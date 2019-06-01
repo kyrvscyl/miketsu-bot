@@ -1,0 +1,50 @@
+{
+	"1": {
+		"offer": {
+			"amulets": 1
+		},
+		"cost": {
+			"jades": 50
+		}
+	},
+	"2": {
+		"offer": {
+			"coins": 80000
+		},
+		"cost": {
+			"jades": 50
+		}
+	},
+	"3": {
+		"offer": {
+			"medals": 20
+		},
+		"cost": {
+			"jades": 50
+		}
+	},
+	"4": {
+		"offer": {
+			"amulets": 10
+		},
+		"cost": {
+			"jades": 750
+		}
+	},
+	"5": {
+		"offer": {
+			"jades": 250
+		},
+		"cost": {
+			"coins": 200000
+		}
+	},
+	"6": {
+		"offer": {
+			"realm_ticket": 3
+		},
+		"cost": {
+			"coins": 150000
+		}
+	}
+}

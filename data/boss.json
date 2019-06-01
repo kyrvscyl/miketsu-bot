@@ -1,0 +1,52 @@
+{
+	"Tsuchigumo": {
+		"discoverer": "None",
+		"level": 0,
+		"total_hp": 0,
+		"current_hp": 0,
+		"damage_cap": 0,
+		"challengers": {},
+		"rewards": {},
+		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903236732256276/tsuchigumo.jpg"
+	},
+	"Shinkirou": {
+		"discoverer": "None",
+		"level": 0,
+		"total_hp": 0,
+		"current_hp": 0,
+		"damage_cap": 0,
+		"challengers": {},
+		"rewards": {},
+		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903235184558081/shinkirou.jpg"
+	},
+	"Namazu": {
+		"discoverer": "None",
+		"level": 0,
+		"total_hp": 0,
+		"current_hp": 0,
+		"damage_cap": 0,
+		"challengers": {},
+		"rewards": {},
+		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903226275987457/namazu.jpg"
+	},
+	"Odokuro": {
+		"discoverer": "None",
+		"level": 0,
+		"total_hp": 0,
+		"current_hp": 0,
+		"damage_cap": 0,
+		"challengers": {},
+		"rewards": {},
+		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903231590039572/odokuro.jpg"
+	},
+	"Oboroguruma": {
+		"discoverer": "None",
+		"level": 0,
+		"total_hp": 0,
+		"current_hp": 0,
+		"damage_cap": 0,
+		"challengers": {},
+		"rewards": {},
+		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903230109450240/oboroguruma.jpg"
+	}
+}

@@ -1,0 +1,233 @@
+{
+	"lantern soul": {
+		"location": ":mag: Bounty Location for Lantern Soul:\n\n:one: Chapter 9: 1st Lantern Boy has 3; 2nd Lantern Boy has 1; Boss Mouba has 1;\n:two: Wraith of Arakawa: Stage One to Three has 3 each;\n:three: Shishio's Wake: Stage Two has 3"
+	},
+	"akashita":{
+		"location": ":mag: Bounty Location for Akashita:\n\n:one: Chapter 23: The two Hone Onna has 3 each\n:two: Summer Poem: Stage One has 3\n:three: Shshio's Wake: Stage Four has 3"
+	},
+	"red imp":{
+		"location": ":mag: Bounty Location for Red Imp:\n\n:one: Chapter 13: The three Gaki has 3 each; the three Umbrella has 1 each;\n:two: Chapter 14: The three Hahakigamis has 3 each; Boss Yumekui has 3;\n:three: Shishio's Wake: Stage Three has 3; Stage Six has 1"
+	},
+	"green imp":{
+		"location": ":mag: Bounty Location for Green Imp:\n\n:one: Chapter 6: The two Blue Imp has 3 each; Boss Kodokushi has 3;\n:two: Encounter: Shouzu has 8; Gaki has 6; Hone Onna has 6; Kyonshi Ani has 4"
+	},
+	"yellow imp":{
+		"location": ":mag: Bounty Location for Yellow Imp:\n\n:one: Encounter: Umibozu has 3; Shuzu has 2; and Kyonshi Ani has 1;\n:two: Shishio's Wake: Stage One has 3"
+	},
+	"hahakigami":{
+		"location": ":mag: Bounty Location for Hahakigami:\n\n:one: Chapter 6: The two Lantern Soul has 3 each;\n:two: Encounters: Futakuchi has 4; Kuro Mujou has 3; Hone Onna has 4; & Kyonshi Ani has 2;\n:three: Tip of the Storm: Stage One has 4; Stage Two to Ten have 3 each;"
+	},
+	"blue imp":{
+		"location": ":mag: Bounty Location for Blue Imp:\n\n:one: Secret of Evil Blade: Stage One to Three has 4 each\n:two: Chapter 10: The two Ushi no Toki has 2 each;"
+	},
+	"parasite":{
+		"location": ":mag: Bounty Location for Parasite:\n\n:one: Chapter 16: The three Akashita has 3;\n:two: Wraith of Arakawa: Stage One to Three has 3 each;"
+	},
+	"umbrella":{
+		"location": ":mag: Bounty Location for Umbrella:\n\n:one: Umbrella's Guard: Stage Two has 3"
+	},
+	"grave digger":{
+		"location": ":mag: Bounty Location for Grave Digger:\n\n:one: Cry Me a River: Stage One/Two/Three has 3 each\n:two: Wraith of Arakawa: Stage One has 3"
+	},
+	"lantern boy":{
+		"location": ":mag: Bounty Location for Lantern Boy:\n\n:one: Encounter: Gaki has 3; Futakuchi has 4; Kuro Mujou has 3; and Umibozu has 4;\n:two: Riverside Tales: Stage One/Two has 3 each;\n:three: Summer Poem: Stage One has 3"
+	},
+	"nurikabe":{
+		"location": ":mag: Bounty Location for Nurikabe:\n\n:one: Chapter 14: the three Nurikabes have 6 each"
+	},
+	"black panther":{
+		"location": ":mag: Bounty Location for Black Panther:\n\n:one: Riverside Tales: Stage Four has 3"
+	},
+	"zombie dog":{
+		"location": ":mag: Bounty Location for Zombie Dog:\n\n:one: Kiyohime Secret Zone: Stage One has 13"
+	},
+	"mio":{
+		"location": ":mag: Bounty Location for Mio:\n\n:one: Tip of the Storm: Stage One to Four have 4 each; Stage Five/Six have 3 each"
+	},
+	"zash":{
+		"location": ":mag: Bounty Location for Zashiki:\n\n:one: Cry Me a River: Stage One has 3"
+	},
+	"zashiki":{
+		"location": ":mag: Bounty Location for Zashiki:\n\n:one: Cry Me a River: Stage One has 3"
+	},
+	"chocho":{
+		"location": ":mag: Bounty Location for Chocho:\n\n:one: Secret of the Evil Blade: Stage Two has 3; Stage Four/Five have 1 each"
+	},
+	"yamawaro":{
+		"location": ":mag: Bounty Location for Yamawaro:\n\n:one: Riverside Tales: Stage Two has 3"
+	},
+	"kubinashi":{
+		"location": ":mag: Bounty Location for Kubinashi:\n\n:one: Tip of the Storm: Stage One has 3"
+	},
+	"satori":{
+		"location": ":mag: Bounty Location for Satori:\n\n:one: Maple's Bond: Stage One has 3"
+	},
+	"kyuumei":{
+		"location": ":mag: Bounty Location for Kyuumei Neko:\n\n:one: Chapter 18: the three Kyuumei Nekos has 6 each; the three Mio has 2 each"
+	},
+	"neko":{
+		"location": ":mag: Bounty Location for Kyuumei Neko:\n\n:one: Chapter 18: the three Kyuumei Nekos has 6 each; the three Mio has 2 each"
+	},
+	"kyuumei neko":{
+		"location": ":mag: Bounty Location for Kyuumei Neko:\n\n:one: Chapter 18: the three Kyuumei Nekos has 6 each; the three Mio has 2 each"
+	},
+	"tanuki":{
+		"location": ":mag: Bounty Location for Tanuki:\n\n:one: Secret of the Evil Blade: Stage One to Three has 4 each; Stage Four to Ten has 3 each"
+	},
+	"kappa":{
+		"location": ":mag: Bounty Location for Kappa:\n\n:one: Wraith of Arakawa: Stage Four to Six has 3 each;\n:two: Shshio's Wake: Stage Two has 2"
+	},
+	"oguna":{
+		"location": ":mag: Bounty Location for Oguna:\n\n:one: Riverside Tales: Stage One has 3;"
+	},
+	"doujo":{
+		"location": ":mag: Bounty Location for Doujo:\n\n:one: Chapter 3: 1st Samurai X has 2 in Normal (1 in Hard); 2nd Akashita has 2; last Yellow Imp has 3;"
+	},
+	"gaki":{
+		"location": ":mag: Bounty Location for Gaki:\n\n:one: Chapter 3: 1st Samurai X has 2 in Normal (1 in Hard); 2nd Akashita has 2; last Yellow Imp has 3;"
+	},
+	"kodokushi":{
+		"location": ":mag: Bounty Location for Kodokushi:\n\n:one: Soul: Stage Six has 1;\n:two: Summer Poem: Stage Three has 3"
+	},
+	"karasu":{
+		"location": ":mag: Bounty Location for Karasu Tengu:\n\n:one: Chapter 12: the 2nd Umibozu has 2; the two Oguna has 2 each"
+	},
+	"karasu tengu":{
+		"location": ":mag: Bounty Location for Karasu Tengu:\n\n:one: Chapter 12: the 2nd Umibozu has 2; the two Oguna has 2 each"
+	},
+	"kamikui":{
+		"location": ":mag: Bounty Location for Kamikui:\n\n:one: Chapter 3: 1st Samurai X has 2 in Normal (1 in Hard); 2nd Akashita has 2; last Yellow Imp has 3"
+	},
+	"kusa":{
+		"location": ":mag: Bounty Location for Kusa:\n\n:one: Soul Sougenbi: has 4; same for all three difficulties"
+	},
+	"warrior soul":{
+		"location": ":mag: Bounty Location for Warrior Soul:\n\n:one: Riverside Tales: Stage Three has 3;\n:two: Cry Me a River: Stage Three has 3"
+	},
+	"kyonshi imoto":{
+		"location": ":mag: Bounty Location for Kyonshi Imoto:\n\n:one: Chapter 12: Boss Yuki Onna has 1; and can use Jumping Bro Older revival trick\n:two: Maple's Bond: Stage Two has 1"
+	},
+	"samurai":{
+		"location": ":mag: Bounty Location for Samurai X:\n\n:one: Cry Me a River: Stage Seven has 4"
+	},
+	"samurai x":{
+		"location": ":mag: Bounty Location for Samurai X:\n\n:one: Cry Me a River: Stage Seven has 4"
+	},
+	"ushi":{
+		"location": ":mag: Bounty Location for Ushi no Toki:\n\n:one: Riverside Tales: Stage Four has 2;\n:two: Chapter 21: The 1st Kamikui has 3; the 2nd and 3rd Kamikuis have 2 each"
+	},
+	"ushi no toki":{
+		"location": ":mag: Bounty Location for Ushi no Toki:\n\n:one: Riverside Tales: Stage Four has 2;\n:two: Chapter 21: The 1st Kamikui has 3; the 2nd and 3rd Kamikuis have 2 each"
+	},
+	"hitosume":{
+		"location": ":mag: Bounty Location for Hitotsume:\n\n:one: Chapter 11: the 2nd Warrior Souls has 3; the two One-Eyed Monk has 1 each in Normal (2 each in Hard)"
+	},
+	"hitot":{
+		"location": ":mag: Bounty Location for Hitotsume:\n\n:one: Chapter 11: the 2nd Warrior Souls has 3; the two One-Eyed Monk has 1 each in Normal (2 each in Hard)"
+	},
+	"tesso":{
+		"location": ":mag: Bounty Location for Tesso:\n\n:one: Encounter: Coin Monster has 16 (best way is to line up in the team menu);\n:two: Chapter 9- 1st Tesso has 1; 2nd Tesso has 2; 2nd Lantern Boy has 2; 2nd Yamausagi has 1"
+	},
+	"shouzu":{
+		"location": ":mag: Bounty Location for Shouzu:\n\n:one: Encounter: Shouzu has 3"
+	},
+	"ame onna":{
+		"location": ":mag: Bounty Location for Ame Onna:\n\n:one: Secret of the Evil Blade: Stage Three has 3"
+	},
+	"kanko":{
+		"location": ":mag: Bounty Location for Kanko:\n\n:one: Maple's Bond: Stage One to Three has 4 each; Stage Four to Ten has 3 each"
+	},
+	"yamasusagi":{
+		"location": ":mag: Bounty Location for Yamausagi:\n\n:one: Chapter 9: 1st Yamausagi has 4; 2nd Yamausagi has 3"
+	},
+	"yama":{
+		"location": ":mag: Bounty Location for Yamausagi:\n\n:one: Chapter 9: 1st Yamausagi has 4; 2nd Yamausagi has 3"
+	},
+	"satori":{
+		"location": ":mag: Bounty Location for Satori:\n\n:one: Maple's Bond: Stage One has 3;"
+	},
+	"jiki":{
+		"location": ":mag: Bounty Location for Jikikaeru:\n\n:one: Soul: Stage Three has 1"
+	},
+	"jikikaeru":{
+		"location": ":mag: Bounty Location for Jikikaeru:\n\n:one: Soul: Stage Three has 1"
+	},
+	"yuki onna":{
+		"location": ":mag: Bounty Location for Yuki Onna:\n\n:one: Chapter 12: the two Doujo has 1 each; Boss Yuki Onna has 2"
+	},
+	"inugami":{
+		"location": ":mag: Bounty Location for Inugami:\n\n:one: Chapter 10: the 2nd Satori has 1; the 2nd Puppeteer has 1"
+	},
+	"honne onna":{
+		"location": ":mag: Bounty Location for Hone Onna:\n\n:one: Cry Me a River: Stage Four has 4"
+	},
+	"umibozu":{
+		"location": ":mag: Bounty Location for Umibozu:\n\n:one: Encounter: Umibozu has 3;\n:two: Chapter 24: The two Vampiras have 3 each"
+	},
+	"kyonshi ani":{
+		"location": ":mag: Bounty Location for Kyonshi Ani:\n\n:one: Encounter: Jumping Bro Older has 3\n:two: Chapter 24: The two Jourogumo have 3 each"
+	},
+	"puppeteer":{
+		"location": ":mag: Bounty Location for Puppeteer:\n\n:one: Chapter 10: the two Ushi no Tokis have 1 each; the two Puppeteers have 1 each;\n:two: Chapter 28: Puppeteer has plenty"
+	},
+	"momiji":{
+		"location": ":mag: Bounty Location for Momiji:\n\n:one: Maple's Bond: Stage One to Ten has 1 each;"
+	},
+	"hangan":{
+		"location": ":mag: Bounty Location for Hangan:\n\n:one: Soul: Stage Eight has 1"
+	},
+	"sakura":{
+		"location": ":mag: Bounty Location for Sakura :\n\n:one: Chapter 8: the two Sakura has 1 each; Boss has 1"
+	},
+	"yumekui":{
+		"location": ":mag: Bounty Location for Yumekui:\n\n:one: Chapter 14: last Nurikabe has 1; Boss Yumekui has 5"
+	},
+	"hououka":{
+		"location": ":mag: Bounty Location for Hououka:\n\n:one: Soul: Stage Seven has 1"
+	},
+	"momo":{
+		"location": ":mag: Bounty Location for Momo:\n\n:one: Soul: Stage Three has 1"
+	},
+	"mouba":{
+		"location": ":mag: Bounty Location for Mouba:\n\n:one: Soul: Stage Five has 2; Stage Six has 1"
+	},
+	"vampira":{
+		"location": ":mag: Bounty Location for Vampira:\n\n:one: Maple's Bond: Stage Seven has 2; Stage Ten has 1;\n:two: Vampira's Secret Stage: One to Nine has 1 each"
+	},
+	"kuro mujou":{
+		"location": ":mag: Bounty Location for Kuro Mujou:\n\n:one: Riverside Tales: Stage Six has 3"
+	},
+	"kuro mujo":{
+		"location": ":mag: Bounty Location for Kuro Mujou:\n\n:one: Riverside Tales: Stage Six has 3"
+	},
+	"kamaitachi":{
+		"location": ":mag: Bounty Location for Kamaitachi:\n\n:one: Challenge: Chapter 18 Kamaitachi has 14"
+	},
+	"kamai":{
+		"location": ":mag: Bounty Location for Kamaitachi:\n\n:one: Challenge: Chapter 18 Kamaitachi has 14"
+	},
+	"youko":{
+		"location": ":mag: Bounty Location for Youko:\n\n:one: Soul: Stage Two has 1; Sougenbi has 1;\n:two: Youko's Secret Stage: One to Ten have 1 each"
+	},
+	"ootengu":{
+		"location": ":mag: Bounty Location for Ootengu:\n\n:one: Soul: Stage Four has 1; Stage Ten has 2"
+	},
+	"tengu":{
+		"location": ":mag: Bounty Location for Ootengu:\n\n:one: Soul: Stage Four has 1; Stage Ten has 2"
+	},
+	"shuten":{
+		"location": ":mag: Bounty Location for Shuten Doji:\n\n:one: Soul: Stage Two has 1; Sougenbi has 1;\n:two: Youko's Secret Stage: One to Ten have 1 each"
+	},
+	"shuten doji":{
+		"location": ":mag: Bounty Location for Shuten Doji:\n\n:one: Soul: Stage Two has 1; Sougenbi has 1;\n:two: Youko's Secret Stage: One to Ten have 1 each"
+	},
+	"enma":{
+		"location": ":mag: Bounty Location for Enma:\n\n:one: Soul: Stage Six has 1"
+	},
+	"arakawa":{
+		"location": ":mag: Bounty Location for Lord Arakawa:\n\n:one: Soul: Stage Seven has 2;\n:two: Wraith of Arakawa: All stages have 1 each"
+	},
+	"lord arakawa":{
+		"location": ":mag: Bounty Location for Lord Arakawa:\n\n:one: Soul: Stage Seven has 2;\n:two: Wraith of Arakawa: All stages have 1 each"
+	}
+}
