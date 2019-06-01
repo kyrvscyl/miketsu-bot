@@ -38,7 +38,6 @@ class Startup(commands.Cog):
 	async def changeStatus(self):
 		await self.client.change_presence(activity=discord.Game(next(status)))
 	
-	
 	@commands.command()
 	async def info(self, ctx):
 		await ctx.channel.send("Hello! I'm Miketsu. I am sharded by kyrvscyl. To see the list of my commands, type `;help` or `;help dm`")

@@ -56,7 +56,10 @@ class Error(commands.Cog):
 		
 		# Catching errors
 		else :
-			print("{} : {}.".format(timeStamp, error))
+			user = self.client.get_user(180717337475809281)
+			msg = "{} : {}.".format(timeStamp, error)
+			await user.send(msg)
+			print(msg)
 		
 def setup(client):
 	client.add_cog(Error(client))
