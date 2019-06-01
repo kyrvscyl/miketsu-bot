@@ -1,8 +1,8 @@
 
 # Getting guild essentials
-server = 1
+server = 2
 
-# Test Server
+# House of Mystery
 if server == 1:
 	guildID = 555628405270511618
 	guildToken = "NTcxODc4NjQ4Njk3NTg1Njc1.XNaSUA.wRY4nIWDhbQWxfs9CTLuFenmq8M"
