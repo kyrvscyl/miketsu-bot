@@ -1,14 +1,14 @@
 {
 	"180717337475809281": {
-		"experience": 16370,
+		"experience": 16385,
 		"level": 18,
 		"level_exp_next": 18305,
-		"amulets": 25,
-		"amulets_spent": 290,
+		"amulets": 5,
+		"amulets_spent": 310,
 		"SP": 0,
 		"SSR": 2,
-		"SR": 44,
-		"R": 244,
+		"SR": 49,
+		"R": 259,
 		"jades": 11536,
 		"coins": 4727271,
 		"medals": 1441,
@@ -198,7 +198,7 @@
 					"evolved": "False"
 				},
 				"Umibozu": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -213,7 +213,7 @@
 					"evolved": "False"
 				},
 				"Vampira": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -273,7 +273,7 @@
 					"evolved": "False"
 				},
 				"Hannya": {
-					"owned": 4,
+					"owned": 5,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -338,7 +338,7 @@
 					"evolved": "False"
 				},
 				"Kaoru": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -363,7 +363,7 @@
 					"evolved": "False"
 				},
 				"Okuribito": {
-					"owned": 2,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				}
@@ -380,7 +380,7 @@
 					"evolved": "False"
 				},
 				"Koi": {
-					"owned": 8,
+					"owned": 9,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -390,22 +390,22 @@
 					"evolved": "False"
 				},
 				"Tanuki": {
-					"owned": 16,
+					"owned": 17,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kappa": {
-					"owned": 6,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Oguna": {
-					"owned": 5,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Doujo": {
-					"owned": 7,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -420,7 +420,7 @@
 					"evolved": "False"
 				},
 				"Karasu Tengu": {
-					"owned": 10,
+					"owned": 11,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -435,7 +435,7 @@
 					"evolved": "False"
 				},
 				"Ame Onna": {
-					"owned": 5,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -445,7 +445,7 @@
 					"evolved": "False"
 				},
 				"Kyonshi Imoto": {
-					"owned": 14,
+					"owned": 15,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -465,12 +465,12 @@
 					"evolved": "False"
 				},
 				"Tesso": {
-					"owned": 8,
+					"owned": 9,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Shouzu": {
-					"owned": 9,
+					"owned": 10,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -490,7 +490,7 @@
 					"evolved": "False"
 				},
 				"Chocho": {
-					"owned": 7,
+					"owned": 9,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -505,7 +505,7 @@
 					"evolved": "False"
 				},
 				"Satori": {
-					"owned": 13,
+					"owned": 15,
 					"grade": 1,
 					"evolved": "False"
 				},

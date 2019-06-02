@@ -31,22 +31,19 @@ class Summon(commands.Cog):
 			
 			if onhandAmulet > 0:
 			
-				if pullAmulet == 10 and onhandAmulet >= 10:
-					await self.summonPerform(ctx, user, pullAmulet)
-					return
-					
-				if pullAmulet == 1 and onhandAmulet >= 1:
-					await self.summonPerform(ctx, user, pullAmulet)
-					return
-				
 				if pullAmulet > onhandAmulet:
 					msg = "{}, you only have {}{} to summon.".format(user.mention, onhandAmulet, guild.eAmulet)
 					await ctx.channel.send(msg)
-					return	
+					
+				elif pullAmulet == 10 and onhandAmulet >= 10:
+					await self.summonPerform(ctx, user, pullAmulet)
+					
+				elif pullAmulet == 1 and onhandAmulet >= 1:
+					await self.summonPerform(ctx, user, pullAmulet)
+					
 				else:
 					msg = "{}, summon can only be by ones or by tens.".format(user.mention)
 					await ctx.channel.send(msg)
-					return
 			else:
 				msg = "{}, you have no {} to summon.".format(user.mention, guild.eAmulet)
 				await ctx.channel.send(msg)
