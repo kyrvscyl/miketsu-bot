@@ -1,6 +1,6 @@
 
 # Getting guild essentials
-server = 1
+server = 2
 
 # House of Mystery
 if server == 1:
