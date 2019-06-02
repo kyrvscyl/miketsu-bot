@@ -107,5 +107,4 @@ venv.bak/
 test.py
 debug.log
 requirements.txt
-Procfile
 backup.zip
