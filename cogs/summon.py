@@ -31,7 +31,7 @@ class Summon(commands.Cog):
 			
 			if onhandAmulet > 0:
 			
-				if pullAmulet == 10 and onhandAmulet >= 0:
+				if pullAmulet == 10 and onhandAmulet >= 10:
 					await self.summonPerform(ctx, user, pullAmulet)
 					return
 					

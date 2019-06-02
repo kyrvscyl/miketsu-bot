@@ -4,7 +4,7 @@ kyrvscyl, 2019
 """
 import discord, json, re
 from discord.ext import commands
-	
+
 class Admin(commands.Cog):
 	
 	def __init__(self, client):

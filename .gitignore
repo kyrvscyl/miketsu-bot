@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# heroku
+test.py
+debug.log
+requirements.txt
+Procfile
+backup.zip

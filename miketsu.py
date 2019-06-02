@@ -49,6 +49,28 @@ async def reload(ctx, extension):
 	msg = "Extension {}.py has been reloaded".format(extension)
 	await ctx.channel.send(msg)
 
+@client.command()
+@commands.is_owner()
+async def shutdown(ctx):
+	for filename in os.listdir("../cogs"):
+		if filename.endswith(".py") and filename != "error.py":
+			client.unload_extension(f"cogs.{filename[:-3]}")
+			print("Unloading {}..".format(filename))
+
+	msg = "Bye-bye!"
+	await ctx.channel.send(msg)
+
+@client.command()
+@commands.is_owner()
+async def initialize(ctx):
+	for filename in os.listdir("../cogs"):
+		if filename.endswith(".py"):
+			client.load_extension(f"cogs.{filename[:-3]}")
+			print("Loading {}..".format(filename))
+
+	msg = "Engines starting.."
+	await ctx.channel.send(msg)
+
 print("-------")
 
 client.run(guild.guildToken)

@@ -7,11 +7,13 @@ from discord.ext import tasks, commands
 from datetime import datetime
 import config.guild as guild
 from itertools import cycle
+import shutil
 
 status = cycle(["with the peasants", "with their feelings", "fake Onmyoji", "with Susabi"])
 
 # Date and Time
 timeStamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
+timeStamp2 = datetime.now().strftime("%m.%d.%Y.%H%M")
 
 class Startup(commands.Cog):
 	
@@ -32,6 +34,7 @@ class Startup(commands.Cog):
 		print("Server: {}".format(guildName))
 		print("Peasant Count: {}".format(len(self.client.users)))
 		self.changeStatus.start()
+		self.backupData.start()
 		print("-------")
 	
 	@tasks.loop(seconds=1200)
@@ -82,6 +85,17 @@ class Startup(commands.Cog):
 		except IndexError as Error:
 			msg = "Hi, {}!, I can collect suggestions. Please provide one.".format(ctx.author.mention)
 			await ctx.channel.send(msg)
+	
+	@tasks.loop(seconds=43200)
+	async def backupData(self):
+		channel = self.client.get_channel(584638230729850880)
+		shutil.make_archive("backup", "zip", "../data/")
+		
+		backup = discord.File("backup.zip", filename="{}.{}.zip".format(self.client.get_guild(guild.guildID), timeStamp2))
+		await channel.send(file=backup)
+	
+	
+	
 	
 def setup(client):
 	client.add_cog(Startup(client))

@@ -15,6 +15,16 @@ class Error(commands.Cog):
 	def __init__(self, client):
 		self.client = client
 	
+	async def submitError(self, ctx, error):
+		discoverer = ctx.author
+		channel = self.client.get_channel(584631677804871682)
+		
+		embed=discord.Embed(color=0xffff80, title="{} triggered an error".format(discoverer))
+		embed.add_field(name="Command: {}".format(ctx.command), value=error)
+		embed.set_footer(text="{}".format(timeStamp))
+		
+		await channel.send(embed=embed)
+	
 	@commands.Cog.listener()
 	async def on_command_error(self, ctx, error):
 		
@@ -40,11 +50,11 @@ class Error(commands.Cog):
 				msg = "Use `;summon <1 or 10>`"
 				await ctx.channel.send(msg)
 			else: 
-				print("{} : {}.".format(timeStamp, error))
+				await self.submitError(ctx, error)
 		
 		# No DM commands
 		elif isinstance(error, commands.NoPrivateMessage):
-			return
+			await self.submitError(ctx, error)
 		
 		# Silently ignore invalid commands
 		elif isinstance(error, commands.CommandNotFound):
@@ -54,12 +64,10 @@ class Error(commands.Cog):
 		elif isinstance(error, commands.ExtensionError):
 			print("{} : {}.".format(timeStamp, error))
 		
-		# Catching errors
+		# Catching other errors errors
 		else :
-			user = self.client.get_user(180717337475809281)
-			msg = "{} : {}.".format(timeStamp, error)
-			await user.send(msg)
-			print(msg)
-		
+			await self.submitError(ctx, error)
+			
+				
 def setup(client):
 	client.add_cog(Error(client))
