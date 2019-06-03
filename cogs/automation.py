@@ -14,6 +14,7 @@ class Events(commands.Cog):
 	# Whenever a member joins
 	@commands.Cog.listener()
 	async def on_member_join(self, member):
+		
 		default = self.client.get_channel(guild.guildDefault)
 		msg = ":sparkles: Welcome to Patronus, {}. Kindly read your acceptance letter first.".format(member.mention)
 		

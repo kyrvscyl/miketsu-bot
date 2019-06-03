@@ -8,32 +8,32 @@
 		"SSR_record": 92
 	},
 	"321097928909389834": {
-		"SSR_current": 50,
-		"SSR_record": 50
+		"SSR_current": 60,
+		"SSR_record": 60
 	},
 	"201402446705065984": {
-		"SSR_current": 119,
-		"SSR_record": 144
+		"SSR_current": 36,
+		"SSR_record": 162
 	},
 	"518458142389043230": {
-		"SSR_current": 19,
+		"SSR_current": 31,
 		"SSR_record": 105
 	},
 	"527763285802745857": {
-		"SSR_current": 21,
+		"SSR_current": 66,
 		"SSR_record": 138
 	},
 	"437941992748482562": {
-		"SSR_current": 46,
+		"SSR_current": 20,
 		"SSR_record": 85
 	},
 	"206757409027391488": {
-		"SSR_current": 57,
+		"SSR_current": 87,
 		"SSR_record": 334
 	},
 	"499517826613248000": {
-		"SSR_current": 141,
-		"SSR_record": 141
+		"SSR_current": 162,
+		"SSR_record": 162
 	},
 	"483262866263375876": {
 		"SSR_current": 4,
@@ -48,7 +48,7 @@
 		"SSR_record": 117
 	},
 	"486940955270971402": {
-		"SSR_current": 58,
+		"SSR_current": 68,
 		"SSR_record": 109
 	},
 	"110472596323045376": {
@@ -68,7 +68,7 @@
 		"SSR_record": 113
 	},
 	"327044665406652417": {
-		"SSR_current": 11,
+		"SSR_current": 23,
 		"SSR_record": 121
 	},
 	"296793120258129923": {
@@ -76,7 +76,7 @@
 		"SSR_record": 20
 	},
 	"309119951611101184": {
-		"SSR_current": 12,
-		"SSR_record": 12
+		"SSR_current": 32,
+		"SSR_record": 32
 	}
 }

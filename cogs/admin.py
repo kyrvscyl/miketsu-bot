@@ -2,8 +2,12 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-import discord, json, re
+import discord, json, re, shutil
 from discord.ext import commands
+from datetime import datetime
+from config.guild import guildID
+
+timeStamp2 = datetime.now().strftime("%m.%d.%Y.%H%M")
 
 class Admin(commands.Cog):
 	
@@ -91,6 +95,15 @@ class Admin(commands.Cog):
 			channel = self.client.get_channel(int(re.sub('[<>#]', '', args[0])))
 			msg = ":loudspeaker: {}".format(" ".join(args[1:]))
 			await channel.send(msg)
+	
+	@commands.command()
+	@commands.is_owner()
+	async def backupData(self):
+		channel = self.client.get_channel(584638230729850880)
+		shutil.make_archive("backup", "zip", "../data/")
+		
+		backup = discord.File("backup.zip", filename="{}.{}.zip".format(self.client.get_guild(guildID), timeStamp2))
+		await channel.send(file=backup)	
 	
 def setup(client):
 	client.add_cog(Admin(client))

@@ -1,52 +1,109 @@
 {
 	"Tsuchigumo": {
-		"discoverer": "None",
-		"level": 0,
-		"total_hp": 0,
-		"current_hp": 0,
-		"damage_cap": 0,
-		"challengers": {},
-		"rewards": {},
+		"discoverer": "437941992748482562",
+		"level": 76,
+		"total_hp": 39392.0,
+		"current_hp": 15466.0,
+		"damage_cap": 7878.0,
+		"challengers": {
+			"437941992748482562": 6052.0,
+			"486940955270971402": 6688.0,
+			"206757409027391488": 7878.0,
+			"180717337475809281": 2520.0,
+			"309119951611101184": 788.0
+		},
+		"rewards": {
+			"medals": 175,
+			"experience": 500,
+			"coins": 1535840,
+			"jades": 857
+		},
 		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903236732256276/tsuchigumo.jpg"
 	},
 	"Shinkirou": {
-		"discoverer": "None",
-		"level": 0,
-		"total_hp": 0,
+		"discoverer": "206757409027391488",
+		"level": 78,
+		"total_hp": 39653.0,
 		"current_hp": 0,
-		"damage_cap": 0,
-		"challengers": {},
-		"rewards": {},
+		"damage_cap": 7931.0,
+		"challengers": {
+			"206757409027391488": 23793.0,
+			"180717337475809281": 7479.0,
+			"437941992748482562": 6090.0,
+			"486940955270971402": 6693.0
+		},
+		"rewards": {
+			"medals": 160,
+			"experience": 450,
+			"coins": 1374938,
+			"jades": 764
+		},
 		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903235184558081/shinkirou.jpg"
 	},
 	"Namazu": {
-		"discoverer": "None",
-		"level": 0,
-		"total_hp": 0,
-		"current_hp": 0,
-		"damage_cap": 0,
-		"challengers": {},
-		"rewards": {},
+		"discoverer": "518458142389043230",
+		"level": 80,
+		"total_hp": 41535.0,
+		"current_hp": 8901.0,
+		"damage_cap": 8307.0,
+		"challengers": {
+			"437941992748482562": 6424.0,
+			"327044665406652417": 2006.0,
+			"518458142389043230": 5698.0,
+			"206757409027391488": 16614.0,
+			"201402446705065984": 1892.0
+		},
+		"rewards": {
+			"medals": 175,
+			"experience": 500,
+			"coins": 1440500,
+			"jades": 824
+		},
 		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903226275987457/namazu.jpg"
 	},
 	"Odokuro": {
-		"discoverer": "None",
-		"level": 0,
-		"total_hp": 0,
+		"discoverer": "581507341820755970",
+		"level": 67,
+		"total_hp": 38004.0,
 		"current_hp": 0,
-		"damage_cap": 0,
-		"challengers": {},
-		"rewards": {},
+		"damage_cap": 7601.0,
+		"challengers": {
+			"206757409027391488": 22803.0,
+			"180717337475809281": 7848.0,
+			"527763285802745857": 4611.0,
+			"437941992748482562": 9324.0,
+			"486940955270971402": 13668.0
+		},
+		"rewards": {
+			"medals": 175,
+			"experience": 500,
+			"coins": 1440500,
+			"jades": 824
+		},
 		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903231590039572/odokuro.jpg"
 	},
 	"Oboroguruma": {
-		"discoverer": "None",
-		"level": 0,
-		"total_hp": 0,
+		"discoverer": "327044665406652417",
+		"level": 70,
+		"total_hp": 39228.0,
 		"current_hp": 0,
-		"damage_cap": 0,
-		"challengers": {},
-		"rewards": {},
+		"damage_cap": 7846.0,
+		"challengers": {
+			"180717337475809281": 2668.0,
+			"327044665406652417": 957.0,
+			"518458142389043230": 5606.0,
+			"437941992748482562": 3166.0,
+			"527763285802745857": 1578.0,
+			"486940955270971402": 13814.0,
+			"206757409027391488": 23538.0,
+			"309119951611101184": 785.0
+		},
+		"rewards": {
+			"medals": 220,
+			"experience": 650,
+			"coins": 1613844,
+			"jades": 989
+		},
 		"boss_url": "https://cdn.discordapp.com/attachments/556032841897607178/578903230109450240/oboroguruma.jpg"
 	}
 }

@@ -4,7 +4,7 @@
 		"shipper2": "437941992748482562",
 		"ship_name": "Exorcist and Devil",
 		"level": 2,
-		"points": 55,
+		"points": 76,
 		"points_required": 125
 	},
 	"437941992748482562x217750812728754178": {
@@ -19,9 +19,9 @@
 		"shipper1": "437941992748482562",
 		"shipper2": "486940955270971402",
 		"ship_name": "Angel and Devil",
-		"level": 2,
-		"points": 76,
-		"points_required": 125
+		"level": 3,
+		"points": 132,
+		"points_required": 350
 	},
 	"518458142389043230x180717337475809281": {
 		"shipper1": "180717337475809281",
@@ -36,7 +36,7 @@
 		"shipper2": "437941992748482562",
 		"ship_name": "Queens of The Underworld",
 		"level": 1,
-		"points": 8,
+		"points": 21,
 		"points_required": 50
 	},
 	"518458142389043230x217750812728754178": {
@@ -60,7 +60,7 @@
 		"shipper2": "511293639796850688",
 		"ship_name": "Ice Queen",
 		"level": 2,
-		"points": 63,
+		"points": 116,
 		"points_required": 125
 	},
 	"180717337475809281x110472596323045376": {
@@ -68,7 +68,7 @@
 		"shipper2": "110472596323045376",
 		"ship_name": "Meow and Woof!",
 		"level": 1,
-		"points": 26,
+		"points": 31,
 		"points_required": 50
 	},
 	"437941992748482562x206757409027391488": {
@@ -77,6 +77,30 @@
 		"ship_name": "Kitty and \u0e41\u0e21\u0e27",
 		"level": 1,
 		"points": 18,
+		"points_required": 50
+	},
+	"437941992748482562x435388666198884363": {
+		"shipper1": "435388666198884363",
+		"shipper2": "437941992748482562",
+		"ship_name": "Unicorns",
+		"level": 1,
+		"points": 8,
+		"points_required": 50
+	},
+	"506895552735084546x435388666198884363": {
+		"shipper1": "435388666198884363",
+		"shipper2": "506895552735084546",
+		"ship_name": "Alliethea and ShaLy's ship",
+		"level": 1,
+		"points": 5,
+		"points_required": 50
+	},
+	"486940955270971402x435388666198884363": {
+		"shipper1": "435388666198884363",
+		"shipper2": "486940955270971402",
+		"ship_name": "Alliethea and Happybunny's ship",
+		"level": 1,
+		"points": 5,
 		"points_required": 50
 	}
 }
