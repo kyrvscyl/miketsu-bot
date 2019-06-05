@@ -35,11 +35,34 @@ class Startup(commands.Cog):
 		print("Peasant Count: {}".format(len(self.client.users)))
 		self.changeStatus.start()
 		self.backupData.start()
+		self.changeCastle.start()
 		print("-------")
 	
 	@tasks.loop(seconds=1200)
 	async def changeStatus(self):
 		await self.client.change_presence(activity=discord.Game(next(status)))
+	
+	@tasks.loop(seconds=1800)
+	async def changeCastle(self):
+	castle = client.get_channel(412057028887052289)
+	channels = castle.text_channels
+	
+	count = len(channels) + 1
+	
+	for channel in channels:
+		
+		await channel.edit(position=(random.randint(1,count)-1))
+		await asyncio.sleep(3)
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	@commands.command()
 	async def info(self, ctx):

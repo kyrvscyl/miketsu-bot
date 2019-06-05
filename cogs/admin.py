@@ -96,9 +96,9 @@ class Admin(commands.Cog):
 			msg = ":loudspeaker: {}".format(" ".join(args[1:]))
 			await channel.send(msg)
 	
-	@commands.command()
+	@commands.command(alises=["backup"])
 	@commands.is_owner()
-	async def backupData(self):
+	async def backupData(self, ctx):
 		channel = self.client.get_channel(584638230729850880)
 		shutil.make_archive("backup", "zip", "../data/")
 		

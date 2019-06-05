@@ -1,6 +1,6 @@
 {
 	"180717337475809281": {
-		"experience": 18803,
+		"experience": 19223,
 		"level": 19,
 		"level_exp_next": 21715,
 		"amulets": 15,
@@ -9,9 +9,9 @@
 		"SSR": 2,
 		"SR": 49,
 		"R": 259,
-		"jades": 12456,
-		"coins": 4786091,
-		"medals": 1607,
+		"jades": 12656,
+		"coins": 4961944,
+		"medals": 1647,
 		"realm_ticket": 30,
 		"honor": 0,
 		"talisman": 0,
@@ -1058,7 +1058,7 @@
 		"friendship": 0
 	},
 	"110472596323045376": {
-		"experience": 6840,
+		"experience": 6955,
 		"level": 14,
 		"level_exp_next": 8325,
 		"amulets": 10,
@@ -1587,7 +1587,7 @@
 		"friendship": 10
 	},
 	"486940955270971402": {
-		"experience": 28388,
+		"experience": 28466,
 		"level": 21,
 		"level_exp_next": 29835,
 		"amulets": 9,
@@ -1596,9 +1596,9 @@
 		"SSR": 12,
 		"SR": 146,
 		"R": 712,
-		"jades": 15309,
-		"coins": 15801159,
-		"medals": 5119,
+		"jades": 15440,
+		"coins": 16029768,
+		"medals": 5146,
 		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
@@ -2116,19 +2116,19 @@
 		"friendship": 60
 	},
 	"201402446705065984": {
-		"experience": 8406,
+		"experience": 8568,
 		"level": 15,
 		"level_exp_next": 10320,
-		"amulets": 10,
+		"amulets": 21,
 		"amulets_spent": 720,
 		"SP": 0,
 		"SSR": 15,
 		"SR": 142,
 		"R": 566,
-		"jades": 3154,
-		"coins": 6967015,
-		"medals": 1086,
-		"realm_ticket": 0,
+		"jades": 3989,
+		"coins": 7136635,
+		"medals": 1094,
+		"realm_ticket": 3,
 		"honor": 0,
 		"talisman": 0,
 		"guild_medal": 0,
@@ -3174,18 +3174,18 @@
 		"friendship": 30
 	},
 	"206757409027391488": {
-		"experience": 18378,
+		"experience": 19319,
 		"level": 19,
 		"level_exp_next": 21715,
-		"amulets": 38,
-		"amulets_spent": 934,
-		"SP": 0,
+		"amulets": 1,
+		"amulets_spent": 1004,
+		"SP": 1,
 		"SSR": 13,
-		"SR": 174,
-		"R": 747,
-		"jades": 1629,
-		"coins": 21266454,
-		"medals": 6664,
+		"SR": 189,
+		"R": 802,
+		"jades": 160,
+		"coins": 22834764,
+		"medals": 6985,
 		"realm_ticket": 3,
 		"honor": 0,
 		"talisman": 0,
@@ -3193,7 +3193,7 @@
 		"shikigami": {
 			"SP": {
 				"Inferno Ibaraki": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "True"
 				},
@@ -3332,7 +3332,7 @@
 					"evolved": "False"
 				},
 				"Shiro Mujou": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3342,7 +3342,7 @@
 					"evolved": "False"
 				},
 				"Mouba": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3362,7 +3362,7 @@
 					"evolved": "False"
 				},
 				"Kyonshi Ani": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3427,17 +3427,17 @@
 					"evolved": "False"
 				},
 				"Hakuro": {
-					"owned": 7,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Sakura": {
-					"owned": 4,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Ebisu": {
-					"owned": 8,
+					"owned": 9,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3462,7 +3462,7 @@
 					"evolved": "False"
 				},
 				"Kuro": {
-					"owned": 3,
+					"owned": 5,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3497,7 +3497,7 @@
 					"evolved": "False"
 				},
 				"Bukkuman": {
-					"owned": 4,
+					"owned": 5,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3512,7 +3512,7 @@
 					"evolved": "False"
 				},
 				"Kaoru": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3527,7 +3527,7 @@
 					"evolved": "False"
 				},
 				"Okikumushi": {
-					"owned": 3,
+					"owned": 5,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3537,34 +3537,34 @@
 					"evolved": "False"
 				},
 				"Okuribito": {
-					"owned": 5,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				}
 			},
 			"R": {
 				"Mio": {
-					"owned": 8,
+					"owned": 11,
 					"grade": 1,
 					"evolved": "True"
 				},
 				"Zashiki": {
-					"owned": 25,
+					"owned": 27,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Koi": {
-					"owned": 21,
+					"owned": 24,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kyuumei Neko": {
-					"owned": 13,
+					"owned": 16,
 					"grade": 1,
 					"evolved": "True"
 				},
 				"Tanuki": {
-					"owned": 20,
+					"owned": 22,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -3574,87 +3574,87 @@
 					"evolved": "False"
 				},
 				"Oguna": {
-					"owned": 6,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "True"
 				},
 				"Doujo": {
-					"owned": 9,
-					"grade": 1,
-					"evolved": "True"
-				},
-				"Gaki": {
-					"owned": 27,
-					"grade": 1,
-					"evolved": "False"
-				},
-				"Kodokushi": {
 					"owned": 10,
 					"grade": 1,
 					"evolved": "True"
 				},
+				"Gaki": {
+					"owned": 28,
+					"grade": 1,
+					"evolved": "False"
+				},
+				"Kodokushi": {
+					"owned": 11,
+					"grade": 1,
+					"evolved": "True"
+				},
 				"Karasu Tengu": {
-					"owned": 25,
+					"owned": 30,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kamikui": {
-					"owned": 22,
+					"owned": 23,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Warrior Soul": {
-					"owned": 23,
-					"grade": 1,
-					"evolved": "False"
-				},
-				"Ame Onna": {
-					"owned": 8,
-					"grade": 1,
-					"evolved": "True"
-				},
-				"Kyonshi Ototo": {
-					"owned": 22,
-					"grade": 1,
-					"evolved": "False"
-				},
-				"Kyonshi Imoto": {
-					"owned": 23,
-					"grade": 1,
-					"evolved": "False"
-				},
-				"Samurai X": {
 					"owned": 26,
 					"grade": 1,
 					"evolved": "False"
 				},
-				"Ushi No Toki": {
-					"owned": 17,
-					"grade": 1,
-					"evolved": "False"
-				},
-				"Hitotsume": {
-					"owned": 3,
+				"Ame Onna": {
+					"owned": 9,
 					"grade": 1,
 					"evolved": "True"
 				},
-				"Tesso": {
-					"owned": 23,
+				"Kyonshi Ototo": {
+					"owned": 24,
 					"grade": 1,
 					"evolved": "False"
 				},
-				"Shouzu": {
-					"owned": 22,
+				"Kyonshi Imoto": {
+					"owned": 26,
 					"grade": 1,
 					"evolved": "False"
 				},
-				"Kanko": {
+				"Samurai X": {
+					"owned": 27,
+					"grade": 1,
+					"evolved": "False"
+				},
+				"Ushi No Toki": {
 					"owned": 20,
 					"grade": 1,
 					"evolved": "False"
 				},
+				"Hitotsume": {
+					"owned": 4,
+					"grade": 1,
+					"evolved": "True"
+				},
+				"Tesso": {
+					"owned": 25,
+					"grade": 1,
+					"evolved": "False"
+				},
+				"Shouzu": {
+					"owned": 23,
+					"grade": 1,
+					"evolved": "False"
+				},
+				"Kanko": {
+					"owned": 22,
+					"grade": 1,
+					"evolved": "False"
+				},
 				"Yamausagi": {
-					"owned": 7,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "True"
 				},
@@ -3664,37 +3664,37 @@
 					"evolved": "True"
 				},
 				"Chocho": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "True"
 				},
 				"Yamawaro": {
-					"owned": 25,
+					"owned": 28,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kubinashi": {
-					"owned": 6,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "True"
 				},
 				"Satori": {
-					"owned": 18,
+					"owned": 19,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Jikikaeru": {
-					"owned": 25,
+					"owned": 27,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Koroka": {
-					"owned": 16,
+					"owned": 17,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Mushishi": {
-					"owned": 4,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "True"
 				}
@@ -4761,18 +4761,18 @@
 		"friendship": 0
 	},
 	"309119951611101184": {
-		"experience": 678,
+		"experience": 690,
 		"level": 7,
 		"level_exp_next": 1025,
 		"amulets": 10,
 		"amulets_spent": 95,
 		"SP": 0,
-		"SSR": 2,
+		"SSR": 4,
 		"SR": 14,
 		"R": 79,
-		"jades": 332,
-		"coins": 742531,
-		"medals": 4,
+		"jades": 352,
+		"coins": 777702,
+		"medals": 8,
 		"realm_ticket": 7,
 		"honor": 0,
 		"talisman": 0,
@@ -4877,7 +4877,7 @@
 					"evolved": "False"
 				},
 				"Tamamonomae": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -4897,7 +4897,7 @@
 					"evolved": "False"
 				},
 				"Hakusozu": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -5290,17 +5290,17 @@
 		"friendship": 0
 	},
 	"351392707890905091": {
-		"experience": 6605,
-		"level": 13,
-		"level_exp_next": 6615,
-		"amulets": 130,
+		"experience": 6755,
+		"level": 14,
+		"level_exp_next": 8325,
+		"amulets": 140,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 2300,
-		"coins": 1200000,
+		"jades": 2450,
+		"coins": 1300000,
 		"medals": 25,
 		"realm_ticket": 0,
 		"honor": 0,
@@ -6348,7 +6348,7 @@
 		"friendship": 0
 	},
 	"368924865807253508": {
-		"experience": 1925,
+		"experience": 1995,
 		"level": 9,
 		"level_exp_next": 2155,
 		"amulets": 90,
@@ -6877,7 +6877,7 @@
 		"friendship": 0
 	},
 	"321097928909389834": {
-		"experience": 4056,
+		"experience": 4076,
 		"level": 12,
 		"level_exp_next": 5165,
 		"amulets": 29,
@@ -7406,7 +7406,7 @@
 		"friendship": 0
 	},
 	"518458142389043230": {
-		"experience": 25203,
+		"experience": 25410,
 		"level": 20,
 		"level_exp_next": 25550,
 		"amulets": 0,
@@ -7415,9 +7415,9 @@
 		"SSR": 6,
 		"SR": 106,
 		"R": 549,
-		"jades": 431,
-		"coins": 5098592,
-		"medals": 1706,
+		"jades": 1645,
+		"coins": 5342357,
+		"medals": 1936,
 		"realm_ticket": 9,
 		"honor": 0,
 		"talisman": 0,
@@ -8464,18 +8464,18 @@
 		"friendship": 50
 	},
 	"437941992748482562": {
-		"experience": 15467,
+		"experience": 16182,
 		"level": 18,
 		"level_exp_next": 18305,
-		"amulets": 19,
-		"amulets_spent": 566,
+		"amulets": 0,
+		"amulets_spent": 596,
 		"SP": 0,
 		"SSR": 10,
-		"SR": 91,
-		"R": 465,
-		"jades": 5080,
-		"coins": 3209224,
-		"medals": 2048,
+		"SR": 97,
+		"R": 489,
+		"jades": 5292,
+		"coins": 3799334,
+		"medals": 2273,
 		"realm_ticket": 3,
 		"honor": 0,
 		"talisman": 0,
@@ -8627,7 +8627,7 @@
 					"evolved": "False"
 				},
 				"Kuro Mujou": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8657,7 +8657,7 @@
 					"evolved": "False"
 				},
 				"Puppeteer": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8712,7 +8712,7 @@
 					"evolved": "False"
 				},
 				"Futakuchi": {
-					"owned": 2,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8747,7 +8747,7 @@
 					"evolved": "False"
 				},
 				"Yasha": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8812,12 +8812,12 @@
 					"evolved": "False"
 				},
 				"Nekomata": {
-					"owned": 6,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Okikumushi": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8834,12 +8834,12 @@
 			},
 			"R": {
 				"Mio": {
-					"owned": 20,
+					"owned": 21,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Zashiki": {
-					"owned": 16,
+					"owned": 17,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8849,22 +8849,22 @@
 					"evolved": "False"
 				},
 				"Kyuumei Neko": {
-					"owned": 18,
+					"owned": 19,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Tanuki": {
-					"owned": 18,
+					"owned": 19,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kappa": {
-					"owned": 18,
+					"owned": 19,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Oguna": {
-					"owned": 17,
+					"owned": 20,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8879,22 +8879,22 @@
 					"evolved": "False"
 				},
 				"Kodokushi": {
-					"owned": 12,
+					"owned": 13,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Karasu Tengu": {
-					"owned": 13,
+					"owned": 14,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kamikui": {
-					"owned": 19,
+					"owned": 20,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Warrior Soul": {
-					"owned": 13,
+					"owned": 14,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8904,7 +8904,7 @@
 					"evolved": "False"
 				},
 				"Kyonshi Ototo": {
-					"owned": 10,
+					"owned": 11,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8914,7 +8914,7 @@
 					"evolved": "False"
 				},
 				"Samurai X": {
-					"owned": 13,
+					"owned": 14,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8924,7 +8924,7 @@
 					"evolved": "False"
 				},
 				"Hitotsume": {
-					"owned": 14,
+					"owned": 15,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8934,7 +8934,7 @@
 					"evolved": "False"
 				},
 				"Shouzu": {
-					"owned": 12,
+					"owned": 13,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8954,12 +8954,12 @@
 					"evolved": "False"
 				},
 				"Chocho": {
-					"owned": 17,
+					"owned": 18,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Yamawaro": {
-					"owned": 13,
+					"owned": 14,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8969,7 +8969,7 @@
 					"evolved": "False"
 				},
 				"Satori": {
-					"owned": 14,
+					"owned": 17,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -8979,7 +8979,7 @@
 					"evolved": "False"
 				},
 				"Koroka": {
-					"owned": 12,
+					"owned": 15,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10051,19 +10051,19 @@
 		"friendship": 0
 	},
 	"327044665406652417": {
-		"experience": 2861,
-		"level": 10,
-		"level_exp_next": 2960,
+		"experience": 3449,
+		"level": 11,
+		"level_exp_next": 3955,
 		"amulets": 0,
-		"amulets_spent": 215,
+		"amulets_spent": 259,
 		"SP": 2,
-		"SSR": 4,
-		"SR": 44,
-		"R": 165,
-		"jades": 485,
-		"coins": 781009,
-		"medals": 186,
-		"realm_ticket": 20,
+		"SSR": 6,
+		"SR": 53,
+		"R": 199,
+		"jades": 488,
+		"coins": 1792997,
+		"medals": 502,
+		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
 		"guild_medal": 0,
@@ -10112,7 +10112,7 @@
 					"evolved": "False"
 				},
 				"Shishio": {
-					"owned": 0,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10234,7 +10234,7 @@
 					"evolved": "False"
 				},
 				"Momiji": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10249,17 +10249,17 @@
 					"evolved": "False"
 				},
 				"Umibozu": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Hangan": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Hououka": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10294,7 +10294,7 @@
 					"evolved": "False"
 				},
 				"Ubume": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10309,7 +10309,7 @@
 					"evolved": "False"
 				},
 				"Sakura": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10339,7 +10339,7 @@
 					"evolved": "False"
 				},
 				"Kuro": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10374,7 +10374,7 @@
 					"evolved": "False"
 				},
 				"Bukkuman": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10389,7 +10389,7 @@
 					"evolved": "False"
 				},
 				"Kaoru": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10426,12 +10426,12 @@
 					"evolved": "False"
 				},
 				"Zashiki": {
-					"owned": 5,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Koi": {
-					"owned": 5,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10441,7 +10441,7 @@
 					"evolved": "False"
 				},
 				"Tanuki": {
-					"owned": 9,
+					"owned": 10,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10451,17 +10451,17 @@
 					"evolved": "False"
 				},
 				"Oguna": {
-					"owned": 8,
+					"owned": 11,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Doujo": {
-					"owned": 6,
+					"owned": 9,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Gaki": {
-					"owned": 1,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10471,7 +10471,7 @@
 					"evolved": "False"
 				},
 				"Karasu Tengu": {
-					"owned": 1,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10481,12 +10481,12 @@
 					"evolved": "False"
 				},
 				"Warrior Soul": {
-					"owned": 10,
+					"owned": 12,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Ame Onna": {
-					"owned": 2,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10496,17 +10496,17 @@
 					"evolved": "False"
 				},
 				"Kyonshi Imoto": {
-					"owned": 2,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Samurai X": {
-					"owned": 2,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Ushi No Toki": {
-					"owned": 6,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10521,12 +10521,12 @@
 					"evolved": "False"
 				},
 				"Shouzu": {
-					"owned": 7,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kanko": {
-					"owned": 4,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10546,12 +10546,12 @@
 					"evolved": "False"
 				},
 				"Yamawaro": {
-					"owned": 6,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kubinashi": {
-					"owned": 8,
+					"owned": 9,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -10561,17 +10561,17 @@
 					"evolved": "False"
 				},
 				"Jikikaeru": {
-					"owned": 6,
+					"owned": 8,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Koroka": {
-					"owned": 6,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Mushishi": {
-					"owned": 9,
+					"owned": 10,
 					"grade": 1,
 					"evolved": "False"
 				}
@@ -11109,19 +11109,19 @@
 		"friendship": 0
 	},
 	"183761342648418304": {
-		"experience": 5062,
-		"level": 12,
-		"level_exp_next": 5165,
-		"amulets": 79,
-		"amulets_spent": 122,
+		"experience": 5473,
+		"level": 13,
+		"level_exp_next": 6615,
+		"amulets": 69,
+		"amulets_spent": 152,
 		"SP": 0,
 		"SSR": 3,
-		"SR": 21,
-		"R": 100,
-		"jades": 3207,
-		"coins": 1298484,
-		"medals": 441,
-		"realm_ticket": 3,
+		"SR": 31,
+		"R": 120,
+		"jades": 3115,
+		"coins": 1478437,
+		"medals": 462,
+		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
 		"guild_medal": 0,
@@ -11262,7 +11262,7 @@
 					"evolved": "False"
 				},
 				"Yuki Onna": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11282,7 +11282,7 @@
 					"evolved": "False"
 				},
 				"Inugami": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11292,7 +11292,7 @@
 					"evolved": "False"
 				},
 				"Momiji": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11332,7 +11332,7 @@
 					"evolved": "False"
 				},
 				"Maestro": {
-					"owned": 1,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11372,7 +11372,7 @@
 					"evolved": "False"
 				},
 				"Ebisu": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11392,7 +11392,7 @@
 					"evolved": "False"
 				},
 				"Yasha": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11402,7 +11402,7 @@
 					"evolved": "False"
 				},
 				"Shiro": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11412,7 +11412,7 @@
 					"evolved": "False"
 				},
 				"Kingyo": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11457,7 +11457,7 @@
 					"evolved": "False"
 				},
 				"Nekomata": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11489,7 +11489,7 @@
 					"evolved": "False"
 				},
 				"Koi": {
-					"owned": 5,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11514,12 +11514,12 @@
 					"evolved": "False"
 				},
 				"Doujo": {
-					"owned": 5,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Gaki": {
-					"owned": 3,
+					"owned": 5,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11539,27 +11539,27 @@
 					"evolved": "False"
 				},
 				"Warrior Soul": {
-					"owned": 8,
+					"owned": 10,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Ame Onna": {
-					"owned": 2,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kyonshi Ototo": {
-					"owned": 2,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Kyonshi Imoto": {
-					"owned": 2,
+					"owned": 6,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Samurai X": {
-					"owned": 3,
+					"owned": 4,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11574,7 +11574,7 @@
 					"evolved": "False"
 				},
 				"Tesso": {
-					"owned": 3,
+					"owned": 5,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11594,7 +11594,7 @@
 					"evolved": "False"
 				},
 				"Kusa": {
-					"owned": 0,
+					"owned": 1,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11614,7 +11614,7 @@
 					"evolved": "False"
 				},
 				"Satori": {
-					"owned": 6,
+					"owned": 7,
 					"grade": 1,
 					"evolved": "False"
 				},
@@ -11624,12 +11624,12 @@
 					"evolved": "False"
 				},
 				"Koroka": {
-					"owned": 2,
+					"owned": 3,
 					"grade": 1,
 					"evolved": "False"
 				},
 				"Mushishi": {
-					"owned": 1,
+					"owned": 2,
 					"grade": 1,
 					"evolved": "False"
 				}
@@ -22747,17 +22747,17 @@
 		"friendship": 0
 	},
 	"483262866263375876": {
-		"experience": 1201,
+		"experience": 1271,
 		"level": 8,
 		"level_exp_next": 1515,
-		"amulets": 141,
+		"amulets": 148,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 2385,
-		"coins": 2441135,
+		"jades": 3335,
+		"coins": 2581135,
 		"medals": 0,
 		"realm_ticket": 0,
 		"honor": 0,
@@ -23276,18 +23276,18 @@
 		"friendship": 0
 	},
 	"481816589134594049": {
-		"experience": 1157,
+		"experience": 1242,
 		"level": 8,
 		"level_exp_next": 1515,
-		"amulets": 107,
+		"amulets": 109,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 6269,
-		"coins": 1713617,
-		"medals": 21,
+		"jades": 7019,
+		"coins": 1973617,
+		"medals": 0,
 		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
@@ -25392,18 +25392,18 @@
 		"friendship": 0
 	},
 	"581507341820755970": {
-		"experience": 864,
+		"experience": 969,
 		"level": 7,
 		"level_exp_next": 1025,
-		"amulets": 111,
+		"amulets": 122,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 2341,
-		"coins": 892497,
-		"medals": 29,
+		"jades": 3141,
+		"coins": 1152497,
+		"medals": 0,
 		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
@@ -25921,18 +25921,18 @@
 		"friendship": 0
 	},
 	"581512723255525376": {
-		"experience": 991,
-		"level": 7,
-		"level_exp_next": 1025,
-		"amulets": 114,
+		"experience": 1076,
+		"level": 8,
+		"level_exp_next": 1515,
+		"amulets": 125,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 3195,
-		"coins": 1686983,
-		"medals": 10,
+		"jades": 4455,
+		"coins": 1766983,
+		"medals": 20,
 		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
@@ -27508,18 +27508,18 @@
 		"friendship": 0
 	},
 	"582111197898211328": {
-		"experience": 497,
+		"experience": 577,
 		"level": 6,
 		"level_exp_next": 655,
-		"amulets": 89,
+		"amulets": 91,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 3737,
-		"coins": 800856,
-		"medals": 8,
+		"jades": 4837,
+		"coins": 860856,
+		"medals": 15,
 		"realm_ticket": 0,
 		"honor": 0,
 		"talisman": 0,
@@ -28037,17 +28037,17 @@
 		"friendship": 0
 	},
 	"582114852219256835": {
-		"experience": 630,
-		"level": 6,
-		"level_exp_next": 655,
-		"amulets": 88,
+		"experience": 715,
+		"level": 7,
+		"level_exp_next": 1025,
+		"amulets": 114,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 2853,
-		"coins": 1610792,
+		"jades": 3363,
+		"coins": 1690792,
 		"medals": 0,
 		"realm_ticket": 0,
 		"honor": 0,
@@ -29095,17 +29095,17 @@
 		"friendship": 0
 	},
 	"582570243868721152": {
-		"experience": 459,
+		"experience": 544,
 		"level": 6,
 		"level_exp_next": 655,
-		"amulets": 76,
+		"amulets": 78,
 		"amulets_spent": 0,
 		"SP": 0,
 		"SSR": 0,
 		"SR": 0,
 		"R": 0,
-		"jades": 1034,
-		"coins": 1220617,
+		"jades": 1914,
+		"coins": 1440617,
 		"medals": 0,
 		"realm_ticket": 0,
 		"honor": 0,
@@ -30153,7 +30153,7 @@
 		}
 	},
 	"212377066862149633": {
-		"experience": 60,
+		"experience": 70,
 		"level": 3,
 		"level_exp_next": 100,
 		"amulets": 30,

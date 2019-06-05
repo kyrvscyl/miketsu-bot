@@ -1,0 +1,20 @@
+{
+	"180717337475809281": {
+		"quests": {
+			"quest1": {
+				"cycle1": {
+					"score": 1000,
+					"timestamp": "2019-Jun-04 12H",
+					"current_path": "path13",
+					"hints": {
+						"1": "locked",
+						"2": "locked",
+						"3": "locked",
+						"4": "locked",
+						"5": "locked"
+					}
+				}
+			}
+		}
+	}
+}
