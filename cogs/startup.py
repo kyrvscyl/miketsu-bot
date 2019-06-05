@@ -27,7 +27,7 @@ class Startup(commands.Cog):
 		print("Initializing...")
 		print("-------")
 		print("Logged in as {0.user}".format(self.client))
-		# Say Hi to me!
+		# Say Hi to me!a
 		print("Hi! {}!".format(self.client.get_user(180717337475809281)))
 		print("Time now: {}".format(timeStamp))
 		print("-------")
@@ -35,34 +35,26 @@ class Startup(commands.Cog):
 		print("Peasant Count: {}".format(len(self.client.users)))
 		self.changeStatus.start()
 		self.backupData.start()
-		self.changeCastle.start()
+		# self.changeCastle.start()
 		print("-------")
 	
 	@tasks.loop(seconds=1200)
 	async def changeStatus(self):
 		await self.client.change_presence(activity=discord.Game(next(status)))
 	
+	"""
 	@tasks.loop(seconds=1800)
 	async def changeCastle(self):
-	castle = client.get_channel(412057028887052289)
-	channels = castle.text_channels
-	
-	count = len(channels) + 1
-	
-	for channel in channels:
+		castle = client.get_channel(412057028887052289)
+		channels = castle.text_channels
 		
-		await channel.edit(position=(random.randint(1,count)-1))
-		await asyncio.sleep(3)
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		count = len(channels) + 1
+		
+		for channel in channels:
+			
+			await channel.edit(position=(random.randint(1,count)-1))
+			await asyncio.sleep(3)
+	"""
 	
 	@commands.command()
 	async def info(self, ctx):
@@ -109,7 +101,7 @@ class Startup(commands.Cog):
 			msg = "Hi, {}!, I can collect suggestions. Please provide one.".format(ctx.author.mention)
 			await ctx.channel.send(msg)
 	
-	@tasks.loop(seconds=43200)
+	@tasks.loop(seconds=3600)
 	async def backupData(self):
 		channel = self.client.get_channel(584638230729850880)
 		shutil.make_archive("backup", "zip", "../data/")
