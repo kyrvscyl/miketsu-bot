@@ -9,8 +9,8 @@ from pymongo import MongoClient
 
 # Mongo Startup
 # memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
-memory = MongoClient("mongodb://localhost:27017/")
-users = memory["miketsu"]["users"]
+# memory = MongoClient("mongodb://localhost:27017/")
+# users = memory["miketsu"]["users"]
 
 class Level(commands.Cog):
 	
