@@ -3,9 +3,43 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import discord, json, random
+from cogs.mongo.db import users, streak, shikigami
 from discord.ext import commands
-import config.guild as guild
-import config.lists as lists
+from pymongo import MongoClient
+
+# Mongo Startup
+# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+# memory = MongoClient("mongodb://localhost:27017/")
+# users = memory["miketsu"]["users"]
+# streak = memory["miketsu"]["streak"]
+# shikigami = memory["miketsu"]["shikigami"]
+
+
+# Generate summon pool
+pool_sp = []
+for shiki in shikigami.find({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1}):
+	for entry in shiki["shikigami"]:
+		pool_sp.append(entry["name"])
+
+pool_ssr = []
+for shiki in shikigami.find({"rarity": "SSR"}, {"_id": 0, "shikigami.name": 1}):
+	for entry in shiki["shikigami"]:
+		pool_ssr.append(entry["name"])
+
+pool_sr = []
+for shiki in shikigami.find({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1}):
+	for entry in shiki["shikigami"]:
+		pool_sr.append(entry["name"])
+
+pool_r = []
+for shiki in shikigami.find({"rarity": "R"}, {"_id": 0, "shikigami.name": 1}):
+	for entry in shiki["shikigami"]:
+		pool_r.append(entry["name"])
+
+# Lists startup
+caption = open("lists/summon.lists")
+summon_caption = caption.read().splitlines()
+caption.close()
 
 class Summon(commands.Cog):
 	
@@ -22,123 +56,113 @@ class Summon(commands.Cog):
 	@commands.guild_only()
 	async def summon(self, ctx, arg):
 		user = ctx.author
+		
 		try :
-			pullAmulet = int(arg)
-			with open("../data/users.json", "r") as f:
-				users = json.load(f)
+			amulet_pull = int(arg)	
+			amulet_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, "amulets": 1})["amulets"]
 			
-			onhandAmulet = users[str(user.id)]["amulets"]
-			
-			if onhandAmulet > 0:
-			
-				if pullAmulet > onhandAmulet:
-					msg = "{}, you only have {}{} to summon.".format(user.mention, onhandAmulet, guild.eAmulet)
+			if amulet_have > 0:
+				if amulet_pull > amulet_have:
+					msg = "{}, you only have {}<:amulet:573071120685596682> to summon.".format(user.mention, amulet_have)
 					await ctx.channel.send(msg)
 					
-				elif pullAmulet == 10 and onhandAmulet >= 10:
-					await self.summonPerform(ctx, user, pullAmulet)
+				elif amulet_pull == 10 and amulet_have >= 10:
+					await self.summon_perform(ctx, user, users, amulet_pull)
 					
-				elif pullAmulet == 1 and onhandAmulet >= 1:
-					await self.summonPerform(ctx, user, pullAmulet)
+				elif amulet_pull == 1 and amulet_have >= 1:
+					await self.summon_perform(ctx, user, users, amulet_pull)
 					
 				else:
 					msg = "{}, summon can only be by ones or by tens.".format(user.mention)
 					await ctx.channel.send(msg)
 			else:
-				msg = "{}, you have no {} to summon.".format(user.mention, guild.eAmulet)
+				msg = "{}, you have no <:amulet:573071120685596682> to summon.".format(user.mention)
 				await ctx.channel.send(msg)
-		except:
+		except ValueError:
 			msg = "Type `;summon <1 or 10>` to perform summon.".format(user.mention)
 			await ctx.channel.send(msg)
-
-	async def summonPerform(self, ctx, user, pullAmulet):
 		
-		summonPulls = []
-		for count in range(pullAmulet):
+	async def summon_perform(self, ctx, user, users, amulet_pull):
+		summon_pull = []
+		
+		for count in range(amulet_pull):
 			roll = random.uniform(0,100)
 			if roll < 1.2:
 				p = random.uniform(0,1.2)
 				if p >= 126/109:
-					summonPulls.append(("SP", "||{}||".format(random.choice(lists.poolSP))))
+					summon_pull.append(("SP", "||{}||".format(random.choice(pool_sp))))
 				else:
-					summonPulls.append(("SSR", "||{}||".format(random.choice(lists.poolSSR))))
+					summon_pull.append(("SSR", "||{}||".format(random.choice(pool_ssr))))
 			elif roll <= 18.8:
-				summonPulls.append(("SR", random.choice(lists.poolSR)))
+				summon_pull.append(("SR", random.choice(pool_sr)))
 			else:
-				summonPulls.append(("R", random.choice(lists.poolR)))
+				summon_pull.append(("R", random.choice(pool_r)))
 
-		summonSP = sum(entry.count("SP") for entry in summonPulls)
-		summonSSR = sum(entry.count("SSR") for entry in summonPulls)
-		summonSR = sum(entry.count("SR") for entry in summonPulls)
-		summonR = sum(entry.count("R") for entry in summonPulls)
+		sum_sp = sum(entry.count("SP") for entry in summon_pull)
+		sum_ssr = sum(entry.count("SSR") for entry in summon_pull)
+		sum_sr = sum(entry.count("SR") for entry in summon_pull)
+		sum_r = sum(entry.count("R") for entry in summon_pull)
 
-		footerSP = str(summonSP) + " " + self.pluralize("SP", summonSP)
-		footerSSR = str(summonSSR) + " " + self.pluralize("SSR", summonSSR)
-		footerSR = str(summonSR) + " " + self.pluralize("SR", summonSR)
-		footerR = str(summonR) + " " + self.pluralize("R", summonR)
+		f_sp = str(sum_sp) + " " + self.pluralize("SP", sum_sp)
+		f_ssr = str(sum_ssr) + " " + self.pluralize("SSR", sum_ssr)
+		f_sr = str(sum_sr) + " " + self.pluralize("SR", sum_sr)
+		f_r = str(sum_r) + " " + self.pluralize("R", sum_r)
 
 		description = ""
-		for entry in summonPulls:
+		for entry in summon_pull:
 			description += ":small_orange_diamond:{}\n".format(entry[1])
 		
-		embed = discord.Embed(color = 0xffff4a, title = ":confetti_ball: Results", description = description)
+		embed = discord.Embed(color=0xffff4a, title=":confetti_ball: Results", description=description)
 		
-		if pullAmulet == 10:
-			embed.set_footer(text = "{}; {}; {}; {}".format(footerSP, footerSSR, footerSR, footerR))
-		elif pullAmulet == 1:
-			with open("../data/shikigami.json", "r") as f:
-				shikigami = json.load(f)
-			summonPic = shikigami[summonPulls[0][0]][summonPulls[0][1].replace("||", "")]["thumbnail"]["pre_evo"]
-			embed.set_thumbnail(url=summonPic)
+		if amulet_pull == 10:
+			embed.set_footer(text = "{}; {}; {}; {}".format(f_sp, f_ssr, f_sr, f_r))
+		
+		# Thumbnails 
+		elif amulet_pull == 1:
+			rarity = summon_pull[0][0] 
+			shiki = summon_pull[0][1].replace("||", "")
+			thumbnail = shikigami.find_one({"rarity": rarity}, {"_id": 0, "shikigami": {"$elemMatch": {"name": shiki}}})["shikigami"][0]["thumbnail"]["pre_evo"]
+			embed.set_thumbnail(url=thumbnail)
 
-		msg = "{}".format(random.choice(lists.summonList)).format(ctx.author.mention)
+		msg = "{}".format(random.choice(summon_caption)).format(user.mention)
 		await ctx.channel.send(msg, embed=embed)
-		
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
+		await self.summon_update(user, users, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull)
+		await self.summon_streak(user, summon_pull)
 			
-			await self.summonUpdate(users, ctx.author, summonSP, summonSSR, summonSR, summonR, pullAmulet, summonPulls)
-			await self.summonStreak(user, summonPulls)
+	async def summon_update(self, user, users, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
+		
+		users.update_one({"user_id": str(user.id)}, {"$inc": {"SP": sum_sp, "SSR": sum_ssr, "SR": sum_sr, "R": sum_r, "amulets_spent": amulet_pull, "amulets": -amulet_pull}})
+
+		for summon in summon_pull:
+			# Creates a shikigami profile
+			if users.find_one({"user_id": str(user.id), "shikigami.name": summon[1].replace("||", "")}, {"_id": 0, "shikigami.$": 1}) == None:
+				users.update_one({"user_id": str(user.id)}, {"$push": {
+					"shikigami": {"name": summon[1].replace("||", ""), "rarity": summon[0], "grade": 1, "owned": 0, "evolved": "False"}
+					}})
+
+			users.update_one({"user_id": str(user.id),  "shikigami.name": summon[1].replace("||", "")}, {
+			"$inc": {
+			"shikigami.$.owned": 1
+			}})
 			
-	async def summonUpdate(self, users, user, summonSP, summonSSR, summonSR, summonR, pullAmulet, summonPulls):
+	async def summon_streak(self, user, summon_pull):
 		
-		users[str(user.id)]["SP"] += summonSP
-		users[str(user.id)]["SSR"] += summonSSR
-		users[str(user.id)]["SR"] += summonSR
-		users[str(user.id)]["R"] += summonR
-		users[str(user.id)]["amulets_spent"] += pullAmulet
-		users[str(user.id)]["amulets"] -= pullAmulet
+		if streak.find_one({"user_id": str(user.id)}, {"_id": 0}) == None:
+			profile = {"user_id": str(user.id), "SSR_current": 0, "SSR_record": 0}
+			streak.insert_one(profile)
 		
-		for summon in summonPulls:
-			users[str(user.id)]["shikigami"][summon[0]][summon[1].replace("||", "")]["owned"] += 1
-		
-		with open("../data/users.json", "w") as f:
-			json.dump(users, f, indent="\t")
-		
-	async def summonStreak(self, user, summonPulls):
-		with open("../data/streak.json", "r") as f:
-			streak = json.load(f)
-		
-		if not str(user.id) in streak:
-			streak[str(user.id)] = {}
-			streak[str(user.id)]["SSR_current"] = 0
-			streak[str(user.id)]["SSR_record"] = 0
-		
-		
-		for summon in summonPulls:
+		for summon in summon_pull:
+			SSR_current = streak.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_current"]
+			SSR_record = streak.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_record"]
+			
 			if summon[0] == "SP" or summon[0] == "SR" or summon[0] == "R":
-				if streak[str(user.id)]["SSR_current"] == (streak[str(user.id)]["SSR_record"]):
-					streak[str(user.id)]["SSR_current"] += 1
-					streak[str(user.id)]["SSR_record"] += 1
-					
-				if streak[str(user.id)]["SSR_current"] != (streak[str(user.id)]["SSR_record"]):
-					streak[str(user.id)]["SSR_current"] += 1
+				if SSR_current == SSR_record:
+					streak.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1, "SSR_record": 1}})
+				else:
+					streak.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1}})
 				
 			if summon[0] == "SSR":
-				streak[str(user.id)]["SSR_current"] = 1
+				streak.update_one({"user_id": str(user.id)}, {"$set": {"SSR_current": 0}})
 		
-		with open("../data/streak.json", "w") as f:
-			json.dump(streak, f, indent="\t")
-
 def setup(client):
 	client.add_cog(Summon(client))

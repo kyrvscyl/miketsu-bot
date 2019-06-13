@@ -4,14 +4,21 @@ kyrvscyl, 2019
 """
 import discord, json, os
 from datetime import datetime
-import config.guild as guild
 from discord.ext import commands
-
-# Directory
+from pymongo import MongoClient
+	
+# Directory/ Bot Name
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+shikigami = os.path.basename(__file__)[:-3:]
+
+# Mongo Startup
+memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+shikigamis = memory["bukkuman"]["shikigamis"]
+token = shikigamis.find_one({"{}".format(shikigami): {"$type": "string"}}, {"_id": 0, shikigami: 1})[shikigami]
+memory.close()
 
 # Date and Time
-timeStamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
+time_stamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
 
 # Instantiation
 client = discord.Client()
@@ -28,7 +35,8 @@ for filename in os.listdir("./cogs"):
 @commands.is_owner()
 async def load(ctx, extension):
 	client.load_extension(f"cogs.{extension}")
-	print("{} : Loading {}.py..".format(timeStamp, extension))
+	print("{} : Loading {}.py..".format(time_stamp, extension))
+	
 	msg = "Extension {}.py has been loaded".format(extension)
 	await ctx.channel.send(msg)
 
@@ -36,7 +44,8 @@ async def load(ctx, extension):
 @commands.is_owner()
 async def unload(ctx, extension):
 	client.unload_extension(f"cogs.{extension}")
-	print("{} : Unloading {}.py..".format(timeStamp, extension))
+	print("{} : Unloading {}.py..".format(time_stamp, extension))
+	
 	msg = "Extension {}.py has been unloaded".format(extension)
 	await ctx.channel.send(msg)
 
@@ -45,7 +54,8 @@ async def unload(ctx, extension):
 async def reload(ctx, extension):
 	client.unload_extension(f"cogs.{extension}")
 	client.load_extension(f"cogs.{extension}")
-	print("{} : Reloading {}.py..".format(timeStamp, extension))
+	print("{} : Reloading {}.py..".format(time_stamp, extension))
+	
 	msg = "Extension {}.py has been reloaded".format(extension)
 	await ctx.channel.send(msg)
 
@@ -68,9 +78,9 @@ async def initialize(ctx):
 			client.load_extension(f"cogs.{filename[:-3]}")
 			print("Loading {}..".format(filename))
 
-	msg = "Engines starting.."
+	msg = "Loading arrows.."
 	await ctx.channel.send(msg)
 
 print("-------")
 
-client.run(guild.guildToken)
+client.run(token)

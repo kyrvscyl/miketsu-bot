@@ -3,8 +3,17 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import discord, json, asyncio
+from cogs.mongo.db import users, daily, shikigami, compensation
 from discord.ext import commands
-from config.guild import eJade, eAmulet, eMedal, eCoin, eFship
+from pymongo import MongoClient
+
+# Mongo Startup
+# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+# memory = MongoClient("mongodb://localhost:27017/")
+# users = memory["miketsu"]["users"]
+# daily = memory["miketsu"]["daily"]
+# shikigami = memory["miketsu"]["shikigami"]
+# compensation = memory["miketsu"]["compensation"]
 
 class Economy(commands.Cog):
 	
@@ -12,145 +21,120 @@ class Economy(commands.Cog):
 		self.client = client
 
 	@commands.command(aliases=["dailies"])
-	async def daily(self, ctx):
-		with open("../data/daily.json", "r") as f:
-			users = json.load(f)
-			
-		await self.dailyConfirm(users, ctx.author, ctx)
+	async def daily(self, ctx):			
+		user = ctx.author
 		
-		with open("../data/daily.json", "w") as f:
-			json.dump(users, f, indent="\t")
-			
-	async def dailyConfirm(self, users, user, ctx):
-		if not str(user.id) in users["daily"]:
-			users["daily"][str(user.id)] = {}
-			users["daily"][str(user.id)]["encounter_pass"] = 4
-			users["daily"][str(user.id)]["friendship_pass"] = 3
-			
-			embed = discord.Embed(color = 0xffff80, title = ":gift: Daily Rewards", 
-				description = "A box containing 50{}, 10,000{}, 3:tickets:, & 4:ticket:".format(eJade, eCoin, eFship))
-			embed.set_footer(text = "Claimed by {}".format(user.name), icon_url=user.avatar_url)
-				
-			await self.dailyAdd(users, ctx.author)
-			await ctx.channel.send(embed=embed)
+		if daily.find_one({"key": "daily"}, {"_id": 0, "{}".format(user.id): 1}) == {}:
+			await self.daily_give_rewards(user, ctx)
+		
+		elif daily.find_one({"key": "daily"}, {"{}".format(user.id): 1})[str(user.id)]["rewards"] == "unclaimed":
+			await self.daily_give_rewards(user, ctx)
+
 		else: 
 			msg = "You have collected already today. Resets at 00:00 EST"
 			await ctx.channel.send(msg)
 
-	async def dailyAdd(self, users, user):
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
-			
-			if str(user.id) in users:
-				users[str(user.id)]["jades"] += 50
-				users[str(user.id)]["coins"] += 10000
-				
-				if users[str(user.id)]["realm_ticket"] < 27:
-					users[str(user.id)]["realm_ticket"] += 3
-				else:
-					users[str(user.id)]["realm_ticket"] = 30
-
-				with open("../data/users.json", "w") as f:
-					json.dump(users, f, indent="\t")
+	async def daily_give_rewards(self, user, ctx):
 		
-
-	@commands.command()
+		daily.update_one({"key": "daily"}, {"$set": {"{}.rewards".format(user.id): "claimed", "{}.encounter_pass".format(user.id): 4, 		"{}.friendship_pass".format(user.id): 3}})
+		
+		embed = discord.Embed(color = 0xffff80, title = ":gift: Daily Rewards", 
+			description = "A box containing 50<:jade:555630314282811412>, 25,000<:coin:573071121495097344>, 3:tickets:, 4:ticket:, 5<:friendship:555630314056318979>")
+		embed.set_footer(text = "Claimed by {}".format(user.name), icon_url=user.avatar_url)
+		
+		users.update_one({"user_id": str(user.id)}, {"$inc": {"jades": 50, "coins": 25000}})
+		
+		if users.find_one({"user_id": str(user.id)}, {"_id": 0, "realm_ticket": 1})["realm_ticket"] < 27:
+			users.update_one({"user_id": str(user.id)}, {"$inc": {"realm_ticket": 3}})
+		else:
+			users.update_one({"user_id": str(user.id)}, {"$set": {"realm_ticket": 30}})
+		
+		await ctx.channel.send(embed=embed)
+		
+	@commands.command(aliases=["weeklies"])
 	async def weekly(self, ctx):
-		with open("../data/daily.json", "r") as f:
-			users = json.load(f)
-			
-		await self.weeklyConfirm(users, ctx.author, ctx)
+		user = ctx.author
 		
-		with open("../data/daily.json", "w") as f:
-			json.dump(users, f, indent="\t")
-
-	async def weeklyConfirm(self, users, user, ctx):
-		if not str(user.id) in users["weekly"]:
-			users["weekly"][str(user.id)] = {}
-			
-			embed = discord.Embed(color = 0xffff80, title = ":gift: Weekly Rewards", 
-				description = "A mythical box containing 750{}, 100,000{}, and 1{}".format(eJade, eCoin, eAmulet))
-			embed.set_footer(text = "Claimed by {}".format(user.name), icon_url = user.avatar_url)
-				
-			await self.weeklyAdd(users, ctx.author)
-			await ctx.channel.send(embed=embed)
+		if daily.find_one({"key": "weekly"}, {"_id": 0, "{}".format(user.id): 1}) == {}:
+			await self.weekly_give_rewards(user, ctx)
+		
+		elif daily.find_one({"key": "weekly"}, {"{}".format(user.id): 1})[str(user.id)]["rewards"] == "unclaimed":
+			await self.weekly_give_rewards(user, ctx)
 		else: 
 			msg = "You have collected already this week. Resets at 00:00 EST Monday"
 			await ctx.channel.send(msg)
-
-	async def weeklyAdd(self, users, user):
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
-			
-			if str(user.id) in users:
-				users[str(user.id)]["jades"] += 750
-				users[str(user.id)]["coins"] += 100000
-				users[str(user.id)]["amulets"] += 1
-			else: return
-			
-		with open("../data/users.json", "w") as f:
-			json.dump(users, f, indent="\t")
 	
+	async def weekly_give_rewards(self, user, ctx):
+
+		daily.update_one({"key": "weekly"}, {"$set": {"{}.rewards".format(user.id): "claimed"}})
+		
+		embed = discord.Embed(color = 0xffff80, title = ":gift: Weekly Rewards", 
+			description = "A mythical box containing 750<:jade:555630314282811412>, 150,000<:coin:573071121495097344>, and 10<:amulet:573071120685596682>")
+		embed.set_footer(text = "Claimed by {}".format(user.name), icon_url = user.avatar_url)
+		
+		users.update_one({"user_id": str(user.id)}, {"$inc": {"jades": 750, "coins": 150000, "amulets": 10}})
+		await ctx.channel.send(embed=embed)
+
 	@commands.command(aliases=["compensate"])
 	async def compensation(self, ctx):
-		requestor = ctx.author.id
-		with open("../data/compensation.json", "r") as f:
-			compensation = json.load(f)
+		requestor = ctx.author
+		requestor_profile = compensation.find_one({}, {"_id": 0, "{}".format(requestor.id): 1})
 		
-		if str(requestor) not in compensation :
+		if requestor_profile == {} :
 			msg = "{}, you are not eligible for this compensation".format(ctx.author.mention)
 			await ctx.channel.send(msg)
 		
-		if str(requestor) in compensation:
+		elif requestor_profile != {}:
+			if requestor_profile[str(requestor.id)] == "unclaimed" :
+				users.update_one({"user_id": str(requestor.id)}, {"$inc": {"jades": 3000}})
+				compensation.update_one({"{}".format(requestor.id): "unclaimed"}, {"$set": {"{}".format(requestor.id): "claimed"}})
 		
-			if compensation[str(requestor)] == "unclaimed" :
-				with open("../data/users.json", "r") as f:
-					users = json.load(f)
-				
-				users[str(requestor)]["jades"] += 3000
-				
-				with open("../data/users.json", "w") as f:
-					json.dump(users, f, indent="\t")
-					
-				with open("../data/compensation.json", "r") as f:
-					compensation = json.load(f)
-				
-				compensation[str(requestor)] = "claimed"
-				
-				with open("../data/compensation.json", "w") as f:
-					json.dump(compensation, f, indent="\t")
-					
-				msg = "You have been compensated with 3000{} due to recent data roll back.".format(eJade)
+				msg = "You have been compensated with 3000<:jade:555630314282811412> due to recent data roll back."
 				await ctx.channel.send(msg)	
 				
-			elif compensation[str(requestor)] == "claimed" :
+			elif requestor_profile[str(requestor.id)] == "claimed" :
 				msg = "{}, you can only claim this once!".format(ctx.author.mention)
 				await ctx.channel.send(msg)
 	
 	@commands.command(aliases=["p"])
 	async def profile(self, ctx, user: discord.User=None):
-		with open("../data/users.json","r") as f:
-				users = json.load(f)	
-		if user == None:
-			await self.profilePost(users, ctx.author, ctx)
-		else:
-			await self.profilePost(users, user, ctx)
-				
-	async def profilePost(self, users, user, ctx):
 		
-		SP = users[str(user.id)]["SP"]
-		SSR = users[str(user.id)]["SSR"]
-		SR = users[str(user.id)]["SR"]
-		R = users[str(user.id)]["R"]
-		amulets = users[str(user.id)]["amulets"]
-		amulets_spent = users[str(user.id)]["amulets_spent"]
-		experience = users[str(user.id)]["experience"]
-		level = users[str(user.id)]["level"]
-		level_exp_next = users[str(user.id)]["level_exp_next"]
-		jades = users[str(user.id)]["jades"]
-		coins = users[str(user.id)]["coins"]
-		medals = users[str(user.id)]["medals"]
-		realm_ticket = users[str(user.id)]["realm_ticket"]
+		if user == None:
+			await self.profile_post(ctx.author, ctx)
+		
+		else:
+			await self.profile_post(user, ctx)
+				
+	async def profile_post(self, user, ctx):
+		profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, 
+			"SP": 1,
+			"SSR": 1,
+			"SR": 1,
+			"R": 1,
+			"amulets": 1,
+			"amulets_spent": 1,
+			"experience": 1,
+			"level": 1,
+			"level_exp_next": 1,
+			"jades": 1,
+			"coins": 1,
+			"medals": 1,
+			"realm_ticket": 1	
+			})
+		
+		SP = profile["SP"]
+		SSR = profile["SSR"]
+		SR = profile["SR"]
+		R = profile["R"]
+		amulets = profile["amulets"]
+		amulets_spent = profile["amulets_spent"]
+		experience = profile["experience"]
+		level = profile["level"]
+		level_exp_next = profile["level_exp_next"]
+		jades = profile["jades"]
+		coins = profile["coins"]
+		medals = profile["medals"]
+		realm_ticket = profile["realm_ticket"]
 		
 		embed = discord.Embed(color=0xffff80)
 		embed.set_thumbnail(url=user.avatar_url)
@@ -159,205 +143,201 @@ class Economy(commands.Cog):
 			value = "Level: {} ({}/{})".format(level, experience, level_exp_next))
 		embed.add_field(inline = True, name="SP | SSR | SR | R", 
 			value="{} | {} | {} | {}".format(SP, SSR, SR, R))
-		embed.add_field(inline = True, name = "{}Amulets".format(eAmulet),
+		embed.add_field(inline = True, name = "{}Amulets".format("<:amulet:573071120685596682>"),
 			value = "On Hand: {} | Used: {}".format(amulets, amulets_spent))
-		embed.add_field(inline = True, name = ":tickets: | {} | {} | {}".format(eMedal, eJade, eCoin), 
+		embed.add_field(inline = True, name = ":tickets: | {} | {} | {}".format("<:medal:573071121545560064>", "<:jade:555630314282811412>", "<:coin:573071121495097344>"), 
 			value = "{} | {} | {:,d} | {:,d}".format(realm_ticket, medals, jades, coins))
 			
 		await ctx.channel.send(embed=embed)
 		
 	@commands.command(aliases=["list"])
-	async def shikigamiList(self, ctx, arg1, user: discord.User=None):
+	async def shikigami_list(self, ctx, arg1, user: discord.User=None):
 		rarity = str(arg1.upper())
 		
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
-		
 		if user == None:
-			await self.shikigamiListPost(users, ctx.author, rarity, ctx)
+			await self.shikigami_list_post(ctx.author, rarity, ctx)
 		else:
-			await self.shikigamiListPost(users, user, rarity, ctx)
+			await self.shikigami_list_post(user, rarity, ctx)
 
-	async def shikigamiListPost(self, users, user, rarity, ctx):
-		
-		userShiki = []
-		
-		for shikigami in users[str(user.id)]["shikigami"][rarity]:
-			userShikiCount = users[str(user.id)]["shikigami"][rarity][shikigami]["owned"]
-			if users[str(user.id)]["shikigami"][rarity][shikigami]["owned"] != 0:
-				userShiki.append((shikigami, userShikiCount))
+	async def shikigami_list_post(self, user, rarity, ctx):
+		entries = users.aggregate([
+			{
+				'$match': {
+					'user_id': str(user.id)
+				}
+			}, {
+				'$unwind': {
+					'path': '$shikigami'
+				}
+			}, {
+				'$match': {
+					'shikigami.rarity': rarity
+				}
+			}, {
+				'$project': {
+					'_id': 0, 
+					'shikigami.name': 1, 
+					'shikigami.owned': 1, 
+					'shikigami.rarity': rarity
+				}
+			}
+		])
+
+		user_shiki = []
+		for entry in entries:
+			user_shiki.append((entry["shikigami"]["name"], entry["shikigami"]["owned"]))
 					
-		userShikiSorted = sorted(userShiki, key=lambda x: x[1], reverse=True)
+		user_shiki_sorted = sorted(user_shiki, key=lambda x: x[1], reverse=True)
 		shiki_pool_formatted = []
 		
 		i = 0
-		while i < len(userShikiSorted):
-			shiki_pool_formatted.append(userShikiSorted[i][0]+" | "+str(userShikiSorted[i][1]))
+		while i < len(user_shiki_sorted):
+			shiki_pool_formatted.append(user_shiki_sorted[i][0]+" | "+str(user_shiki_sorted[i][1]))
 			i += 1
 		
 		description = []
-		for shikigami in userShikiSorted:
+		for shikigami in user_shiki_sorted:
 			description.append(":white_small_square:{}, x{}\n".format(shikigami[0], shikigami[1]))
 		
-		userShikiPages = (len(userShiki) + 9)//10 * 10
-		userShikiPage = 1
+		user_shiki_pages = (len(user_shiki) + 9)//10 * 10
+		user_shiki_page = 1
 		
 		icon_url = "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/facebook/200/bookmark_1f516.png"
 		
 		embed = discord.Embed(color=0xffff80, description="".join(description[0:10]))
 		embed.set_author(icon_url=user.avatar_url, name = "{}'s Shikigamis".format(user.name))
-		embed.set_footer(text = "Rarity: {} - Page: {}".format(rarity.upper(), userShikiPage), icon_url=icon_url)
+		embed.set_footer(text = "Rarity: {} - Page: {}".format(rarity.upper(), user_shiki_page), icon_url=icon_url)
 		msg = await ctx.channel.send(embed=embed)
 		
 		await msg.add_reaction("⬅")
 		await msg.add_reaction("➡")
 		
-		
-		def check(reaction, user):
-			return user != self.client.user and reaction.message.id == msg.id
+		def check(reaction, member):
+			return member != self.client.user and reaction.message.id == msg.id
 		
 		while True:
 			try:
-				timeSec = 10
-				reaction, user = await self.client.wait_for("reaction_add", timeout=timeSec, check=check)
+				timeout = 10
+				reaction, member = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
 				
 				if str(reaction.emoji) == "➡":
-					userShikiPage += 1
+					user_shiki_page += 1
 
 				if str(reaction.emoji) == "⬅":
-					userShikiPage -= 1
-					if userShikiPage == 0:
-						userShikiPage = 1				
+					user_shiki_page -= 1
+					if user_shiki_page == 0:
+						user_shiki_page = 1				
 					
-				start = (userShikiPage)*10-10
-				end = (userShikiPage)*10
+				start = (user_shiki_page)*10-10
+				end = (user_shiki_page)*10
 				
 				embed = discord.Embed(color=0xffff80, description="".join(description[start:end]))
 				embed.set_author(icon_url=user.avatar_url, name = "{}'s Shikigamis".format(user.name))
-				embed.set_footer(text = "Rarity: {} - Page: {}".format(rarity.upper(), userShikiPage), icon_url=icon_url)
+				embed.set_footer(text = "Rarity: {} - Page: {}".format(rarity.upper(), user_shiki_page), icon_url=icon_url)
 
 				await msg.edit(embed=embed)
-				timeSec = timeSec - 1
+				timeout = timeout - 1
 			except asyncio.TimeoutError:
-				return False
+				return
 		
 	@commands.command(aliases=["my"])
-	async def shikigamiMy(self, ctx, *args):
+	async def shikigami_my(self, ctx, *args):
 		query = (" ".join(args)).title()
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
-		await self.shikigamiMyPost(users, ctx.author, query, ctx)
+		await self.shikigami_my_post(ctx.author, query, ctx)
 
-	async def shikigamiMyPost(self, users, user, query, ctx):
-	
-		for rarity in users[str(user.id)]["shikigami"]:
-			for shikigami in users[str(user.id)]["shikigami"][rarity]:
-				if query == shikigami:
-					count = users[str(user.id)]["shikigami"][rarity][shikigami]["owned"]
-					grade = users[str(user.id)]["shikigami"][rarity][shikigami]["grade"]
-					evo = users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"]
-					
-					if count == 0:
-						msg = "{} does not have {}.".format(user.name, query)
-						await ctx.channel.send(msg)
-						return
-					
-					with open ("../data/shikigami.json") as f:
-						shikigami= json.load(f)
-					
-					for rarity in shikigami:
-						for shiki in shikigami[rarity]:
-							if query == shiki:
-								normal = shikigami[rarity][query]["skills"]["normal"]
-								special = shikigami[rarity][query]["skills"]["special"]
-								specialty = shikigami[rarity][query]["specialty"]
-								if evo == "True":
-									evo = shikigami[rarity][query]["thumbnail"]["evo"]
-									grade_star = ":star2:"*grade
-								else:
-									evo = shikigami[rarity][query]["thumbnail"]["pre_evo"]
-									grade_star = ":star:"*grade
-
-					embed=discord.Embed(color=0xffff80, 
-						description = "Grade: {}\n\nNormal: {}\nSpecial: {}\n\nSpecialty: {}".format(grade_star, normal, special, specialty))
-					embed.set_thumbnail(url=evo)
-					embed.set_author(icon_url=user.avatar_url, name = "{}\"s {}".format(ctx.author.name, query))
-					embed.set_footer(text = "shikigami count: {}".format(count))
-					await ctx.channel.send(embed=embed)
-					return	
+	async def shikigami_my_post(self, user, query, ctx):
 		
-		msg = "{}, {} does not exist in my memory.".format(user.mention, query)
-		await ctx.channel.send(msg)
+		try : 
+			profile_my_shikigami = users.find_one({"user_id": str(user.id)}, {"_id": 0, "shikigami": {"$elemMatch": {"name": query}}})
+			count = profile_my_shikigami["shikigami"][0]["owned"]
+			grade = profile_my_shikigami["shikigami"][0]["grade"]
+			evo = profile_my_shikigami["shikigami"][0]["evolved"]
+			rarity = profile_my_shikigami["shikigami"][0]["rarity"]
+			
+			
+			profile_shikigami = shikigami.find_one({"rarity": rarity}, {"_id": 0, "shikigami": {"$elemMatch": {"name": query}}})
+			normal = profile_shikigami["shikigami"][0]["skills"]["normal"]
+			special = profile_shikigami["shikigami"][0]["skills"]["special"]
+			specialty = profile_shikigami["shikigami"][0]["specialty"]
+			
+			
+			if evo == "True":
+				thumbnail = profile_shikigami["shikigami"][0]["thumbnail"]["evo"]
+				grade_star = ":star2:"*grade
+			else:
+				thumbnail = profile_shikigami["shikigami"][0]["thumbnail"]["pre_evo"]
+				grade_star = ":star:"*grade
+
+			embed=discord.Embed(color=0xffff80, 
+				description = "Grade: {}\n\nNormal: {}\nSpecial: {}\n\nSpecialty: {}".format(grade_star, normal, special, specialty))
+			embed.set_thumbnail(url=thumbnail)
+			embed.set_author(icon_url=user.avatar_url, name = "{}\"s {}".format(ctx.author.name, query))
+			embed.set_footer(text = "shikigami count: {}".format(count))
+			await ctx.channel.send(embed=embed)
+	
+		except KeyError:
+			msg = "{}, that shikigami does not exist or your do not have it".format(user.mention)
+			await ctx.channel.send(msg)
 		
 	@commands.command(aliases=["shiki", "shikigami"])
-	async def shikigamiInfo(self, ctx, *args):
-		with open ("../data/shikigami.json") as f:
-			shikigami= json.load(f)
-		
+	async def shikigami_info(self, ctx, *args):
 		query = (" ".join(args)).title()
 		collect = []
 		
-		for rarity in shikigami:
-			for shiki in shikigami[rarity]:
-				if query == shiki:
-					normal = shikigami[rarity][query]["skills"]["normal"]
-					special = shikigami[rarity][query]["skills"]["special"]
-					pre_evo = shikigami[rarity][query]["thumbnail"]["pre_evo"]
-					evo = shikigami[rarity][query]["thumbnail"]["evo"]
-					specialty = shikigami[rarity][query]["specialty"]
+		profile_shikigami = shikigami.find_one({"shikigami.name": query}, {"_id": 0, "shikigami": {"$elemMatch": {"name": query}}})
+		normal = profile_shikigami["shikigami"][0]["skills"]["normal"]
+		special = profile_shikigami["shikigami"][0]["skills"]["special"]
+		specialty = profile_shikigami["shikigami"][0]["specialty"]
+		pre_evo =  profile_shikigami["shikigami"][0]["thumbnail"]["pre_evo"]
+		evo = profile_shikigami["shikigami"][0]["thumbnail"]["evo"]
 		
-		embed = discord.Embed(color=0xffff80, description="Skills:\nNormal: {}\nSpecial: {}\n\nSpecialty: {}".format(normal, special, specialty))
+		embed = discord.Embed(color=0xffff80, description="**Skills:**\nNormal: {}\nSpecial: {}\n\nSpecialty: {}".format(normal, special, specialty))
 		embed.set_thumbnail(url = evo)
 		embed.set_author(name = "{}".format(query), icon_url = pre_evo)
 		await ctx.channel.send(embed=embed)
 	
 	@commands.command(aliases=["update"])
-	async def updateShiki(self, ctx, *args):
+	async def shikigami_update(self, ctx, *args):
 		if len(args) == 0 :
 			
-			embed = discord.Embed(color=0xffff80, description="Refer to sample correct command format:\n\n`;update <rarity> <shikigami> <normalskill> <specialskill> <pre-evo image link> <evo image link>`\n\nFor every <> replace spaces with underscore:\ne.g. inferno ibaraki -> inferno_ibaraki\n\nGrants 100{} per shikigami update per user".format(eJade))
+			embed = discord.Embed(color=0xffff80, description="Refer to sample correct command format:\n\n`;update <rarity> <shikigami> <normalskill> <specialskill> <pre-evo image link> <evo image link>`\n\nFor every <> replace spaces with underscore:\ne.g. inferno ibaraki -> inferno_ibaraki\n\nGrants 100{} per shikigami update per user".format("<:jade:555630314282811412>"))
 			embed.set_thumbnail(url=self.client.user.avatar_url)
 			await ctx.channel.send(embed=embed)
-			return
 		
 		elif len(args) == 6:
-			with open ("shikigami.json") as f:
-					shikigami= json.load(f)
+			
 			rarity = args[0].upper()
 			query = (args[1].replace("_", " ")).title()
 			user = ctx.author
-				
-			if "profiler" in shikigami[rarity][query]:
-				msg = "This shikigami has profile already. Try others."
-				await ctx.channel.send(msg)
-				return
-			else: 		
+			
+			profile_shikigami = shikigami.find_one({"shikigami.name": query}, {"_id": 0, "shikigami": {"$elemMatch": {"name": query}}})
+			
+			try:
+				if profile_shikigami["shikigami"][0]["profiler"] != "":
+					msg = "This shikigami has profile already. Try others."
+					await ctx.channel.send(msg)
+
+			except KeyError:
 				try: 
 					normal = (args[2].title().replace("_", " ")).title()
 					special = (args[3].title().replace("_", " ")).title()
 					pre_evo = args[4]
 					evo = args[5]
+					profiler = ctx.author.name
 					
-					shikigami[rarity][query]["thumbnail"]["pre_evo"] = pre_evo
-					shikigami[rarity][query]["thumbnail"]["evo"] = evo
-					shikigami[rarity][query]["skills"]["normal"] = normal
-					shikigami[rarity][query]["skills"]["special"] = special
+					x = shikigami.update_one({"shikigami.name": query}, {"$set": {
+						"shikigami.$.skills.normal": normal, 
+						"shikigami.$.skills.special": special,
+						"shikigami.$.thumbnail.pre_evo": pre_evo,
+						"shikigami.$.thumbnail.evo": evo,
+						"shikigami.$.profiler": str(profiler)
+						}})
 					
-					if not "profiler" in shikigami[rarity][query]:
-						shikigami[rarity][query]["profiler"] = user.name
+					print(x.modified_count)
 					
-					with open("../data/shikigami.json", "w") as f:
-						json.dump(shikigami, f, indent="\t")
+					users.update_one({"user_id": str(user.id)}, {"$inc": {"jades": 100}})
 					
-					with open ("../data/users.json") as f:
-						users= json.load(f)
-					
-					users[str(user.id)]["jades"] += 100
-					
-					with open("../data/users.json", "w") as f:
-						json.dump(users, f, indent="\t")
-					
-					msg ="{}, you have earned 100{}.".format(ctx.author.mention, eJade)
+					msg ="{}, you have earned 100{}.".format(ctx.author.mention, "<:jade:555630314282811412>")
 					await ctx.channel.send(msg)
 							
 				except KeyError as error:
@@ -371,105 +351,89 @@ class Economy(commands.Cog):
 	async def evolve(self, ctx, *args):
 		user = ctx.author
 		query = (" ".join(args)).title()
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
+		profile_my_shikigami = users.find_one({"user_id": str(user.id)}, {"_id": 0, "shikigami": {"$elemMatch": {"name": query}}})
 		
 		if query == "":
 			embed = discord.Embed(color=0xffff80, title=":gem: Shikigami Evolution",
 				description = ":small_orange_diamond:SP - pre-evolved\n:small_orange_diamond:SSR - requires 1 dupe of the same kind\n:small_orange_diamond:SR - requires 10 dupes of the same kind\n:small_orange_diamond:R - requires 20 dupes of the same kind\n\nUse `;evolve <shikigami>` to perform evolution")
 			embed.set_thumbnail(url=self.client.user.avatar_url)
 			await ctx.channel.send(embed=embed)
-			return 
+		
+		elif profile_my_shikigami == {}:
+			msg = "{}, I did not find that shikigami nor you have it.".format(user.mention)
+			await ctx.channel.send(msg)
 			
-		for rarity in users[str(user.id)]["shikigami"]:
-			for shikigami in users[str(user.id)]["shikigami"][rarity]:
-				
-				
-				if query == shikigami and rarity == "R" :
-					count = users[str(user.id)]["shikigami"][rarity][shikigami]["owned"]
-					grade = users[str(user.id)]["shikigami"][rarity][shikigami]["grade"]
-					evo = users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"]
-					if evo == "True":
-						msg = "{}, your {} is already evolved.".format(user.mention, query)
-						await ctx.channel.send(msg)
-						return
-					if evo == "False":
-						if count >= 21:
-							users[str(user.id)]["shikigami"][rarity][shikigami]["owned"] -= 20
-							users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"] = "True"
-							with open("../data/users.json", "w") as f:
-								json.dump(users, f, indent="\t")
-							msg = "{}, you have evolved your {}!".format(user.mention, query)
-							await ctx.channel.send(msg)
-							return 
-						if count == 0:
-							msg = "{}, you do not own that shikigami!".format(user.mention)
-							await ctx.channel.send(msg)
-							return
-						if count <= 20:
-							msg = "{}, you lack {} {} dupes to evolve yours.".format(user.mention, 21-count, query)
-							await ctx.channel.send(msg)
-							return
+		elif profile_my_shikigami != {}:
+			rarity = profile_my_shikigami["shikigami"][0]["rarity"]
+			count = profile_my_shikigami["shikigami"][0]["owned"]
+			grade = profile_my_shikigami["shikigami"][0]["grade"]
+			evo = profile_my_shikigami["shikigami"][0]["evolved"]
+			
+			if rarity == "R" :
+				if evo == "True":
+					msg = "{}, your {} is already evolved.".format(user.mention, query)
+					await ctx.channel.send(msg)
 					
-				if query == shikigami and rarity == "SR" :
-					count = users[str(user.id)]["shikigami"][rarity][shikigami]["owned"]
-					grade = users[str(user.id)]["shikigami"][rarity][shikigami]["grade"]
-					evo = users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"]
-					if evo == "True":
-						msg = "{}, your {} is already evolved.".format(user.mention, query)
+				elif evo == "False":
+					if count >= 21:
+						users.update_one({"user_id": str(user.id), "shikigami.name": query}, {"$inc": {"shikigami.$.owned": -20}})
+						users.update_one({"user_id": str(user.id), "shikigami.name": query}, {"$set": {"shikigami.$.evolved": "True"}})
+						msg = "{}, you have evolved your {}!".format(user.mention, query)
 						await ctx.channel.send(msg)
-						return
-					if evo == "False":
-						if count >= 11:
-							users[str(user.id)]["shikigami"][rarity][shikigami]["owned"] -= 10
-							users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"] = "True"
-							with open("../data/users.json", "w") as f:
-								json.dump(users, f, indent="\t")
-							msg = "{}, you have evolved your {}!".format(user.mention, query)
-							await ctx.channel.send(msg)
-							return 
-						if count == 0:
-							msg = "{}, you do not own that shikigami!".format(user.mention)
-							await ctx.channel.send(msg)
-							return
-						if count <= 10:
-							msg = "{}, you lack {} {} dupes to evolve yours.".format(user.mention, 11-count, query)
-							await ctx.channel.send(msg)
-							return
-							
-				if query == shikigami and rarity == "SSR" :
-					count = users[str(user.id)]["shikigami"][rarity][shikigami]["owned"]
-					grade = users[str(user.id)]["shikigami"][rarity][shikigami]["grade"]
-					evo = users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"]
-					if evo == "True":
-						msg = "{}, your {} is already evolved.".format(user.mention, query)
+					
+					elif count == 0:
+						msg = "{}, you do not own that shikigami!".format(user.mention)
 						await ctx.channel.send(msg)
-						return
-					if evo == "False":
-						if count >= 2:
-							users[str(user.id)]["shikigami"][rarity][shikigami]["owned"] -= 1
-							users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"] = "True"
-							with open("../data/users.json", "w") as f:
-								json.dump(users, f, indent="\t")
-							msg = "{}, you have evolved your {}!".format(user.mention, query)
-							await ctx.channel.send(msg)
-							return 
-						if count == 0:
-							msg = "{}, you do not own that shikigami!".format(user.mention)
-							await ctx.channel.send(msg)
-							return
-						if count == 1:
-							msg = "{}, you lack {} {} dupe to evolve yours.".format(user.mention, 2-count, query)
-							await ctx.channel.send(msg)
-							return
 						
-				if query == shikigami and rarity == "SP" :
-						msg = "{}, SPs are pre-evolved.".format(user.mention)
+					elif count <= 20:
+						msg = "{}, you lack {} more {} dupes to evolve yours.".format(user.mention, 21-count, query)
 						await ctx.channel.send(msg)
-						return
 						
-		msg = "{}, I did not find that shikigami. Please input exact name.".format(user.mention)
-		await ctx.channel.send(msg)
-	
+			elif rarity == "SR" :
+				if evo == "True":
+					msg = "{}, your {} is already evolved.".format(user.mention, query)
+					await ctx.channel.send(msg)
+
+				elif evo == "False":
+					if count >= 11:
+						users.update_one({"user_id": str(user.id), "shikigami.name": query}, {"$inc": {"shikigami.$.owned": -10}})
+						users.update_one({"user_id": str(user.id), "shikigami.name": query}, {"$set": {"shikigami.$.evolved": "True"}})
+						
+						msg = "{}, you have evolved your {}!".format(user.mention, query)
+						await ctx.channel.send(msg)
+
+					elif count == 0:
+						msg = "{}, you do not own that shikigami!".format(user.mention)
+						await ctx.channel.send(msg)
+						
+					elif count <= 10:
+						msg = "{}, you lack {} more {} dupes to evolve yours.".format(user.mention, 11-count, query)
+						await ctx.channel.send(msg)
+						
+			elif rarity == "SSR" :
+				if evo == "True":
+					msg = "{}, your {} is already evolved.".format(user.mention, query)
+					await ctx.channel.send(msg)
+					
+				elif evo == "False":
+					if count >= 2:
+						users.update_one({"user_id": str(user.id), "shikigami.name": query}, {"$inc": {"shikigami.$.owned": -1}})
+						users.update_one({"user_id": str(user.id), "shikigami.name": query}, {"$set": {"shikigami.$.evolved": "True"}})
+						
+						msg = "{}, you have evolved your {}!".format(user.mention, query)
+						await ctx.channel.send(msg)
+						 
+					elif count == 0:
+						msg = "{}, you do not own that shikigami!".format(user.mention)
+						await ctx.channel.send(msg)
+						
+					elif count == 1:
+						msg = "{}, you lack {} more {} dupe to evolve yours.".format(user.mention, 2-count, query)
+						await ctx.channel.send(msg)				
+					
+			elif rarity == "SP" :
+				msg = "{}, SPs are pre-evolved.".format(user.mention)
+				await ctx.channel.send(msg)
+					
 def setup(client):
 	client.add_cog(Economy(client))

@@ -3,17 +3,21 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import discord, json
+from cogs.mongo.db import bounty
 from discord.ext import tasks, commands
 from datetime import datetime
-import config.guild as guild
 from itertools import cycle
-import shutil
+from pymongo import MongoClient
 
+# Mongo Startup
+# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+# memory = MongoClient("mongodb://localhost:27017/")
+# bounty = memory["miketsu"]["bounty"]
 status = cycle(["with the peasants", "with their feelings", "fake Onmyoji", "with Susabi"])
 
 # Date and Time
-timeStamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
-timeStamp2 = datetime.now().strftime("%m.%d.%Y.%H%M")
+time_stamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
+time_stamp2 = datetime.now().strftime("%m.%d.%Y.%H%M")
 
 class Startup(commands.Cog):
 	
@@ -23,38 +27,21 @@ class Startup(commands.Cog):
 	# Bot logging in
 	@commands.Cog.listener()
 	async def on_ready(self):
-		guildName = self.client.get_guild(guild.guildID)
 		print("Initializing...")
 		print("-------")
 		print("Logged in as {0.user}".format(self.client))
 		# Say Hi to me!a
 		print("Hi! {}!".format(self.client.get_user(180717337475809281)))
-		print("Time now: {}".format(timeStamp))
+		print("Time now: {}".format(time_stamp))
 		print("-------")
-		print("Server: {}".format(guildName))
 		print("Peasant Count: {}".format(len(self.client.users)))
 		self.changeStatus.start()
-		self.backupData.start()
 		# self.changeCastle.start()
 		print("-------")
 	
 	@tasks.loop(seconds=1200)
 	async def changeStatus(self):
 		await self.client.change_presence(activity=discord.Game(next(status)))
-	
-	"""
-	@tasks.loop(seconds=1800)
-	async def changeCastle(self):
-		castle = client.get_channel(412057028887052289)
-		channels = castle.text_channels
-		
-		count = len(channels) + 1
-		
-		for channel in channels:
-			
-			await channel.edit(position=(random.randint(1,count)-1))
-			await asyncio.sleep(3)
-	"""
 	
 	@commands.command()
 	async def info(self, ctx):
@@ -63,7 +50,7 @@ class Startup(commands.Cog):
 	@commands.command(aliases=["h"])
 	async def help(self, ctx, *args):
 		embed = discord.Embed(color = 0xffff80, title = "My Commands",
-			description = ":earth_asia: Economy\n`;daily`, `;weekly`, `;profile`, `;profile <@mention>`, `;buy`, `;summon`, `;evolve`, `;list <rarity>`, `;my <shikigami>`, `;shiki <shikigami>` `;friendship`\n\n:trophy: LeaderBoard (lb)\n`;lb level`, `;lb SSR`, `;lb medals`, `;lb amulets`, `;lb fp`, `;lb ships`\n\n:bow_and_arrow: Gameplay\n`;duel <@mention>`, `;raidc`, `;raidc <@mention>`, `;raid <@mention>`, `;encounter`, `;binfo <boss>`\n\n:information_source: Information\n`;bounty <shikigami>`\n\n:heart: Others\n`;compensate`, `;suggest`, `;update`")
+			description = ":earth_asia: Economy\n`;daily`, `;weekly`, `;profile`, `;profile <@mention>`, `;buy`, `;summon`, `;evolve`, `;list <rarity>`, `;my <shikigami>`, `;shiki <shikigami>` `;friendship`\n\n:trophy: LeaderBoard (lb)\n`;lb level`, `;lb SSR`, `;lb medals`, `;lb amulets`, `;lb fp`, `;lb ships`\n\n:bow_and_arrow: Gameplay\n`;raidc`, `;raidc <@mention>`, `;raid <@mention>`, `;encounter`, `;binfo <boss>`\n\n:information_source: Information\n`;bounty <shikigami>`\n\n:heart: Others\n`;compensate`, `;suggest`, `;update`")
 		try:
 			if args[0].lower() == "dm":
 				await ctx.author.send(embed=embed)
@@ -75,42 +62,32 @@ class Startup(commands.Cog):
 	@commands.command(aliases=["b"])
 	async def bounty(self, ctx, *args):
 		query = " ".join(args)
-		with open("../data/bounty.json", "r") as f:
-			bounty = json.load(f)
 		if not query == "":
 			try: 
-				msg = bounty[query]["location"]
+				msg = bounty.find_one({"shikigami": query}, {"_id": 0, "location": 1})["location"]
 				await ctx.channel.send(msg)
 			except KeyError as error:
 				msg = "I'm sorry. I did not catch that. Please requery."
 				await ctx.channel.send(msg)
+			except TypeError as error:
+				msg = "I'm sorry. That shikigami does not exist in the bounty list."
+				await ctx.channel.send(msg)	
 		else:
 			msg = "Hi! I can help you find bounty locations. Please type `;b <shikigami>`"
 			await ctx.channel.send(msg)
 	
 	@commands.command()
 	async def suggest(self, ctx, *args):
-		user = self.client.get_user(180717337475809281)
+		administrator = self.client.get_user(180717337475809281)
 		try: 
 			if args[0] != "":
 				msg1 = "{} suggested: {}".format(ctx.author, " ".join(args))
 				msg2 = "{}, thank you for that suggestion.".format(ctx.author.mention)
-				await user.send(msg1)
+				await administrator.send(msg1)
 				await ctx.channel.send(msg2)
 		except IndexError as Error:
 			msg = "Hi, {}!, I can collect suggestions. Please provide one.".format(ctx.author.mention)
 			await ctx.channel.send(msg)
-	
-	@tasks.loop(seconds=3600)
-	async def backupData(self):
-		channel = self.client.get_channel(584638230729850880)
-		shutil.make_archive("backup", "zip", "../data/")
-		
-		backup = discord.File("backup.zip", filename="{}.{}.zip".format(self.client.get_guild(guild.guildID), timeStamp2))
-		await channel.send(file=backup)
-	
-	
-	
 	
 def setup(client):
 	client.add_cog(Startup(client))

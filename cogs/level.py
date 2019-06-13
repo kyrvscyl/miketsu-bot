@@ -3,8 +3,14 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import discord, json
+from cogs.mongo.db import users
 from discord.ext import commands
-import config.lists as shiki
+from pymongo import MongoClient
+
+# Mongo Startup
+# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+memory = MongoClient("mongodb://localhost:27017/")
+users = memory["miketsu"]["users"]
 
 class Level(commands.Cog):
 	
@@ -12,94 +18,72 @@ class Level(commands.Cog):
 		self.client = client
 	
 	@commands.Cog.listener()
+	async def on_member_join(self, member):
+		await self.create_user(member)
+	
+	@commands.Cog.listener()
 	async def on_message(self, ctx):
 		# Ignore myself
 		if ctx.author == self.client.user:
 			return
+		
 		# Ignore other bots
 		elif ctx.author.bot == True:
 			return
+		
 		# Perform add experience
-		with open("../data/users.json", "r") as f:
-			users = json.load(f)
-			await self.create_user(users, ctx.author)
-			await self.add_experience(users, ctx.author, 5)
-			await self.level_up(users, ctx.author, ctx)
-		with open("../data/users.json", "w") as f:
-			json.dump(users, f, indent="\t")
+		await self.create_user(ctx.author)
+		await self.add_experience(ctx.author, 5)
+		await self.level_up(ctx.author, ctx)
 	
-	async def add_experience(self, users, user, exp):
+	async def add_experience(self, user, exp):
 		# Maximum level check
-		if users[str(user.id)]["level"] == 60:
+		if users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"] == 60:
 			return
 		else:
-			users[str(user.id)]["experience"] += exp
+			users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": exp}})
 
-	async def level_up(self, users, user, ctx):
-		exp = users[str(user.id)]["experience"]
-		levelStart = users[str(user.id)]["level"]
-		levelEnd = int(exp **(0.3))
+	async def level_up(self, user, ctx):
+		
+		exp = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1})["experience"]
+		level = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"]
+		level_end = int(exp **(0.3))
 		
 		# Add one level
-		if levelStart < levelEnd:
-			users[str(user.id)]["level_exp_next"] = 5*(round(((users[str(user.id)]["level"]+2)**3.3333333333)/5))
-			users[str(user.id)]["jades"] += 150
-			users[str(user.id)]["amulets"] += 10
-			users[str(user.id)]["coins"] += 100000
-			users[str(user.id)]["level"] = levelEnd
+		if level < level_end:
 			
+			level_next = 5*(round(((level+2)**3.3333333333)/5))
+			users.update_one({"user_id": str(user.id)}, {"$set": {"level_exp_next": level_next}})
+			users.update_one({"user_id": str(user.id)}, {"$inc": {"jades": 150, "amulets": 10, "coins": 100000, "level": level_end}})
+
 			# Add emoji during levelup
 			await ctx.add_reaction("⤴")
 
-	async def create_user(self, users, user):
-		if not str(user.id) in users:
-			users[str(user.id)] = {}
-			users[str(user.id)]["experience"] = 0
-			users[str(user.id)]["level"] = 1
-			users[str(user.id)]["level_exp_next"] = 5
-			users[str(user.id)]["amulets"] = 10
-			users[str(user.id)]["amulets_spent"] = 0
-			users[str(user.id)]["SP"] = 0
-			users[str(user.id)]["SSR"] = 0
-			users[str(user.id)]["SR"] = 0
-			users[str(user.id)]["R"] = 0
-			users[str(user.id)]["jades"] = 0
-			users[str(user.id)]["coins"] = 0
-			users[str(user.id)]["medals"] = 0
-			users[str(user.id)]["realm_ticket"] = 0
-			users[str(user.id)]["honor"] = 0
-			users[str(user.id)]["talisman"] = 0
-			users[str(user.id)]["friendship"] = 0
-			users[str(user.id)]["guild_medal"] = 0
-			users[str(user.id)]["shikigami"] = {"SP" : {},"SSR" : {},"SR" : {},"R" : {}}
+	async def create_user(self, user):
+		if users.find_one({"user_id": str(user.id)}, {"_id": 0}) == None:
+			profile = {}
+			profile["user_id"] = str(user.id)
+			profile["experience"] = 0
+			profile["level"] = 1
+			profile["level_exp_next"] = 5
+			profile["amulets"] = 10
+			profile["amulets_spent"] = 0
+			profile["SP"] = 0
+			profile["SSR"] = 0
+			profile["SR"] = 0
+			profile["R"] = 0
+			profile["jades"] = 0
+			profile["coins"] = 0
+			profile["medals"] = 0
+			profile["realm_ticket"] = 0
+			profile["honor"] = 0
+			profile["talisman"] = 0
+			profile["friendship"] = 0
+			profile["guild_medal"] = 0
+			profile["shikigami"] = []
 			
-			# Iterates for every shikigami
-			for member in users:
-				for rarity in users[member]["shikigami"]:
-					if rarity == "SP":
-						for shikigami in shiki.poolSP:
-							users[str(user.id)]["shikigami"][rarity][shikigami] = {}
-					if rarity == "SSR":
-						for shikigami in shiki.poolSSR:
-							users[str(user.id)]["shikigami"][rarity][shikigami] = {}
-					if rarity == "SR":
-						for shikigami in shiki.poolSR:
-							users[str(user.id)]["shikigami"][rarity][shikigami] = {}
-					if rarity == "R":
-						for shikigami in shiki.poolR:
-							users[str(user.id)]["shikigami"][rarity][shikigami] = {}
-							
-			# Iterates for every shikigami
-			for member in users:
-				for rarity in users[member]["shikigami"]:
-					for shikigami in users[member]["shikigami"][rarity]:
-						users[str(user.id)]["shikigami"][rarity][shikigami]["owned"] = 0
-						users[str(user.id)]["shikigami"][rarity][shikigami]["grade"] = 1
-						# SP as pre-evolved
-						if rarity == "SP":
-							users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"] = "True"
-						else:
-							users[str(user.id)]["shikigami"][rarity][shikigami]["evolved"] = "False"
-
+			# Creates a profile
+			users.insert_one(profile)
+		
 def setup(client):
 	client.add_cog(Level(client))
