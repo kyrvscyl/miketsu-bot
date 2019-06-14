@@ -1,8 +1,8 @@
 from pymongo import MongoClient
 
 # Mongo Database Startup
-# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
-memory = MongoClient("mongodb://localhost:27017/")
+memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+# memory = MongoClient("mongodb://localhost:27017/")
 
 
 # Collections
