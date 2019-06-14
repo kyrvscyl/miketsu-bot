@@ -5,14 +5,6 @@ kyrvscyl, 2019
 import discord, json, random, asyncio
 from cogs.mongo.db import users, daily, boss
 from discord.ext import commands
-# from pymongo import MongoClient
-
-# Mongo Startup
-# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
-# memory = MongoClient("mongodb://localhost:27017/")
-# users = memory["miketsu"]["users"]
-# daily = memory["miketsu"]["daily"]
-# boss = memory["miketsu"]["boss"]
 
 demon = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
 

@@ -5,15 +5,6 @@ kyrvscyl, 2019
 import discord, json, asyncio
 from cogs.mongo.db import users, daily, shikigami, compensation
 from discord.ext import commands
-# from pymongo import MongoClient
-
-# Mongo Startup
-# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
-# memory = MongoClient("mongodb://localhost:27017/")
-# users = memory["miketsu"]["users"]
-# daily = memory["miketsu"]["daily"]
-# shikigami = memory["miketsu"]["shikigami"]
-# compensation = memory["miketsu"]["compensation"]
 
 class Economy(commands.Cog):
 	

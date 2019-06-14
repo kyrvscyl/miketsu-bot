@@ -15,7 +15,7 @@ shikigami = os.path.basename(__file__)[:-3:]
 token = shikigamis.find_one({"{}".format(shikigami): {"$type": "string"}}, {"_id": 0, shikigami: 1})[shikigami]
 
 # Date and Time
-time_stamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
+time_stamp = datetime.now().strftime("%d.%b %Y %m:%M")
 
 # Instantiation
 client = discord.Client()

@@ -7,12 +7,6 @@ from cogs.mongo.db import users, daily
 from discord.ext import commands
 from pymongo import MongoClient
 
-# Mongo Startup
-# memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
-# memory = MongoClient("mongodb://localhost:27017/")
-# users = memory["miketsu"]["users"]
-# daily = memory["miketsu"]["daily"]
-
 class Startup(commands.Cog):
 	
 	def __init__(self, client):

@@ -6,8 +6,7 @@ import discord, json, re
 from cogs.mongo.db import daily, boss
 from discord.ext import commands
 from datetime import datetime
-# from pymongo import MongoClient
-		
+
 class Admin(commands.Cog):
 	
 	def __init__(self, client):
