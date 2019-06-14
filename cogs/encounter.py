@@ -215,7 +215,7 @@ class Encounter(commands.Cog):
 		msg = await ctx.channel.send(embed=embed)
 		await msg.add_reaction("🏁")
 		
-		timer = 5
+		timer = 180
 		count_players = 0
 		assembly_players = []
 		
