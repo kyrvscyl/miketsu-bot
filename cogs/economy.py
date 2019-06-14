@@ -10,7 +10,7 @@ class Economy(commands.Cog):
 	
 	def __init__(self, client):
 		self.client = client
-
+	
 	@commands.command(aliases=["dailies"])
 	async def daily(self, ctx):			
 		user = ctx.author

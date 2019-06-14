@@ -103,8 +103,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# heroku
 test.py
 debug.log
-requirements.txt
 backup.zip
+db.py
+cogs/mongo/db.py

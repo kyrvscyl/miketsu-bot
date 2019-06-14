@@ -51,12 +51,13 @@ class Events(commands.Cog):
 		
 		await self.client.get_channel(int(record_scroll)).send(embed=embed)
 	
+	# Whenever a member leaves
 	@commands.Cog.listener()
 	async def on_member_remove(self, member):
 		
 		users.delete_one({"user_id": str(member.id)})
 		
-		time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %mEST")
+		time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
 		guild_id = member.guild.id
 		request = books.find_one({"server": "{}".format(guild_id)}, {"_id": 0, "scroll-of-everything": 1})
 		record_scroll = request["scroll-of-everything"]
@@ -70,5 +71,58 @@ class Events(commands.Cog):
 
 		await self.client.get_channel(int(record_scroll)).send(embed=embed)
 	
+	# Spying members
+	@commands.Cog.listener()
+	async def on_member_update(self, before, after):
+		time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
+		
+		if before.roles != after.roles:
+			roles_before = before.roles
+			roles_after = after.roles
+
+			changed_role1 = list(set(roles_after) - set(roles_before))
+			changed_role2 = list(set(roles_before) - set(roles_after))
+			
+			if changed_role1 == []:
+
+				request = books.find_one({"server": "{}".format(before.guild.id)}, {"_id": 0, "scroll-of-everything": 1})
+				record_scroll = request["scroll-of-everything"]
+					
+				embed = discord.Embed(color=0xac330f, title=":camera_with_flash: Role Update")
+				embed.set_thumbnail(url=before.avatar_url)
+				embed.add_field(inline=False, name="Removed role for {}:".format(after.name), value=changed_role2[0].name)
+				embed.set_footer(text="{}".format(time_stamp))
+				
+				await self.client.get_channel(int(record_scroll)).send(embed=embed)
+				
+			elif changed_role2 == []:
+		
+				request = books.find_one({"server": "{}".format(before.guild.id)}, {"_id": 0, "scroll-of-everything": 1})
+				record_scroll = request["scroll-of-everything"]
+					
+				embed = discord.Embed(color=0xffff80, title=":camera_with_flash: Role Update")
+				embed.set_thumbnail(url=before.avatar_url)
+				embed.add_field(inline=False, name="Added role for {}:".format(after.name), value=changed_role1[0].name)
+				embed.set_footer(text="{}".format(time_stamp))
+				
+				await self.client.get_channel(int(record_scroll)).send(embed=embed)
+		
+		elif before.nick != after.nick:
+			request = books.find_one({"server": "{}".format(before.guild.id)}, {"_id": 0, "scroll-of-everything": 1})
+			record_scroll = request["scroll-of-everything"]
+			
+			embed = discord.Embed(color=0xffff80, title=":camera_with_flash: Nickname Change")
+			embed.set_thumbnail(url=before.avatar_url)
+				
+			if before.nick == None:
+				embed.add_field(inline=True, name="Before:", value=before.name)
+			else:
+				embed.add_field(inline=True, name="Before:", value=before.nick)
+			
+			embed.add_field(inline=True, name="After:", value=after.nick)
+			embed.set_footer(text="{}".format(time_stamp))
+			
+			await self.client.get_channel(int(record_scroll)).send(embed=embed)
+			
 def setup(client):
 	client.add_cog(Events(client))

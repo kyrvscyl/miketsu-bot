@@ -59,7 +59,7 @@ async def reload(ctx, extension):
 @client.command()
 @commands.is_owner()
 async def shutdown(ctx):
-	for filename in os.listdir("../cogs"):
+	for filename in os.listdir("./cogs"):
 		if filename.endswith(".py") and filename != "error.py":
 			client.unload_extension(f"cogs.{filename[:-3]}")
 			print("Unloading {}..".format(filename))
@@ -70,7 +70,7 @@ async def shutdown(ctx):
 @client.command()
 @commands.is_owner()
 async def initialize(ctx):
-	for filename in os.listdir("../cogs"):
+	for filename in os.listdir("./cogs"):
 		if filename.endswith(".py"):
 			client.load_extension(f"cogs.{filename[:-3]}")
 			print("Loading {}..".format(filename))
