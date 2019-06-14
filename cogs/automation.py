@@ -20,7 +20,7 @@ class Events(commands.Cog):
 	async def on_member_join(self, member):
 		
 		# Setup Variables
-		time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %mEST")
+		time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
 		guild = member.guild
 		request = books.find_one({"server": "{}".format(guild.id)}, {"_id": 0, "welcome": 1, "sorting": 1, "landing_zone": 1, "scroll-of-everything": 1, "default_role": 1})
 		welcome = request["welcome"]
@@ -47,7 +47,7 @@ class Events(commands.Cog):
 		# Scroll of Everything
 		embed = discord.Embed(color=0xffff80, title=":newspaper2: Memory Scroll Update", description=">> {} has joined the House!\n\nSending acceptance letter.. :love_letter:".format(member.mention))
 		embed.set_thumbnail(url=member.avatar_url)
-		embed.set_footer(text="Total Scrolls: {} | {}".format(scrolls, time_stamp), icon_url=guild_icon)
+		embed.set_footer(text="Total Scrolls: {} | {}".format(scrolls, time_stamp))
 		
 		await self.client.get_channel(int(record_scroll)).send(embed=embed)
 	
