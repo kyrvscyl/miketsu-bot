@@ -5,7 +5,7 @@ kyrvscyl, 2019
 import discord, json, asyncio
 from cogs.mongo.db import users, daily, shikigami, compensation
 from discord.ext import commands
-from pymongo import MongoClient
+# from pymongo import MongoClient
 
 # Mongo Startup
 # memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
@@ -147,7 +147,7 @@ class Economy(commands.Cog):
 			value = "On Hand: {} | Used: {}".format(amulets, amulets_spent))
 		embed.add_field(inline = True, name = ":tickets: | {} | {} | {}".format("<:medal:573071121545560064>", "<:jade:555630314282811412>", "<:coin:573071121495097344>"), 
 			value = "{} | {} | {:,d} | {:,d}".format(realm_ticket, medals, jades, coins))
-			
+		
 		await ctx.channel.send(embed=embed)
 		
 	@commands.command(aliases=["list"])

@@ -3,10 +3,10 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import discord, json, re
-from cogs.mongo.db import daily
+from cogs.mongo.db import daily, boss
 from discord.ext import commands
 from datetime import datetime
-from pymongo import MongoClient
+# from pymongo import MongoClient
 		
 class Admin(commands.Cog):
 	

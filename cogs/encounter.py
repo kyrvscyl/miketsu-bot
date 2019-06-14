@@ -5,7 +5,7 @@ kyrvscyl, 2019
 import discord, json, random, asyncio
 from cogs.mongo.db import users, daily, boss
 from discord.ext import commands
-from pymongo import MongoClient
+# from pymongo import MongoClient
 
 # Mongo Startup
 # memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")

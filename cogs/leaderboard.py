@@ -5,7 +5,7 @@ kyrvscyl, 2019
 import discord, json, asyncio
 from cogs.mongo.db import users, daily, friendship
 from discord.ext import commands
-from pymongo import MongoClient
+# from pymongo import MongoClient
 
 # Mongo Startup
 # memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
@@ -44,7 +44,7 @@ class Leaderboard(commands.Cog):
 			elif args[0] == "amulet" or args[0] == "amulets":
 				await self.leaderboard_post_amulet(ctx)
 			elif args[0] == "friendship" or args[0] == "fp":
-				await self.leaderboardFriendship(ctx)
+				await self.leaderboard_friendship(ctx)
 			elif args[0] == "ship" or args[0] == "ships":
 				await self.leaderboard_post_ship(ctx)
 			else:
@@ -103,7 +103,7 @@ class Leaderboard(commands.Cog):
 				if str(reaction.emoji) == "⬅":
 					page -= 1
 				await msg.edit(embed=self.post(page, embed1, embed2, embed3))
-				timeSec=timeSec - 1
+				timeout=timeout - 1
 			except asyncio.TimeoutError:
 				return False
 				
@@ -164,6 +164,7 @@ class Leaderboard(commands.Cog):
 		level_board1=[]
 
 		for user in users.find({}, {"_id": 0, "user_id": 1, "level": 1}):
+			print(user["user_id"])
 			level_board1.append((self.client.get_user(int(user["user_id"])).name, user["level"]))
 
 		level_board2=sorted(level_board1, key=lambda x: x[1], reverse=True)
@@ -212,6 +213,7 @@ class Leaderboard(commands.Cog):
 				timeout = timeout - 1
 			except asyncio.TimeoutError:
 				return False
+	
 	async def leaderboard_post_amulet(self, ctx):
 		amulet_board1 = []
 
@@ -265,7 +267,7 @@ class Leaderboard(commands.Cog):
 			except asyncio.TimeoutError:
 				return False
 	
-	async def leaderboardFriendship(self, ctx):
+	async def leaderboard_friendship(self, ctx):
 		fp_board1 = []
 
 		for user in users.find({}, {"_id": 0, "user_id": 1, "friendship": 1}):

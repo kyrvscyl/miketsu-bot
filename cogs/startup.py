@@ -7,7 +7,7 @@ from cogs.mongo.db import bounty
 from discord.ext import tasks, commands
 from datetime import datetime
 from itertools import cycle
-from pymongo import MongoClient
+# from pymongo import MongoClient
 
 # Mongo Startup
 # memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")

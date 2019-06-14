@@ -1,7 +1,9 @@
 from pymongo import MongoClient
 
-# Mongo Startup
+# Mongo Database Startup
 memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
+
+# Collections
 boss = memory["miketsu"]["boss"]
 bounty = memory["miketsu"]["bounty"]
 compensation = memory["miketsu"]["compensation"]
@@ -11,3 +13,4 @@ shikigami = memory["miketsu"]["shikigami"]
 streak = memory["miketsu"]["streak"]
 users = memory["miketsu"]["users"]
 books = memory["bukkuman"]["books"]
+shikigamis = memory["bukkuman"]["shikigamis"]

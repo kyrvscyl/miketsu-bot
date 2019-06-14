@@ -5,17 +5,14 @@ kyrvscyl, 2019
 import discord, json, os
 from datetime import datetime
 from discord.ext import commands
-from pymongo import MongoClient
+from cogs.mongo.db import shikigamis
 	
 # Directory/ Bot Name
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 shikigami = os.path.basename(__file__)[:-3:]
 
-# Mongo Startup
-memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority")
-shikigamis = memory["bukkuman"]["shikigamis"]
+# Token
 token = shikigamis.find_one({"{}".format(shikigami): {"$type": "string"}}, {"_id": 0, shikigami: 1})[shikigami]
-memory.close()
 
 # Date and Time
 time_stamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
