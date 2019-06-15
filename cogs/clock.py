@@ -33,7 +33,7 @@ class Clock(commands.Cog):
 	@tasks.loop(seconds=30)
 	async def clock_update(self):
 		
-		hour = datetime.now(tz=pytz.timezone("America/Atikokan")).strftime("%H")
+		hour = datetime.now(tz=pytz.timezone("America/Atikokan")).strftime("%I")
 		minute = datetime.now(tz=pytz.timezone("America/Atikokan")).strftime("%M")
 		
 		for clock_channel in clock_channels:
