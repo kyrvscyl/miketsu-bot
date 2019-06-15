@@ -57,7 +57,7 @@ class Events(commands.Cog):
 			description="{}".format(payload.data["content"]))
 			
 			# Checks if it has image:
-			if len(payload.data["attachments"][0]) != 0:
+			if len(payload.data["attachments"]) != 0:
 				embed.set_image(url=payload.data["attachments"][0]["url"])
 
 			embed.set_thumbnail(url=user.avatar_url)
