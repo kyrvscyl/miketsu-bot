@@ -23,7 +23,7 @@ class Clock(commands.Cog):
 		self.client = client
 	
 	def current_time1(self):
-		time_current1 = (datetime.now(tz=tz_target)).strftime("%I:%M %p EST")
+		time_current1 = (datetime.now(tz=tz_target)).strftime("%H:%M EST | %a")
 		return time_current1
 	
 	@commands.Cog.listener()
