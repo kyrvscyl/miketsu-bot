@@ -25,6 +25,9 @@ class Events(commands.Cog):
 			return
 		
 		elif str(payload.data["channel_id"]) == shard_trading and payload.data["pinned"] == True:
+			
+			
+			
 			time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %I:%M EST")
 			headlines = self.client.get_channel(int(request["headlines"]))
 			user = self.client.get_user(int(payload.data["author"]["id"]))
@@ -38,7 +41,7 @@ class Events(commands.Cog):
 			# Checks if it has image:
 			if len(payload.data["attachments"]) != 0:
 				embed.set_image(url=payload.data["attachments"][0]["url"])
-
+			
 			embed.set_thumbnail(url=user.avatar_url)
 			embed.set_footer(text="#{} | {}".format(shard_trading.name, time_stamp))
 			await headlines.send(embed=embed)

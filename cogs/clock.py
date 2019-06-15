@@ -55,7 +55,7 @@ class Clock(commands.Cog):
 	@commands.command(aliases=["so"])
 	@commands.cooldown(1, 900, commands.BucketType.guild)
 	async def shoutout(self, ctx, *args):
-
+	
 		if len(args) == 0:
 			embed = discord.Embed(color=0xffff80,
 					description="Temporarily change the clock to a custom message.\n\nUse `;shoutout <duration: 1-10 min> <message: 25 character limit`")
