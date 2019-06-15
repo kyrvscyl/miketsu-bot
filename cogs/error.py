@@ -46,13 +46,17 @@ class Error(commands.Cog):
 		elif isinstance(error, commands.CommandOnCooldown):
 			
 			if str(ctx.command) == "duel":
-				msg = '{}, there is an ongoing duel, try again once it is finished.'.format(ctx.author.mention)
+				msg = '{}, there is an ongoing duel, try again once it finishes'.format(ctx.author.mention)
 				await ctx.channel.send(msg)
 				
 			elif str(ctx.command) == "encounter":
-				msg = '{}, there is an ongoing search, try again it is finished.'.format(ctx.author.mention)
+				msg = '{}, there is an ongoing search, try again once it finishes'.format(ctx.author.mention)
 				await ctx.channel.send(msg)
-				
+			
+			elif str(ctx.command) == "shoutout":
+				msg = '{}, there is a shoutout already, try again later'.format(ctx.author.mention)
+				await ctx.channel.send(msg)
+			
 		# Lacks arguments
 		elif isinstance(error, commands.MissingRequiredArgument):
 			if str(ctx.command) == "summon":

@@ -14,38 +14,17 @@ class Events(commands.Cog):
 	
 	def __init__(self, client):
 		self.client = client
-	
-	# Whenever a old shard post is pinned
-	@commands.Cog.listener()
-	async def on_message_edit(self, before, after):
-		request = books.find_one({"server": "{}".format(before.guild.id)}, {"_id": 0, "shard-trading": 1, "headlines": 1})
-		shard_trading = request["shard-trading"]
 		
-		if str(before.channel.id) == shard_trading and after.pinned == True:
-			headlines = request["headlines"]
-			time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
-					
-			embed = discord.Embed(
-			color=0xffff80, 
-			title="{} is looking for shards!".format(before.author.name), 
-			description="{}".format(before.content))
-			
-			# Checks if it has image:
-			if len(before.attachments) != 0:
-				image_posted = before.attachments[0].url
-				embed.set_image(url=image_posted)
-			
-			embed.set_thumbnail(url=before.author.avatar_url)
-			embed.set_footer(text="#{} | {}".format(before.channel, time_stamp))
-			await self.client.get_channel(int(headlines)).send(embed=embed)
-	
-	# Whenever a newly shard post is pinned
+	# Whenever a shard post is pinned
 	@commands.Cog.listener()
 	async def on_raw_message_edit(self, payload):
 		request = books.find_one({"server": "{}".format(payload.data["guild_id"])}, {"_id": 0, "shard-trading": 1, "headlines": 1})
 		shard_trading = request["shard-trading"]
-			
-		if str(payload.data["channel_id"]) == shard_trading and payload.data["pinned"] == True:
+		
+		if "pinned" not in payload.data:
+			return
+		
+		elif str(payload.data["channel_id"]) == shard_trading and payload.data["pinned"] == True:
 			time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %I:%M EST")
 			headlines = self.client.get_channel(int(request["headlines"]))
 			user = self.client.get_user(int(payload.data["author"]["id"]))
