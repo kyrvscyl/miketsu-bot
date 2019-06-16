@@ -301,7 +301,7 @@ class Admin(commands.Cog):
 			end = page*20
 			start =  end - 20
 			description = "".join(query_list[start:end])
-			embed = discord.Embed(color=0xffff80, title="Members with Status '{}'".format(args[2].capitalize()), description=description)
+			embed = discord.Embed(color=0xffff80, title=":trident: Members with Status '{}'".format(args[2].capitalize()), description=description)
 			embed.set_footer(text="Page: {} | Queried on {}".format(page, time_current1))
 			embed.set_thumbnail(url=ctx.guild.icon_url)
 			return embed
