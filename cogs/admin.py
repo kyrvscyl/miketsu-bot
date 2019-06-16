@@ -86,7 +86,7 @@ class Admin(commands.Cog):
 		
 		# ;g add <onmyoji>
 		elif args[0].lower() == "add" and len(args) <= 2:
-			embed = discord.Embed(color=0xffff80, title=":trident: Adding Members", description=":white_small_square: `;m add {name} {role}`")
+			embed = discord.Embed(color=0xffff80, title=":trident: Adding Members", description=":white_small_square: `;m add {role} {name}`")
 			embed.add_field(name=":ribbon: Roles", value=":white_small_square: `member` : a current member\n:white_small_square: `ex-member` : a former member\n:white_small_square: `ex-officer`\n:white_small_square: `officer` : currently appointed")
 			embed.set_thumbnail(url=ctx.guild.icon_url)
 			await ctx.channel.send(embed=embed)
