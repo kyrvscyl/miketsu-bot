@@ -404,8 +404,6 @@ class Admin(commands.Cog):
 	async def management_update_field(self, ctx, args):
 		members_registered = []
 		ids_registered = []
-		time_current2 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
-		time_current3 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d") #YYYY-MM-DD HH:MM
 		
 		for member in members.find({}, {"_id": 0, "name": 1, "#": 1}):
 				members_registered.append(member["name"].lower())
@@ -445,9 +443,17 @@ class Admin(commands.Cog):
 					msg = "Invalid country code."
 					await ctx.channel.send(msg)
 			
+			# Updating the name
 			elif args[2].lower() == "name":
 				members.update_one({"#": id}, {"$set": {"name": "{}".format(args[3]), "name_lower": "{}".format(args[3].lower())}})
 				await ctx.message.add_reaction("✅")
+			
+			elif args[2].lower() == "role" and args[3].lower() in roles:
+				members.update_one({"#": id}, {"$set": {"role": args[3].capitalize()}})
+				await ctx.message.add_reaction("✅")
+			
+			else:
+				await ctx.message.add_reaction("❌")
 			
 		# name instead is provided
 		except ValueError:
@@ -487,5 +493,12 @@ class Admin(commands.Cog):
 				members.update_one({"name_lower": args[1].lower()}, {"$set": {"name": "{}".format(args[3]), "name_lower": "{}".format(args[3].lower())}})
 				await ctx.message.add_reaction("✅")
 			
+			elif args[2].lower() == "role" and args[3].lower() in roles:
+				members.update_one({"name_lower": args[1].lower()}, {"$set": {"role": "{}".format(args[3].capitalize())}})
+				await ctx.message.add_reaction("✅")
+			
+			else:
+				await ctx.message.add_reaction("❌")
+				
 def setup(client):
 	client.add_cog(Admin(client))
