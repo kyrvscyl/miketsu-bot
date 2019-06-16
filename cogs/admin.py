@@ -413,8 +413,8 @@ class Admin(commands.Cog):
 	
 		try: # check if code is provided
 			id = int(args[1])
-			
-			
+			time_current2 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
+			time_current3 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d") #YYYY-MM-DD HH:MM
 			# Check if registered
 			if id not in ids_registered:
 				msg = "Provided username or number is not in the guild database."
@@ -451,6 +451,8 @@ class Admin(commands.Cog):
 			
 		# name instead is provided
 		except ValueError:
+			time_current2 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
+			time_current3 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d") #YYYY-MM-DD HH:MM
 			# Not in the registered ones
 			if args[1].lower() not in members_registered:
 				msg = "That user is not in the Guild Database"
