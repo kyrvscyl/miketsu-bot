@@ -404,6 +404,8 @@ class Admin(commands.Cog):
 	async def management_update_field(self, ctx, args):
 		members_registered = []
 		ids_registered = []
+		time_current2 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
+		time_current3 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d") #YYYY-MM-DD HH:MM
 		
 		for member in members.find({}, {"_id": 0, "name": 1, "#": 1}):
 				members_registered.append(member["name"].lower())
@@ -411,8 +413,7 @@ class Admin(commands.Cog):
 	
 		try: # check if code is provided
 			id = int(args[1])
-			time_current2 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
-			time_current3 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d") #YYYY-MM-DD HH:MM
+			
 			
 			# Check if registered
 			if id not in ids_registered:
