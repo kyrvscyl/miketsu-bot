@@ -10,7 +10,7 @@ from datetime import datetime
 tz_target = pytz.timezone("America/Atikokan")
 
 # Global Variables
-fields = ["name", "role", "status", "country", "timezone", "notes", "note", "tz"]
+fields = ["name", "role", "status", "notes", "note"]
 roles = ["member", "ex-member", "ex-officer", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
 
@@ -87,7 +87,7 @@ class Admin(commands.Cog):
 		# ;g add <onmyoji>
 		elif args[0].lower() == "add" and len(args) <= 2:
 			embed = discord.Embed(color=0xffff80, title=":trident: Adding Members", description=":white_small_square: `;m add {name} {role}`")
-			embed.add_field(name=":ribbon: Roles", value=":white_small_square: `member` : a current member\n:white_small_square: `ex-member` : a former member\n:white_small_square: `ex-officer` : pre/post merge\n:white_small_square: `officer` : currently appointed")
+			embed.add_field(name=":ribbon: Roles", value=":white_small_square: `member` : a current member\n:white_small_square: `ex-member` : a former member\n:white_small_square: `ex-officer`\n:white_small_square: `officer` : currently appointed")
 			embed.set_thumbnail(url=ctx.guild.icon_url)
 			await ctx.channel.send(embed=embed)
 			
@@ -113,7 +113,7 @@ class Admin(commands.Cog):
 			embed = discord.Embed(color=0xffff80, title=":trident: Updating Member Data", description=":white_small_square: `;m update {name} {field} {value}`\n:white_small_square: `;m update {#} {field} {value}`")
 			embed.add_field(inline=True, name=":ribbon: Role", value="member, ex-member, ex-officer, officer")
 			embed.add_field(inline=True, name=":golf: Status", value="active, inactive, on-leave, kicked, semi-active, away, left")
-			embed.add_field(inline=True, name=":globe_with_meridians: Country", value="Use country codes: PH, MY, ID, AU, etc")
+			# embed.add_field(inline=True, name=":globe_with_meridians: Country", value="Use country codes: PH, MY, ID, AU, etc")
 			embed.add_field(inline=True, name=":notepad_spiral: Notes", value="Any officer notes")
 			embed.set_footer(text="Use name as field to change name")
 			embed.set_thumbnail(url=ctx.guild.icon_url)
@@ -121,12 +121,12 @@ class Admin(commands.Cog):
 		
 		# ;m update 1
 		elif (args[0].lower() == "update" or args[0].lower() == "u") and len(args) == 2:
-			msg = "No field and value provided. Valid fields: `name`, `role`, `status`, `country`, `notes`"
+			msg = "No field and value provided. Valid fields: `name`, `role`, `status`, `notes`"
 			await ctx.channel.send(msg)
 		
 		# ;m update weird active
 		elif (args[0].lower() == "update" or args[0].lower() == "u") and args[2].lower() not in fields and len(args) >= 3:
-			msg = "Invalid field update request. Valid fields: `name`, `role`, `status`, `country`, `notes`"
+			msg = "Invalid field update request. Valid fields: `name`, `role`, `status`, `notes`"
 			await ctx.channel.send(msg)
 		
 		# ;m update 1 name
@@ -155,9 +155,9 @@ class Admin(commands.Cog):
 			msg = "Provide a role value to show. `;m show status {active, inactive, etc..}`"
 			await ctx.channel.send(msg)
 		
-		elif args[0].lower() == "show" and len(args) == 2 and (args[1].lower() == "tz" or args[1].lower() == "timezone"):
-			msg = "Provide a timezone value to show. `;m show tz {guild, {member}, all}`"
-			await ctx.channel.send(msg)
+		# elif args[0].lower() == "show" and len(args) == 2 and (args[1].lower() == "tz" or args[1].lower() == "timezone"):
+		# 	msg = "Provide a timezone value to show. `;m show tz {guild, {member}, all}`"
+		#	await ctx.channel.send(msg)
 		
 		# ;m show all
 		elif args[0].lower() == "show" and len(args) == 2 and args[1].lower() == "all":
@@ -175,8 +175,8 @@ class Admin(commands.Cog):
 			await self.management_show_field_role(ctx, args)
 		
 		# ;m show timezone
-		elif args[0].lower() == "show" and len(args) == 3 and (args[1].lower() == "timezone" or args[1].lower() == "tz") and (args[2].lower() in roles or args[2].lower() == "guild"):
-			await self.management_show_field_timezone(ctx, args)
+		#elif args[0].lower() == "show" and len(args) == 3 and (args[1].lower() == "timezone" or args[1].lower() == "tz") and (args[2].lower() in roles or args[2].lower() == "guild"):
+		#	await self.management_show_field_timezone(ctx, args)
 		
 		# No command hit
 		else:
@@ -227,6 +227,7 @@ class Admin(commands.Cog):
 			except asyncio.TimeoutError:
 				return False
 	
+	"""
 	async def management_show_field_timezone(self, ctx, args):
 		time_current1 = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
 		query_list = []
@@ -280,7 +281,7 @@ class Admin(commands.Cog):
 				timeout=timeout - 1
 			except asyncio.TimeoutError:
 				return False
-
+	"""
 	async def management_show_field_role(self, ctx, args):
 		time_current1 = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
 		query_list = []
@@ -382,7 +383,7 @@ class Admin(commands.Cog):
 		try:
 			embed = discord.Embed(color=0xffff80, title="#{} : {} | :ribbon: {}".format(member["#"], member["name"], member["role"]))
 			embed.add_field(inline=True, name=":golf: Status", value="{} [{}]".format(member["status"], member["status_update1"]))
-			embed.add_field(inline=True, name=":globe_with_meridians: Country | Timezone", value="{} | {}".format(member["country"], member["timezone"]))
+			# embed.add_field(inline=True, name=":globe_with_meridians: Country | Timezone", value="{} | {}".format(member["country"], member["timezone"]))
 			
 			if member["notes"] == []:
 				embed.add_field(inline=True, name=":notepad_spiral: Notes", value="No notes yet.")
@@ -432,16 +433,16 @@ class Admin(commands.Cog):
 				await ctx.message.add_reaction("✅")
 			
 			# Updating country
-			elif args[2] == "country":
-				try:
-					country = args[3].upper()
-					timezone = random.choice(pytz.country_timezones(country))
-					members.update_one({"#": id}, {"$set": {"country": country}})
-					members.update_one({"#": id}, {"$set": {"timezone": "['{}']".format(timezone)}})
-					await ctx.message.add_reaction("✅")
-				except KeyError:
-					msg = "Invalid country code."
-					await ctx.channel.send(msg)
+			# elif args[2] == "country":
+			#	try:
+			#		country = args[3].upper()
+			#		timezone = random.choice(pytz.country_timezones(country))
+			#		members.update_one({"#": id}, {"$set": {"country": country}})
+			#		members.update_one({"#": id}, {"$set": {"timezone": "['{}']".format(timezone)}})
+			#		await ctx.message.add_reaction("✅")
+			#	except KeyError:
+			#		msg = "Invalid country code."
+			#		await ctx.channel.send(msg)
 			
 			# Updating the name
 			elif args[2].lower() == "name":
@@ -478,16 +479,16 @@ class Admin(commands.Cog):
 				await ctx.message.add_reaction("✅")
 			
 			# Updating country
-			elif args[2] == "country":
-				try:
-					country = args[3].upper()
-					timezone = random.choice(pytz.country_timezones(country))
-					members.update_one({"name_lower": args[1].lower()}, {"$set": {"country": country}})
-					members.update_one({"name_lower": args[1].lower()}, {"$set": {"timezone": "['{}']".format(timezone)}})
-					await ctx.message.add_reaction("✅")
-				except KeyError:
-					msg = "Invalid country code."
-					await ctx.channel.send(msg)
+			# elif args[2] == "country":
+			#	try:
+			#		country = args[3].upper()
+			#		timezone = random.choice(pytz.country_timezones(country))
+			#		members.update_one({"name_lower": args[1].lower()}, {"$set": {"country": country}})
+			#		members.update_one({"name_lower": args[1].lower()}, {"$set": {"timezone": "['{}']".format(timezone)}})
+			#		await ctx.message.add_reaction("✅")
+			#	except KeyError:
+			#		msg = "Invalid country code."
+			#		await ctx.channel.send(msg)
 			
 			elif args[2].lower() == "name":
 				members.update_one({"name_lower": args[1].lower()}, {"$set": {"name": "{}".format(args[3]), "name_lower": "{}".format(args[3].lower())}})
