@@ -92,21 +92,30 @@ class Admin(commands.Cog):
 			await ctx.channel.send(embed=embed)
 			
 		# ;g add <role> <name>
-		elif args[0].lower() == "add" and len(args) == 3 and args[1] in roles and args[2].lower() not in members_registered:
-			count = members.count() + 1
-			profile = {}
-			profile["#"] = count
-			profile["name"] = args[2]
-			profile["role"] = args[1].title()
-			profile["status"] = "< None >"
-			profile["status_update1"] = ""
-			profile["status_update2"] = ""
-			profile["country"] = "<CC>"
-			profile["timezone"] = "['/']"
-			profile["notes"] = []
-			profile["name_lower"] = args[2].lower()
-			members.insert_one(profile)
-			await ctx.message.add_reaction("✅")
+		elif args[0].lower() == "add" and len(args) == 3 and args[1] in roles:
+			
+			members_registered = []
+			
+			for member in members.find({}, {"_id": 0, "name": 1, "#": 1}):
+				members_registered.append(member["name"].lower())
+			
+			if args[2].lower() not in members_registered:
+				count = members.count() + 1
+				profile = {}
+				profile["#"] = count
+				profile["name"] = args[2]
+				profile["role"] = args[1].title()
+				profile["status"] = "< None >"
+				profile["status_update1"] = ""
+				profile["status_update2"] = ""
+				profile["country"] = "<CC>"
+				profile["timezone"] = "['/']"
+				profile["notes"] = []
+				profile["name_lower"] = args[2].lower()
+				members.insert_one(profile)
+				await ctx.message.add_reaction("✅")
+			else:
+				await ctx.message.add_reaction("❌")
 		
 		# ;m update <onmyoji or #> <field> <value>
 		elif (args[0].lower() == "update" or args[0].lower() == "u") and len(args) <= 1:
