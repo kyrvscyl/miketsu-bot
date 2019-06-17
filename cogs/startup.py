@@ -45,7 +45,7 @@ class Startup(commands.Cog):
 	@commands.command(aliases=["h"])
 	async def help(self, ctx, *args):
 		embed = discord.Embed(color = 0xffff80, title = "My Commands",
-			description = ":earth_asia: Economy\n`;daily`, `;weekly`, `;profile`, `;profile <@mention>`, `;buy`, `;summon`, `;evolve`, `;list <rarity>`, `;my <shikigami>`, `;shiki <shikigami>` `;friendship`\n\n:trophy: LeaderBoard (lb)\n`;lb level`, `;lb SSR`, `;lb medals`, `;lb amulets`, `;lb fp`, `;lb ships`\n\n:bow_and_arrow: Gameplay\n`;raidc`, `;raidc <@mention>`, `;raid <@mention>`, `;encounter`, `;binfo <boss>`\n\n:information_source: Information\n`;bounty <shikigami>`\n\n:heart: Others\n`;compensate`, `;suggest`, `;update`")
+			description = ":earth_asia: Economy\n`;daily`, `;weekly`, `;profile`, `;profile <@mention>`, `;buy`, `;summon`, `;evolve`, `;list <rarity>`, `;my <shikigami>`, `;shiki <shikigami>` `;friendship`\n\n:trophy: LeaderBoard (lb)\n`;lb level`, `;lb SSR`, `;lb medals`, `;lb amulets`, `;lb fp`, `;lb ships`\n\n:bow_and_arrow: Gameplay\n`;raidc`, `;raidc <@mention>`, `;raid <@mention>`, `;encounter`, `;binfo <boss>`\n\n:information_source: Information\n`;bounty <shikigami>`\n\n:heart: Others\n`;compensate`, `;suggest`, `;update`, `;stickers`")
 		try:
 			if args[0].lower() == "dm":
 				await ctx.author.send(embed=embed)
