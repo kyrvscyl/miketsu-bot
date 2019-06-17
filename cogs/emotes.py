@@ -39,8 +39,8 @@ class Emotes(commands.Cog):
 		elif message.author.bot == True:
 			return
 		
-		elif "mike" in message.content:
-			list = message.content.split()
+		elif "mike" in message.content.lower():
+			list = message.content.lower().split()
 			action_recognized = None
 			
 			# find the action
