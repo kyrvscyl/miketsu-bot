@@ -120,7 +120,7 @@ class Economy(commands.Cog):
         medals = profile["medals"]
         realm_ticket = profile["realm_ticket"]
 
-        embed = discord.Embed(color=0xffff80)
+        embed = discord.Embed(color=user.colour)
         embed.set_thumbnail(url=user.avatar_url)
         embed.set_author(name=f"{user.name}\'s profile")
         embed.add_field(inline=True, name=":arrow_heading_up: Experience",
@@ -181,7 +181,7 @@ class Economy(commands.Cog):
 
         icon_url = "https://i.imgur.com/CSMZAjb.png"
 
-        embed = discord.Embed(color=0xffff80, description="".join(description[0:10]))
+        embed = discord.Embed(color=user.colour, description="".join(description[0:10]))
         embed.set_author(icon_url=user.avatar_url, name=f"{user.name}'s Shikigamis")
         embed.set_footer(text=f"Rarity: {rarity.upper()} - Page: {user_shikigamis_page}", icon_url=icon_url)
         msg = await ctx.channel.send(embed=embed)
@@ -208,7 +208,7 @@ class Economy(commands.Cog):
                 start = user_shikigamis_page * 10 - 10
                 end = user_shikigamis_page * 10
 
-                embed = discord.Embed(color=0xffff80, description="".join(description[start:end]))
+                embed = discord.Embed(color=user.colour, description="".join(description[start:end]))
                 embed.set_author(icon_url=user.avatar_url, name=f"{user.name}'s Shikigamis")
                 embed.set_footer(text=f"Rarity: {rarity.upper()} - Page: {user_shikigamis_page}", icon_url=icon_url)
                 await msg.edit(embed=embed)
@@ -244,7 +244,7 @@ class Economy(commands.Cog):
                 thumbnail = profile_shikigami["shikigami"][0]["thumbnail"]["pre_evo"]
                 grade_star = ":star:" * grade
 
-            embed = discord.Embed(color=0xffff80,
+            embed = discord.Embed(color=user.colour,
                                   description=f"Grade: {grade_star}\n\nNormal: {normal}\nSpecial: {special}\n"
                                   f"\nSpecialty: {specialty}")
             embed.set_thumbnail(url=thumbnail)
@@ -267,7 +267,7 @@ class Economy(commands.Cog):
         pre_evo = profile_shikigami["shikigami"][0]["thumbnail"]["pre_evo"]
         evo = profile_shikigami["shikigami"][0]["thumbnail"]["evo"]
 
-        embed = discord.Embed(color=0xffff80,
+        embed = discord.Embed(color=ctx.author.colour,
                               description=f"**Skills:**\nNormal: {normal}\n"
                               f"Special: {special}\n\nSpecialty: {specialty}")
         embed.set_thumbnail(url=evo)
@@ -278,7 +278,7 @@ class Economy(commands.Cog):
     async def shikigami_update(self, ctx, *args):
         if len(args) == 0:
 
-            embed = discord.Embed(color=0xffff80,
+            embed = discord.Embed(color=ctx.author.colour,
                                   description="Refer to sample correct command format:\n\n"
                                               "`;update <rarity> <shikigami> <normal_skill> <special_skill> "
                                               "<pre-evo image link> <evo image link>`\n\nFor every <> replace spaces "
@@ -328,7 +328,7 @@ class Economy(commands.Cog):
         profile_my_shikigami = users.find_one({"user_id": str(user.id)},
                                               {"_id": 0, "shikigami": {"$elemMatch": {"name": query}}})
         if query == "":
-            embed = discord.Embed(color=0xffff80, title=":gem: Shikigami Evolution",
+            embed = discord.Embed(color=user.colour, title=":gem: Shikigami Evolution",
                                   description=":small_orange_diamond:SP - pre-evolved\n:small_orange_diamond:SSR - "
                                               "requires 1 dupe of the same kind\n:small_orange_diamond:SR - requires "
                                               "10 dupes of the same kind\n:small_orange_diamond:R - requires 20 dupes "

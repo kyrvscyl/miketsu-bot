@@ -46,7 +46,7 @@ async def friendship_levelup(ctx, code, giver, receiver):
 
             rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, bond_current)) + 1
 
-            embed = discord.Embed(color=0xffff80,
+            embed = discord.Embed(color=giver.colour,
                                   description=f"Level: `{level}`\n"
                                   f"Total points: `{bond_current}`{emoji_f}\n"
                                   f"Server Rank: `{rank}`")
@@ -80,7 +80,7 @@ class Friendship(commands.Cog):
                     list_rank.append((ship["code"], ship["points"]))
 
                 rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, ship["points"])) + 1
-                embed = discord.Embed(color=0xffff80,
+                embed = discord.Embed(color=query1.colour,
                                       description=f"Level: `{ship['level']}`\n"
                                       f"Total points: `{ship['points']}`{emoji_f}\n"
                                       f"Server Rank: `{rank}`")
@@ -101,7 +101,7 @@ class Friendship(commands.Cog):
                     list_rank.append((ship["code"], ship["points"]))
 
                 rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, ship["points"])) + 1
-                embed = discord.Embed(color=0xffff80,
+                embed = discord.Embed(color=query2.colour,
                                       description=f"Level: `{ship['level']}`\n"
                                       f"Total points: `{ship['points']}`{emoji_f}\n"
                                       f"Server Rank: `{rank}`")
@@ -120,7 +120,7 @@ class Friendship(commands.Cog):
 
         # Checks if no user mentioned
         if receiver is None:
-            embed = discord.Embed(color=0xffff80,
+            embed = discord.Embed(color=giver.colour,
                                   title="{} Friendship System".format("<:friendship:555630314056318979>"),
                                   description="Send & receive friendship points: `;fp @mention`\n"
                                               "Show ship's information: `;ship @mention`\n"
@@ -199,7 +199,7 @@ class Friendship(commands.Cog):
 
             rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, bond_current)) + 1
 
-            embed = discord.Embed(color=0xffff80,
+            embed = discord.Embed(color=ctx.author.colour,
                                   description=f"Level: `{level}`\n"
                                   f"Total points: `{bond_current}`{emoji_f}\n"
                                   f"Server Rank: `{rank}`")

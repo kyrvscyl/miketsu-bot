@@ -20,26 +20,33 @@ class Events(commands.Cog):
     # Whenever a shard post is pinned/edited
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
-        request = books.find_one({"server": f"{payload.data['guild_id']}"},
-                                 {"_id": 0, "shard-trading": 1, "headlines": 1})
+
         if "pinned" not in payload.data:
             return
 
-        elif str(payload.data["channel_id"]) == request["shard-trading"] and payload.data["pinned"] is True:
-            time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %I:%M EST")
-            headlines = self.client.get_channel(int(request["headlines"]))
-            user = self.client.get_user(int(payload.data["author"]["id"]))
-            shard_trading = self.client.get_channel(int(request["shard-trading"]))
+        elif payload.data["pinned"] is True:
+            try:
+                request = books.find_one({"server": f"{payload.data['guild_id']}"},
+                                         {"_id": 0, "shard-trading": 1, "headlines": 1})
 
-            embed = discord.Embed(color=0xffff80, title=f"{user.name} is looking for shards!",
-                                  description=f"{payload.data['content']}")
+                if str(payload.data["channel_id"]) == request["shard-trading"]:
+                    time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %I:%M EST")
+                    headlines = self.client.get_channel(int(request["headlines"]))
+                    user = self.client.get_user(int(payload.data["author"]["id"]))
+                    shard_trading = self.client.get_channel(int(request["shard-trading"]))
 
-            if len(payload.data["attachments"]) != 0:
-                embed.set_image(url=payload.data["attachments"][0]["url"])
+                    embed = discord.Embed(color=0xffff80, title=f"{user.name} is looking for shards!",
+                                          description=f"{payload.data['content']}")
 
-            embed.set_thumbnail(url=user.avatar_url)
-            embed.set_footer(text=f"#{shard_trading.name} | {time_stamp}")
-            await headlines.send(embed=embed)
+                    if len(payload.data["attachments"]) != 0:
+                        embed.set_image(url=payload.data["attachments"][0]["url"])
+
+                    embed.set_thumbnail(url=user.avatar_url)
+                    embed.set_footer(text=f"#{shard_trading.name} | {time_stamp}")
+                    await headlines.send(embed=embed)
+
+            except KeyError:
+                print(payload.data["author"]["id"])
 
     # Whenever a member joins
     @commands.Cog.listener()

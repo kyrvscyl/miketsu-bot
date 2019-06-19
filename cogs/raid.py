@@ -69,7 +69,7 @@ async def raid_calculation(victim, raider, ctx):
         chance6 = calculate(profile_raider["R"], profile_victim["R"], 0.01)
         total_chance = round((0.5 + chance1 + chance2 + chance3 + chance4 + chance5 + chance6) * 100, 2)
 
-        embed = discord.Embed(color=0xffff80, title=":gear: Raid Calculation",
+        embed = discord.Embed(color=raider.colour, title=":gear: Raid Calculation",
                               description=f":bow_and_arrow: Raider: `{raider.name}`\n"
                               f":dart:  Victim: `{victim.name}`\n\n"
                               f":game_die: `{total_chance}%` success")
@@ -100,7 +100,7 @@ async def raid_attack(victim, raider, ctx):
         roll = random.uniform(0, 100)
 
         if roll <= total_chance:
-            embed = discord.Embed(color=0xffff80, title=":clipboard: Raid Report",
+            embed = discord.Embed(color=raider.colour, title=":clipboard: Raid Report",
                                   description=f":bow_and_arrow: Raider: `{raider.name}`\n"
                                   f":dart: Victim: `{victim.name}`\n\n:game_die: `{total_chance}%` success\n"
                                   f":trophy: `{raider.name}` prevails!\n\n"
@@ -110,7 +110,7 @@ async def raid_attack(victim, raider, ctx):
             await raid_giverewards_raider_as_winner(victim, raider)
             await ctx.channel.send(embed=embed)
         else:
-            embed = discord.Embed(color=0xac330f, title=":clipboard: Raid Report",
+            embed = discord.Embed(color=victim.colour, title=":clipboard: Raid Report",
                                   description=f":bow_and_arrow: Raider: `{raider.name}`\n"
                                   f":dart:  Victim: `{victim.name}`\n\n:game_die: `{total_chance}%` success\n"
                                   f":trophy: `{victim.name}` prevails!\n\n"

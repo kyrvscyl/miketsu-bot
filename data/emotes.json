@@ -1,6 +1,7 @@
 {
 	"sorry": {
-		"1": "https://i.imgur.com/pJrDzFa.png"
+		"1": "https://i.imgur.com/pJrDzFa.png",
+		"2": "https://i.imgur.com/0W1s0lr.png"
 	},
 	"sad": {
 		"1": "https://i.imgur.com/bOKD524.png",
@@ -13,8 +14,8 @@
 	"yes": {
 		"1": "https://i.imgur.com/l6Cna0i.png"
 	},
-	"blush": {
-		"1": "https://i.imgur.com/tJirL2W.png"
+	"shy": {
+		"1": "https://i.imgur.com/F8v5J1w.png"
 	},
 	"blank": {
 		"1": "https://i.imgur.com/Xdt9hrx.png"
@@ -38,7 +39,8 @@
 		"1": "https://i.imgur.com/Xt7PnMk.png"
 	},
 	"hello": {
-		"1": "https://i.imgur.com/8DeaQmu.png"
+		"1": "https://i.imgur.com/8DeaQmu.png",
+		"2": "https://i.imgur.com/NPTnl9A.png"
 	},
 	"hug": {
 		"1": "https://i.imgur.com/OFTZEBq.png"
@@ -94,7 +96,8 @@
 		"1": "https://i.imgur.com/JoM9xjb.png"
 	},
 	"bye": {
-		"1": "https://i.imgur.com/NDizy77.png"
+		"1": "https://i.imgur.com/NDizy77.png",
+		"2": "https://i.imgur.com/YrLEblF.png"
 	},
 	"tremble": {
 		"1": "https://i.imgur.com/YDV54DL.png"
@@ -109,5 +112,80 @@
 	},
 	"buddy": {
 		"1": "https://i.imgur.com/5ELar9q.png"
+	},
+	"ehh": {
+		"1": "https://i.imgur.com/jSj1VuU.png"
+	},
+	"what": {
+		"1": "https://i.imgur.com/VrQ127k.png"
+	},
+	"ltim": {
+		"1": "https://i.imgur.com/1tBPHtt.png"
+	},
+	"fightx2": {
+		"1": "https://i.imgur.com/vEBIyWf.png"
+	},
+	"gawk": {
+		"1": "https://i.imgur.com/PTDye1R.png"
+	},
+	"lalala": {
+		"1": "https://i.imgur.com/eTnSgrt.png"
+	},
+	"painfulsmile": {
+		"1": "https://i.imgur.com/QY9lw5h.png"
+	},
+	"ithurts": {
+		"1": "https://i.imgur.com/wSkXSuL.png"
+	},
+	"deal!": {
+		"1": "https://i.imgur.com/daY8VXE.png"
+	},
+	"cry": {
+		"1": "https://i.imgur.com/Zh1ATYV.png"
+	},
+	"yawn": {
+		"1": "https://i.imgur.com/lwHvMGt.png"
+	},
+	"notgood": {
+		"1": "https://i.imgur.com/PtV4cTH.png"
+	},
+	"hydoin": {
+		"1": "https://i.imgur.com/qh6xDrO.png"
+	},
+	"hpybday": {
+		"1": "https://i.imgur.com/0lHv8xr.png"
+	},
+	"nono": {
+		"1": "https://i.imgur.com/Q9u4WZ4.png"
+	},
+	"ciodawg": {
+		"1": "https://i.imgur.com/ZVdRgCE.png"
+	},
+	"alone": {
+		"1": "https://i.imgur.com/cyyyr56.png"
+	},
+	"jhtwatch": {
+		"1": "https://i.imgur.com/f0F8eyG.png"
+	},
+	"kneel": {
+		"1": "https://i.imgur.com/fhLriRS.png"
+	},
+	"thissucks": {
+		"1": "https://i.imgur.com/fhLriRS.png"
+	},
+	"cleaningup": {
+		"1": "https://i.imgur.com/VCerBFv.png"
+	},
+	"marryme": {
+		"1": "https://i.imgur.com/PRjyr2T.png"
+	},
+	"hmph": {
+		"1": "https://i.imgur.com/Vo67LoR.png"
+	},
+	"ily": {
+		"1": "https://i.imgur.com/IvN7e2i.png"
+	},
+	"comeone": {
+		"1": "https://i.imgur.com/ES0veLg.png"
 	}
 }

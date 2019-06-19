@@ -115,7 +115,7 @@ async def summon_perform(ctx, user, amulet_pull):
     for entry in summon_pull:
         description += ":small_orange_diamond:{}\n".format(entry[1])
 
-    embed = discord.Embed(color=0xffff4a, title=":confetti_ball: Results", description=description)
+    embed = discord.Embed(color=user.colour, title=":confetti_ball: Results", description=description)
 
     if amulet_pull == 10:
         embed.set_footer(text=f"{f_sp}; {f_ssr}; {f_sr}; {f_r}")

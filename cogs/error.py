@@ -20,7 +20,7 @@ class Error(commands.Cog):
         time_stamp = datetime.now().strftime("%d.%b %Y %H:%M:%S")
         channel = self.client.get_channel(584631677804871682)
 
-        embed = discord.Embed(color=0xffff80, title=f"{ctx.author} triggered an error")
+        embed = discord.Embed(color=ctx.author.colour, title=f"{ctx.author} triggered an error")
         embed.add_field(name="Command: {}".format(ctx.command), value=error)
         embed.set_footer(text="{}".format(time_stamp))
         await channel.send(embed=embed)

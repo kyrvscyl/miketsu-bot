@@ -135,7 +135,7 @@ class Encounter(commands.Cog):
 
         question = random.choice(questions)
 
-        embed = discord.Embed(color=0xffff80, description=f":grey_question:Who is this shikigami: {question}")
+        embed = discord.Embed(color=user.colour, description=f":grey_question:Who is this shikigami: {question}")
         embed.set_author(name="Demon Quiz")
         embed.set_footer(text=f"Quiz for {user.name}. 10 sec | 2 guesses", icon_url=user.avatar_url)
 
@@ -187,7 +187,7 @@ class Encounter(commands.Cog):
         cost_item = tuple(dict.keys(rewards[str(roll)]["cost"]))[0]
         cost_amount = tuple(dict.values(rewards[str(roll)]["cost"]))[0]
 
-        embed = discord.Embed(color=0xffff80,
+        embed = discord.Embed(color=user.colour,
                               description=f"A treasure box containing {offer_amount:,d}{get_emoji(offer_item)}\n"
                               f"It opens using {cost_amount:,d}{get_emoji(cost_item)}")
         embed.set_footer(text=f"Found by {user.name}", icon_url=user.avatar_url)
@@ -244,7 +244,7 @@ class Encounter(commands.Cog):
 
         boss_hp_remaining = round(((boss_currenthp / boss_totalhp) * 100), 2)
 
-        embed = discord.Embed(color=0xffff80,
+        embed = discord.Embed(color=user.colour,
                               description=f"The Rare Boss `{boss_select}` has been triggered!\n"
                               f"Boss Level: `{boss_lvl}`\nRemaining Hp: `{boss_hp_remaining}%`\n\nMax players: 10\n"
                               f""f"Click the 🏁 to participate in the assembly!")
@@ -450,7 +450,7 @@ class Encounter(commands.Cog):
                           ":small_orange_diamond:Namazu\n\n" \
                           "Use `;binfo <boss_name>`"
 
-            embed = discord.Embed(color=0xffff80, title="Show Rare Boss Stats", description=description)
+            embed = discord.Embed(color=ctx.author.colour, title="Show Rare Boss Stats", description=description)
             embed.set_thumbnail(url=self.client.user.avatar_url)
             await ctx.channel.send(embed=embed)
 

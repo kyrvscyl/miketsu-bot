@@ -79,13 +79,13 @@ class Leaderboard(commands.Cog):
 
         title = ":trophy: SSR LeaderBoard"
 
-        embed1 = discord.Embed(color=0xffff80, title=title, description=description1)
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
 
-        embed2 = discord.Embed(color=0xffff80, title=title, description=description2)
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
         embed2.set_footer(text="page 2")
 
-        embed3 = discord.Embed(color=0xffff80, title=title, description=description3)
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
@@ -132,13 +132,13 @@ class Leaderboard(commands.Cog):
 
         title = "{} Medal LeaderBoard".format("<:medal:573071121545560064>")
 
-        embed1 = discord.Embed(color=0xffff80, title=title, description=description1)
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
 
-        embed2 = discord.Embed(color=0xffff80, title=title, description=description2)
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
         embed2.set_footer(text="page 2")
 
-        embed3 = discord.Embed(color=0xffff80, title=title, description=description3)
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
@@ -186,13 +186,13 @@ class Leaderboard(commands.Cog):
 
         title = ":arrow_heading_up: Level LeaderBoard"
 
-        embed1 = discord.Embed(color=0xffff80, title=title, description=description1)
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
 
-        embed2 = discord.Embed(color=0xffff80, title=title, description=description2)
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
         embed2.set_footer(text="page 2")
 
-        embed3 = discord.Embed(color=0xffff80, title=title, description=description3)
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
@@ -239,13 +239,13 @@ class Leaderboard(commands.Cog):
 
         title = f"{emoji_a} Spender LeaderBoard"
 
-        embed1 = discord.Embed(color=0xffff80, title=title, description=description1)
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
 
-        embed2 = discord.Embed(color=0xffff80, title=title, description=description2)
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
         embed2.set_footer(text="page 2")
 
-        embed3 = discord.Embed(color=0xffff80, title=title, description=description3)
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
@@ -292,13 +292,13 @@ class Leaderboard(commands.Cog):
 
         title = f"{emoji_f} Friendship LeaderBoard"
 
-        embed1 = discord.Embed(color=0xffff80, title=title, description=description1)
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
 
-        embed2 = discord.Embed(color=0xffff80, title=title, description=description2)
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
         embed2.set_footer(text="page 2")
 
-        embed3 = discord.Embed(color=0xffff80, title=title, description=description3)
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
@@ -346,13 +346,13 @@ class Leaderboard(commands.Cog):
 
         title = ":ship: Ships LeaderBoard"
 
-        embed1 = discord.Embed(color=0xffff80, title=title, description=description1)
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
 
-        embed2 = discord.Embed(color=0xffff80, title=title, description=description2)
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
         embed2.set_footer(text="page 2")
 
-        embed3 = discord.Embed(color=0xffff80, title=title, description=description3)
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
