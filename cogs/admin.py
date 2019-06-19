@@ -11,6 +11,7 @@ from datetime import datetime
 from discord.ext import commands
 from cogs.mongo.db import daily, boss, members
 
+# Timezone
 tz_target = pytz.timezone("America/Atikokan")
 
 # Global Variables
@@ -184,13 +185,13 @@ class Admin(commands.Cog):
         elif args[0].lower() == "show" and len(args) == 3 and args[1].lower() == "all":
             await self.management_show_guild_first(ctx, args)
 
-        elif args[0].lower() == "show" and len(args) == 2 and args[1].lower() != "all" and args[
-            1].lower() not in fields:
+        elif args[0].lower() == "show" and len(args) == 2 and args[1].lower() != "all" \
+                and args[1].lower() not in fields:
             await self.management_show_profile(ctx, args)
 
         # ;m show status <value>
-        elif args[0].lower() == "show" and len(args) == 3 and args[1].lower() == "status" and args[2].lower() in \
-                status_values:
+        elif args[0].lower() == "show" and len(args) == 3 and args[1].lower() == "status" \
+                and args[2].lower() in status_values:
             await self.management_show_field_status(ctx, args)
 
         # ;m show role <value>
@@ -205,7 +206,7 @@ class Admin(commands.Cog):
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         query_list = []
 
-        for member in members.find({"role":{"$in": ["Officer", "Member", "Leader"]}},
+        for member in members.find({"role": {"$in": ["Officer", "Member", "Leader"]}},
                                    {"_id": 0, "name": 1, "role": 1, "#": 1}).sort([("#", 1)]):
 
             if member['role'] == "Leader":
@@ -265,7 +266,7 @@ class Admin(commands.Cog):
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         query_list = []
 
-        for member in members.find({"name_lower": {"$regex": "^{}".format(args[2].lower())}},
+        for member in members.find({"name_lower": {"$regex": f"^{args[2].lower()}"}},
                                    {"_id": 0, "name": 1, "role": 1, "#": 1}).sort([("name_lower", 1)]):
 
             if member['role'] == "Leader":
@@ -508,11 +509,11 @@ class Admin(commands.Cog):
                 embed.add_field(inline=True, name="🗒 Notes", value="No notes yet.")
 
             elif len(member["notes"]) != 0:
-                note_formatted = ""
+                notes = ""
                 for note in member["notes"]:
                     entry = f"[{note['time']} | {note['officer']}]: {note['note']}\n"
-                    note_formatted += entry
-                embed.add_field(inline=True, name="🗒 Notes", value=note_formatted)
+                    notes += entry
+                embed.add_field(inline=True, name="🗒 Notes", value=notes)
 
             embed.set_footer(text=f"Queried on {time}")
             embed.set_thumbnail(url=ctx.guild.icon_url)
