@@ -108,3 +108,10 @@ debug.log
 backup.zip
 db.py
 cogs/mongo/db.py
+.idea/dictionaries/kv_ca.xml
+.idea/inspectionProfiles/Project_Default.xml
+.idea/miketsu-bot.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
