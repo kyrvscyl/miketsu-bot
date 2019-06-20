@@ -18,11 +18,11 @@ async def add_experience(user, exp):
 async def level_up(user, ctx):
     exp = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1})["experience"]
     level = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"]
-    level_end = int(exp ** 0.3)
+    level_end = int(exp ** 0.3556302501) # 0.3556302501
 
     # Add one level
     if level < level_end:
-        level_next = 5 * (round(((level + 2) ** 3.3333333333) / 5))
+        level_next = 5 * (round(((level + 2) ** 2.811909279) / 5))
         users.update_one({"user_id": str(user.id)}, {"$set": {"level_exp_next": level_next}})
         users.update_one({"user_id": str(user.id)},
                          {"$inc": {"jades": 150, "amulets": 10, "coins": 100000, "level": level_end}})
