@@ -58,11 +58,16 @@ class Emotes(commands.Cog):
                 return
 
             else:
+                if message.author.nick is None:
+                    user = message.author.name
+                else:
+                    user = message.author.nick
+
                 color = message.author.colour
                 selection = [v for v in emotes[action_recognized].values()]
                 thumbnail = random.choice(selection)
                 embed = discord.Embed(color=color)
-                embed.set_footer(text=f"pulled by {message.author.nick}", icon_url=message.author.avatar_url)
+                embed.set_footer(text=f"pulled by {user}", icon_url=message.author.avatar_url)
                 embed.set_image(url=thumbnail)
                 await message.channel.send(embed=embed)
                 await message.delete()
