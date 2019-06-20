@@ -2,11 +2,13 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-from datetime import datetime
 import asyncio
+from datetime import datetime
+
 import discord
 import pytz
 from discord.ext import tasks, commands
+
 from cogs.mongo.db import books
 
 # Get the clock channels

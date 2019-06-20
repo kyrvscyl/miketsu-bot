@@ -2,9 +2,10 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-import discord
 import json
 import random
+
+import discord
 from discord.ext import commands
 
 with open("data/emotes.json", "r") as f:

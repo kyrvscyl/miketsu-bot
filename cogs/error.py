@@ -2,9 +2,10 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
+from datetime import datetime
+
 import discord
 import pytz
-from datetime import datetime
 from discord.ext import commands
 
 # Timezone

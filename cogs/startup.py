@@ -4,8 +4,10 @@ kyrvscyl, 2019
 """
 from datetime import datetime
 from itertools import cycle
+
 import discord
 from discord.ext import tasks, commands
+
 from cogs.mongo.db import bounty
 
 status = cycle(["with the peasants", "with their feelings", "fake Onmyoji", "with Susabi"])

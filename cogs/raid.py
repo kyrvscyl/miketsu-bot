@@ -2,9 +2,11 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-import discord
 import random
+
+import discord
 from discord.ext import commands
+
 from cogs.mongo.db import users, daily
 
 # Global Variables

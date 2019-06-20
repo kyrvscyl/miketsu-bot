@@ -3,9 +3,11 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 from datetime import datetime
+
 import discord
 import pytz
 from discord.ext import commands
+
 from cogs.mongo.db import books, users
 
 # Timezone

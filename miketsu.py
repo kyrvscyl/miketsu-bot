@@ -4,8 +4,10 @@ kyrvscyl, 2019
 """
 
 import os
+
 import discord
 from discord.ext import commands
+
 from cogs.mongo.db import shikigamis
 
 # Directory/ Bot Name

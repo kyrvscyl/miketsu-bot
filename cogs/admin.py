@@ -4,11 +4,13 @@ kyrvscyl, 2019
 """
 
 import asyncio
-import discord
-import pytz
 import re
 from datetime import datetime
+
+import discord
+import pytz
 from discord.ext import commands
+
 from cogs.mongo.db import daily, boss, members
 
 # Timezone
@@ -112,7 +114,7 @@ class Admin(commands.Cog):
                 time1 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
                 time2 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d")
 
-                profile = {"#": count, "name": args[2], "role": args[1].title(), "status": "< None >",
+                profile = {"#": count, "name": args[2], "role": args[1].title(), "status": "Active",
                            "status_update1": time1, "status_update2": time2, "country": "<CC>", "timezone": "['/']",
                            "notes": [], "name_lower": args[2].lower()}
                 members.insert_one(profile)
@@ -175,7 +177,7 @@ class Admin(commands.Cog):
 
         # ;m show all
         elif args[0].lower() == "show" and len(args) == 2 and args[1].lower() == "all":
-            await self.management_show_guild(ctx, args)
+            await self.management_show_guild_specific(ctx, args)
 
         # ;m show all guild
         elif args[0].lower() == "show" and len(args) == 3 and args[1].lower() == "all" and args[2].lower() == "guild":
@@ -207,7 +209,7 @@ class Admin(commands.Cog):
         query_list = []
 
         for member in members.find({"role": {"$in": ["Officer", "Member", "Leader"]}},
-                                   {"_id": 0, "name": 1, "role": 1, "#": 1}).sort([("#", 1)]):
+                                   {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}).sort([("#", 1)]):
 
             if member['role'] == "Leader":
                 role = "LDR"
@@ -216,12 +218,27 @@ class Admin(commands.Cog):
             elif member['role'] == "Officer":
                 role = "OFR"
 
+            if member['status'] == "Active":
+                status = "ACTV"
+            elif member['status'] == "Inactive":
+                status = "INAC"
+            elif member['status'] == "On-leave":
+                status = "ONLV"
+            elif member['status'] == "Kicked":
+                status = "KCKD"
+            elif member['status'] == "Semi-active":
+                status = "SMAC"
+            elif member['status'] == "Away":
+                status = "AWAY"
+            elif member['status'] == "Left":
+                status = "LEFT"
+
             if member['#'] < 10:
-                query_list.append(f"`#00{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#00{member['#']}: {role}` | `{status}` | {member['name']}\n")
             elif member['#'] < 100:
-                query_list.append(f"`#0{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#0{member['#']}: {role}` | `{status}` | {member['name']}\n")
             elif member['#'] >= 100:
-                query_list.append(f"`#{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#{member['#']}: {role}` | `{status}` | {member['name']}\n")
 
         description = "".join(query_list[0:20])
         embed = discord.Embed(color=0xffff80, title="🔱 Guild Registry", description=f"{description}")
@@ -267,7 +284,7 @@ class Admin(commands.Cog):
         query_list = []
 
         for member in members.find({"name_lower": {"$regex": f"^{args[2].lower()}"}},
-                                   {"_id": 0, "name": 1, "role": 1, "#": 1}).sort([("name_lower", 1)]):
+                                   {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}).sort([("name_lower", 1)]):
 
             if member['role'] == "Leader":
                 role = "LDR"
@@ -278,12 +295,27 @@ class Admin(commands.Cog):
             elif member['role'] == "Officer":
                 role = "OFR"
 
+            if member['status'] == "Active":
+                status = "ACTV"
+            elif member['status'] == "Inactive":
+                status = "INAC"
+            elif member['status'] == "On-leave":
+                status = "ONLV"
+            elif member['status'] == "Kicked":
+                status = "KCKD"
+            elif member['status'] == "Semi-active":
+                status = "SMAC"
+            elif member['status'] == "Away":
+                status = "AWAY"
+            elif member['status'] == "Left":
+                status = "LEFT"
+
             if member['#'] < 10:
-                query_list.append(f"`#00{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#00{member['#']}: {role}` | `{status}` | {member['name']}\n")
             elif member['#'] < 100:
-                query_list.append(f"`#0{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#0{member['#']}: {role}` | `{status}` | {member['name']}\n")
             elif member['#'] >= 100:
-                query_list.append(f"`#{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#{member['#']}: {role}` | `{status}` | {member['name']}\n")
 
         description = "".join(query_list[0:20])
         embed = discord.Embed(color=0xffff80, title="🔱 Guild Registry", description=f"{description}")
@@ -324,7 +356,7 @@ class Admin(commands.Cog):
             except asyncio.TimeoutError:
                 return False
 
-    async def management_show_guild(self, ctx, args):
+    async def management_show_guild_specific(self, ctx, args):
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         query_list = []
 
@@ -340,12 +372,27 @@ class Admin(commands.Cog):
             elif member['role'] == "Officer":
                 role = "OFR"
 
+            if member['status'] == "Active":
+                status = "ACTV"
+            elif member['status'] == "Inactive":
+                status = "INAC"
+            elif member['status'] == "On-leave":
+                status = "ONLV"
+            elif member['status'] == "Kicked":
+                status = "KCKD"
+            elif member['status'] == "Semi-active":
+                status = "SMAC"
+            elif member['status'] == "Away":
+                status = "AWAY"
+            elif member['status'] == "Left":
+                status = "LEFT"
+
             if member['#'] < 10:
-                query_list.append(f"`#00{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#00{member['#']}: {role}` | `{status}` | {member['name']}\n")
             elif member['#'] < 100:
-                query_list.append(f"`#0{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#0{member['#']}: {role}` | `{status}` | {member['name']}\n")
             elif member['#'] >= 100:
-                query_list.append(f"`#{member['#']}: {role}` | {member['name']}\n")
+                query_list.append(f"`#{member['#']}: {role}` | `{status}` | {member['name']}\n")
 
         description = "".join(query_list[0:20])
         embed = discord.Embed(color=0xffff80, title="🔱 Guild Registry", description=f"{description}")

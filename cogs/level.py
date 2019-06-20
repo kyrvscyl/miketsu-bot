@@ -3,6 +3,7 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 from discord.ext import commands
+
 from cogs.mongo.db import users
 
 
