@@ -103,6 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+susabi.py
 test.py
 debug.log
 backup.zip
