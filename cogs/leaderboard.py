@@ -385,8 +385,8 @@ class Leaderboard(commands.Cog):
     async def leaderboard_post_streak(self, ctx):
         streakboard1 = []
 
-        for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_record": 1}):
-            streakboard1.append((self.client.get_user(int(user["user_id"])).name, user["SSR_record"]))
+        for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
+            streakboard1.append((self.client.get_user(int(user["user_id"])).name, user["SSR_current"]))
 
         streakboard2 = sorted(streakboard1, key=lambda x: x[1], reverse=True)
 

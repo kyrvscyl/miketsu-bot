@@ -20,15 +20,14 @@ emoji_a = "<:amulet:573071120685596682>"
 
 
 async def frame_starlight(ctx):
-    server = ctx.guild
-    starlight_role = discord.utils.get(server.roles, name="Starlight Sky")
+    starlight_role = discord.utils.get(ctx.guild.roles, name="Starlight Sky")
 
     streak_list = []
     for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
         streak_list.append((user["user_id"], user["SSR_current"]))
 
     streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
-    starlight_new = server.get_member(int(streak_list_new[0][0]))
+    starlight_new = ctx.guild.get_member(int(streak_list_new[0][0]))
 
     if len(starlight_role.members) == 0:
         await starlight_new.add_roles(starlight_role)

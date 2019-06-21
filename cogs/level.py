@@ -21,6 +21,10 @@ async def level_up(user, ctx):
     level = profile["level"]
     level_end = int(exp ** 0.3556302501)  # 0.3556302501
 
+    # Corrects the level
+    if level > level_end:
+        users.update_one({"user_id": str(user.id)}, {"$set": {"level": level_end}})
+
     # Add one level
     if level < level_end:
         level_next = 5 * (round(((level + 2) ** 2.811909279) / 5))
