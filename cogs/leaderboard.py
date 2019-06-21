@@ -7,7 +7,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users, friendship
+from cogs.mongo.db import users, friendship, streak
 
 # Global Variables
 emoji_m = "<:medal:573071121545560064>"
@@ -53,6 +53,8 @@ class Leaderboard(commands.Cog):
                 await self.leaderboard_friendship(ctx)
             elif args[0] == "ship" or args[0] == "ships":
                 await self.leaderboard_post_ship(ctx)
+            elif args[0] == "streak":
+                await self.leaderboard_post_streak(ctx)
             else:
                 await self.leaderboard_post_level(ctx)
 
@@ -347,6 +349,59 @@ class Leaderboard(commands.Cog):
             description3 += f":small_orange_diamond:{ship[0]}, x{ship[4]}{emoji_f}\n"
 
         title = ":ship: Ships LeaderBoard"
+
+        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
+        embed1.set_footer(text="page 1")
+
+        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
+        embed2.set_footer(text="page 2")
+
+        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
+        embed3.set_footer(text="page 3")
+
+        msg = await ctx.channel.send(embed=embed1)
+
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(reaction, user):
+            return user != self.client.user and reaction.message.id == msg.id
+
+        # Embed pagination max 3 pages
+        page = 1
+        while True:
+            try:
+                timeout = 60
+                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                if str(reaction.emoji) == "⬅":
+                    page -= 1
+                await msg.edit(embed=post(page, embed1, embed2, embed3))
+
+            except asyncio.TimeoutError:
+                return False
+
+    async def leaderboard_post_streak(self, ctx):
+        streakboard1 = []
+
+        for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_record": 1}):
+            streakboard1.append((self.client.get_user(int(user["user_id"])).name, user["SSR_record"]))
+
+        streakboard2 = sorted(streakboard1, key=lambda x: x[1], reverse=True)
+
+        description1 = ""
+        description2 = ""
+        description3 = ""
+
+        for user in streakboard2[0:10]:
+            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}{emoji_a}\n"
+        for user in streakboard2[10:20]:
+            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}{emoji_a}\n"
+        for user in streakboard2[20:30]:
+            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}{emoji_a}\n"
+
+        title = "No SSR Streak LeaderBoard"
 
         embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
