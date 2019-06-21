@@ -49,7 +49,7 @@ class Startup(commands.Cog):
                                           "<@mention>`, `;buy`, `;summon`, `;evolve`, `;list <rarity>`, "
                                           "`;my <shikigami>`, `;shiki <shikigami>` `;friendship`\n\n"
                                           ":trophy: LeaderBoard (lb)\n`;lb level`, `;lb SSR`, `;lb medals`, "
-                                          "`;lb amulets`, `;lb fp`, `;lb ships`\n\n"
+                                          "`;lb amulets`, `;lb fp`, `;lb ships`, `;lb streak`\n\n"
                                           ":bow_and_arrow: Game play\n`;raidc`, `;raidc <@mention>`, "
                                           "`;raid <@mention>`, `;encounter`, `;binfo <boss>`\n\n"
                                           ":information_source: Information\n`;bounty <shikigami>`\n\n:heart: "
