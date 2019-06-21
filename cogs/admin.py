@@ -11,7 +11,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import daily, boss, members
+from cogs.mongo.db import daily, boss, members, users, friendship
 
 # Timezone
 tz_target = pytz.timezone("America/Atikokan")
@@ -20,6 +20,7 @@ tz_target = pytz.timezone("America/Atikokan")
 fields = ["name", "role", "status", "notes", "note"]
 roles = ["member", "ex-member", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
+emoji_j = "<:jade:555630314282811412>"
 
 
 # noinspection PyShadowingNames,PyShadowingBuiltins,PyMethodMayBeStatic,PyUnusedLocal,PyUnboundLocalVariable
@@ -48,7 +49,48 @@ class Admin(commands.Cog):
             for user_id in daily.find_one({"key": "raid"}, {"_id": 0, "key": 0}):
                 daily.update_one({"key": "raid"}, {"$set": {f"{user_id}.raid_count": 0}})
 
-            await ctx.channel.send("🎊 Daily rewards have been reset.")
+            query_list = []
+            for ship in friendship.find({}, {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}):
+                if ship["level"] > 1:
+                    rewards = ship["level"] * 25
+                    query_list.append(f":small_orange_diamond: {ship['ship_name']}, {rewards}{emoji_j}\n")
+                    users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
+                    users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
+
+            description = "".join(query_list[0:10])
+            embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
+            embed.set_footer(text="Page 1")
+            msg = await ctx.channel.send("🎊 Daily rewards have been reset.", embed=embed)
+
+            await msg.add_reaction("⬅")
+            await msg.add_reaction("➡")
+
+            def create_embed(page):
+                end = page * 10
+                start = end - 10
+                description = "".join(query_list[start:end])
+                embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
+                embed.set_footer(text=f"Page: {page}")
+                return embed
+
+            def check(reaction, user):
+                return user != self.client.user and reaction.message.id == msg.id
+
+            page = 1
+            while True:
+                try:
+                    timeout = 60
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                    if str(reaction.emoji) == "➡":
+                        page += 1
+                    elif str(reaction.emoji) == "⬅":
+                        page -= 1
+                    if page == 0:
+                        page = 1
+
+                    await msg.edit(embed=create_embed(page))
+                except asyncio.TimeoutError:
+                    return False
 
         # Resets weekly
         elif args[0] == "weekly":
