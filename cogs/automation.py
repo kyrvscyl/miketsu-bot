@@ -98,6 +98,7 @@ class Events(commands.Cog):
     # Spying members
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
+
         time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
         request = books.find_one({"server": str(before.guild.id)},
                                  {"_id": 0, "scroll-of-everything": 1, "auror-department": 1})
@@ -119,16 +120,19 @@ class Events(commands.Cog):
 
                 if changed_role1[0].name == "Auror":
                     auror_channel = self.client.get_channel(int(request["auror-department"]))
-                    await auror_channel.send(f"{after.mention} has been promoted to :fleur_de_lis: Auror")
+                    embed = discord.Embed(color=0x50e3c2,
+                                          title=f"{after.mention} has been promoted to :fleur_de_lis: Auror")
+                    embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
+                    await auror_channel.send(embed=embed)
 
         elif before.nick != after.nick:
             embed = discord.Embed(color=0x7ed321)
             embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
 
             if before.nick is None:
-                embed.add_field(inline=True, name="Before | New nickname:", value=f"{before.name} | {after.nick}")
+                embed.add_field(name="Before | New nickname:", value=f"{before.name} | {after.nick}")
             else:
-                embed.add_field(inline=True, name="Before | New nickname:", value=f"{before.nick} | {after.nick}")
+                embed.add_field(name="Before | New nickname:", value=f"{before.nick} | {after.nick}")
 
             await record_scroll.send(embed=embed)
 
