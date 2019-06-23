@@ -1,11 +1,14 @@
+"""
+Discord Miketsu Bot.
+kyrvscyl, 2019
+"""
 from pymongo import MongoClient
 
 # Mongo Database Startup
-memory = MongoClient("mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w"
-                     "=majority")
-# memory = MongoClient("mongodb://localhost:27017/")
+address = "mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/test?retryWrites=true&w=majority"
+memory = MongoClient(address)
 
-# Collections
+# Collections - Miketsu
 boss = memory["miketsu"]["boss"]
 bounty = memory["miketsu"]["bounty"]
 compensation = memory["miketsu"]["compensation"]
@@ -14,6 +17,12 @@ friendship = memory["miketsu"]["friendship"]
 shikigami = memory["miketsu"]["shikigami"]
 streak = memory["miketsu"]["streak"]
 users = memory["miketsu"]["users"]
+sendoff = memory["miketsu"]["sendoff"]
+quests = memory["miketsu"]["quests"]
+owls = memory["miketsu"]["owls"]
+
+# Collections - Bukkuman
 books = memory["bukkuman"]["books"]
 shikigamis = memory["bukkuman"]["shikigamis"]
 members = memory["bukkuman"]["members"]
+weather = memory["bukkuman"]["weather"]
