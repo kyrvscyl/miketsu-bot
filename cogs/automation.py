@@ -121,7 +121,7 @@ class Events(commands.Cog):
                 if changed_role1[0].name == "Auror":
                     auror_channel = self.client.get_channel(int(request["auror-department"]))
                     embed = discord.Embed(color=0x50e3c2,
-                                          title=f"{after.mention} has been promoted to :fleur_de_lis: Auror")
+                                          title=f"{after.nick} has been promoted to :fleur_de_lis: Auror")
                     embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
                     await auror_channel.send(embed=embed)
 
