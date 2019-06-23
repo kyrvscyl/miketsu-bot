@@ -99,7 +99,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
         time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
-        request = books.find_one({"server": str(before.guild.id)}, {"_id": 0, "scroll-of-everything": 1})
+        request = books.find_one({"server": str(before.guild.id)},
+                                 {"_id": 0, "scroll-of-everything": 1, "auror-department": 1})
         record_scroll = self.client.get_channel(int(request["scroll-of-everything"]))
 
         if before.roles != after.roles:
@@ -115,6 +116,10 @@ class Events(commands.Cog):
                 embed = discord.Embed(color=0x50e3c2, title=f"Added {changed_role1[0].name} role for {after.name}")
                 embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
                 await record_scroll.send(embed=embed)
+
+                if changed_role1[0].name == "Auror":
+                    auror_channel = self.client.get_channel(int(request["auror-department"]))
+                    await auror_channel.send(f"{after.mention} has been promoted to :fleur_de_lis: Auror")
 
         elif before.nick != after.nick:
             embed = discord.Embed(color=0x7ed321)
