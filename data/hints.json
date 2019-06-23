@@ -1,0 +1,70 @@
+{
+    "path1": {
+        "1": "Hmmm.. the letter says the Headmaster awaits your owl? What does that mean?",
+        "2": "Owls fascinate me but nocturnal and solitary in behavior. I want to own one! \ud83e\udd89",
+        "3": "In the wizarding world, they can also carry packages and \u2709 envelopes to someone or to a specific location",
+        "4": "We could try teaching our owl on how to send a letter to the Headmaster's Office. If we have one?",
+        "5": "Thought we should get an owl! There are hidden places in the Diagon Alley but they are closed at some time of the day or so I heard.."
+    },
+    "path6": {
+        "1": "It's a very old and dark house. It seems haunted :house_abandoned:",
+        "2": "And it has a mysterious door but without a doorknob",
+        "3": "A sign magically appeared at the door: 'Knock wisely. For you can only knock once but many'",
+        "4": "Well, it's a door. Have you tried command knock?",
+        "5": "Maybe twice? thrice? Idk."
+    },
+    "path8": {
+        "1": "What do you want? {}",
+        "2": "{}, in case you don't know, we secure the wizarding families' treasuries here. Now, what do you want? *glares*",
+        "3": "{}, you waste my time. I will not entertain you until the clock minute ticks zero.",
+        "4": "Well, we want to purchase something, right?",
+        "5": "Hmm.. I know we need galleons to command purchase but what do they call that room again?"
+    },
+    "path2": {
+        "1": "Now we have an owl, how to make this fluffy bird to send some items?",
+        "2": "Have you read the manuals?",
+        "3": "Hmm.. the manuals and information at the shop? Have you read it?",
+        "4": "I think I saw it somewhere in the ceiling or at the walls of the house",
+        "5": "They change depending on how you knock"
+    },
+    "path15": {
+        "1": "With this amount of galleons, we can command to purchase stuffs now"
+    },
+    "path7": {
+        "1": "Where are we supposed to get wizarding money?",
+        "2": "Are there any banks in the Diagon Alley?"
+    },
+    "path3": {
+        "1": "It sounds interesting! What is a Patronus charm, by the way?",
+        "2": "As per checking, it's a powerful defensive spell which produces a silver animal guardian",
+        "3": "Try casting the spell that summons a Patronus!"
+    },
+    "path10": {
+        "1": "Weird. It did not work? Maybe we are lacking something?",
+        "2": "I believe there's a store that sells magical rods. You know, the thing you gracefully wave",
+        "3": "I think I remember now, back at Diagon Alley, I think I saw a place that sells those",
+        "4": "It's Ollivanders!"
+    },
+    "path13": {
+        "1": "Well, I'm sure that there are different kinds of owl",
+        "2": "Maybe knock differently or knock the door as much as you can?"
+    },
+    "path18": {
+        "1": "Could be your picture here, huh?",
+        "2": "Try those in your image link?",
+        "3": "Maybe Yui or the the other Animagus can help you",
+        "4": "They can show your identification using a command, it also shows a neat square photo of you",
+        "5": "I think the numeric one is the vault number."
+    },
+    "path19": {
+        "1": "You sent off your owl in a suicide mission, smh."
+    },
+    "path20": {
+        "1": "Never torture your owl like that again",
+        "2": "You should be mindful of the weather"
+    },
+    "path4": {
+        "1": "If the weather's fine, owls can come back in 2 hours",
+        "2": "I heard owls do return faster at night"
+    }
+}
