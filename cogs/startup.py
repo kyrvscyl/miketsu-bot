@@ -10,7 +10,7 @@ from discord.ext import tasks, commands
 
 from cogs.mongo.db import bounty
 
-status = cycle(["with the peasants", "with their feelings", "fake Onmyoji", "with Susabi"])
+status = cycle(["with the peasants", "with their feelings", "fake Onmyoji", "with Susabi", "in Patronusverse"])
 
 
 # noinspection PyCallingNonCallable
