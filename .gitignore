@@ -116,3 +116,5 @@ cogs/mongo/db.py
 .idea/modules.xml
 .idea/vcs.xml
 .idea/workspace.xml
+cogs/magic.py
+data/hints.json
