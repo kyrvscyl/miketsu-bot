@@ -160,22 +160,19 @@ class Clock(commands.Cog):
             for clock_channel in clock_channels:
                 clock = self.client.get_channel(int(clock_channel))
 
-                if clock is not None:
-
-                    # noinspection PyShadowingNames
-                    def get_emoji(hour, minute):
-                        if int(minute) >= 30:
-                            emoji_clock_index = int(hour) * 2 + 1
-                        else:
-                            emoji_clock_index = int(hour) * 2
-                        emoji_clock = list_clock[int(emoji_clock_index)]
-                        return emoji_clock
-
-                    if clock_channel == "584975951788638228":
-                        name = f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}"
+                def get_emoji(hour, minute):
+                    if int(minute) >= 30:
+                        emoji_clock_index = int(hour) * 2 + 1
                     else:
-                        name = f"{get_emoji(hour_12, minute)} {time}"
-                    await clock.edit(name=name)
+                        emoji_clock_index = int(hour) * 2
+                    emoji_clock = list_clock[int(emoji_clock_index)]
+                    return emoji_clock
+
+                if clock_channel == "584975951788638228":
+                    name = f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}"
+                else:
+                    name = f"{get_emoji(hour_12, minute)} {time}"
+                await clock.edit(name=name)
 
     @commands.command(aliases=["so"])
     @commands.cooldown(1, 900, commands.BucketType.guild)
