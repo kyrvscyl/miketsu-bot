@@ -118,7 +118,7 @@ class Clock(commands.Cog):
                             await channel.delete()
 
     async def clock_update(self):
-        time = get_time().strftime("%H:%M:%S EST | %a")
+        time = get_time().strftime("%H:%M EST | %a")
         hour_minute = datetime.now(tz=tz_target).strftime("%H:%M")
         minute = datetime.now(tz=tz_target).strftime("%M")
         hour_24 = int(datetime.now(tz=tz_target).strftime("%H"))
@@ -171,11 +171,10 @@ class Clock(commands.Cog):
                         emoji_clock = list_clock[int(emoji_clock_index)]
                         return emoji_clock
 
-                    name = f"{get_emoji(hour_12, minute)} {time}"
-
                     if clock_channel == "584975951788638228":
                         name = f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}"
-
+                    else:
+                        name = f"{get_emoji(hour_12, minute)} {time}"
                     await clock.edit(name=name)
 
     @commands.command(aliases=["so"])
