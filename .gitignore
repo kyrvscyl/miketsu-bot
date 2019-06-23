@@ -106,9 +106,6 @@ venv.bak/
 susabi.py
 test.py
 debug.log
-backup.zip
-db.py
-cogs/mongo/db.py
 .idea/dictionaries/kv_ca.xml
 .idea/inspectionProfiles/Project_Default.xml
 .idea/miketsu-bot.iml
@@ -116,5 +113,3 @@ cogs/mongo/db.py
 .idea/modules.xml
 .idea/vcs.xml
 .idea/workspace.xml
-cogs/magic.py
-data/hints.json
