@@ -13,8 +13,8 @@ from discord.ext import commands
 from cogs.magic import Magic
 from cogs.magic import get_data
 from cogs.mongo.db import books, weather, sendoff, quests, owls
+from cogs.admin import Admin
 
-print(Magic)
 
 # Get the clock channels
 clock_channels = []
@@ -155,7 +155,10 @@ class Clock(commands.Cog):
                 await self.send_off_complete()
 
             if hour_minute == "00:00":
+                spell_spam = self.client.get_channel(417507997846339585)
                 await self.owls_restock()
+                await Admin(self).reset_daily(spell_spam)
+                await Admin(self).reset_boss(spell_spam)
 
             for clock_channel in clock_channels:
                 clock = self.client.get_channel(int(clock_channel))
