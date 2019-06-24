@@ -44,7 +44,8 @@ class Clock(commands.Cog):
 
     async def logging(self, msg):
         channel = self.client.get_channel(592270990894170112)
-        await channel.send(msg)
+        date_time = datetime.now(tz=tz_target).strftime("%Y-%b-%d %HH")
+        await channel.send(f"[{date_time}] " + msg)
 
     @commands.Cog.listener()
     async def on_ready(self):
