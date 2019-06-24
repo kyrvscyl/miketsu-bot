@@ -389,8 +389,8 @@ class Magic(commands.Cog):
 
                     # Specific hint revelation
                     if path == "path6" and ctx.channel.name != "eeylops-owl-emporium":
-                        await ctx.channel.send("These hints can only be revealed in the store channel")
-                        await self.logging(f"{user.name} is under path6 and used hint in the wrong channel")
+                        await user.send(f"These path hints can only be revealed in the secret channel")
+                        await self.logging(f"{user.name} is under path6 and used hint in the wrong channel! DM'ed!")
 
                     # Path 8 as Gringotts transactions, hint starts at #4
                     elif path == "path8":
@@ -404,7 +404,7 @@ class Magic(commands.Cog):
                                 embed = discord.Embed(color=user.colour, description=hints[path][hint_num])
                                 embed.set_footer(icon_url=user.avatar_url, text=f"Path {path[4::]} | Hint# {hint_num}")
                                 await user.send(embed=embed)
-                                await self.logging(f"Sent a hint for {user.name}")
+                                await self.logging(f"Sent a hint for {user.name} | {path}:{hint_num}")
 
                                 break
                             h += 1
@@ -416,6 +416,8 @@ class Magic(commands.Cog):
                     elif path == "path15" and ctx.channel.name == "gringotts-bank":
                         await self.penalize(user, cycle, points=5)
                         await ctx.channel.send(f"{user.mention}, don't we have what we wanted here already?")
+                        await self.logging(f"S{user.name} transacted with gringotts with moneybag role already"
+                                           f" | {path}")
 
                     else:
                         await self.update_hint(user, cycle, h)
@@ -425,11 +427,11 @@ class Magic(commands.Cog):
                         embed = discord.Embed(color=user.colour, description=hint)
                         embed.set_footer(icon_url=user.avatar_url, text=f"Path {path[4::]} | Hint# {hint_num}")
                         await user.send(embed=embed)
-                        await self.logging(f"Sent a hint for {user.name}")
+                        await self.logging(f"Sent a hint for {user.name} | {path}:{hint_num}")
 
                 except IndexError or KeyError:
                     await ctx.channel.send(f"{user.mention}, you have used up all your hints for the path.")
-                    await self.logging(f"{user.name} has used up all their hints")
+                    await self.logging(f"{user.name} has used up all their hints | {path}")
 
     @commands.command(
         aliases=["knock", "knockknock", "knockknockknock", "knockknockknockknock", "knockknockknockknockknock"])
@@ -550,7 +552,7 @@ class Magic(commands.Cog):
                     webhook.execute()
                     await self.logging(f"{user.name} tried to buy {owl_buy} but it has been purchased already")
             else:
-                msg = "My hearing must have been getting old. Which owl is it again?"
+                msg = "My hearing must have been getting old. Which kind of owl is it again?"
                 await self.penalize(user, cycle, points=10)
                 webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
                 webhook.execute()
