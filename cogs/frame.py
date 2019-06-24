@@ -19,15 +19,15 @@ emoji_j = "<:jade:555630314282811412>"
 emoji_a = "<:amulet:573071120685596682>"
 
 
-async def frame_starlight(ctx):
-    starlight_role = discord.utils.get(ctx.guild.roles, name="Starlight Sky")
+async def frame_starlight(guild, channel):
+    starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
 
     streak_list = []
     for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
         streak_list.append((user["user_id"], user["SSR_current"]))
 
     streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
-    starlight_new = ctx.guild.get_member(int(streak_list_new[0][0]))
+    starlight_new = guild.get_member(int(streak_list_new[0][0]))
 
     if len(starlight_role.members) == 0:
         await starlight_new.add_roles(starlight_role)
@@ -38,7 +38,7 @@ async def frame_starlight(ctx):
                               f"earned themselves the Rare Starlight Sky Frame!\n\n"
                               f":four_leaf_clover: No SSR streak as of posting: {streak_list_new[0][1]} summons!")
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-        await ctx.channel.send(embed=embed)
+        await channel.send(embed=embed)
 
     starlight_current = starlight_role.members[0]
 
@@ -46,7 +46,7 @@ async def frame_starlight(ctx):
         users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
 
         msg = f"{starlight_current.mention} has earned 2,000{emoji_j} for wielding the Starlight Sky frame for a day!"
-        await ctx.channel.send(msg)
+        await channel.send(msg)
 
     else:
         await starlight_new.add_roles(starlight_role)
@@ -61,19 +61,18 @@ async def frame_starlight(ctx):
                               f":four_leaf_clover: No SSR streak record as of posting: "
                               f"{streak_list_new[0][1]} summons!")
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-        await ctx.channel.send(embed=embed)
+        await channel.send(embed=embed)
 
 
-async def frame_blazing(ctx):
-    server = ctx.guild
-    blazing_role = discord.utils.get(server.roles, name="Blazing Sun")
+async def frame_blazing(guild, channel):
+    blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
 
     ssr_list = []
     for user in users.find({}, {"_id": 0, "user_id": 1, "SSR": 1}):
         ssr_list.append((user["user_id"], user["SSR"]))
 
     ssr_list_new = sorted(ssr_list, key=lambda x: x[1], reverse=True)
-    blazing_new = server.get_member(int(ssr_list_new[0][0]))
+    blazing_new = guild.get_member(int(ssr_list_new[0][0]))
 
     if len(blazing_role.members) == 0:
         await blazing_new.add_roles(blazing_role)
@@ -84,7 +83,7 @@ async def frame_blazing(ctx):
                               f"Sun Frame!\n\n:four_leaf_clover: Distinct SSRs under possession: {ssr_list_new[0][1]} "
                               f"shikigamis")
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
-        await ctx.channel.send(embed=embed)
+        await channel.send(embed=embed)
 
     blazing_current = blazing_role.members[0]
 
@@ -92,7 +91,7 @@ async def frame_blazing(ctx):
         users.update_one({"user_id": str(blazing_current.id)}, {"$inc": {"amulets": 10}})
 
         msg = f"{blazing_current.mention} has earned 10{emoji_a} for wielding the Blazing Sun frame for a day!"
-        await ctx.channel.send(msg)
+        await channel.send(msg)
 
     else:
         await blazing_new.add_roles(blazing_role)
@@ -106,7 +105,7 @@ async def frame_blazing(ctx):
                               f"{random.choice(comment)}\n\n:"
                               f"four_leaf_clover: Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis")
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
-        await ctx.channel.send(embed=embed)
+        await channel.send(embed=embed)
 
 
 class Frame(commands.Cog):
@@ -117,9 +116,9 @@ class Frame(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def frame(self, ctx):
-        await frame_starlight(ctx)
+        await frame_starlight(ctx.guild, ctx.channel)
         await asyncio.sleep(2)
-        await frame_blazing(ctx)
+        await frame_blazing(ctx.guild, ctx.channel)
 
 
 def setup(client):
