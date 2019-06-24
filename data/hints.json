@@ -2,7 +2,7 @@
     "path1": {
         "1": "Hmmm.. the letter says the Headmaster awaits your owl? What does that mean?",
         "2": "Owls fascinate me but nocturnal and solitary in behavior. I want to own one! \ud83e\udd89",
-        "3": "In the wizarding world, they can also carry packages and \u2709 envelopes to someone or to a specific location",
+        "3": "In the wizarding world, they can also carry packages and \u2709 to someone or to a specific location",
         "4": "We could try teaching our owl on how to send a letter to the Headmaster's Office. If we have one?",
         "5": "Thought we should get an owl! There are hidden places in the Diagon Alley but they are closed at some time of the day or so I heard.."
     },
@@ -52,7 +52,7 @@
     "path18": {
         "1": "Could be your picture here, huh?",
         "2": "Try those in your image link?",
-        "3": "Maybe Yui or the the other Animagus can help you",
+        "3": "Maybe the Animagus can help you show your identification link",
         "4": "They can show your identification using a command, it also shows a neat square photo of you",
         "5": "I think the numeric one is the vault number."
     },
