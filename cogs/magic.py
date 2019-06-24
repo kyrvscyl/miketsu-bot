@@ -1003,9 +1003,6 @@ class Magic(commands.Cog):
             webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
             webhook.execute()
             await self.logging(f"{ctx.author.name} is trying purchase again but on hour cooldown")
-        else:
-            print(error)
-            await ctx.channel.send(error)
 
 
 def setup(client):
