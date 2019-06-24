@@ -66,7 +66,8 @@ class Magic(commands.Cog):
 
     async def logging(self, msg):
         channel = self.client.get_channel(592270990894170112)
-        await channel.send(msg)
+        date_time = datetime.now(tz=tz_target).strftime("%Y-%b-%d %HH")
+        await channel.send(f"[{date_time}] " + msg)
 
     async def sendoff_owl(self, user, reaction, cycle):
         await reaction.message.channel.send("Sending off owl to the :trident: Headmaster's Tower")
@@ -151,7 +152,7 @@ class Magic(commands.Cog):
     async def penalize(self, user, cycle, points):
         quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                           {"$inc": {"quest1.$.score": -points}})
-        await self.logging(f"Penalizing {user.name} for {points}")
+        await self.logging(f"Penalizing {user.name} for {points} points")
 
     # noinspection PyUnusedLocal
     async def action_update(self, user, cycle, actions):
@@ -162,7 +163,7 @@ class Magic(commands.Cog):
     # noinspection PyUnusedLocal
     async def update_hint(self, user, cycle, hint):
         quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                          {"$set": {f"quest1.$.hints.{hint}": "unlocked"}})
+                          {"$set": {f"quest1.$.hints.{hint}": "unlocked", "timestamp": current_timestamp()}})
         quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                           {"$inc": {f"quest1.$.hints_unlocked": 1}})
         await self.logging("Updating and adding hints locked")
@@ -192,6 +193,7 @@ class Magic(commands.Cog):
         await self.logging(f"Generating secret channel: {channel_name} and its webhook")
 
     async def reaction_closed(self, message):
+        await self.logging("Secret channel is 'CLOSED': Added reactions and deleting message")
         await message.add_reaction("🇨")
         await message.add_reaction("🇱")
         await message.add_reaction("🇴")
@@ -200,7 +202,6 @@ class Magic(commands.Cog):
         await message.add_reaction("🇩")
         await asyncio.sleep(4)
         await message.delete()
-        await self.logging("Secret channel is 'CLOSED': Added reactions and deleted message")
 
     async def expecto(self, guild, user, channel, message):
         role_star = discord.utils.get(guild.roles, name="🌟")
@@ -266,7 +267,7 @@ class Magic(commands.Cog):
             embed = discord.Embed(description=description)
             embed.set_author(name=f"{ctx.message.author}'s Cycle #{cycle}", icon_url=ctx.message.author.avatar_url)
             await ctx.channel.send(embed=embed)
-            await self.logging(f"{ctx.message.author} requested to show their progress")
+            await self.logging(f"{ctx.message.author.name} requested to show their progress")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -367,13 +368,13 @@ class Magic(commands.Cog):
             t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
             delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
-            # Hint cooldown of 3 hours
-            if delta <= 2:
-                await ctx.channel.send(f"{user.mention}, you must wait for {4 - delta} hr before you can reveal a hint")
+            # Hint cooldown of 3 hours  # if delta <= 2:
+            if delta >= 101:
+                await ctx.channel.send(f"{user.mention}, you must wait for {3 - delta} hr before you can reveal a hint")
                 await self.logging(f"{user.name} used hint while on cooldown")
 
-            # More than 3 hours passed
-            elif delta >= 3:
+            # More than 3 hours passed  # elif delta >= 3:
+            elif delta <= 100:
                 with open("data/hints.json") as f:
                     hints = json.load(f)
 
@@ -593,9 +594,9 @@ class Magic(commands.Cog):
     async def create_emporium(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions = get_data(user)
-        await self.logging(f"{user.name} tried to open a secret channel {msg}")
+        await self.logging(f"{user.name} tried to open a secret channel `{msg} opened at 7AM-1PM`")
 
-        if "eeylops-owl-emporium" not in channels and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
+        if "eeylops-owl-emporium" not in channels:  # and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -609,7 +610,7 @@ class Magic(commands.Cog):
             elif path == "path15":
                 return
 
-        elif "eeylops-owl-emporium" in channels and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
+        elif "eeylops-owl-emporium" in channels:  # and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
             emporium_id = books.find_one({"server": str(guild.id)},
                                          {"eeylops-owl-emporium": 1})["eeylops-owl-emporium"]["id"]
             emporium_channel = self.client.get_channel(int(emporium_id))
@@ -626,9 +627,9 @@ class Magic(commands.Cog):
     async def create_gringotts(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions = get_data(user)
-        await self.logging(f"{user.name} tried to open a secret channel {msg}")
+        await self.logging(f"{user.name} tried to open a secret channel `{msg} opened at 9AM-2PM`")
 
-        if "gringotts-bank" not in channels and 9 <= int(current_time2()) <= 14:  # 9AM-2PM
+        if "gringotts-bank" not in channels:  # and 9 <= int(current_time2()) <= 14:  # 9AM-2PM
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -640,7 +641,7 @@ class Magic(commands.Cog):
             if path == "path7":
                 await self.update_path(user, cycle, path_new="path8")
 
-        elif "gringotts-bank" in channels and 9 <= int(current_time2()) <= 14:  # 9AM-2PM:
+        elif "gringotts-bank" in channels:  # and 9 <= int(current_time2()) <= 14:  # 9AM-2PM:
             gringotts_id = books.find_one({"server": str(guild.id)},
                                           {"gringotts-bank": 1})["gringotts-bank"]["id"]
             gringotts_channel = self.client.get_channel(int(gringotts_id))
@@ -655,9 +656,9 @@ class Magic(commands.Cog):
     async def create_ollivanders(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions = get_data(user)
-        await self.logging(f"{user.name} tried to open a secret channel {msg}")
+        await self.logging(f"{user.name} tried to open a secret channel `{msg} opened at 1PM-4PM`")
 
-        if "ollivanders" not in channels and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
+        if "ollivanders" not in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -670,7 +671,7 @@ class Magic(commands.Cog):
                 await self.update_path(user, cycle, path_new="path6")  # path_current="10"
                 await self.wand_personalise(guild, user, ollivanders, path, cycle)
 
-        elif "ollivanders" in channels and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
+        elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
             ollivanders_id = books.find_one({"server": str(guild.id)},
                                             {"ollivanders": 1})["ollivanders"]["id"]
             ollivanders_channel = self.client.get_channel(int(ollivanders_id))
