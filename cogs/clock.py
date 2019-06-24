@@ -27,7 +27,7 @@ tz_target = pytz.timezone("America/Atikokan")
 
 # Global Variables
 status = "None"
-list_clock = ["", "", "", "🕐", "🕜", "🕑", "🕒", "🕞", "🕓", "🕓", "🕔", "🕠", "🕕", "🕕", "🕖", "🕢", "🕗", "🕣",
+list_clock = ["", "", "🕐", "🕜", "🕑", "🕒", "🕞", "🕓", "🕓", "🕔", "🕠", "🕕", "🕕", "🕖", "🕢", "🕗", "🕣",
               "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"]
 
 
@@ -160,11 +160,11 @@ class Clock(commands.Cog):
             for clock_channel in clock_channels:
                 clock = self.client.get_channel(int(clock_channel))
 
-                def get_emoji(hour, minute):
-                    if int(minute) >= 30:
-                        emoji_clock_index = int(hour) * 2 + 1
+                def get_emoji(hours, minutes):
+                    if int(minutes) >= 30:
+                        emoji_clock_index = int(hours) * 2 + 1
                     else:
-                        emoji_clock_index = int(hour) * 2
+                        emoji_clock_index = int(hours) * 2
                     emoji_clock = list_clock[int(emoji_clock_index)]
                     return emoji_clock
 
