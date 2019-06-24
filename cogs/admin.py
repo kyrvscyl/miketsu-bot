@@ -156,7 +156,8 @@ class Admin(commands.Cog):
                                   description="`;m help` - shows this help\n"
                                               "`;m add` - adding new accounts\n"
                                               "`;m update` - updating member profile\n"
-                                              "`;m show` - querying the registry")
+                                              "`;m show` - querying the registry"
+                                              "`;m stats` - guild statistics")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
 
@@ -179,7 +180,7 @@ class Admin(commands.Cog):
                 time1 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
                 time2 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d")
 
-                profile = {"#": count, "name": args[2], "role": args[1].title(), "status": "Active",
+                profile = {"#": count, "name": args[2], "role": args[1].capitalize(), "status": "Active",
                            "status_update1": time1, "status_update2": time2, "country": "<CC>", "timezone": "['/']",
                            "notes": [], "name_lower": args[2].lower()}
                 members.insert_one(profile)
@@ -263,9 +264,38 @@ class Admin(commands.Cog):
         elif args[0].lower() == "show" and len(args) == 3 and args[1].lower() == "role" and args[2].lower() in roles:
             await self.management_show_field_role(ctx, args)
 
+        # ;m show role <value>
+        elif args[0].lower() == "stats" and len(args) == 1:
+            await self.management_stats(ctx)
+
         # No command hit
         else:
             await ctx.message.add_reaction("❌")
+
+    async def management_stats(self, ctx):
+        time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
+        registered_users = members.count()
+        guild_members = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}})
+        # status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
+        guild_members_actv = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "Active"})
+        guild_members_inac = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "Inactive"})
+        guild_members_onlv = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "On-leave"})
+        guild_members_smac = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "Semi-active"})
+        ex_members_away = members.count({"role": "Ex-member", "status": "Away"})
+
+        description = f"Registered Accounts: `{registered_users}`\n" \
+            f"Guild Occupancy: `{guild_members}/160`\n" \
+            f"▫ Active: `{guild_members_actv}`\n" \
+            f"▫ Semi-active: `{guild_members_smac}`\n" \
+            f"▫ Inactive: `{guild_members_inac}`\n" \
+            f"▫ On-leave: `{guild_members_onlv}`\n" \
+            f"🔹 Away: `{ex_members_away}`"
+
+        msg = f"Estimated guild quests per week: {guild_members_actv*90 + guild_members_smac*30:,d}"
+        embed = discord.Embed(color=0xffff80, title="🔱 Guild Statistics", description=f"{description}")
+        embed.set_footer(text=f"Queried on {time}")
+        embed.set_thumbnail(url=ctx.guild.icon_url)
+        await ctx.channel.send(msg, embed=embed)
 
     async def management_show_guild_current(self, ctx, args):
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
