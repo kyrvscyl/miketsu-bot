@@ -35,7 +35,7 @@ class Admin(commands.Cog):
         else:
             return singular
 
-    @commands.command(aliases="specialrole")
+    @commands.command(aliases=["specialrole"])
     @commands.is_owner()
     async def post_specialrole(self, ctx):
         embed = discord.Embed(title="Special Roles", colour=discord.Colour(0x50e3c2),
