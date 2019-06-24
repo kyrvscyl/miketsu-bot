@@ -35,79 +35,102 @@ class Admin(commands.Cog):
         else:
             return singular
 
+    @commands.command(aliases="specialrole")
+    @commands.is_owner()
+    async def post_specialrole(self, ctx):
+        embed = discord.Embed(title="Special Roles", colour=discord.Colour(0x50e3c2),
+                              description="Members can react to multiple roles below\n"
+                                          "Clearing your reaction removes the role")
+
+        embed.add_field(name=":books: Apprentice",
+                        value="Patronus can apply as long term associate and later on graduate to Auror", inline=False)
+        embed.add_field(name=":tada: Funfun", value="Mentionable role for people looking for playmates", inline=False)
+        embed.add_field(name=":mag: Coop Find",
+                        value="Mentionable role if you're looking for accompany quest completion", inline=False)
+        embed.add_field(name=":checkered_flag: Boss Busters", value="Mentionable role for rare boss assembly spawns",
+                        inline=False)
+
+        await ctx.channel.send(embed=embed)
+
+    async def reset_daily(self, channel):
+        for entry in daily.find({"key": "daily"}, {"key": 0, "_id": 0}):
+            for user_id in entry:
+                daily.update_one({"key": "daily"}, {"$set": {f"{user_id}.rewards": "unclaimed"}})
+
+        for user_id in daily.find_one({"key": "raid"}, {"_id": 0, "key": 0}):
+            daily.update_one({"key": "raid"}, {"$set": {f"{user_id}.raid_count": 0}})
+
+        query_list = []
+        for ship in friendship.find({}, {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}):
+            if ship["level"] > 1:
+                rewards = ship["level"] * 25
+                query_list.append(f":small_orange_diamond: {ship['ship_name']}, {rewards}{emoji_j}\n")
+                users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
+                users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
+
+        description = "".join(query_list[0:10])
+        embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
+        embed.set_footer(text="Page 1")
+        msg = await channel.send("🎊 Daily rewards have been reset.", embed=embed)
+
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def create_embed(page):
+            end = page * 10
+            start = end - 10
+            description = "".join(query_list[start:end])
+            embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
+            embed.set_footer(text=f"Page: {page}")
+            return embed
+
+        def check(reaction, user):
+            return user != self.client.user and reaction.message.id == msg.id
+
+        page = 1
+        while True:
+            try:
+                timeout = 60
+                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = 1
+
+                await msg.edit(embed=create_embed(page))
+            except asyncio.TimeoutError:
+                return False
+
+    async def reset_weekly(self, ctx):
+        for entry in daily.find({"key": "weekly"}, {"key": 0, "_id": 0}):
+            for user in entry:
+                daily.update({"key": "weekly"}, {"$set": {f"{user}.rewards": "unclaimed"}})
+
+        await ctx.channel.send("🎊 Weekly rewards have been reset.")
+
+    async def reset_boss(self, ctx):
+        boss.update_many({}, {"$set": {"discoverer": 0, "level": 0, "damage_cap": 0, "total_hp": 0, "current_hp": 0,
+                                       "challengers": [], "rewards": {}}})
+
+        await ctx.channel.send("Assembly Boss encounter has been reset.")
+
     @commands.command()
     @commands.is_owner()
     async def reset(self, ctx, *args):
 
         # Resets daily
         if args[0] == "daily":
-
-            for entry in daily.find({"key": "daily"}, {"key": 0, "_id": 0}):
-                for user_id in entry:
-                    daily.update_one({"key": "daily"}, {"$set": {f"{user_id}.rewards": "unclaimed"}})
-
-            for user_id in daily.find_one({"key": "raid"}, {"_id": 0, "key": 0}):
-                daily.update_one({"key": "raid"}, {"$set": {f"{user_id}.raid_count": 0}})
-
-            query_list = []
-            for ship in friendship.find({}, {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}):
-                if ship["level"] > 1:
-                    rewards = ship["level"] * 25
-                    query_list.append(f":small_orange_diamond: {ship['ship_name']}, {rewards}{emoji_j}\n")
-                    users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
-                    users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
-
-            description = "".join(query_list[0:10])
-            embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
-            embed.set_footer(text="Page 1")
-            msg = await ctx.channel.send("🎊 Daily rewards have been reset.", embed=embed)
-
-            await msg.add_reaction("⬅")
-            await msg.add_reaction("➡")
-
-            def create_embed(page):
-                end = page * 10
-                start = end - 10
-                description = "".join(query_list[start:end])
-                embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
-                embed.set_footer(text=f"Page: {page}")
-                return embed
-
-            def check(reaction, user):
-                return user != self.client.user and reaction.message.id == msg.id
-
-            page = 1
-            while True:
-                try:
-                    timeout = 60
-                    reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                    if str(reaction.emoji) == "➡":
-                        page += 1
-                    elif str(reaction.emoji) == "⬅":
-                        page -= 1
-                    if page == 0:
-                        page = 1
-
-                    await msg.edit(embed=create_embed(page))
-                except asyncio.TimeoutError:
-                    return False
+            await self.reset_daily(ctx.channel)
 
         # Resets weekly
         elif args[0] == "weekly":
-
-            for entry in daily.find({"key": "weekly"}, {"key": 0, "_id": 0}):
-                for user in entry:
-                    daily.update({"key": "weekly"}, {"$set": {f"{user}.rewards": "unclaimed"}})
-
-            await ctx.channel.send("🎊 Weekly rewards have been reset.")
+            await self.reset_weekly(ctx.channel)
 
         # Resets the boss
         elif args[0] == "boss":
-
-            boss.update_many({}, {"$set": {"discoverer": 0, "level": 0, "damage_cap": 0, "total_hp": 0, "current_hp": 0,
-                                           "challengers": [], "rewards": {}}})
-
-            await ctx.channel.send("Assembly Boss encounter has been reset.")
+            await self.reset_boss(ctx.channel)
 
         else:
             await ctx.channel.send("Provide a valid argument: daily, weekly, or boss")
@@ -170,10 +193,9 @@ class Admin(commands.Cog):
             embed = discord.Embed(color=0xffff80, title="🔱 Updating Members",
                                   description="`;m update {name} {field} {value}`\n"
                                               "`;m update {#} {field} {value}`")
-            embed.add_field(inline=True, name=":ribbon: Roles", value="member, ex-member, officer")
-            embed.add_field(inline=True, name=":golf: Status",
-                            value="active, inactive, on-leave, kicked, semi-active, away, left")
-            embed.add_field(inline=True, name="🗒 Notes", value="Any officer notes")
+            embed.add_field(name=":ribbon: Roles", value="member, ex-member, officer")
+            embed.add_field(name=":golf: Status", value="active, inactive, on-leave, kicked, semi-active, away, left")
+            embed.add_field(name="🗒 Notes", value="Any officer notes")
             embed.set_footer(text="Use name as field to revise name")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
@@ -203,9 +225,8 @@ class Admin(commands.Cog):
                                               "`'m show all guild` - currently in guild\n"
                                               "`;m show {name or #}`\n"
                                               "`;m show {field} {data}`")
-            embed.add_field(inline=True, name=":ribbon: Role", value="member, ex-member, officer")
-            embed.add_field(inline=True, name=":golf: Status",
-                            value="active, inactive, on-leave, kicked, semi-active, away, left")
+            embed.add_field(name=":ribbon: Role", value="member, ex-member, officer")
+            embed.add_field(name=":golf: Status", value="active, inactive, on-leave, kicked, semi-active, away, left")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
 
@@ -591,18 +612,17 @@ class Admin(commands.Cog):
         try:
             embed = discord.Embed(color=0xffff80,
                                   title=f"#{member['#']} : {member['name']} | :ribbon: {member['role']}")
-            embed.add_field(inline=True, name=":golf: Status",
-                            value=f"{member['status']} [{member['status_update1']}]")
+            embed.add_field(name=":golf: Status", value=f"{member['status']} [{member['status_update1']}]")
 
             if not member["notes"]:
-                embed.add_field(inline=True, name="🗒 Notes", value="No notes yet.")
+                embed.add_field(name="🗒 Notes", value="No notes yet.")
 
             elif len(member["notes"]) != 0:
                 notes = ""
                 for note in member["notes"]:
                     entry = f"[{note['time']} | {note['officer']}]: {note['note']}\n"
                     notes += entry
-                embed.add_field(inline=True, name="🗒 Notes", value=notes)
+                embed.add_field(name="🗒 Notes", value=notes)
 
             embed.set_footer(text=f"Queried on {time}")
             embed.set_thumbnail(url=ctx.guild.icon_url)
