@@ -111,7 +111,7 @@ class Clock(commands.Cog):
 
                     embed = discord.Embed(color=0xffff80, description=description)
                     msg = f"Your {entry['type']} has returned with a letter from the Headmaster"
-                    await Magic(self).update_path(user, cycle, path_new="path3")
+                    await Magic(self.client).update_path(user, cycle, path_new="path3")
                     await user.send(msg, embed=embed)
                     await self.logging(f"Sent {user}: Confirmation letter receipt from the Headmaster")
 
@@ -119,7 +119,7 @@ class Clock(commands.Cog):
                     user = self.client.get_user(int(entry["user_id"]))
                     msg = f"Your {entry['type']} has fully recovered"
 
-                    await Magic(self).update_path(user, cycle, path_new="path20")
+                    await Magic(self.client).update_path(user, cycle, path_new="path20")
                     await user.send(embed=msg)
 
     async def send_off_report(self):
@@ -130,7 +130,7 @@ class Clock(commands.Cog):
 
                 if entry["scenario"] == 1:
                     cycle, path, timestamp, user_hint, actions = get_data(user)
-                    await Magic(self).penalize(user, cycle, points=20)
+                    await Magic(self.client).penalize(user, cycle, points=20)
 
                 await user.send(entry["report"])
 
