@@ -200,7 +200,6 @@ class Clock(commands.Cog):
                         emoji_clock_index = (int(hours) * 2) + 2
                     else:
                         emoji_clock_index = (int(hours) * 2) + 1
-                    print(emoji_clock_index)
                     emoji_clock = list_clock[emoji_clock_index]
                     return emoji_clock
 
