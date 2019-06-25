@@ -28,8 +28,8 @@ tz_target = pytz.timezone("America/Atikokan")
 # Global Variables
 status = "None"
 list_clock = ["",  # 0
-              "🕛",  # 1
-              "🕧",  # 2
+              "",  # 1
+              "",  # 2
               "🕐",  # 3
               "🕜",  # 4
               "🕑",  # 5
@@ -51,7 +51,9 @@ list_clock = ["",  # 0
               "🕙",  # 21
               "🕥",  # 22
               "🕚",  # 23
-              "🕦"]  # 24
+              "🕦",  # 24
+              "🕛",  # 25
+              "🕧"]  # 26
 
 
 def get_time():
@@ -198,6 +200,7 @@ class Clock(commands.Cog):
                         emoji_clock_index = (int(hours) * 2) + 2
                     else:
                         emoji_clock_index = (int(hours) * 2) + 1
+                    print(emoji_clock_index)
                     emoji_clock = list_clock[emoji_clock_index]
                     return emoji_clock
 
