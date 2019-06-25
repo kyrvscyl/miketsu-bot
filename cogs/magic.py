@@ -163,7 +163,7 @@ class Magic(commands.Cog):
     # noinspection PyUnusedLocal
     async def update_hint(self, user, cycle, hint):
         quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                          {"$set": {f"quest1.$.hints.{hint}": "unlocked", "timestamp": current_timestamp()}})
+                          {"$set": {f"quest1.$.hints.{hint}": "unlocked", f"quest1.$.timestamp": current_timestamp()}})
         quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                           {"$inc": {f"quest1.$.hints_unlocked": 1}})
         await self.logging("Updating and adding hints locked")
@@ -429,8 +429,12 @@ class Magic(commands.Cog):
                         await user.send(embed=embed)
                         await self.logging(f"Sent a hint for {user.name} | {path}:{hint_num}")
 
-                except IndexError or KeyError:
-                    await ctx.channel.send(f"{user.mention}, you have used up all your hints for the path.")
+                except IndexError:
+                    await user.send(f"{user.mention}, you have used up all your hints for the path.")
+                    await self.logging(f"{user.name} has used up all their hints | {path}")
+
+                except KeyError:
+                    await user.send(f"{user.mention}, you have used up all your hints for the path.")
                     await self.logging(f"{user.name} has used up all their hints | {path}")
 
     @commands.command(
@@ -504,35 +508,60 @@ class Magic(commands.Cog):
     @commands.cooldown(1, 3600, commands.BucketType.user)
     @commands.has_role("Test")
     async def buy_items(self, ctx, *args):
-        user = ctx.author
-        role_galleons = discord.utils.get(ctx.guild.roles, name="💰")
-        role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
 
-        try:
-            query = args[0].title()
-        except IndexError:
-            self.client.get_command("buy_items").reset_cooldown(ctx)
+        if ctx.channel.name != "eeylops-owl-emporium":
             return
 
-        channel = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, str(ctx.channel.name): 1})
-        webhook_url = channel[str(ctx.channel.name)]["webhook"]
-        avatar = channel[str(ctx.channel.name)]["avatar"]
-        username = channel[str(ctx.channel.name)]["username"]
-        cycle, path, timestamp, user_hints, actions = get_data(user)
+        elif ctx.channel.name == "eeylops-owl-emporium":
 
-        if ctx.channel.name == "eeylops-owl-emporium":
+            try:
+                query = args[0].title()
+            except IndexError:
+                self.client.get_command("buy_items").reset_cooldown(ctx)
+                return
+
+            user = ctx.author
             owl_buy = f"{query} Owl"
+            cycle, path, timestamp, user_hints, actions = get_data(user)
+            channel = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, str(ctx.channel.name): 1})
+            webhook_url = channel[str(ctx.channel.name)]["webhook"]
+            avatar = channel[str(ctx.channel.name)]["avatar"]
+            username = channel[str(ctx.channel.name)]["username"]
 
-            if owl_buy in owls_list:
-                if owls.find_one({"type": f"{owl_buy}"}, {"_id": 0, "purchaser": 1})["purchaser"] == "None":
+            if owl_buy not in owls_list:
+                msg = "My hearing must have been getting old. Which kind of owl is it again?"
+                await self.penalize(user, cycle, points=10)
+                webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
+                webhook.execute()
+
+                await self.logging(f"{user.name} tried to buy {owl_buy} but its not in the available list of owls")
+                self.client.get_command("buy_items").reset_cooldown(ctx)
+
+            elif owl_buy in owls_list:
+                purchaser = owls.find_one({"type": f"{owl_buy}"}, {"_id": 0, "purchaser": 1})["purchaser"]
+
+                if purchaser != "None":
+
+                    await self.penalize(user, cycle, points=5)
+                    msg = f"My Dear, that owl has been bought earlier " \
+                        f"by {self.client.get_user(int(purchaser)).name}. Do come early tomorrow!"
+                    webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
+                    webhook.execute()
+
+                    await self.logging(f"{user.name} tried to buy {owl_buy} but it has been purchased already")
+
+                elif purchaser == "None":
+                    role_galleons = discord.utils.get(ctx.guild.roles, name="💰")
                     if user not in role_galleons.members:
                         await self.update_path(user, cycle, path_new="path7")  # path_current="13"
                         await self.penalize(user, cycle, points=5)
                         msg = f"{user.mention}, my Dear, this does not come for free."
                         webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
                         webhook.execute()
+
                         await self.logging(f"{user.name} tried to buy {owl_buy} but they have no moneybag role")
                     else:
+                        role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
                         owls.update_one({"type": f"{owl_buy}"}, {"$set": {"purchaser": str(user.id)}})
                         sendoff.insert_one({"user_id": str(user.id), "type": owl_buy})
                         await ctx.message.add_reaction("🦉")
@@ -542,22 +571,8 @@ class Magic(commands.Cog):
                         msg = "What a lovely choice of owl!"
                         webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
                         webhook.execute()
+
                         await self.logging(f"{user.name} bought {owl_buy}")
-                else:
-                    purchaser = int(owls.find_one({"type": f"{owl_buy}"}, {"_id": 0, "purchaser": 1})["purchaser"])
-                    await self.penalize(user, cycle, points=5)
-                    msg = f"My Dear, that owl has been bought earlier by {self.client.get_user(purchaser).name}. " \
-                        f"Do come early tomorrow!"
-                    webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
-                    webhook.execute()
-                    await self.logging(f"{user.name} tried to buy {owl_buy} but it has been purchased already")
-            else:
-                msg = "My hearing must have been getting old. Which kind of owl is it again?"
-                await self.penalize(user, cycle, points=10)
-                webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
-                webhook.execute()
-                await self.logging(f"{user.name} tried to buy {owl_buy} but its not in the available list of owls")
-                self.client.get_command("buy_items").reset_cooldown(ctx)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -771,6 +786,7 @@ class Magic(commands.Cog):
             elif actions == 1:
                 await self.action_update(user, cycle, actions=1)
                 await self.update_hint(user, cycle, hint="1")
+                await message.add_reaction("❎")
 
                 msg = (hints["path8"]["2"]).format(user.mention)
                 webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
@@ -849,6 +865,7 @@ class Magic(commands.Cog):
             try:
                 guess = await self.client.wait_for("message", timeout=180, check=check)
                 await guess.delete()
+                await self.update_path(user, cycle, path_new="path5")
                 answer = "Correct"
                 i = 4
 
@@ -996,12 +1013,12 @@ class Magic(commands.Cog):
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown) and str(ctx.command) == "buy_items":
             channel = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, f"{ctx.channel.name}": 1})
-            webhook_url = channel["webhook"]
-            avatar = channel["avatar"]
-            username = channel["username"]
+            webhook_url = channel[f"{ctx.channel.name}"]["webhook"]
+            avatar = channel[f"{ctx.channel.name}"]["avatar"]
+            username = channel[f"{ctx.channel.name}"]["username"]
 
             msg = f"{ctx.author.mention}, I'm sorry dear. I only cater to guests once in a while. " \
-                f"Comeback again in an hour"
+                f"Comeback again when the minute ticks zero"
             webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
             webhook.execute()
             await self.logging(f"{ctx.author.name} is trying purchase again but on hour cooldown")
