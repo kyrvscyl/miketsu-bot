@@ -66,5 +66,9 @@
     "path4": {
         "1": "If the weather's fine, owls can come back in 2 hours",
         "2": "I heard owls do return faster at night"
+    },
+    "path5": {
+        "1": "Have you tried manipulating your vault number?",
+        "2": "Convert it to alphabets? or try the reverse?"
     }
 }
