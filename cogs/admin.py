@@ -68,53 +68,22 @@ class Admin(commands.Cog):
                 users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
                 users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
 
-        description = "".join(query_list[0:10])
+        description = "".join(query_list[0:30])
         embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
-        embed.set_footer(text="Page 1")
-        msg = await channel.send("🎊 Daily rewards have been reset.", embed=embed)
+        await channel.send("🎊 Daily rewards have been reset.", embed=embed)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def create_embed(page):
-            end = page * 10
-            start = end - 10
-            description = "".join(query_list[start:end])
-            embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
-            embed.set_footer(text=f"Page: {page}")
-            return embed
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                elif str(reaction.emoji) == "⬅":
-                    page -= 1
-                if page == 0:
-                    page = 1
-
-                await msg.edit(embed=create_embed(page))
-            except asyncio.TimeoutError:
-                return False
-
-    async def reset_weekly(self, ctx):
+    async def reset_weekly(self, channel):
         for entry in daily.find({"key": "weekly"}, {"key": 0, "_id": 0}):
             for user in entry:
                 daily.update({"key": "weekly"}, {"$set": {f"{user}.rewards": "unclaimed"}})
 
-        await ctx.channel.send("🎊 Weekly rewards have been reset.")
+        await channel.send("🎊 Weekly rewards have been reset.")
 
-    async def reset_boss(self, ctx):
+    async def reset_boss(self, channel):
         boss.update_many({}, {"$set": {"discoverer": 0, "level": 0, "damage_cap": 0, "total_hp": 0, "current_hp": 0,
                                        "challengers": [], "rewards": {}}})
 
-        await ctx.channel.send("Assembly Boss encounter has been reset.")
+        await channel.send("Assembly Boss encounter has been reset.")
 
     @commands.command()
     @commands.is_owner()
