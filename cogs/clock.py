@@ -16,7 +16,6 @@ from cogs.mongo.db import books, weather, sendoff, quests, owls
 from cogs.frame import frame_starlight, frame_blazing
 from cogs.admin import Admin
 
-
 # Get the clock channels
 clock_channels = []
 for guild_clock in books.find({}, {"clock": 1, "_id": 0}):
@@ -28,8 +27,31 @@ tz_target = pytz.timezone("America/Atikokan")
 
 # Global Variables
 status = "None"
-list_clock = ["", "", "🕐", "🕜", "🕑", "🕒", "🕞", "🕓", "🕓", "🕔", "🕠", "🕕", "🕕", "🕖", "🕢", "🕗", "🕣",
-              "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"]
+list_clock = {"",   # 0
+               "🕛",  # 1
+               "🕧",  # 2
+               "🕐",  # 3
+               "🕜",  # 4
+               "🕑",  # 5
+               "🕝",  # 6
+               "🕒",  # 7
+               "🕞",  # 8
+               "🕓",  # 9
+               "🕟",  # 10
+               "🕔",  # 11
+               "🕠",  # 12
+               "🕕",  # 13
+               "🕡",  # 14
+               "🕖",  # 15
+               "🕢",  # 16
+               "🕗",  # 17
+               "🕣",  # 18
+               "🕘",  # 19
+               "🕤",  # 20
+               "🕙",  # 21
+               "🕥",  # 22
+               "🕚",  # 23
+               "🕦"}  # 24
 
 
 def get_time():
@@ -170,9 +192,9 @@ class Clock(commands.Cog):
 
                 def get_emoji(hours, minutes):
                     if int(minutes) >= 30:
-                        emoji_clock_index = int(hours) * 2 + 1
+                        emoji_clock_index = (int(hours) * 2) + 2
                     else:
-                        emoji_clock_index = int(hours) * 2
+                        emoji_clock_index = (int(hours) * 2) + 1
                     emoji_clock = list_clock[int(emoji_clock_index)]
                     return emoji_clock
 
