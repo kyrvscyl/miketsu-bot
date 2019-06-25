@@ -170,14 +170,17 @@ class Clock(commands.Cog):
 
                 return weather1, weather2
 
+            # Reset items during every after hour
             if minute == "00":
                 weather1, weather2 = generate_weather(hour_24)
+
                 await self.penalty_hour()
                 await self.actions_reset()
                 await self.clear_secrets()
                 await self.send_off_report()
                 await self.send_off_complete()
 
+            # Reset items during every after day
             if hour_minute == "00:00":
                 server = self.client.get_guild(412057028887052288)
                 spell_spam = self.client.get_channel(417507997846339585)
