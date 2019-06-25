@@ -78,7 +78,7 @@ class Magic(commands.Cog):
 
     # noinspection PyUnboundLocalVariable,PyUnusedLocal
     async def generate_owl_report(self, user, cycle):
-        profile = owls.find({"purchaser": str(user.id)}, {"_id": 0})
+        profile = sendoff.find({"user_id": str(user.id)}, {"_id": 0})
         weather1 = weather.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
         weather2 = weather.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
@@ -472,7 +472,7 @@ class Magic(commands.Cog):
                             "Simple but complex as magic!"
                     return msg, topic
                 elif x == "4":
-                    msg = "We have Barn owl, Brown owl, Screech owl, Snowy owl, Tawny owl and Barred owl. " \
+                    msg = "We have Brown, Screech, Snowy, Tawny and Barred owls. " \
                           "Find your precious feathered friend from the low price of 11 Galleons."
                     topic = "I only open the store during certain hours and weather, " \
                             "if you can't find me then no magic can!"
