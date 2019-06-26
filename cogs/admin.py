@@ -86,7 +86,7 @@ class Admin(commands.Cog):
 
         msg2 = await sorting.send(embed=embed)
         await msg2.add_reaction("🐬")
-        books.update_one({"server": str(ctx.guild.id)}, {"letter": str(msg.id)})
+        books.update_one({"server": str(ctx.guild.id)}, {"$set": {"letter": str(msg.id)}})
 
     @commands.command(aliases=["specialrole"])
     @commands.is_owner()
