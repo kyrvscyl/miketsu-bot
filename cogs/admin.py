@@ -11,7 +11,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import daily, boss, members, users, friendship
+from cogs.mongo.db import daily, boss, members, users, friendship, books
 
 # Timezone
 tz_target = pytz.timezone("America/Atikokan")
@@ -34,6 +34,56 @@ class Admin(commands.Cog):
             return singular + "s"
         else:
             return singular
+
+    @commands.command(aliases=["start"])
+    @commands.is_owner()
+    async def post_announcement_magic(self, ctx):
+        request = books.find_one({"server": f"{ctx.guild.id}"},
+                                 {"_id": 0, "sorting": 1, "patronus_role": 1, "headlines": 1})
+
+        headlines = self.client.get_channel(request["headlines"])
+        sorting = self.client.get_channel(request["sorting"])
+
+        embed = discord.Embed(title=":confetti_ball: Special Guild Contest", colour=discord.Colour(0x50e3c2),
+                              description=f"{request['patronus_role']} In late celebration of our not so recent merge "
+                              f"with Crusaders, it is timely to have our next once in awhile Discord Event!")
+
+        embed.add_field(name=":tada: Event Overview",
+                        value="Members can role-play as a wizard/witch/spirit in the wizarding server of Patronusverse "
+                              "where you will be given a quest to complete. The quest can be casually interacted in "
+                              "this server since it is an idle and riddle kind of game.")
+        embed.add_field(name=":notepad_spiral:  Game Mechanics:",
+                        value=f"`1. `You must allow direct messages from our bot Miketsu to be able to join. Type "
+                        f"`;help dm` to test if Miketsu can direct message you.\n\n`2. ` Interested players can "
+                        f"voluntarily accept the quest at the {request['sorting']} to kick start their "
+                        f"adventure.\n\n`3. `Messages sent to you may be crucial to finish the quest.\n\n`4. `Hints "
+                        f"will be available to use via `;hint`\n\n`5. `Also, once the clock ticks a new hour, "
+                        f"various events can happen, it's up for you to learn and notice them.\n\n`6. `Quest cycle "
+                        f"can be checked via `;progress` command")
+        embed.add_field(name=":goal: Scoring System",
+                        value="`1. `You will have a base score of 1000 points\n`2. `Every hour that passes reduces "
+                              "your score by 2 points\n`3. `Every hint revealed reduces your score by 10 points \n`4. "
+                              "`Certain wrong and irrelevant actions you made can reduce your score as well")
+        embed.add_field(name=":gift_heart: Rewards System",
+                        value="`1. `Two players will win the event. One is a pre-merge Patronus member and the other "
+                              "is a pre-merge Crusaders member.\n`2. `The 1st person to complete the quest will "
+                              "automatically earn themselves 1-month Discord Nitro\n`3. `Whereas, the next 5 people "
+                              "who completed the quest for the 2nd time will compete for the highest 2nd cycle score "
+                              "to earn another Discord Nitro.\n\n__Note: The 5 people who will compete for the 2nd "
+                              "reward will be of the same pre-merge Guild as opposed to the Guild of the 1st "
+                              "winner.__ Moreover, the 2nd cycle means that you need to re-do the whole quest AFTER "
+                              "you finished the 1st cycle to get a higher score than your previous one.")
+        msg = await headlines.send(embed=embed)
+
+        embed = discord.Embed(title="Quest Selection & Acceptance", colour=discord.Colour(0xa661da),
+                              description="Only when you finished your current quest, can make you able to restart a "
+                                          "new quest and have different outcome and score.")
+
+        link = f"https://discordapp.com/channels/{msg.guild.id}/{msg.channel.id}/{msg.id}"
+        embed.add_field(name=":dolphin: Quest #1: `Show us your Patronus!``",
+                        value="Learn how to summon one. Refer to the quest mechanics [here!](link)")
+
+        await sorting.send(embed=embed)
 
     @commands.command(aliases=["specialrole"])
     @commands.is_owner()
@@ -68,9 +118,40 @@ class Admin(commands.Cog):
                 users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
                 users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
 
-        description = "".join(query_list[0:30])
+        description = "".join(query_list[0:10])
         embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
-        await channel.send("🎊 Daily rewards have been reset.", embed=embed)
+        embed.set_footer(text="Page 1")
+        msg = await channel.send("🎊 Daily rewards have been reset.", embed=embed)
+
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def create_embed(page):
+            end = page * 10
+            start = end - 10
+            description = "".join(query_list[start:end])
+            embed = discord.Embed(color=0xffff80, title=":ship: Daily Ship Sail Rewards", description=description)
+            embed.set_footer(text=f"Page: {page}")
+            return embed
+
+        def check(reaction, user):
+            return user != self.client.user and reaction.message.id == msg.id
+
+        page = 1
+        while True:
+            try:
+                timeout = 60
+                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = 1
+
+                await msg.edit(embed=create_embed(page))
+            except asyncio.TimeoutError:
+                return False
 
     async def reset_weekly(self, channel):
         for entry in daily.find({"key": "weekly"}, {"key": 0, "_id": 0}):
@@ -260,7 +341,7 @@ class Admin(commands.Cog):
             f"▫ On-leave: `{guild_members_onlv}`\n" \
             f"🔹 Away: `{ex_members_away}`"
 
-        msg = f"Estimated guild quests per week: {guild_members_actv*90 + guild_members_smac*30:,d}"
+        msg = f"Estimated guild quests per week: {guild_members_actv * 90 + guild_members_smac * 30:,d}"
         embed = discord.Embed(color=0xffff80, title="🔱 Guild Statistics", description=f"{description}")
         embed.set_footer(text=f"Queried on {time}")
         embed.set_thumbnail(url=ctx.guild.icon_url)
