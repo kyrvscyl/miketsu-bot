@@ -41,8 +41,8 @@ class Admin(commands.Cog):
         request = books.find_one({"server": f"{ctx.guild.id}"},
                                  {"_id": 0, "sorting": 1, "patronus_role": 1, "headlines": 1})
 
-        headlines = self.client.get_channel(request["headlines"])
-        sorting = self.client.get_channel(request["sorting"])
+        headlines = self.client.get_channel(int(request["headlines"]))
+        sorting = self.client.get_channel(int(request["sorting"]))
 
         embed = discord.Embed(title=":confetti_ball: Special Guild Contest", colour=discord.Colour(0x50e3c2),
                               description=f"{request['patronus_role']} In late celebration of our not so recent merge "
