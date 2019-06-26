@@ -47,24 +47,26 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(title=":confetti_ball: Special Guild Contest", colour=discord.Colour(0x50e3c2),
                               description=f"{patronus.mention}, in late celebration of our not so recent merge "
-                              f"with Crusaders, it is timely to have our next once in a while Discord Event!")
+                              f"with Crusaders, it is timely to have our next once in a while Discord Event!\n")
 
         embed.add_field(name=":tada: Event Overview",
                         value="Members can role-play as a wizard/witch/spirit in the wizarding server of Patronusverse "
-                              "where you will be given a quest to complete. The quest can be casually interacted in "
-                              "this server since it is an idle and riddle kind of game.")
-        embed.add_field(name=":notepad_spiral:  Game Mechanics:",
-                        value=f"`1. `You must allow direct messages from our bot Miketsu to be able to join. Type "
-                        f"`;help dm` to test if Miketsu can direct message you.\n\n`2. ` Interested players can "
-                        f"voluntarily accept the quest at the {request['sorting']} to kick start their "
-                        f"adventure.\n\n`3. `Messages sent to you may be crucial to finish the quest.\n\n`4. `Hints "
-                        f"will be available to use via `;hint`\n\n`5. `Also, once the clock ticks a new hour, "
-                        f"various events can happen, it's up for you to learn and notice them.\n\n`6. `Quest cycle "
-                        f"can be checked via `;progress` command")
+                              "where you will be given a quest to complete. This quest can be casually interacted in "
+                              "the server and it will be an idle and riddle kind of game.\n")
+        embed.add_field(name=":notepad_spiral:  Game Mechanics",
+                        value=f"`1. `You must allow direct messages from our bot Miketsu to be able to join. "
+                        f"Use command `;help dm` to test if Miketsu can direct message you.\n"
+                        f"`2. ` Interested players can voluntarily accept the quest at the {sorting.name} to "
+                        f"kick start their adventure.\n"
+                        f"`3. `Messages sent to the players may be crucial to finish the quest.\n`"
+                        f"4. `Hints will be available to use via command `;hint`\n"
+                        f"`5. `Also, once the clock ticks a new hour, various events can happen, "
+                        f"it's up for players to learn and notice them.\n"
+                        f"`6. `Quest cycle can be checked via command `;progress`\n")
         embed.add_field(name=":goal: Scoring System",
-                        value="`1. `You will have a base score of 1000 points\n`2. `Every hour that passes reduces "
-                              "your score by 2 points\n`3. `Every hint revealed reduces your score by 10 points \n`4. "
-                              "`Certain wrong and irrelevant actions you made can reduce your score as well")
+                        value="`1. `Players will have a base score of 1000 points\n`2. `Every hour that passes reduces "
+                              "their score by 2 points\n`3. `Every hint revealed reduces their score by 10 points \n"
+                              "`4. `Certain wrong and irrelevant actions made can reduce their score as well\n")
         embed.add_field(name=":gift_heart: Rewards System",
                         value="`1. `Two players will win the event. One is a pre-merge Patronus member and the other "
                               "is a pre-merge Crusaders member.\n`2. `The 1st person to complete the quest will "
@@ -81,12 +83,13 @@ class Admin(commands.Cog):
                                           "new quest and have different outcome and score.")
 
         link = f"https://discordapp.com/channels/{msg.guild.id}/{msg.channel.id}/{msg.id}"
-        embed.add_field(name=":dolphin: Quest #1: `Show us your Patronus!``",
+        embed.add_field(name=":dolphin: Quest #1: Show us your Patronus!",
                         value=f"Learn how to summon one. Refer to the quest mechanics [here!]({link})")
 
         msg2 = await sorting.send(embed=embed)
         await msg2.add_reaction("🐬")
-        books.update_one({"server": str(ctx.guild.id)}, {"$set": {"letter": str(msg.id)}})
+        books.update_one({"server": str(ctx.guild.id)}, {"$set": {"letter": str(msg2.id)}})
+        await ctx.message.delete()
 
     @commands.command(aliases=["specialrole"])
     @commands.is_owner()

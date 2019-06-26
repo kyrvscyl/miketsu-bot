@@ -227,6 +227,8 @@ class Magic(commands.Cog):
             quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                               {"$set": {"quest1.$.status": "completed"}})
 
+            await self.logging(f"{user.name} successfully finished the quest")
+
         elif path == "path3":
             await self.update_path(user, cycle, path_new="path10")
             await message.add_reaction("❎")
@@ -238,7 +240,7 @@ class Magic(commands.Cog):
             await self.logging(f"{user.name} tried to recast the Patronus summoning spell to no avail")
 
     @commands.command(aliases=["progress"])
-    @commands.has_role("✨")
+    @commands.has_role("🐬")
     async def show_progress(self, ctx):
         if not check_quest(ctx.message.author):
             return
@@ -281,18 +283,29 @@ class Magic(commands.Cog):
         if str(payload.emoji) != "🐬":
             return
 
+        elif self.client.get_user(payload.user_id).bot is True:
+            return
+
+        server = self.client.get_guild(payload.guild_id)
+        role_dolphin = discord.utils.get(server.roles, name="🐬")
+        user = self.client.get_user(payload.user_id)
+
+        if user in role_dolphin.members:
+            return
+
         request = books.find_one({"server": f"{payload.guild_id}"},
                                  {"_id": 0, "welcome": 1, "sorting": 1, "letter": 1})
 
         if str(payload.emoji) == "🐬" and payload.message_id == int(request['letter']):
-            user = self.client.get_user(payload.user_id)
+            member = server.get_member(user.id)
 
             if quests.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
                 profile = {"user_id": str(payload.user_id), "quest1": []}
                 quests.insert_one(profile)
                 await self.logging(f"Successfully created quest profile for {user.name}")
 
-            for i in (range(50)):
+            # Cycle creation
+            for i in (range(200)):
                 cycle = i + 1
                 if len(quests.find_one({"user_id": str(payload.user_id)}, {"_id": 0})["quest1"]) != cycle:
                     quests.update_one({"user_id": str(user.id)},
@@ -307,7 +320,7 @@ class Magic(commands.Cog):
                     await self.logging(f"Successfully started cycle#{cycle} for {user.name}")
                     break
 
-            user = self.client.get_user(int(payload.user_id))
+            # Sending of messages
             description = f"Dear {user.name},\n\nWe are pleased to accept you at House Patronus.\nDo browse " \
                 f"the server's <#{request['welcome']}> channel for the basics and essentials of the guild then " \
                 f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\nWe await your return owl.\n\n" \
@@ -318,6 +331,8 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await user.send(embed=embed)
             await self.logging(f"Successfully sent {user.name} their first clue through DM")
+            await member.add_roles(role_dolphin)
+            await self.logging(f"Successfully added dolphin role to {user.name}")
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
@@ -361,7 +376,7 @@ class Magic(commands.Cog):
 
     # noinspection PyUnboundLocalVariable
     @commands.command(aliases=["hint"])
-    @commands.has_role("✨")
+    @commands.has_role("🐬")
     async def hint_request(self, ctx):
         user = ctx.message.author
 
@@ -449,7 +464,7 @@ class Magic(commands.Cog):
     @commands.command(
         aliases=["knock", "knockknock", "knockknockknock", "knockknockknockknock", "knockknockknockknockknock"])
     @commands.cooldown(1, 3600, commands.BucketType.user)
-    @commands.has_role("✨")
+    @commands.has_role("🐬")
     async def knocking(self, ctx):
         knocks = str(int(len(ctx.message.content.replace("%", "")) / 5))
         await ctx.message.delete()
@@ -514,7 +529,7 @@ class Magic(commands.Cog):
             self.client.get_command("knocking").reset_cooldown(ctx)
 
     @commands.command(aliases=["purchase"])
-    @commands.has_role("✨")
+    @commands.has_role("🐬")
     async def buy_items(self, ctx, *args):
 
         if ctx.channel.name != "eeylops-owl-emporium":

@@ -211,7 +211,9 @@ class Clock(commands.Cog):
                     name = f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}"
                 else:
                     name = f"{get_emoji(hour_12, minute)} {time}"
-                await clock.edit(name=name)
+
+                if clock is not None:
+                    await clock.edit(name=name)
 
     @commands.command(aliases=["so"])
     @commands.cooldown(1, 900, commands.BucketType.guild)
