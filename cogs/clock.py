@@ -88,7 +88,7 @@ class Clock(commands.Cog):
         await self.logging("Penalizing everyone with 2 points for every hour passed")
 
     async def owls_restock(self):
-        owls.update_many({"purchaser": {"$ne": "None"}}, {"$set": {"purchaser": "None"}})
+        owls.update_many({}, {"$set": {"purchaser": "None"}})
         await self.logging("Restocking emporium with all owls")
 
     async def actions_reset(self):
@@ -101,7 +101,7 @@ class Clock(commands.Cog):
             if entry["timestamp_complete"] == get_time().strftime("%Y-%b-%d %HH"):
 
                 user = self.client.get_user(int(entry["user_id"]))
-                cycle, path, timestamp, user_hint, actions = get_data(user)
+                cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
 
                 if entry["scenario"] == 2:
                     description = f"Dear {user.name},\n\nIt is wondrous to have such another promising magic " \
@@ -129,10 +129,14 @@ class Clock(commands.Cog):
                 user = self.client.get_user(int(entry["user_id"]))
 
                 if entry["scenario"] == 1:
-                    cycle, path, timestamp, user_hint, actions = get_data(user)
+                    cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
                     await Magic(self.client).penalize(user, cycle, points=20)
 
                 await user.send(entry["report"])
+
+    async def reset_purchase(self):
+        quests.update_many({"quest1.purchase": False}, {"quest1.$.purchase": True})
+        await self.logging("Resetting everyone's ability to purchase owls to True")
 
     async def clear_secrets(self):
         for entry in books.find({}, {"_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1}):
@@ -187,8 +191,8 @@ class Clock(commands.Cog):
                 server = self.client.get_guild(412057028887052288)
                 spell_spam = self.client.get_channel(417507997846339585)
                 await self.owls_restock()
-                await Admin(self).reset_daily(spell_spam)
-                await Admin(self).reset_boss(spell_spam)
+                await Admin(self.client).reset_daily(spell_spam)
+                await Admin(self.client).reset_boss(spell_spam)
                 await frame_starlight(server, spell_spam)
                 await frame_blazing(server, spell_spam)
 

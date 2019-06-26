@@ -44,8 +44,9 @@ def get_data(user):
         timestamp = profile["quest1"][0]["timestamp"]
         hints = profile["quest1"][0]["hints"]
         actions = profile["quest1"][0]["actions"]
+        purchase = profile["quest1"][0]["purchase"]
         break
-    return cycle, current_path, timestamp, hints, actions
+    return cycle, current_path, timestamp, hints, actions, purchase
 
 
 def check_quest(user):
@@ -125,14 +126,14 @@ class Magic(commands.Cog):
                                                                 "scenario": scenario}})
 
         await self.logging(f"Generated owl report for {user.name}\n"
-                           f"Report: {report}\n"
-                           f"weather1: {weather1}\n"
-                           f"weather2: {weather2}\n"
-                           f"time of sendoff: {current_timestamp()}\n"
-                           f"Time of sending of update: {timestamp_update}\n"
-                           f"Time of sending of completion: {timestamp_complete}\n"
-                           f"Hours delay of owl: {delay}\n"
-                           f"scenario: {scenario}\n")
+                           f"--> Report: {report}\n"
+                           f"--> Weather1: {weather1}\n"
+                           f"--> Weather2: {weather2}\n"
+                           f"--> Time of sendoff: {current_timestamp()}\n"
+                           f"--> Time of sending of update: {timestamp_update}\n"
+                           f"--> Time of sending of completion: {timestamp_complete}\n"
+                           f"--> Hours delay of owl: {delay}\n"
+                           f"--> Scenario: {scenario}\n")
 
     # noinspection PyUnusedLocal,PyShadowingNames
     async def update_path(self, user, cycle, path_new):
@@ -205,6 +206,7 @@ class Magic(commands.Cog):
 
     async def expecto(self, guild, user, channel, message):
         role_star = discord.utils.get(guild.roles, name="🌟")
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         if user in role_star.members:
             uppers = len([char for char in message.content if char.isupper()])
@@ -221,18 +223,22 @@ class Magic(commands.Cog):
 
             await channel.send(f"Your Patronus strength: {strength}%")
             await self.logging(f"{user.name} successfully finished the quest")
-            cycle, path, timestamp, user_hints, actions = get_data(user)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
             quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                               {"$set": {"quest1.$.status": "completed"}})
 
-        else:
-            cycle, path, timestamp, user_hints, actions = get_data(user)
-            await self.update_path(user, cycle, path_new="path10")  # path_current="3"
+        elif path == "path3":
+            await self.update_path(user, cycle, path_new="path10")
             await message.add_reaction("❎")
-            await self.logging(f"{user.name} casted the Patronus summoning spell")
+            await self.logging(f"{user.name} tried to cast the Patronus summoning spell")
+
+        elif path == "path10":
+            await message.add_reaction("❔")
+            await self.penalize(user, cycle, points=10)
+            await self.logging(f"{user.name} tried to recast the Patronus summoning spell to no avail")
 
     @commands.command(aliases=["progress"])
-    @commands.has_role("Test")
+    @commands.has_role("✨")
     async def show_progress(self, ctx):
         if not check_quest(ctx.message.author):
             return
@@ -294,6 +300,7 @@ class Magic(commands.Cog):
                                                                 timestamp=current_timestamp(),
                                                                 timestamp_start=current_timestamp(),
                                                                 current_path="path1", actions=0,
+                                                                purchase=False,
                                                                 hints_unlocked=0,
                                                                 hints=["locked", "locked", "locked", "locked",
                                                                        "locked"])}})
@@ -332,7 +339,7 @@ class Magic(commands.Cog):
                 await reaction.message.add_reaction("❔")
 
             elif request["tower"] in str(reaction.message.content) and "✉" in str(reaction.message.content):
-                cycle, path, timestamp, user_hints, actions = get_data(user)
+                cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
                 # Path having the owl roles and haven't sent off yet
                 if path == "path2" or path == "path20":
@@ -352,7 +359,7 @@ class Magic(commands.Cog):
 
     # noinspection PyUnboundLocalVariable
     @commands.command(aliases=["hint"])
-    @commands.has_role("Test")
+    @commands.has_role("✨")
     async def hint_request(self, ctx):
         user = ctx.message.author
 
@@ -363,7 +370,7 @@ class Magic(commands.Cog):
 
         # With quest acceptance
         elif check_quest(user):
-            cycle, path, timestamp, user_hints, actions = get_data(user)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
             t1 = datetime.strptime(timestamp, "%Y-%b-%d %HH")
             t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
             delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
@@ -440,14 +447,14 @@ class Magic(commands.Cog):
     @commands.command(
         aliases=["knock", "knockknock", "knockknockknock", "knockknockknockknock", "knockknockknockknockknock"])
     @commands.cooldown(1, 3600, commands.BucketType.user)
-    @commands.has_role("Test")
+    @commands.has_role("✨")
     async def knocking(self, ctx):
         knocks = str(int(len(ctx.message.content.replace("%", "")) / 5))
         await ctx.message.delete()
         if str(ctx.channel.name) == "eeylops-owl-emporium":
 
             user = ctx.author
-            cycle, path, timestamp, user_hints, actions = get_data(user)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
             channel = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, str(ctx.channel.name): 1})
             webhook_url = channel[str(ctx.channel.name)]["webhook"]
@@ -463,7 +470,7 @@ class Magic(commands.Cog):
                 elif x == "2":
                     msg = "Here at the Emporium, we sell Eeylops Premium Owl Treats. " \
                           "A treat shaped like a mice that is the best thing for a happy and healthy owl."
-                    topic = "Do you know why this place is so dark? Because duhhh we sell owls!"
+                    topic = "Stocks refresh every day! So better hurry before you run our of owls!"
                     return msg, topic
                 elif x == "3":
                     msg = "We sell only the best of our trained owls to carry your letters. " \
@@ -475,10 +482,10 @@ class Magic(commands.Cog):
                     msg = "We have Brown, Screech, Snowy, Tawny and Barred owls. " \
                           "Find your precious feathered friend from the low price of 11 Galleons."
                     topic = "I only open the store during certain hours and weather, " \
-                            "if you can't find me then no magic can!"
+                            "if you can't find the store then no magic can!"
                     return msg, topic
                 elif x == "5":
-                    msg = "So.. what are you waiting for? Command to purchase an owl!"
+                    msg = "What are you waiting for? Command to purchase an owl!"
                     topic = "Store hours: 6 hours opened everyday but which hours?"
                     return msg, topic
 
@@ -505,8 +512,7 @@ class Magic(commands.Cog):
             self.client.get_command("knocking").reset_cooldown(ctx)
 
     @commands.command(aliases=["purchase"])
-    @commands.cooldown(1, 3600, commands.BucketType.user)
-    @commands.has_role("Test")
+    @commands.has_role("✨")
     async def buy_items(self, ctx, *args):
 
         if ctx.channel.name != "eeylops-owl-emporium":
@@ -522,11 +528,18 @@ class Magic(commands.Cog):
 
             user = ctx.author
             owl_buy = f"{query} Owl"
-            cycle, path, timestamp, user_hints, actions = get_data(user)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
             channel = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, str(ctx.channel.name): 1})
             webhook_url = channel[str(ctx.channel.name)]["webhook"]
             avatar = channel[str(ctx.channel.name)]["avatar"]
             username = channel[str(ctx.channel.name)]["username"]
+
+            if purchase is False:
+                msg = f"{ctx.author.mention}, I'm sorry dear. I only cater to guests once in a while. " \
+                    f"Comeback again when the minute ticks zero"
+                webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
+                webhook.execute()
+                await self.logging(f"{ctx.author.name} is trying purchase again but on hour cooldown")
 
             if owl_buy not in owls_list:
                 msg = "My hearing must have been getting old. Which kind of owl is it again?"
@@ -535,7 +548,6 @@ class Magic(commands.Cog):
                 webhook.execute()
 
                 await self.logging(f"{user.name} tried to buy {owl_buy} but its not in the available list of owls")
-                self.client.get_command("buy_items").reset_cooldown(ctx)
 
             elif owl_buy in owls_list:
                 purchaser = owls.find_one({"type": f"{owl_buy}"}, {"_id": 0, "purchaser": 1})["purchaser"]
@@ -544,10 +556,12 @@ class Magic(commands.Cog):
 
                     await self.penalize(user, cycle, points=5)
                     msg = f"My Dear, that owl has been bought earlier " \
-                        f"by {self.client.get_user(int(purchaser)).name}. Do come early tomorrow!"
+                        f"by {self.client.get_user(int(purchaser)).name}. " \
+                        f"Do come early tomorrow should you wish the same owl!"
                     webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
                     webhook.execute()
-
+                    await quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
+                                            {"$set": {"quest1.$.purchase_owl": False}})
                     await self.logging(f"{user.name} tried to buy {owl_buy} but it has been purchased already")
 
                 elif purchaser == "None":
@@ -558,7 +572,8 @@ class Magic(commands.Cog):
                         msg = f"{user.mention}, my Dear, this does not come for free."
                         webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
                         webhook.execute()
-
+                        await quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
+                                                {"$set": {"quest1.$.purchase_owl": False}})
                         await self.logging(f"{user.name} tried to buy {owl_buy} but they have no moneybag role")
                     else:
                         role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
@@ -610,7 +625,7 @@ class Magic(commands.Cog):
 
     async def create_emporium(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
-        cycle, path, timestamp, user_hints, actions = get_data(user)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
         await self.logging(f"{user.name} tried to open a secret channel `{msg} opened at 7AM-1PM`")
 
         if "eeylops-owl-emporium" not in channels:  # and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
@@ -643,7 +658,7 @@ class Magic(commands.Cog):
 
     async def create_gringotts(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
-        cycle, path, timestamp, user_hints, actions = get_data(user)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
         await self.logging(f"{user.name} tried to open a secret channel `{msg} opened at 9AM-2PM`")
 
         if "gringotts-bank" not in channels:  # and 9 <= int(current_time2()) <= 14:  # 9AM-2PM
@@ -672,7 +687,7 @@ class Magic(commands.Cog):
 
     async def create_ollivanders(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
-        cycle, path, timestamp, user_hints, actions = get_data(user)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
         await self.logging(f"{user.name} tried to open a secret channel `{msg} opened at 1PM-4PM`")
 
         if "ollivanders" not in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
@@ -756,7 +771,7 @@ class Magic(commands.Cog):
         webhook_url = gringotts["gringotts-bank"]["webhook"]
         avatar = gringotts["gringotts-bank"]["avatar"]
         username = gringotts["gringotts-bank"]["username"]
-        cycle, path, timestamp, user_hints, actions = get_data(user)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         if user not in role_galleons.members:
 
@@ -1008,20 +1023,6 @@ class Magic(commands.Cog):
                 i += 1
         await self.logging(f"{user.name} is trying to transact to Gringotts: -> awaits Ended")
         return answer
-
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown) and str(ctx.command) == "buy_items":
-            channel = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, f"{ctx.channel.name}": 1})
-            webhook_url = channel[f"{ctx.channel.name}"]["webhook"]
-            avatar = channel[f"{ctx.channel.name}"]["avatar"]
-            username = channel[f"{ctx.channel.name}"]["username"]
-
-            msg = f"{ctx.author.mention}, I'm sorry dear. I only cater to guests once in a while. " \
-                f"Comeback again when the minute ticks zero"
-            webhook = DiscordWebhook(url=webhook_url, content=msg, avatar_url=avatar, username=username)
-            webhook.execute()
-            await self.logging(f"{ctx.author.name} is trying purchase again but on hour cooldown")
 
 
 def setup(client):
