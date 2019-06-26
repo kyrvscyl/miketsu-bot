@@ -43,10 +43,11 @@ class Admin(commands.Cog):
 
         headlines = self.client.get_channel(int(request["headlines"]))
         sorting = self.client.get_channel(int(request["sorting"]))
+        patronus = ctx.guild.get_role(int(request['patronus_role']))
 
         embed = discord.Embed(title=":confetti_ball: Special Guild Contest", colour=discord.Colour(0x50e3c2),
-                              description=f"{request['patronus_role']} In late celebration of our not so recent merge "
-                              f"with Crusaders, it is timely to have our next once in awhile Discord Event!")
+                              description=f"{patronus.mention}, in late celebration of our not so recent merge "
+                              f"with Crusaders, it is timely to have our next once in a while Discord Event!")
 
         embed.add_field(name=":tada: Event Overview",
                         value="Members can role-play as a wizard/witch/spirit in the wizarding server of Patronusverse "
@@ -81,9 +82,11 @@ class Admin(commands.Cog):
 
         link = f"https://discordapp.com/channels/{msg.guild.id}/{msg.channel.id}/{msg.id}"
         embed.add_field(name=":dolphin: Quest #1: `Show us your Patronus!``",
-                        value="Learn how to summon one. Refer to the quest mechanics [here!](link)")
+                        value=f"Learn how to summon one. Refer to the quest mechanics [here!]({link})")
 
-        await sorting.send(embed=embed)
+        msg2 = await sorting.send(embed=embed)
+        await msg2.add_reaction("🐬")
+        books.update_one({"server": str(ctx.guild.id)}, {"letter": str(msg.id)})
 
     @commands.command(aliases=["specialrole"])
     @commands.is_owner()

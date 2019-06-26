@@ -278,13 +278,13 @@ class Magic(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
 
-        if str(payload.emoji) != "✉":
+        if str(payload.emoji) != "🐬":
             return
 
         request = books.find_one({"server": f"{payload.guild_id}"},
                                  {"_id": 0, "welcome": 1, "sorting": 1, "letter": 1})
 
-        if str(payload.emoji) == "✉" and payload.message_id == int(request['letter']):
+        if str(payload.emoji) == "🐬" and payload.message_id == int(request['letter']):
             user = self.client.get_user(payload.user_id)
 
             if quests.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
@@ -314,6 +314,8 @@ class Magic(commands.Cog):
                 f"Yours Truly,\nThe Headmaster "
 
             embed = discord.Embed(color=0xffff80, title=":love_letter: Acceptance Letter", description=description)
+            await user.send("You have been obliviated.")
+            await asyncio.sleep(3)
             await user.send(embed=embed)
             await self.logging(f"Successfully sent {user.name} their first clue through DM")
 
