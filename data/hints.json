@@ -1,74 +1,53 @@
 {
     "path1": {
-        "1": "Hmmm.. the letter says the Headmaster awaits your owl? What does that mean?",
-        "2": "Owls fascinate me but nocturnal and solitary in behavior. I want to own one! \ud83e\udd89",
-        "3": "In the wizarding world, they can also carry packages and \u2709 to someone or to a specific location",
-        "4": "We could try teaching our owl on how to send a letter to the Headmaster's Office. If we have one?",
-        "5": "Thought we should get an owl! There are hidden places in the Diagon Alley but they are closed at some time of the day or so I heard.."
+        "1": "Fragments of memory haunt you as several minutes have passed by, you kept on wondering what was the owl meant for in the letter",
+        "2": "Out of curiosity, you researched everything about the owls and consequently learned that they play a very important role",
+        "3": "An excerpt from the book you have read: __Owls are magical creatures most often used for delivering post and parcels in the wizarding world. They are known for their speed and discretion and can find recipients without an address.__",
+        "4": "Suddenly, you came up with the conclusion that owning an owl would be the very first step in response to the letter.",
+        "5": "You walked past through the recognizable streets of Diagon Alley, looking for the store which primary sells owls"
     },
     "path6": {
-        "1": "It's a very old and dark house. It seems haunted :house_abandoned:",
-        "2": "And it has a mysterious door but without a doorknob",
-        "3": "A sign magically appeared at the door: 'Knock wisely. For you can only knock once but many'",
-        "4": "Well, it's a door. Have you tried command knock?",
-        "5": "Maybe twice? thrice? Idk."
+        "1": "During your patrol at the north side of the alley, you finally caught sight of the store. You went near and in front of it, you were being stared by various owls of limited kinds..",
+        "2": "Looking closer, low luminance light shyly gleamed from the inside. And you were left nothing to check but the old wooden opaque door and mumbled to yourself, 'should I knock?'"
     },
     "path8": {
-        "1": "What do you want? {}",
-        "2": "{}, in case you don't know, we secure the wizarding families' treasuries here. Now, what do you want? *glares*",
-        "3": "{}, you waste my time. I will not entertain you until the clock minute ticks zero.",
-        "4": "Well, we want to purchase something, right?",
-        "5": "Hmm.. I know we need galleons to command purchase but what do they call that room again?"
+        "1": "While you were walking at the busy aisle of the bank, you overheard one witch saying, 'I cannot believe that's how easy your vault password is. I mean, revers...'"
     },
     "path2": {
-        "1": "Now we have an owl, how to make this fluffy bird to send some items?",
-        "2": "Have you read the manuals?",
-        "3": "Hmm.. the manuals and information at the shop? Have you read it?",
-        "4": "I think I saw it somewhere in the ceiling or at the walls of the house",
-        "5": "They change depending on how you knock"
+        "1": "You were told that the owls at the emporium were well-trained to send posts and parcels.",
+        "2": "The emporium shop was definitely bestowed with magic as the shop information variably changed depending on the course of the guests' actions"
     },
     "path15": {
-        "1": "With this amount of galleons, we can command to purchase stuffs now"
+        "1": "You briefly recalled from the book that owls have specific traits and they can symbolize the same characteristics of their owners magical capabilities."
     },
     "path7": {
-        "1": "Where are we supposed to get wizarding money?",
-        "2": "Are there any banks in the Diagon Alley?"
+        "1": "Seeing others exchanged their galleons everywhere made you ponder about that dragon-like statue you saw earlier"
     },
     "path3": {
-        "1": "It sounds interesting! What is a Patronus charm, by the way?",
-        "2": "As per checking, it's a powerful defensive spell which produces a silver animal guardian",
-        "3": "Try casting the spell that summons a Patronus!"
+        "1": "You tried investigating the Patronus charm and found out that it is a very interesting spell",
+        "2": "As you investigated further, it is a powerful defensive spell which produces a silver animal guardian and can be casted using a specific spell"
     },
     "path10": {
-        "1": "Weird. It did not work? Maybe we are lacking something?",
-        "2": "I believe there's a store that sells magical rods. You know, the thing you gracefully wave",
-        "3": "I think I remember now, back at Diagon Alley, I think I saw a place that sells those",
-        "4": "It's Ollivanders!"
-    },
-    "path13": {
-        "1": "Well, I'm sure that there are different kinds of owl",
-        "2": "Maybe knock differently or knock the door as much as you can?"
+        "1": "You casted the spell in total confusion that something was entirely missing",
+        "2": "Abruptly realizing that back in the alley there was a store that sold magical rods."
     },
     "path18": {
-        "1": "Could be your picture here, huh?",
-        "2": "Try those in your image link?",
-        "3": "Maybe the Animagus can help you show your identification link",
-        "4": "They can show your identification using a command, it also shows a neat square photo of you",
-        "5": "I think the numeric one is the vault number."
+        "1": "With no avail on how to retrieve your identification, you decided to eavesdrop again...",
+        "2": "One wizard asked the Animagus Yui to show their identification."
     },
     "path19": {
-        "1": "You sent off your owl in a suicide mission, smh."
+        "1": "Your intuition suggested, 'since the weather changes every hour, I should be mindful of the weather occasions prior sending'"
     },
     "path20": {
-        "1": "Never torture your owl like that again",
-        "2": "You should be mindful of the weather"
+        "1": "While you were waiting for your owl to heal, you discovered by the books that casting the Patronus summoning spell must be with diction to effectively summon one"
     },
     "path4": {
-        "1": "If the weather's fine, owls can come back in 2 hours",
-        "2": "I heard owls do return faster at night"
+        "1": "As per the information you read in the book, owls may travel differently due to the weather."
     },
     "path5": {
-        "1": "Have you tried manipulating your vault number?",
-        "2": "Convert it to alphabets? or try the reverse?"
+        "1": "Based on the witch earlier at the bank, it should be an 18 numeric characters."
+    },
+    "path9": {
+         "1": "You contemplated that the Store Manager seems to be welcoming of guests and thought of perhaps, \"it would be of ease to inquire about the store's owls and everything\""
     }
 }
