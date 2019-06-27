@@ -97,30 +97,30 @@ class Clock(commands.Cog):
 
     async def send_off_complete(self):
 
-        for entry in sendoff.find({"timestamp_complete": {"$exists": True}}, {"_id": 0}):
-            if entry["timestamp_complete"] == get_time().strftime("%Y-%b-%d %HH"):
+        for entry in sendoff.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
+            user = self.client.get_user(int(entry["user_id"]))
+            cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
 
+            if entry["scenario"] == 2:
+                async with user.typing():
+                    msg1 = "*\"You heard a sound of a bird above you.\"*"
+                    msg2 = "*\"It was your owl flocking gracefully with its wings " \
+                           "and holding a paper with its feet.\"*"
+                    msg3 = f"*\"Your {entry['type']} has returned with a letter from the Headmaster\"*"
+                    await user.send(msg1)
+                    await asyncio.sleep(4)
+                    await user.send(msg2)
+                    await asyncio.sleep(4)
+                    msg = await user.send(msg3)
+                    await msg.add_reaction("✉")
+
+                await self.logging(f"Sent {user}: Confirmation letter received from the Headmaster")
+
+            elif entry["scenario"] == 1:
                 user = self.client.get_user(int(entry["user_id"]))
-                cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
-
-                if entry["scenario"] == 2:
-                    description = f"Dear {user.name},\n\nIt is wondrous to have such another promising magic " \
-                        f"practitioner, you see in the castle everyone there is special, but what makes them " \
-                        f"more special is their Patronus charm.\n\nYour term awaits soon. Good luck!\n\n" \
-                        f"Yours Truly,\nThe Headmaster "
-
-                    embed = discord.Embed(color=0xffff80, description=description)
-                    msg = f"Your {entry['type']} has returned with a letter from the Headmaster"
-                    await Magic(self.client).update_path(user, cycle, path_new="path3")
-                    await user.send(msg, embed=embed)
-                    await self.logging(f"Sent {user}: Confirmation letter receipt from the Headmaster")
-
-                elif entry["scenario"] == 1:
-                    user = self.client.get_user(int(entry["user_id"]))
-                    msg = f"Your {entry['type']} has fully recovered"
-
-                    await Magic(self.client).update_path(user, cycle, path_new="path20")
-                    await user.send(embed=msg)
+                msg = f"Your {entry['type']} has fully recovered"
+                await Magic(self.client).update_path(user, cycle, path_new="path20")
+                await user.send(embed=msg)
 
     async def send_off_report(self):
 
@@ -132,10 +132,13 @@ class Clock(commands.Cog):
                     cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
                     await Magic(self.client).penalize(user, cycle, points=20)
 
-                await user.send(entry["report"])
+                description = entry["report"]
+                embed = discord.Embed(color=0xffffff, title="Owl Report", description=description)
+                embed.set_footer(text=f"{entry['timestamp_update']}")
+                await user.send(embed=embed)
 
     async def reset_purchase(self):
-        quests.update_many({"quest1.purchase": False}, {"quest1.$.purchase": True})
+        quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
         await self.logging("Resetting everyone's ability to purchase owls to True")
 
     async def clear_secrets(self):
@@ -182,6 +185,7 @@ class Clock(commands.Cog):
 
                 await self.penalty_hour()
                 await self.actions_reset()
+                await self.reset_purchase()
                 await self.clear_secrets()
                 await self.send_off_report()
                 await self.send_off_complete()
