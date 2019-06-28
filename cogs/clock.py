@@ -190,11 +190,14 @@ class Clock(commands.Cog):
                 await self.send_off_report()
                 await self.send_off_complete()
 
+            # Reset owl during 12:00
+            if hour_minute == "12:00":
+                await self.owls_restock()
+
             # Reset items during every after day
             if hour_minute == "00:00":
                 server = self.client.get_guild(412057028887052288)
                 spell_spam = self.client.get_channel(417507997846339585)
-                await self.owls_restock()
                 await Admin(self.client).reset_daily(spell_spam)
                 await Admin(self.client).reset_boss(spell_spam)
                 await frame_starlight(server, spell_spam)
@@ -217,7 +220,10 @@ class Clock(commands.Cog):
                     name = f"{get_emoji(hour_12, minute)} {time}"
 
                 if clock is not None:
-                    await clock.edit(name=name)
+                    try:
+                        await clock.edit(name=name)
+                    except discord.errors.Forbidden:
+                        return
 
     @commands.command(aliases=["so"])
     @commands.cooldown(1, 900, commands.BucketType.guild)
