@@ -13,7 +13,7 @@ import pytz
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.db import books, quests, owls, weather, sendoff
+from cogs.mongo.db import books, quests, owls, weather, sendoff, thieves
 
 # Date and Time
 tz_target = pytz.timezone("America/Atikokan")
@@ -79,9 +79,9 @@ class Magic(commands.Cog):
         await channel.send(f"[{date_time}] " + msg)
 
     async def sendoff_owl(self, user, reaction, cycle):
-        await reaction.message.channel.send("Sending off owl to the :trident: Headmaster's Tower")
+        await user.send("*Sending off owl to the :trident: Headmaster's Tower*")
         await asyncio.sleep(2)
-        await reaction.message.channel.send(f"{user.mention}, you will receive an update when the clock moves an hour")
+        await reaction.message.channel.send(f"*{user}, you will receive an update when the clock moves an hour*")
         await self.generate_owl_report(user, cycle)
         await self.logging(f"{user} has successfully dispatched their owl to the Headmaster's Office")
 
@@ -99,25 +99,25 @@ class Magic(commands.Cog):
             scenario = 1
 
         elif weather1 == "🌨" and profile["type"] == "Snowy Owl":  # Snowy owl and Snowy weather
-            report = "Your owl travelled hastily to the Headmaster's Office due to favorable weather for the owl\n\n" \
+            report = "Your owl travelled hastily to the Headmaster's Office due to favorable weather for the owl.\n\n" \
                      "Estimated time of return: in 1 hour"
             delay = 1 + 1
             scenario = 2
 
         elif weather2 == "🌕" or weather2 == "🌑":  # Night
-            report = "Owls are best at night and can return faster than normal travel time\n\n" \
+            report = "Owls are best at night and can return faster than normal travel time.\n\n" \
                      "Estimated time of return: in 1 hour"
             delay = 1 + 1
             scenario = 2
 
         elif weather1 == "🌧" or weather1 == "🌨":  # Rainy or snowy
-            report = "Your owl struggled to reached the Headmaster's Office on time due to unfavoured weather\n\n" \
+            report = "Your owl struggled to reached the Headmaster's Office on time due to unfavoured weather.\n\n" \
                      "Estimated time of return: in 2 hours"
             delay = 1 + 2
             scenario = 2
 
         elif weather1 == "☁" or weather1 == "⛅":  # Cloudy & Partly sunny
-            report = "Your owl has safely arrived at the Headmaster's Office\n\n" \
+            report = "Your owl has safely arrived at the Headmaster's Office.\n\n" \
                      "Estimated time of return: in 1 hour"
             delay = 1 + 1
             scenario = 2
@@ -291,8 +291,9 @@ class Magic(commands.Cog):
                 f"▫Current Path: {current_path.capitalize()}\n" \
                 f"▫Hints Unlocked: {hints_unlocked}"
 
-            embed = discord.Embed(description=description)
-            embed.set_author(name=f"{ctx.message.author}'s Cycle #{cycle}", icon_url=ctx.message.author.avatar_url)
+            embed = discord.Embed(color=ctx.message.author.colour, description=description)
+            embed.set_author(name=f"{ctx.message.author}'s Cycle #{cycle}",
+                             icon_url=ctx.message.author.avatar_url)
             await ctx.channel.send(embed=embed)
             await self.logging(f"{ctx.message.author.name} requested to show their progress")
 
@@ -332,7 +333,7 @@ class Magic(commands.Cog):
                                                                 timestamp=current_timestamp(),
                                                                 timestamp_start=current_timestamp(),
                                                                 current_path="path1", actions=0,
-                                                                purchase=False,
+                                                                purchase=True,
                                                                 hints_unlocked=0,
                                                                 hints=["locked", "locked", "locked", "locked",
                                                                        "locked"])}})
@@ -392,7 +393,7 @@ class Magic(commands.Cog):
             await self.logging(f"{user} opened the letter of Headmaster invitation letter.")
 
         elif str(reaction.emoji) == "✉" and user != self.client.user \
-                and "envelope" in reaction.message.content and reaction.message.author == self.client.user:
+                and "returned with" in reaction.message.content and reaction.message.author == self.client.user:
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
             await self.update_path(user, cycle, path_new="path3")
@@ -450,7 +451,6 @@ class Magic(commands.Cog):
         # Not accepted the quest
         if not check_quest(user):
             await self.logging(f"{user} tried to use hint while the quest is not yet accepted")
-            return
 
         # With quest acceptance
         elif check_quest(user):
@@ -490,7 +490,7 @@ class Magic(commands.Cog):
                         await self.penalize(user, cycle, points=10)
                         await ctx.message.add_reaction("✅")
 
-                        embed = discord.Embed(color=user.colour, description="*\""+hint+"\"*")
+                        embed = discord.Embed(color=user.colour, description="*\"" + hint + "\"*")
                         embed.set_footer(icon_url=user.avatar_url, text=f"Path {path[4::]} | Hint# {hint_num}")
                         await user.send(embed=embed)
                         await self.logging(f"Sent a hint for {user.name} | {path}:{hint_num}")
@@ -542,7 +542,7 @@ class Magic(commands.Cog):
                 responses = [
                     (
                         "Here at the Emporium, we sell **Eeylops Premium Owl Treats!**\n\nA treat shaped like a mice "
-                        "which is the best thing for a happy and healthy owl.*",
+                        "which is the best thing for a happy and healthy owl.",
                         "Stocks refresh every 12:00"),
                     (
                         "We sell only the best of our trained owls to carry your letters.\n\nNo address is needed "
@@ -558,7 +558,6 @@ class Magic(commands.Cog):
 
                 msg, topic = responses[actions]
                 await self.action_update(user, cycle, actions=1)
-                topic = "Stocks refresh every 6 hours."
 
             if path == "path6":
                 await self.update_path(user, cycle, path_new="path9")
@@ -586,9 +585,9 @@ class Magic(commands.Cog):
             user = ctx.author
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
-            if purchase is True:
+            if purchase is False:
                 msg = "Relentlessly, you queued in line. " \
-                      "Only to to realize that it would be best to just return the next hour instead"
+                      "Only to to realize that it would be best to just return on the next hour instead"
                 await self.penalize(user, cycle, points=5)
                 await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                 await self.logging(f"{ctx.author.name} is trying purchase again but on hour cooldown")
@@ -603,7 +602,14 @@ class Magic(commands.Cog):
                 purchaser_id = owls.find_one({"type": f"{owl_buy}"}, {"_id": 0, "purchaser": 1})["purchaser"]
                 role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
 
-                if purchaser_id != "None":
+                if user in role_owl.members:
+                    msg = f"My dear {user}, it would be best to sell this owl to those who do not own any yet as" \
+                        f" my stocks are very limited."
+                    await self.penalize(user, cycle, points=25)
+                    await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await self.logging(f"{user} tried to buy {owl_buy} again")
+
+                elif purchaser_id != "None":
                     purchaser = self.client.get_user(int(purchaser_id))
                     msg = f"My dear, that owl has been bought earlier by {purchaser}.\n\n" \
                         f"Should you wish to buy the same kind of owl again, do visit us just when our stocks " \
@@ -611,10 +617,10 @@ class Magic(commands.Cog):
                     await self.penalize(user, cycle, points=5)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                                            {"$set": {"quest1.$.purchase_owl": False}})
+                                            {"$set": {"quest1.$.purchase": False}})
                     await self.logging(f"{user} tried to buy {owl_buy} but it has been purchased already")
 
-                elif purchaser_id == "None" and user not in role_owl:
+                elif purchaser_id == "None":
                     role_galleons = discord.utils.get(ctx.guild.roles, name="💰")
 
                     if user not in role_galleons.members:
@@ -625,7 +631,7 @@ class Magic(commands.Cog):
                         await self.penalize(user, cycle, points=5)
                         await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                         quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                                          {"$set": {"quest1.$.purchase_owl": False}})
+                                          {"$set": {"quest1.$.purchase": False}})
                         await self.logging(f"{user} tried to buy {owl_buy} but they have no moneybag role")
 
                     else:
@@ -634,9 +640,9 @@ class Magic(commands.Cog):
                             role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
                             owl_description = owls.find_one({"type": f"{owl_buy}"}, {"_id": 0})
                             description = owl_description["description"]
-                            msg = "What a lovely choice of owl!\"*\n\n" + description
-                            embed = discord.Embed(title=f":owl: {owl_description['type']} | owl_description['trait'']",
-                                                  description="*"+description+"*", color=user.colour)
+                            msg = "What a lovely choice of owl!"
+                            embed = discord.Embed(title=f":owl: {owl_description['type']} | {owl_description['trait']}",
+                                                  description="*" + description + "*", color=user.colour)
                             embed.set_thumbnail(url=owl_description["thumbnail"])
 
                             owls.update_one({"type": f"{owl_buy}"}, {"$set": {"purchaser": str(user.id)}})
@@ -670,8 +676,8 @@ class Magic(commands.Cog):
             await self.create_emporium(message.channel.category, message.guild,
                                        message.content.lower(), message, message.author)
 
-        elif message.content.lower() == "gringotts bank" and str(message.channel.category) == "⛲ Diagon Alley" \
-                and str(message.channel) != "gringotts-bank":
+        elif message.content.lower() in ["gringotts bank", "gringotts wizarding bank"] \
+                and str(message.channel.category) == "⛲ Diagon Alley" and str(message.channel) != "gringotts-bank":
             await self.create_gringotts(message.channel.category, message.guild,
                                         message.content.lower(), message, message.author)
 
@@ -690,9 +696,9 @@ class Magic(commands.Cog):
     async def create_emporium(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
-        await self.logging(f"{user} tried to open a secret channel `{msg} opened at 7AM-1PM`")
+        await self.logging(f"{user} tried to open a secret channel `{msg} opened at 07:00 - 14:00`")
 
-        if "eeylops-owl-emporium" not in channels:  # and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
+        if "eeylops-owl-emporium" not in channels:  # and 7 <= int(current_time2()) <= 14:  # 07:00 - 14:00
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
@@ -706,7 +712,7 @@ class Magic(commands.Cog):
             elif path == "path15":
                 return
 
-        elif "eeylops-owl-emporium" in channels:  # and 7 <= int(current_time2()) <= 13:  # 7AM-1PM
+        elif "eeylops-owl-emporium" in channels:  # and 7 <= int(current_time2()) <= 14:  # 07:00 - 14:00
             emporium_id = books.find_one({"server": str(guild.id)},
                                          {"eeylops-owl-emporium": 1})["eeylops-owl-emporium"]["id"]
             emporium_channel = self.client.get_channel(int(emporium_id))
@@ -723,29 +729,38 @@ class Magic(commands.Cog):
     async def create_gringotts(self, category, guild, msg, message, user):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
-        await self.logging(f"{user} tried to open a secret channel `{msg} opened at 9AM-2PM`")
+        await self.logging(f"{user} tried to open a secret channel `{msg} opened at 08:00 - 15:00`")
 
-        if "gringotts-bank" not in channels:  # and 9 <= int(current_time2()) <= 14:  # 9AM-2PM
+        # Topic creation
+        list_thieves = thieves.find_one({}, {"_id": 0, "names": 1})["names"]
+        formatted_thieves = "\n".join(list_thieves)
+        topic = f"List of Potential Thieves:\n{formatted_thieves}"
+
+        if "gringotts-bank" not in channels:  # and 8 <= int(current_time2()) <= 15:  # 08:00 - 15:00
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
                 guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, read_message_history=False)
             }
-            gringotts = await guild.create_text_channel("gringotts-bank", category=category, overwrites=overwrites)
-            await self.generate_data(guild, msg, gringotts)
+
+            gringotts = await guild.create_text_channel("gringotts-bank", category=category, overwrites=overwrites,
+                                                        topic=topic)
+            await self.generate_data(guild, "gringotts-bank", gringotts)
 
             if path == "path7":
                 await self.update_path(user, cycle, path_new="path8")
 
-        elif "gringotts-bank" in channels:  # and 9 <= int(current_time2()) <= 14:  # 9AM-2PM:
+        elif "gringotts-bank" in channels:  # and 8 <= int(current_time2()) <= 15:  # 08:00 - 15:00
             gringotts_id = books.find_one({"server": str(guild.id)},
                                           {"gringotts-bank": 1})["gringotts-bank"]["id"]
             gringotts_channel = self.client.get_channel(int(gringotts_id))
             await gringotts_channel.set_permissions(user, read_messages=True, send_messages=True,
                                                     read_message_history=False)
+            await gringotts_channel.edit(topic=topic)
 
             if path == "path7":
                 await self.update_path(user, cycle, path_new="path8")
+
         else:
             await self.reaction_closed(message)
 
@@ -854,8 +869,8 @@ class Magic(commands.Cog):
                 responses = [
                     "Greetings, {}. What do you want?",
 
-                    "{}, in case you don't know, we secure the wizarding families' treasuries here.\n\n"
-                    "Now, what do you want?",
+                    "{}, I am assuming you do not know, we secure the wizarding families' treasuries here.\n\n"
+                    "Now, what do you want from us?",
 
                     "{}, I don't think you are well aware of what is happening here.\n\n"
                     "I have other clients to assist, come back again once you know, because I do not like my time "
@@ -877,7 +892,7 @@ class Magic(commands.Cog):
         await self.secret_response(guild.id, message.channel.name, msg)
         await self.logging(f"{user} is trying to transact to Gringotts: -> awaits identification")
 
-        identity = await self.obtain_identity(cycle, user, guild, message)
+        identity = await self.obtain_identity(user, guild, message)
         if identity != "Wrong":
             vault_number = await self.obtain_vault_number(cycle, user, guild, message)
             if vault_number != "Wrong":
@@ -891,8 +906,9 @@ class Magic(commands.Cog):
                     username = secret_channel[str(message.channel.name)]["username"]
                     webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
 
+                    vault = f"{str(user.id).replace('1', '@').replace('5', '%').replace('7', '&').replace('3', '#')}"
                     embed = DiscordEmbed(color=0xffffff,
-                                         title=":closed_lock_with_key: Opening Vault# {}".format(user.id))
+                                         title=f":closed_lock_with_key: Opening Vault# {vault}")
                     embed.set_image(url="https://i.imgur.com/RIS1TLh.gif")
                     webhook.add_embed(embed)
                     webhook.execute()
@@ -901,16 +917,17 @@ class Magic(commands.Cog):
                     await user.add_roles(role_galleons)
                     await self.logging(f"Added Moneybag role for {user.name}")
 
-                    await asyncio.sleep(8)
-                    msg = f"{user} acquired :moneybag: role"
+                    await asyncio.sleep(6)
+                    msg = f"{user.mention} has acquired :moneybag: role"
                     await message.channel.send(msg)
 
                     msg = "Very well then. You can get out of my bank now."
                     await self.secret_response(guild.id, message.channel.name, msg)
 
     # noinspection PyUnboundLocalVariable
-    async def obtain_identity(self, cycle, user, guild, message):
+    async def obtain_identity(self, user, guild, message):
         await self.logging(f"{user} is trying to transact to Gringotts: -> awaits identity")
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         # noinspection PyShadowingNames
         def check(guess):
@@ -925,18 +942,28 @@ class Magic(commands.Cog):
         i = 0
         while i < 3:
             try:
-                guess = await self.client.wait_for("message", timeout=180, check=check)
+                guess = await self.client.wait_for("message", timeout=120, check=check)
+                await guess.add_reaction("✅")
+                await asyncio.sleep(3)
                 await guess.delete()
-                await self.update_path(user, cycle, path_new="path5")
+
+                if path == "path18":
+                    await self.update_path(user, cycle, path_new="path5")
+
                 answer = "Correct"
                 i = 4
 
             except asyncio.TimeoutError:
+                if thieves.find_one({"names": user.name}, {"_id": 0}) is None:
+                    thieves.update_one({}, {"$push": {"names": user.name}})
+
                 msg = f"{user}, it seems that you have trouble showing me your identification.\n\n" \
                     f"I'm gonna have to ask you to get out of my bank. You are wasting my time."
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
+                topic = "The goblins can await for two minutes for every question they ask"
+                await message.channel.edit(topic=topic)
                 answer = "Wrong"
                 i = 4
 
@@ -944,15 +971,26 @@ class Magic(commands.Cog):
                 if i == 0:
                     msg = f"{user}, that is not what we call identification here!"
                     await self.penalize(user, cycle, points=5)
+                    topic = "One customer vault access request ticket can be used every hour"
+                    await message.channel.edit(topic=topic)
+
                 elif i == 1:
-                    msg = f"{user}, neither that one!\n\nWhat are you even suggesting to me? The identification I am" \
-                        f"looking for is a 32 alpha-numeric characters!"
+                    msg = f"{user}, neither that one!\n\nWhat are you even suggesting to me? The identification I am " \
+                        f"looking for is a 32 alpha-numeric character!"
                     await self.penalize(user, cycle, points=5)
+                    topic = "Identification cards equate to the wizards'/witches'/spirits' avatar"
+                    await message.channel.edit(topic=topic)
+
                 elif i == 2:
+                    if thieves.find_one({"names": user.name}, {"_id": 0}) is None:
+                        thieves.update_one({}, {"$push": {"names": user.name}})
+
                     msg = f"{user}, I don't think you have any business here!\n\n" \
                         f"I'm gonna have to ask you to get out of my bank. You are plainly wasting my time."
                     await self.action_update(user, cycle, actions=3)
                     await self.penalize(user, cycle, points=10)
+                    topic = "Banking Hours: 08:00 - 15:00"
+                    await message.channel.edit(topic=topic)
                     answer = "Wrong"
 
                 await self.secret_response(guild.id, message.channel.name, msg)
@@ -980,16 +1018,24 @@ class Magic(commands.Cog):
         i = 0
         while i < 3:
             try:
-                guess = await self.client.wait_for("message", timeout=180, check=check)
+                guess = await self.client.wait_for("message", timeout=120, check=check)
+                await guess.add_reaction("✅")
+                await asyncio.sleep(3)
                 await guess.delete()
+                topic = "Banking Hours: 08:00 - 15:00"
+                await message.channel.edit(topic=topic)
                 answer = "Correct"
                 i = 4
 
             except asyncio.TimeoutError:
-                msg = f"{user}. Are you stealing from someone?\n\nGet the hell out of my bank now."
+                if thieves.find_one({"names": user.name}, {"_id": 0}) is None:
+                    thieves.update_one({}, {"$push": {"names": user.name}})
+
+                msg = f"{user}. Are you stealing from someone?\n\nGet the hell out of my bank now!"
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
+
                 answer = "Wrong"
                 i = 4
 
@@ -997,15 +1043,23 @@ class Magic(commands.Cog):
                 if i == 0:
                     msg = f"{user}, my records cannot be wrong, that is an invalid vault number."
                     await self.penalize(user, cycle, points=5)
+
                 elif i == 1:
                     msg = f"{user}, that does not show either!"
                     await self.penalize(user, cycle, points=5)
+                    topic = "Gringotts, the wizard bank! Ain't no safer place. Not one. Except perhaps Patronus Castle."
+                    await message.channel.edit(topic=topic)
+
                 elif i == 2:
+                    if thieves.find_one({"names": user.name}, {"_id": 0}) is None:
+                        thieves.update_one({}, {"$push": {"names": user.name}})
+
                     msg = f"{user}, I don't think you have any business here!\n\n" \
-                        f"I'm gonna have to ask you to get out of my bank. You are wasting my time."
+                        f"I'm gonna have to ask you to get out of my bank. You are just wasting my time."
                     await self.action_update(user, cycle, actions=3)
                     await self.penalize(user, cycle, points=10)
-                    await self.secret_response(guild.id, message.channel.name, msg)
+                    topic = "Most commonly used passwords:\n1. ALOHOMORA\n2. vault number reversal\n3. Password1234"
+                    await message.channel.edit(topic=topic)
                     answer = "Wrong"
 
                 await self.secret_response(guild.id, message.channel.name, msg)
@@ -1039,12 +1093,17 @@ class Magic(commands.Cog):
         i = 0
         while i < 3:
             try:
-                guess = await self.client.wait_for("message", timeout=180, check=check)
+                guess = await self.client.wait_for("message", timeout=120, check=check)
+                await guess.add_reaction("✅")
+                await asyncio.sleep(3)
                 await guess.delete()
                 answer = "Correct"
                 i = 4
 
             except asyncio.TimeoutError:
+                if thieves.find_one({"names": user.name}, {"_id": 0}) is None:
+                    thieves.update_one({}, {"$push": {"names": user.name}})
+
                 msg = f"{user}. What do you mean that you forgot? You wasted my time! Get out of my bank!"
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=5)
@@ -1060,11 +1119,15 @@ class Magic(commands.Cog):
                     msg = "Huhh.. Are you sure that is your correct password?!"
                     await self.penalize(user, cycle, points=5)
                 elif i == 2:
+                    if thieves.find_one({"names": user.name}, {"_id": 0}) is None:
+                        thieves.update_one({}, {"$push": {"names": user.name}})
+
                     msg = f"{user}, I don't think you have any business here!\n\n" \
                         f"I'm gonna have to ask you to get out of my bank. You are wasting my time."
                     await self.action_update(user, cycle, actions=3)
                     await self.penalize(user, cycle, points=10)
                     answer = "Wrong"
+
                 await self.secret_response(guild.id, message.channel.name, msg)
                 i += 1
 
