@@ -33,7 +33,8 @@
     },
     "path18": {
         "1": "With no avail on how to retrieve your identification, you decided to eavesdrop again...",
-        "2": "One wizard asked the Animagus Yui to show their identification."
+        "2": "One wizard asked the Animagus Yui to show their identification.",
+        "3": "...Another witch recited long alphanumeric characters to one of the goblins"
     },
     "path19": {
         "1": "Your intuition suggested, 'since the weather changes every hour, I should be mindful of the weather occasions prior sending'"
@@ -45,7 +46,7 @@
         "1": "As per the information you read in the book, owls may travel differently due to the weather."
     },
     "path5": {
-        "1": "Based on the witch earlier at the bank, it should be an 18 numeric characters."
+        "1": "Based on the witch earlier at the bank, it should be an 18 digit number."
     },
     "path9": {
          "1": "You contemplated that the Store Manager seems to be welcoming of guests and thought of perhaps, \"it would be of ease to inquire about the store's owls and everything\""
