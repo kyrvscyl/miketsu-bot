@@ -739,6 +739,10 @@ class Admin(commands.Cog):
                 members.update_one({"#": id}, {"$set": {"status": args[3].capitalize()}})
                 members.update_one({"#": id}, {"$set": {"status_update1": time1}})
                 members.update_one({"#": id}, {"$set": {"status_update2": time2}})
+
+                if args[3].lower() in ["away", "left", "kicked"]:
+                    members.update_one({"#": id}, {"$set": {"role": "Ex-member"}})
+
                 await ctx.message.add_reaction("✅")
 
             # Updating the notes
