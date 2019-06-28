@@ -1011,6 +1011,8 @@ class Magic(commands.Cog):
                     await message.channel.send(msg1)
                     await self.secret_response(guild.id, message.channel.name, msg2)
 
+                    thieves.update_one({}, {"$pull": {"names": str(user.name)}})
+
     # noinspection PyUnboundLocalVariable
     async def obtain_identity(self, user, guild, message):
 
