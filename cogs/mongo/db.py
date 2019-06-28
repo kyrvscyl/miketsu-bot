@@ -20,6 +20,7 @@ users = memory["miketsu"]["users"]
 sendoff = memory["miketsu"]["sendoff"]
 quests = memory["miketsu"]["quests"]
 owls = memory["miketsu"]["owls"]
+thieves = memory["miketsu"]["thieves"]
 
 # Collections - Bukkuman
 books = memory["bukkuman"]["books"]
