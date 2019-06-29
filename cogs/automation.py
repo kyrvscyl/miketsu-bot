@@ -25,7 +25,7 @@ class Events(commands.Cog):
 
         for entry in books.find({}, {"_id": 0, "server": 1, "prefects": 1}):
             server = entry["server"]
-            role_bathroom = discord.utils.get(self.client.get_guild(int(server)), name="🚿")
+            role_bathroom = discord.utils.get(self.client.get_guild(int(server)).roles, name="🚿")
 
             if len(role_bathroom.members) == 0:
                 return
