@@ -6,6 +6,8 @@ from datetime import datetime
 
 import discord
 import pytz
+import random
+import asyncio
 from discord.ext import commands
 
 from cogs.mongo.db import books, users
@@ -18,6 +20,76 @@ class Events(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    async def reset_prefects(self):
+
+        for entry in books.find({}, {"_id": 0, "server": 1, "prefects": 1}):
+            server = entry["server"]
+            role_bathroom = discord.utils.get(self.client.get_guild(int(server)), name="🚿")
+
+            if len(role_bathroom.members) == 0:
+                return
+
+            else:
+                for member in role_bathroom.members:
+                    await member.remove_roles(role_bathroom)
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if message.content.lower() != "pine fresh":
+            return
+
+        elif message.channel.position != 4:
+            return
+
+        elif message.channel.position == 4 and str(message.channel.category) == "🏰 Patronus Castle":
+            role_bathroom = discord.utils.get(message.guild.roles, name="🚿")
+
+            await message.author.add_roles(role_bathroom)
+
+    @commands.command(aliases=["change"])
+    @commands.is_owner()
+    async def change_castle(self, ctx):
+        await ctx.channel.send("Re-arranging..")
+
+        guild_id = ctx.guild.id
+        server = books.find_one({"server": str(guild_id)}, {"_id": 0, "castle": 1, "prefects": 1})
+        castle_id = server["castle"]
+
+        castle = self.client.get_channel(int(castle_id))
+        prefects = self.client.get_channel(int(server["prefects"]))
+
+        for channel in castle.text_channels:
+            new_floor = random.randint(1, len(castle.text_channels)) - 1
+            await channel.edit(position=new_floor)
+            await asyncio.sleep(1)
+
+        await prefects.edit(position=7)
+        await asyncio.sleep(5)
+        await self.change_topic_floor(castle_id, prefects)
+
+    async def change_topic_floor(self, castle_id, prefects):
+        ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
+        new_castle = self.client.get_channel(int(castle_id))
+
+        for channel in new_castle.text_channels:
+            print(channel.name)
+
+        i = 0
+        while i < len(new_castle.text_channels):
+
+            if new_castle.text_channels[i].name != "prefects-bathroom":
+                channel_topic = new_castle.text_channels[i].topic[12:]
+                floor = i + 1
+                await new_castle.text_channels[i].edit(topic=f"{ordinal(floor)} Floor -\n{channel_topic}")
+                print(f"{ordinal(floor)} Floor -\n{channel_topic}")
+                i += 1
+
+            else:
+                i += 1
+
+        await prefects.edit(position=5)
 
     # Whenever a shard post is pinned/edited
     @commands.Cog.listener()
