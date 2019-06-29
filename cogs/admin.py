@@ -35,6 +35,28 @@ class Admin(commands.Cog):
         else:
             return singular
 
+    @commands.command(aliases=["welcome"])
+    @commands.is_owner()
+    async def post_welcome(self, ctx):
+        request = books.find_one({"server": f"{ctx.guild.id}"}, {"_id": 0, "welcome": 1})
+        welcome = self.client.get_channel(int(request["welcome"]))
+
+        embed1 = discord.Embed(title="Welcome to House Patronus!", colour=discord.Colour(0xe77eff),
+                               description="Herewith are the rules and information of our server!\n\n"
+                                           "Crest designed by <@&281223518103011340>")
+        embed1.set_thumbnail(
+            url="https/cdn.discordapp.com/attachments/556032841897607178/584001678316142607/Patronus_Crest.png")
+
+        embed2 = discord.Embed(title="Primary Server Roles", colour=discord.Colour(0xff44))
+        embed2.add_field(name=":trident: Head", value="• The Ministers of Patronus")
+        embed2.add_field(name=":fleur_de_lis: Auror", value="• Prime Witches, Wizards, & Spirits of Patronus",
+                         inline=False)
+        embed2.add_field(name=":crystal_ball: Patronus", value=" Existing members of the guild", inline=False)
+        embed2.add_field(name=":fire: No-Maj", value="• Obliviated, former members, guests", inline=False)
+        embed2.add_field(name=":wolf: Animagus", value="• Transformed members during Full Moon", inline=False)
+
+        await welcome.send(embed=embed1)
+
     @commands.command(aliases=["start"])
     @commands.is_owner()
     async def post_announcement_magic(self, ctx):
