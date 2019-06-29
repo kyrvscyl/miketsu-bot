@@ -80,11 +80,11 @@ class Magic(commands.Cog):
 
         await channel.send(f"[{date_time}] " + msg)
 
-    async def sendoff_owl(self, user, reaction, cycle):
+    async def sendoff_owl(self, user, cycle):
 
         await user.send("*Sending off owl to the :trident: Headmaster's Tower*")
         await asyncio.sleep(2)
-        await reaction.message.channel.send(f"*{user}, you will receive an update when the clock moves an hour*")
+        await user.send(f"*{user}, you will receive an update when the clock moves an hour*")
         await self.generate_owl_report(user, cycle)
         await self.logging(f"{user} has successfully dispatched their owl to the Headmaster's Office")
 
@@ -125,7 +125,7 @@ class Magic(commands.Cog):
             report = "Your owl struggled to reached the Headmaster's Office on time due to unfavoured weather.\n\n" \
                      "Estimated time of return: in 2 hours"
 
-        elif weather1 == "☁" or weather1 == "⛅":  # Cloudy & Partly sunny
+        elif weather1 == "☁" or weather1 == "⛅" or weather1 == "☀":  # Cloudy & Partly sunny, or sunny
 
             delay = 1 + 1
             scenario = 2
@@ -462,7 +462,7 @@ class Magic(commands.Cog):
                 if path == "path2" or path == "path20":
 
                     await self.update_path(user, cycle, path_new="path4")  # Transfers to waiting path
-                    await self.sendoff_owl(user, reaction, cycle)
+                    await self.sendoff_owl(user, cycle)
                     await reaction.message.add_reaction("✅")
                     await asyncio.sleep(2)
                     await reaction.message.delete()
@@ -766,17 +766,22 @@ class Magic(commands.Cog):
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
-                guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, read_message_history=False)
+                guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, send_messages=True,
+                                                                       read_message_history=False)
             }
 
             emporium = await guild.create_text_channel("eeylops-owl-emporium", category=category, overwrites=overwrites)
             await self.generate_data(guild, msg, emporium)
+            await message.add_reaction("✨")
 
             if path == "path1":
                 await self.update_path(user, cycle, path_new="path6")  # path_current="1"
 
             elif path == "path15":
                 return
+
+            await asyncio.sleep(3)
+            await message.delete()
 
         elif "eeylops-owl-emporium" in channels:  # and 7 <= int(current_time2()) <= 14:  # 07:00 - 14:00
 
@@ -785,13 +790,17 @@ class Magic(commands.Cog):
             emporium_channel = self.client.get_channel(int(emporium_id))
 
             await emporium_channel.set_permissions(user, read_messages=True,
-                                                   send_messages=False, read_message_history=False)
+                                                   send_messages=True, read_message_history=False)
+            await message.add_reaction("✨")
 
             if path == "path1":
                 await self.update_path(user, cycle, path_new="path6")  # path_current="1"
 
             elif path == "path15":
                 return
+
+            await asyncio.sleep(3)
+            await message.delete()
 
         else:
             await self.reaction_closed(message)
@@ -812,12 +821,14 @@ class Magic(commands.Cog):
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
-                guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, read_message_history=False)
+                guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, send_messages=True,
+                                                                       read_message_history=False)
             }
 
             gringotts = await guild.create_text_channel("gringotts-bank", category=category,
                                                         overwrites=overwrites, topic=topic)
             await self.generate_data(guild, "gringotts-bank", gringotts)
+            await message.add_reaction("✨")
 
             if path == "path7":
                 await self.update_path(user, cycle, path_new="path8")
@@ -829,10 +840,14 @@ class Magic(commands.Cog):
 
             await gringotts_channel.set_permissions(user, read_messages=True,
                                                     send_messages=True, read_message_history=False)
+            await message.add_reaction("✨")
             await gringotts_channel.edit(topic=topic)
 
             if path == "path7":
                 await self.update_path(user, cycle, path_new="path8")
+
+            await asyncio.sleep(3)
+            await message.delete()
 
         else:
             await self.reaction_closed(message)
@@ -849,16 +864,21 @@ class Magic(commands.Cog):
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
-                guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, read_message_history=False)
+                guild.get_member(user.id): discord.PermissionOverwrite(read_messages=True, send_messages=True,
+                                                                       read_message_history=False)
             }
 
             ollivanders = await guild.create_text_channel("ollivanders", category=category, overwrites=overwrites)
             await self.generate_data(guild, msg, ollivanders)
+            await message.add_reaction("✨")
 
             if path == "path10":
 
                 await self.update_path(user, cycle, path_new="path6")  # path_current="10"
                 await self.wand_personalise(guild, user, ollivanders, path, cycle)
+
+            await asyncio.sleep(3)
+            await message.delete()
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
 
@@ -867,11 +887,15 @@ class Magic(commands.Cog):
 
             await ollivanders_channel.set_permissions(user, read_messages=True,
                                                       send_messages=True, read_message_history=False)
+            await message.add_reaction("✨")
 
             if path == "path10":
 
                 await self.update_path(user, cycle, path_new="path6")
                 await self.wand_personalise(guild, user, ollivanders_channel, path, cycle)
+
+            await asyncio.sleep(3)
+            await message.delete()
 
         else:
             await self.reaction_closed(message)

@@ -15,6 +15,7 @@ from cogs.magic import get_data
 from cogs.mongo.db import books, weather, sendoff, quests, owls
 from cogs.frame import frame_starlight, frame_blazing
 from cogs.admin import Admin
+from cogs.automation import Events
 
 # Get the clock channels
 clock_channels = []
@@ -120,7 +121,7 @@ class Clock(commands.Cog):
                 user = self.client.get_user(int(entry["user_id"]))
                 msg = f"Your {entry['type']} has fully recovered"
                 await Magic(self.client).update_path(user, cycle, path_new="path20")
-                await user.send(embed=msg)
+                await user.send(msg)
 
     async def send_off_report(self):
 
@@ -189,6 +190,7 @@ class Clock(commands.Cog):
                 await self.clear_secrets()
                 await self.send_off_report()
                 await self.send_off_complete()
+                await Events(self.client).reset_prefects()
 
             # Reset owl during 12:00
             if hour_minute == "12:00":
