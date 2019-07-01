@@ -149,7 +149,10 @@ class Clock(commands.Cog):
                     if key == "id":
                         channel = self.client.get_channel(int(entry[secret][key]))
                         if channel is not None:
-                            await channel.delete()
+                            try:
+                                await channel.delete()
+                            except discord.errors.Forbidden:
+                                return
 
     async def clock_update(self):
         time = get_time().strftime("%H:%M EST | %a")
