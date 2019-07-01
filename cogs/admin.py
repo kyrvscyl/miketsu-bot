@@ -234,7 +234,7 @@ class Admin(commands.Cog):
                                   description="`;m help` - shows this help\n"
                                               "`;m add` - adding new accounts\n"
                                               "`;m update` - updating member profile\n"
-                                              "`;m show` - querying the registry"
+                                              "`;m show` - querying the registry\n"
                                               "`;m stats` - guild statistics")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
