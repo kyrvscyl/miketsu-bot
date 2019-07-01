@@ -81,7 +81,7 @@ class Encounter(commands.Cog):
         self.client = client
 
     @commands.command(aliases=["enc"])
-    @commands.cooldown(1, 180, commands.BucketType.guild)
+    @commands.cooldown(1, 180, commands.BucketType.user)
     @commands.guild_only()
     async def encounter(self, ctx):
         user = ctx.author
