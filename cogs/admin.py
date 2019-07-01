@@ -17,7 +17,7 @@ from cogs.mongo.db import daily, boss, members, users, friendship, books
 tz_target = pytz.timezone("America/Atikokan")
 
 # Global Variables
-fields = ["name", "role", "status", "notes", "note"]
+fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
 emoji_j = "<:jade:555630314282811412>"
@@ -231,18 +231,18 @@ class Admin(commands.Cog):
         # No argument passed
         if len(args) == 0 or args[0].lower() == "help" or args[0].lower() == "h":
             embed = discord.Embed(color=0xffff80, title="🔱 Management Commands",
-                                  description="`;m help` - shows this help\n"
-                                              "`;m add` - adding new accounts\n"
-                                              "`;m update` - updating member profile\n"
-                                              "`;m show` - querying the registry\n"
-                                              "`;m stats` - guild statistics")
+                                  description="• `;m help` - shows this help\n"
+                                              "• `;m add` - adding new accounts\n"
+                                              "• `;m update` - updating member profiles\n"
+                                              "• `;m show` - querying the registry\n"
+                                              "• `;m stats` - guild statistics")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
 
         # ;m add {onmyoji}
         elif args[0].lower() == "add" and len(args) <= 2:
             embed = discord.Embed(color=0xffff80, title="🔱 Adding Members",
-                                  description="`;m add {role} {name}`\n")
+                                  description="• `;m add {role} {name}`\n")
             embed.add_field(name=":ribbon: Role Selection", value="member, ex-member, officer")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
@@ -270,14 +270,24 @@ class Admin(commands.Cog):
         # ;m update <onmyoji or #> <field> <value>
         elif args[0].lower() in ("update", "u") and len(args) <= 1:
             embed = discord.Embed(color=0xffff80, title="🔱 Updating Members",
-                                  description="`;m update {name} {field} {value}`\n"
-                                              "`;m update {#} {field} {value}`")
+                                  description="• `;m update {name} {field} {value}`\n"
+                                              "• `;m update {#} {field} {value}`\n"
+                                              "• `;m update feats` - batch updating\n"
+                                              "• `;m update inactives` - batch updating")
             embed.add_field(name=":ribbon: Roles", value="member, ex-member, officer")
             embed.add_field(name=":golf: Status", value="active, inactive, on-leave, kicked, semi-active, away, left")
             embed.add_field(name="🗒 Notes", value="Any officer notes")
             embed.set_footer(text="Use name as field to revise name")
             embed.set_thumbnail(url=ctx.guild.icon_url)
             await ctx.channel.send(embed=embed)
+
+        # ;m update feats
+        elif args[0].lower() in ("update", "u") and args[1].lower() == "inactives" and len(args) == 2:
+            await self.management_update_performance(ctx, args)
+
+        # ;m update feats
+        elif args[0].lower() in ("update", "u") and args[1].lower() == "feats" and len(args) == 2:
+            await self.management_update_feats(ctx, args)
 
         # ;m update 1
         elif args[0].lower() in ("update", "u") and len(args) == 2:
@@ -299,11 +309,11 @@ class Admin(commands.Cog):
         # ;m show
         elif args[0].lower() == "show" and len(args) == 1:
             embed = discord.Embed(color=0xffff80, title="🔱 Querying Members",
-                                  description="`;m show all`\n"
-                                              "`;m show all {[a-z or '#']}`\n"
-                                              "`'m show all guild` - currently in guild\n"
-                                              "`;m show {name or #}`\n"
-                                              "`;m show {field} {data}`")
+                                  description="• `;m show all`\n"
+                                              "• `;m show all {[a-z or 1-9]}`\n"
+                                              "• `;m show all guild`\n"
+                                              "• `;m show {name or #}`\n"
+                                              "• `;m show {field} {data}`")
             embed.add_field(name=":ribbon: Role", value="member, ex-member, officer")
             embed.add_field(name=":golf: Status", value="active, inactive, on-leave, kicked, semi-active, away, left")
             embed.set_thumbnail(url=ctx.guild.icon_url)
@@ -350,6 +360,208 @@ class Admin(commands.Cog):
         else:
             await ctx.message.add_reaction("❌")
 
+    async def management_update_performance(self, ctx, args):
+
+        time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
+        week_number = datetime.now(tz=tz_target).isocalendar()[1]
+
+        await ctx.channel.send("Opening environment for batch updating of inactives...")
+        await asyncio.sleep(3)
+
+        await ctx.channel.send("Enter `stop`/`skip` to exit the environment or skip a member, respectively...")
+        await asyncio.sleep(3)
+
+        description = "• `90` : `ACTV` | `>= 90 GQ`\n" \
+                      "• `60` : `SMAC` | `90 > GQ > 30`\n" \
+                      "• `30` : `INAC` | `<30 GQ`"
+
+        embed = discord.Embed(color=0xffff80, title="GQ Codes", description=description)
+        await ctx.channel.send(embed=embed)
+        await asyncio.sleep(4)
+
+        embed = discord.Embed(color=0xffff80, title="Performing initial calculations...")
+        msg = await ctx.channel.send("Enter the GQ code `(90/60/30)` for: ", embed=embed)
+
+        for member in members.find({"role": {"$in": ["Officer", "Member", "Leader"]},
+                                    "status": {"$in": ["Semi-active", "Inactive"]}},
+                                   {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1,
+                                    "total_feats": 1, "weekly_gq": 1,
+                                    "status_update1": 1}).sort([("total_feats", -1)]):
+
+            embed = discord.Embed(color=0xffff80,
+                                  title=f"#{member['#']} : {member['name']} | :ribbon: {member['role']}")
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.set_footer(text=f"Queried on {time}")
+            embed.add_field(name=":golf: Status", value=f"{member['status']} [{member['status_update1']}]")
+            embed.add_field(name=":trophy: Feats | GQ",
+                            value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{week_number}]")
+
+            await asyncio.sleep(2)
+            await msg.edit(embed=embed)
+
+            def check(feat):
+                try:
+                    value = int(feat.content)
+
+                    if value not in [90, 60, 30]:
+                        raise KeyError
+
+                except ValueError:
+
+                    if feat.content.lower() == "stop":
+                        raise TypeError
+
+                    elif feat.content.lower() == "skip":
+                        raise IndexError
+
+                    else:
+                        raise KeyError
+
+                return feat.author == ctx.message.author
+
+            i = 0
+            while i < 1:
+
+                try:
+                    timeout = 180
+                    answer = await self.client.wait_for("message", timeout=timeout, check=check)
+                    value = int(answer.content)
+                    time1 = (datetime.now(tz=tz_target)).strftime("%d.%b %y")
+                    time2 = (datetime.now(tz=tz_target)).strftime("%Y:%m:%d")
+
+                    if value == 30:
+                        members.update_one({"name": str(member["name"])}, {"$set": {"status": "Inactive",
+                                                                                    "status_update1": time1,
+                                                                                    "status_update2": time2}})
+                    elif value == 60:
+                        members.update_one({"name": str(member["name"])}, {"$set": {"status": "Semi-active",
+                                                                                    "status_update1": time1,
+                                                                                    "status_update2": time2}})
+                    elif value == 90:
+                        members.update_one({"name": str(member["name"])}, {"$set": {"status": "Active",
+                                                                                    "status_update1": time1,
+                                                                                    "status_update2": time2}})
+
+                    members.update_one({"name": str(member["name"])}, {"$set": {"weekly_gq": value}})
+
+                    await answer.add_reaction("✅")
+                    await asyncio.sleep(2)
+                    await answer.delete()
+                    i += 1
+
+                except IndexError:
+                    i = 4
+
+                except TypeError:
+                    msg = await ctx.channel.send("Exiting environment..")
+                    await msg.add_reaction("✅")
+                    i = 5
+
+                except KeyError:
+                    msg = await ctx.channel.send("Invalid input")
+                    await asyncio.sleep(2)
+                    await msg.delete()
+                    i = 0
+
+                except asyncio.TimeoutError:
+                    msg = await ctx.channel.send("Exiting environment due to timeout error")
+                    await asyncio.sleep(1)
+                    await msg.add_reaction("✅")
+                    i += 1
+
+            if i == 5:
+                break
+
+            elif i == 4:
+                continue
+
+    async def management_update_feats(self, ctx, args):
+
+        time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
+        week_number = datetime.now(tz=tz_target).isocalendar()[1]
+
+        await ctx.channel.send("Opening environment for batch updating of inactives...")
+        await asyncio.sleep(3)
+
+        await ctx.channel.send("Enter `stop`/`skip` to exit the environment or skip a member, respectively...")
+        await asyncio.sleep(3)
+
+        embed = discord.Embed(color=0xffff80, title="Performing initial calculations...")
+        msg = await ctx.channel.send("Enter the total feats for: ", embed=embed)
+
+        for member in members.find({"role": {"$in": ["Officer", "Member", "Leader"]}},
+                                   {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1,
+                                    "total_feats": 1, "weekly_gq": 1,
+                                    "status_update1": 1}).sort([("total_feats", 1)]):
+
+            embed = discord.Embed(color=0xffff80,
+                                  title=f"#{member['#']} : {member['name']} | :ribbon: {member['role']}")
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.add_field(name=":golf: Status", value=f"{member['status']} [{member['status_update1']}]")
+            embed.add_field(name=":trophy: Feats | GQ",
+                            value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{week_number}]")
+
+            await asyncio.sleep(2)
+            await msg.edit(embed=embed)
+
+            def check(feat):
+                try:
+                    value = int(feat.content)
+
+                except ValueError:
+
+                    if feat.content.lower() == "stop":
+                        raise TypeError
+
+                    elif feat.content.lower() == "skip":
+                        raise IndexError
+
+                    else:
+                        raise KeyError
+
+                return feat.author == ctx.message.author
+
+            i = 0
+            while i < 1:
+
+                try:
+                    timeout = 180
+                    answer = await self.client.wait_for("message", timeout=timeout, check=check)
+                    value = int(answer.content)
+
+                    members.update_one({"name": str(member["name"])}, {"$set": {"total_feats": value}})
+
+                    await answer.add_reaction("✅")
+                    await asyncio.sleep(2)
+                    await answer.delete()
+                    i += 1
+
+                except IndexError:
+                    i = 4
+
+                except TypeError:
+                    msg = await ctx.channel.send("Exiting environment..")
+                    await msg.add_reaction("✅")
+                    i = 5
+
+                except KeyError:
+                    msg = await ctx.channel.send("Invalid input")
+                    await asyncio.sleep(2)
+                    await msg.delete()
+                    i = 0
+
+                except asyncio.TimeoutError:
+                    msg = await ctx.channel.send("Exiting environment due to timeout error")
+                    await asyncio.sleep(1)
+                    await msg.add_reaction("✅")
+                    i += 1
+
+            if i == 5:
+                break
+
+            elif i == 4:
+                continue
+
     async def management_stats(self, ctx):
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         registered_users = members.count()
@@ -380,7 +592,7 @@ class Admin(commands.Cog):
         query_list = []
 
         for member in members.find({"role": {"$in": ["Officer", "Member", "Leader"]}},
-                                   {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}).sort([("#", 1)]):
+                                   {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}).sort([("total_feats", -1)]):
 
             if member['role'] == "Leader":
                 role = "LDR"
@@ -785,6 +997,47 @@ class Admin(commands.Cog):
                 members.update_one({"#": id}, {"$set": {"role": args[3].capitalize()}})
                 await ctx.message.add_reaction("✅")
 
+            # Updating the tfeat
+            elif args[2].lower() == "tfeat":
+
+                try:
+                    total_feat_new = int(args[3])
+                    members.update_one({"#": id}, {"$set": {"total_feats": total_feat_new}})
+                    await ctx.message.add_reaction("✅")
+
+                except ValueError:
+                    await ctx.message.add_reaction("❌")
+
+            # Updating the tfeat
+            elif args[2].lower() == "gq":
+
+                try:
+                    new_gq = int(args[3])
+
+                    if new_gq == 30:
+                        await ctx.message.add_reaction("✅")
+                        members.update_one({"#": id},
+                                           {"$set": {"status": "Inactive",
+                                                     "status_update1": time1, "status_update2": time2,
+                                                     "weekly_gq": new_gq}})
+                    elif new_gq == 60:
+                        await ctx.message.add_reaction("✅")
+                        members.update_one({"#": id},
+                                           {"$set": {"status": "Semi-active",
+                                                     "status_update1": time1, "status_update2": time2,
+                                                     "weekly_gq": new_gq}})
+                    elif new_gq == 90:
+                        await ctx.message.add_reaction("✅")
+                        members.update_one({"#": id},
+                                           {"$set": {"status": "Active",
+                                                     "status_update1": time1, "status_update2": time2,
+                                                     "weekly_gq": new_gq}})
+                    else:
+                        await ctx.message.add_reaction("❌")
+
+                except ValueError:
+                    await ctx.message.add_reaction("❌")
+
             else:
                 await ctx.message.add_reaction("❌")
 
@@ -825,6 +1078,48 @@ class Admin(commands.Cog):
                 members.update_one({"name_lower": args[1].lower()},
                                    {"$set": {"role": args[3].capitalize()}})
                 await ctx.message.add_reaction("✅")
+
+            # Updating the tfeat
+            elif args[2].lower() == "tfeat":
+
+                try:
+                    total_feat_new = int(args[3])
+                    members.update_one({"name_lower": args[1].lower()}, {"$set": {"total_feats": total_feat_new}})
+                    await ctx.message.add_reaction("✅")
+
+                except ValueError:
+                    await ctx.message.add_reaction("❌")
+
+            # Updating the GQ
+            elif args[2].lower() == "gq":
+
+                try:
+                    new_gq = int(args[3])
+
+                    if new_gq == 30:
+                        await ctx.message.add_reaction("✅")
+                        members.update_one({"name_lower": args[1].lower()},
+                                           {"$set": {"status": "Inactive",
+                                                     "status_update1": time1, "status_update2": time2,
+                                                     "weekly_gq": new_gq}})
+                    elif new_gq == 60:
+                        await ctx.message.add_reaction("✅")
+                        members.update_one({"name_lower": args[1].lower()},
+                                           {"$set": {"status": "Semi-active",
+                                                     "status_update1": time1, "status_update2": time2,
+                                                     "weekly_gq": new_gq}})
+                    elif new_gq == 90:
+                        await ctx.message.add_reaction("✅")
+                        members.update_one({"name_lower": args[1].lower()},
+                                           {"$set": {"status": "Active",
+                                                     "status_update1": time1, "status_update2": time2,
+                                                     "weekly_gq": new_gq}})
+
+                    else:
+                        await ctx.message.add_reaction("❌")
+
+                except ValueError:
+                    await ctx.message.add_reaction("❌")
 
             else:
                 await ctx.message.add_reaction("❌")
