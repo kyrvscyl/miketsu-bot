@@ -399,7 +399,7 @@ class Magic(commands.Cog):
                 answer = await self.client.wait_for("message", timeout=60, check=check)
                 await answer.add_reaction("✅")
                 description = f"• Patronus: {patronus_name.title()}\n" \
-                    f"• Trait: {traittitle()}\n" \
+                    f"• Trait: {trait.title()}\n" \
                     f"• Wand length: {length.title()}\n" \
                     f"• Wand flexibility: {flexibility.title()}\n" \
                     f"• Wand wood: {wood.title()}\n" \
