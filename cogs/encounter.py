@@ -125,7 +125,7 @@ class Encounter(commands.Cog):
 
     async def quiz_roll(self, user, ctx):
 
-        with open("data/quiz.json", "r") as f:
+        with open("data/quiz.json") as f:
             quiz = json.load(f)
 
         answer = random.choice(list(quiz.keys()))
@@ -180,7 +180,7 @@ class Encounter(commands.Cog):
                     await ctx.channel.send(f"{user.mention}, wrong answer! 1 more try left.")
 
     async def treasure_roll(self, user, ctx):
-        with open("data/rewards.json", "r") as f:
+        with open("data/rewards.json") as f:
             rewards = json.load(f)
 
         roll = random.randint(1, 6)
@@ -284,7 +284,7 @@ class Encounter(commands.Cog):
                                      "rewards.coins": 50000}})
 
                     assembly_players.append(str(user.id))
-                    timer = timer / 1.20
+                    timer /= 1.20
 
                     msg = f"{user.mention} joins the assembly! :checkered_flag: {count_players + 1}/10 players; " \
                         f":alarm_clock:{round(timer)} seconds before closing!"
@@ -401,11 +401,9 @@ class Encounter(commands.Cog):
             users.update_one({"user_id": [reward][0][0]}, {
                 "$inc": {"jades": round([reward][0][2]), "coins": round([reward][0][1]),
                          "medals": round([reward][0][3]), "experience": round([reward][0][4])}})
-            embed.add_field(
-                name=f"{self.client.get_user(int([reward][0][0])).name}, {round([reward][0][5] * 100, 2)}%",
-                inline=True,
-                value=f"{round([reward][0][1]):,d}{emoji_c}, {round([reward][0][2])}{emoji_j}, "
-                f"{round([reward][0][3])}{emoji_m}, {round([reward][0][4])} :arrow_heading_up:")
+            embed.add_field(name=f"{self.client.get_user(int([reward][0][0])).name}, {round([reward][0][5] * 100, 2)}%",
+                            value=f"{round([reward][0][1]):,d}{emoji_c}, {round([reward][0][2])}{emoji_j}, "
+                            f"{round([reward][0][3])}{emoji_m}, {round([reward][0][4])} :arrow_heading_up:")
 
         users.update_one({"user_id": discoverer},
                          {"$inc": {"jades": 100, "coins": 50000, "medals": 15, "experience": 100}})
