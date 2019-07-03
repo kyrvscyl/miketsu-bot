@@ -733,6 +733,9 @@ class Magic(commands.Cog):
 
                 score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand = get_profile(user)
 
+                print(score)
+                print(timestamp_start)
+
                 t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
                 t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
                 delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
