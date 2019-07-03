@@ -530,7 +530,7 @@ class Magic(commands.Cog):
 
         await user.send("*Sending off owl to the :trident: Headmaster's Tower*")
         await asyncio.sleep(2)
-        await user.send(f"*{user}, you will receive an update when the clock moves an hour*")
+        await user.send("*You will receive an update when the clock moves an hour*")
         await self.generate_owl_report(user, cycle)
         await self.logging(f"{user} has successfully dispatched their owl to the Headmaster's Office")
 
@@ -550,7 +550,7 @@ class Magic(commands.Cog):
 
             await self.update_path(user, cycle, path_new="path19")
 
-        elif weather1 == "🌨" and profile["type"] == "Snowy Owl":  # Snowy owl and Snowy weather
+        elif weather1 == "🌨" and profile["type"] == "snowy":  # Snowy owl and Snowy weather
 
             delay = 1 + 1
             scenario = 2
@@ -690,39 +690,87 @@ class Magic(commands.Cog):
         role_star = discord.utils.get(guild.roles, name="🌟")
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
-        if user in role_star.members:
+        async with channel.typing():
+            if user in role_star.members:
 
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
-            uppers = len([char for char in message.content if char.isupper()])
-            lowers = len([char for char in message.content if char.islower()])
-            symbol = len([char for char in message.content if char == "!"])
+                role_dolphin = discord.utils.get(guild.roles, name="🐬")
+                role_galleon = discord.utils.get(guild.roles, name="💰")
+                role_owl = discord.utils.get(guild.roles, name="🦉")
 
-            strength = round((uppers * 1.35) + lowers + (symbol * 1.5), 2)
-            range_min = strength - 5
-            range_max = strength + 5
-            strength = round(random.uniform(range_min, range_max), 2)
+                cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
+                uppers = len([char for char in message.content if char.isupper()])
+                lowers = len([char for char in message.content if char.islower()])
+                symbol = len([char for char in message.content if char == "!"])
 
-            if strength > 100:
-                strength = round(random.uniform(98, 99.99), 2)
+                strength = round((uppers * 1.35) + lowers + (symbol * 1.5), 2)
+                range_min = strength - 5
+                range_max = strength + 5
+                strength = round(random.uniform(range_min, range_max), 2)
 
-            await channel.send(f"Your Patronus strength: {strength}%")
-            await self.logging(f"{user} successfully finished the quest")
+                if strength > 100:
+                    strength = round(random.uniform(98, 99.99), 2)
 
-            quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                              {"$set": {"quest1.$.status": "completed"}})
+                await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
 
-        elif path == "path3":
+                # noinspection PyShadowingNames,PyUnboundLocalVariable
+                def get_profile(user):
+                    data = quests.aggregate([{"$match": {"user_id": str(user.id)}},
+                                             {"$project": {"_id": 0, "quest1": {"$slice": ["$quest1", -1]}}}])
 
-            await self.update_path(user, cycle, path_new="path10")
-            await self.penalize(user, cycle, points=5)
-            await message.add_reaction("❎")
-            await self.logging(f"{user} tried to cast the Patronus charm summoning spell")
+                    for profile in data:
+                        patronus_summon = profile["quest1"][0]["current_path"]
+                        score = profile["quest1"][0]["score"]
+                        timestamp_start = profile["quest1"][0]["timestamp_start"]
+                        hints_unlocked = profile["quest1"][0]["hints_unlocked"]
+                        owl_final = profile["quest1"][0]["owl"]
+                        wand = profile["quest1"][0]["wand"]
+                        break
 
-        elif path == "path10":
+                    return score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand
 
-            await message.add_reaction("❔")
-            await self.penalize(user, cycle, points=10)
-            await self.logging(f"{user} tried to recast the Patronus summoning spell to no avail")
+                score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand = get_profile(user)
+
+                t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
+                t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
+                delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
+
+                patronus_profile = patronus.find_one({"patronus": patronus_summon.lower()},
+                                                     {"_id": 0, "trait": 1, "link": 1})
+
+                embed = discord.Embed(title=f"Your Patronus Strength: {strength}% | {patronus_summon.title()}",
+                                      colour=discord.Colour(0x50e3c2),
+                                      description=f"• Cycle Score: {score}\n"
+                                      f"• Hints unlocked: {hints_unlocked}\n"
+                                      f"• Owl: {owl_final.title()} Owl [{patronus_profile['trait']}]")
+
+                embed.set_image(url=patronus_profile["link"])
+                embed.set_author(name=f"{user.name} | Cycle #{cycle}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"Hours spent: {delta} hours")
+
+                embed.add_field(name="Wand Properties",
+                                value=f"{wand['length']} inches, {wand['flexibility']}, "
+                                f"{wand['core'].replace(' ', '-')}-cored, {wand['wood']} wand")
+
+                await channel.send(content=":confetti_ball: **Congratulations!** You have finished the quest!",
+                                   embed=embed)
+
+                await self.logging(f"{user} successfully finished the quest")
+
+                quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
+                                  {"$set": {"quest1.$.status": "completed"}})
+
+            elif path == "path3":
+
+                await self.update_path(user, cycle, path_new="path10")
+                await self.penalize(user, cycle, points=5)
+                await message.add_reaction("❎")
+                await self.logging(f"{user} tried to cast the Patronus charm summoning spell")
+
+            elif path == "path10":
+
+                await message.add_reaction("❔")
+                await self.penalize(user, cycle, points=10)
+                await self.logging(f"{user} tried to recast the Patronus summoning spell to no avail")
 
     @commands.command(aliases=["progress"])
     @commands.has_role("🐬")
@@ -1068,8 +1116,7 @@ class Magic(commands.Cog):
         elif ctx.channel.name == "eeylops-owl-emporium":
 
             try:
-                query = args[0].title()
-                owl_buy = f"{query} Owl"
+                owl_buy = args[0].lower()
             except IndexError:
                 return
 
@@ -1142,14 +1189,15 @@ class Magic(commands.Cog):
                         async with ctx.channel.typing():
 
                             role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
-                            owl_description = owls.find_one({"type": f"{owl_buy}"}, {"_id": 0})
+                            owl_description = owls.find_one({"type": owl_buy}, {"_id": 0})
                             description = owl_description["description"]
                             msg = "What a lovely choice of owl!"
-                            embed = discord.Embed(title=f":owl: {owl_description['type']} | {owl_description['trait']}",
+                            embed = discord.Embed(title=f":owl: {owl_description['type'].title()} | "
+                                                        f"{owl_description['trait'].capitalize()}",
                                                   description="*" + description + "*", color=user.colour)
                             embed.set_thumbnail(url=owl_description["thumbnail"])
 
-                            owls.update_one({"type": f"{owl_buy}"}, {"$set": {"purchaser": str(user.id)}})
+                            owls.update_one({"type": owl_buy}, {"$set": {"purchaser": str(user.id)}})
                             sendoff.insert_one({"user_id": str(user.id), "type": owl_buy, "cycle": cycle})
                             quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                                               {"$set": {"quest1.$.purchase": False, "owl": owl_buy}})
@@ -1336,8 +1384,7 @@ class Magic(commands.Cog):
 
             if path == "path3":
                 # await self.update_path(user, cycle, path_new="path6")
-                await self.ollivanders_transaction(guild, user, ollivanders, path, cycle)
-                await message.delete()
+                await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
 
@@ -1353,15 +1400,15 @@ class Magic(commands.Cog):
 
             if path == "path3":
                 # await self.update_path(user, cycle, path_new="path6")
-                await self.ollivanders_transaction(guild, user, ollivanders_channel, path, cycle)
+                await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
 
         else:
             await self.reaction_closed(message)
 
-    async def ollivanders_transaction(self, guild, user, channel, path, cycle):
+    async def transaction_ollivanders(self, guild, user, channel, path, cycle):
 
         msg = f"{user}, what can I help you for?"
-        role_wand = discord.utils.get(guild.roles, name="✨")
+        role_star = discord.utils.get(guild.roles, name="🌟")
 
         await self.secret_response(guild.id, channel.name, msg)
 
@@ -1369,7 +1416,7 @@ class Magic(commands.Cog):
             if guess.author != user:
                 return
             elif "wand" in guess.content.lower() or "wands" in guess.content.lower():
-                return guess.author == user
+                return guess.author == user and channel == guess.channel
             else:
                 raise KeyError
 
@@ -1386,7 +1433,7 @@ class Magic(commands.Cog):
         if answer == "Wrong":
             return
 
-        elif user not in role_wand.members and path == "path3":
+        elif user not in role_star.members and path == "path3":
 
             msg = f"{user}, I see you want wands. Allow me to guide you through your wand selection, shall we?"
             topic = "Every choice affects your ending results."
@@ -1396,12 +1443,14 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await self.wand_personalise(user, guild, channel, cycle)
 
-        elif user in role_wand.members:
+        elif user in role_star.members:
             topic = "Ollivanders! Home of the best crafted wands!"
             await channel.edit(topic=topic)
 
     # noinspection PyUnboundLocalVariable,PyMethodMayBeStatic,PyShadowingNames
     async def wand_personalise(self, user, guild, channel, cycle):
+        role_star = discord.utils.get(guild.roles, name="✨")
+
         data = quests.aggregate([{"$match": {"user_id": str(user.id)}},
                                  {"$project": {"_id": 0, "quest1": {"$slice": ["$quest1", -1]}}}])
 
@@ -1412,31 +1461,31 @@ class Magic(commands.Cog):
         trait = owls.find_one({"type": owl}, {"_id": 0, "trait": 1})["trait"]
 
         responses = {
-            "Pure Emotions": ("I see you... I see in you a temperamental and sensitive character.. "
+            "pure emotions": ("I see you... I see that you have a temperamental and sensitive character.. "
                               "And perhaps also, a person who is attracted to those with inner conflicts..\n\n"
                               "Very unyielding yet faithful to those who are honest with themselves.",
 
                               ""),
 
-            "Strong-willed": ("My child, do you ever believe in self-sacrificing. You are a strong-willed person. "
+            "strong-willed": ("My child, do you ever believe in self-sacrificing. You are a strong-willed person. "
                               "Capable of being the bravest of them all and with outstanding passion and strong "
                               "sense of self, belief, and above all, justice.",
 
                               ""),
 
-            "Adventurous": ("One stepped in this house, I knew how creative and brilliant youngster you are. "
+            "adventurous": ("One stepped in this house, I knew how creative and brilliant youngster you are. "
                             "Hmm.. Very ambitious as well. Destined for a final quest.. Wise and rich in "
                             "experiences. A great partner with uninterrupted excitement and fun.",
 
                             ""),
 
-            "Nature-loving": ("Do you perhaps have high interest in nature? You are well fitted to be someone with "
+            "nature-loving": ("Do you perhaps have high interest in nature? You are well fitted to be someone with "
                               "exceptional skills in magical beasts and herbalogy. Great talent requires great "
                               "wand",
 
                               ""),
 
-            "Special": ("A very special person. With traits of care and love for others. I know just the perfect "
+            "special": ("A very special person. With traits of care and love for others. I know just the perfect "
                         "wands for you, wands with healing, defensive, and legilimency properties. Utterly loved "
                         "by nature, indeed.",
 
@@ -1448,64 +1497,119 @@ class Magic(commands.Cog):
 
         await self.secret_response(guild.id, channel.name, msg1)
         await channel.edit(topic=topic)
-        await asyncio.sleep(11)
+        await asyncio.sleep(9)
 
         wand_length = await self.get_wand_length(user, guild, channel, cycle)
 
-        if wand_length != "Wrong":
+        if wand_length == "Wrong":
+            return
+
+        elif wand_length != "Wrong":
             wand_flexibility = await self.get_wand_flexibility(user, guild, channel, cycle)
 
-            if wand_flexibility != "Wrong":
+            if wand_flexibility == "Wrong":
+                return
+
+            elif wand_flexibility != "Wrong":
                 wand_length_category = get_length_category(wand_length)
                 wand_flexibility_category = get_flexibility_category(wand_flexibility)
 
-                print(wand_flexibility_category)
-                print(wand_length_category)
-                print(trait)
-
                 wood_selection = []
-                for wand in patronus.find({"flexibility": wand_flexibility_category,
-                                           "length": wand_length_category, "trait": trait}, {"_id": 0, "wood": 1}):
-                    wood_selection.append(wand["wood"])
+                for wand in patronus.find({"flexibility": wand_flexibility_category, "length": wand_length_category,
+                                           "trait": trait.lower()}, {"_id": 0, "wood": 1}):
+
+                    if wand["wood"] not in wood_selection:
+                        wood_selection.append(wand["wood"])
 
                 wand_wood = await self.get_wand_wood(user, guild, channel, cycle, wood_selection)
 
-                if wand_wood != "Wrong":
+                if wand_wood == "Wrong":
+                    return
+
+                elif wand_wood != "Wrong":
                     wand_core = await self.get_wand_core(user, guild, channel, cycle)
 
-                    description = f"Length: {wand_length}\n" \
-                        f"Wood: {wand_wood}\n" \
-                        f"Flexibility: {wand_flexibility}\n" \
-                        f"Core: {wand_core}"
+                    wand_creation = {"flexibility_category": wand_flexibility_category,
+                                     "flexibility": wand_flexibility,
+                                     "length_category": wand_length_category,
+                                     "length": wand_length,
+                                     "core": wand_core,
+                                     "trait": trait,
+                                     "wood": wand_wood}
 
-                    embed = DiscordEmbed(title="Wand Creation Results", description=description)
-                    await channel.send(embed=embed)
+                    __patronus = patronus.find_one({"flexibility": wand_flexibility_category,
+                                                    "length": wand_length_category, "trait": trait,
+                                                    "core": wand_core, "wood": wand_wood}, {"_id": 0})
 
-                    """
-                    patronus = wands.find_one({"flexibility": wand_flexibility_category,
-                                               "length": wand_length_category,
-                                               "trait": trait,
-                                               "core": wand_core,
-                                               "wood": wand_wood}, {"_id": 0})["patronus"]
-                    """
+                    if __patronus is None:
+
+                        msg = f"It seems that you're out of luck, {user}. I do not have that kind of wand. " \
+                            f"Perhaps, you're looking for a rare wand. But no such wand is crafted yet by me. I " \
+                            f"suggest you wield a common core, I'm sure there are lots of available for your choice."
+
+                        await self.secret_response(guild.id, channel.name, msg)
+
+                    elif __patronus is not None:
+
+                        description = f"Wood: `{wand_wood.title()}`\n" \
+                            f"Length: `{wand_length} in`\n" \
+                            f"Flexibility: `{wand_flexibility.title()}`\n" \
+                            f"Core: `{wand_core.title()}`"
+
+                        embed = discord.Embed(color=user.colour, description=description)
+                        embed.set_author(name="Wand Properties", icon_url=user.avatar_url)
+                        embed.set_footer(text="Confirm purchase?")
+
+                        msg = await channel.send(embed=embed)
+                        await msg.add_reaction("✅")
+                        await msg.add_reaction("❌")
+
+                        # noinspection PyShadowingNames
+                        def check(reaction, purchaser):
+                            return msg.id == reaction.message.id and user.id == purchaser.id \
+                                   and str(reaction.emoji) in ["✅", "❌"]
+
+                        i = 0
+                        while i < 1:
+
+                            try:
+                                reaction, purchaser = await self.client.wait_for("reaction_add", timeout=60,
+                                                                                 check=check)
+                                if str(reaction.emoji) == "✅":
+
+                                    msg = f"{user.mention} has acquired :sparkles: role"
+                                    quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
+                                                      {"$set": {"quest1.$.wand": wand_creation,
+                                                                "patronus": __patronus}})
+
+                                    await user.add_roles(role_star)
+                                    await channel.send(msg)
+                                    break
+
+                                elif str(reaction.emoji) == "❌":
+                                    msg = f"{user.mention}, come back soon once you've decided"
+                                    await self.penalize(user, cycle, points=20)
+                                    await channel.send(msg)
+                                    break
+
+                            except asyncio.TimeoutError:
+                                i = 5
 
     # noinspection PyUnboundLocalVariable
     async def get_wand_core(self, user, guild, channel, cycle):
 
-        wand_cores = ["unicorn hair", "dragon heartstring", "phoenix feathers"]
-
-        formatted_cores = "`, `".join(wand_cores)
+        formatted_cores = "`, `".join(cores)
         msg = f"{user}, lastly, the wand cores.\n\n" \
             f"Select from the choices: `{formatted_cores}`"
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
             if guess.author != user:
                 return
-            elif guess.content.lower() in wand_cores and guess.author == user:
-                return True
+            elif guess.content.lower() in cores and guess.author == user:
+                return channel == guess.channel
             else:
                 raise KeyError
 
@@ -1518,9 +1622,9 @@ class Magic(commands.Cog):
                 msg = f"{user}, {wand_core.capitalize()}. Another Interesting choice."  # change
                 topic = "Wand flexibility is categorized into 3 major parts."  # change
 
-                await asyncio.sleep(3)
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
+                break
 
             except asyncio.TimeoutError:
 
@@ -1530,7 +1634,7 @@ class Magic(commands.Cog):
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, channel.name, msg)
-                i = 4
+                break
 
             except KeyError:
                 if i == 0:
@@ -1551,7 +1655,7 @@ class Magic(commands.Cog):
                 await self.secret_response(guild.id, channel.name, msg)
                 i += 1
 
-        await self.logging(f"{user} is trying to personalise wand: -> awaits wood -> Ended")
+        await self.logging(f"{user} is trying to personalise wand: -> awaits core -> Ended")
         return wand_core.lower()
 
     # noinspection PyUnboundLocalVariable
@@ -1561,14 +1665,14 @@ class Magic(commands.Cog):
         msg = f"{user}, I just happen to have the appropriate woods for your wand characteristics.\n\n" \
             f"Select from the choices: `{formatted_woods}`"
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
             if guess.author != user:
                 return
             elif guess.content.lower() in wood_selection and guess.author == user:
-                return True
+                return channel == guess.channel
             else:
                 raise KeyError
 
@@ -1581,9 +1685,9 @@ class Magic(commands.Cog):
                 msg = f"{user}, {wand_wood.capitalize()}. Another Interesting choice."
                 topic = "Wand flexibility is categorized into 3 major parts."  # change
 
-                await asyncio.sleep(3)
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
+                break
 
             except asyncio.TimeoutError:
 
@@ -1595,7 +1699,7 @@ class Magic(commands.Cog):
                 await self.penalize(user, cycle, points=15)
                 await self.action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
-                i = 4
+                break
 
             except KeyError:
 
@@ -1607,7 +1711,7 @@ class Magic(commands.Cog):
                 await self.penalize(user, cycle, points=15)
                 await self.action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
-                i += 1
+                break
 
         await self.logging(f"{user} is trying to personalise wand: -> awaits wood -> Ended")
         return wand_wood.lower()
@@ -1618,14 +1722,14 @@ class Magic(commands.Cog):
         msg = f"We have wand lengths, {user}.\nDo tell me, which length in inches best suits your personality?\n\n" \
             f"Enter your choice: 8, 9, 10, 11, 12, 13, or 14."
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
             if guess.author != user:
                 return
             elif guess.content in ["8", "9", "10", "11", "12", "13", "14"] and guess.author == user:
-                return True
+                return channel == guess.channel
             else:
                 raise KeyError
 
@@ -1642,7 +1746,7 @@ class Magic(commands.Cog):
 
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
-                i = 4
+                break
 
             except asyncio.TimeoutError:
 
@@ -1654,7 +1758,7 @@ class Magic(commands.Cog):
                 await self.penalize(user, cycle, points=15)
                 await self.action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
-                i = 4
+                break
 
             except KeyError:
 
@@ -1706,7 +1810,7 @@ class Magic(commands.Cog):
             if guess.author != user:
                 return
             elif guess.content.lower() in flexibility and guess.author == user:
-                return True
+                return channel == guess.channel
             else:
                 raise KeyError
 
@@ -1722,7 +1826,7 @@ class Magic(commands.Cog):
 
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
-                i = 4
+                break
 
             except asyncio.TimeoutError:
 
@@ -1734,7 +1838,7 @@ class Magic(commands.Cog):
                 await self.penalize(user, cycle, points=15)
                 await self.action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
-                i = 4
+                break
 
             except KeyError:
 
@@ -2070,12 +2174,10 @@ class Magic(commands.Cog):
             except KeyError:
                 if i == 0:
                     msg = "Well that's weird. It did not work"
-
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 1:
                     msg = "Huhh.. Are you sure that is your correct password?!"
-
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 2:
