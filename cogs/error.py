@@ -28,11 +28,24 @@ class Error(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        print(error)
 
         # Probably not an admin
         if isinstance(error, commands.CheckFailure):
             return
+
+        elif str(ctx.command) == "suggest":
+            if isinstance(error, commands.errors.MissingRequiredArgument):
+                await ctx.channel.send(f"Hi, {ctx.author.mention}, I can collect suggestions. Kindly provide one.")
+
+            else:
+                await self.submit_error(ctx, error)
+
+        elif str(ctx.command) in ["raid", "raid_calculate"]:
+            if isinstance(error, commands.errors.BadArgument):
+                return
+
+            else:
+                await self.submit_error(ctx, error)
 
         # Broadcasting errors
         elif str(ctx.command) == "broadcast":
