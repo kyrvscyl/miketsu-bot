@@ -179,14 +179,14 @@ class Events(commands.Cog):
 
             if not changed_role1:
                 embed = discord.Embed(color=0x50e3c2,
-                                      title=f"Removed {changed_role2[0].display_name} role for {after.display_name}")
+                                      title=f"Removed {changed_role2[0].name} role for {after.display_name}")
                 embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
 
                 await record_scroll.send(embed=embed)
 
             elif not changed_role2:
                 embed = discord.Embed(color=0x50e3c2,
-                                      title=f"Added {changed_role1[0].display_name} role for {after.display_name}")
+                                      title=f"Added {changed_role1[0].name} role for {after.display_name}")
                 embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
 
                 await record_scroll.send(embed=embed)
