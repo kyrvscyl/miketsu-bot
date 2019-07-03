@@ -10,7 +10,6 @@ memory = MongoClient(address)
 
 # Collections - Miketsu
 boss = memory["miketsu"]["boss"]
-bounty = memory["miketsu"]["bounty"]
 compensation = memory["miketsu"]["compensation"]
 daily = memory["miketsu"]["daily"]
 friendship = memory["miketsu"]["friendship"]
@@ -24,6 +23,7 @@ thieves = memory["miketsu"]["thieves"]
 
 # Collections - Bukkuman
 books = memory["bukkuman"]["books"]
+bounty = memory["bukkuman"]["bounty"]
 shikigamis = memory["bukkuman"]["shikigamis"]
 members = memory["bukkuman"]["members"]
 weather = memory["bukkuman"]["weather"]
