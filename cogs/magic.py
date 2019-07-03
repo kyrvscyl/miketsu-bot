@@ -1591,7 +1591,7 @@ class Magic(commands.Cog):
                                     msg = f"{user.mention} has acquired :star2: role"
                                     quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                                                       {"$set": {"quest1.$.wand": wand_creation,
-                                                                "patronus": __patronus}})
+                                                                "quest1.$.patronus": __patronus}})
 
                                     await user.add_roles(role_star)
                                     await channel.send(msg)
