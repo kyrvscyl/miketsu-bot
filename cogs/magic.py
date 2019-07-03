@@ -1253,6 +1253,7 @@ class Magic(commands.Cog):
 
     async def create_emporium(self, category, guild, msg, message, user):
 
+        role_owl = discord.utils.get(guild.roles, name="🦉")
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
@@ -1271,7 +1272,7 @@ class Magic(commands.Cog):
             await self.generate_data(guild, msg, emporium)
             await message.add_reaction("✨")
 
-            if path == "path1":
+            if user not in role_owl.members:
                 await self.update_path(user, cycle, path_new="path6")
                 await asyncio.sleep(3)
                 await message.delete()
@@ -1292,7 +1293,7 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if path == "path1":
+            if user not in role_owl.members:
                 await self.update_path(user, cycle, path_new="path6")
                 await asyncio.sleep(3)
                 await message.delete()
@@ -1306,6 +1307,7 @@ class Magic(commands.Cog):
 
     async def create_gringotts(self, category, guild, msg, message, user):
 
+        role_galleons = discord.utils.get(message.guild.roles, name="💰")
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
         list_thieves = thieves.find_one({}, {"_id": 0, "names": 1})["names"]
@@ -1329,7 +1331,7 @@ class Magic(commands.Cog):
             await self.generate_data(guild, "gringotts-bank", gringotts)
             await message.add_reaction("✨")
 
-            if path == "path7":
+            if user not in role_galleons.members:
                 await self.update_path(user, cycle, path_new="path8")
                 await asyncio.sleep(3)
                 await message.delete()
@@ -1348,7 +1350,7 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
             await gringotts_channel.edit(topic=topic)
 
-            if path == "path7":
+            if user not in role_galleons.members:
                 await self.update_path(user, cycle, path_new="path8")
                 await asyncio.sleep(3)
                 await message.delete()
@@ -1362,6 +1364,7 @@ class Magic(commands.Cog):
 
     async def create_ollivanders(self, category, guild, msg, message, user):
 
+        role_star = discord.utils.get(guild.roles, name="🌟")
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
@@ -1382,8 +1385,8 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if path == "path3":
-                # await self.update_path(user, cycle, path_new="path6")
+            if user not in role_star.members:
+                await self.update_path(user, cycle, path_new="path6")
                 await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
@@ -1398,8 +1401,8 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if path == "path3":
-                # await self.update_path(user, cycle, path_new="path6")
+            if user not in role_star.members:
+                await self.update_path(user, cycle, path_new="path6")
                 await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
 
         else:
