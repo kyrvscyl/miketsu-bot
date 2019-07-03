@@ -8,7 +8,7 @@ from itertools import cycle
 import discord
 from discord.ext import tasks, commands
 
-from cogs.mongo.db import bounty
+from cogs.mongo.db import bounty, shikigami
 
 status = cycle(["with the peasants", "with their feelings", "fake Onmyoji", "with Susabi", "in Patronusverse"])
 
@@ -48,6 +48,7 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["h"])
     async def help(self, ctx, *args):
+
         embed = discord.Embed(color=0xffff80, title="My Commands",
                               description=":earth_asia: Economy\n`;daily`, `;weekly`, `;profile`, `;profile "
                                           "<@mention>`, `;buy`, `;summon`, `;evolve`, `;list <rarity>`, "
@@ -59,35 +60,56 @@ class Startup(commands.Cog):
                                           ":information_source: Information\n`;bounty <shikigami>`\n\n:heart: "
                                           "Others\n`;compensate`, `;suggest`, `;update`, `;stickers`")
         try:
+
             if args[0].lower() == "dm":
                 await ctx.author.send(embed=embed)
+
             else:
                 await ctx.channel.send(embed=embed)
+
         except IndexError:
             await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["b"])
-    async def bounty(self, ctx, *args):
-        query = " ".join(args)
-        if not query == "":
-            try:
-                await ctx.channel.send(bounty.find_one({"shikigami": query}, {"_id": 0, "location": 1})["location"])
-            except KeyError:
-                await ctx.channel.send("I'm sorry. I did not catch that. Please re-query.")
-            except TypeError:
-                await ctx.channel.send("I'm sorry. That shikigami does not exist in the bounty list.")
+    async def bounty(self, ctx, *, query):
+
+        profile = bounty.find_one({"aliases": query.lower()}, {"_id": 0})
+
+        if profile is not None:
+            shikigami_profile = shikigami.find_one({"shikigami.name": query.title()},
+                                                   {"shikigami.$.name": 1})
+
+            if shikigami_profile is not None:
+                image = shikigami_profile["shikigami"][0]["thumbnail"]["pre_evo"]
+            else:
+                image = ""
+
+            name = profile["bounty"].title()
+            description = ("• " + "\n• ".join(profile["location"]))
+            aliases = profile["aliases"]
+            text = ", ".join(aliases)
+
+            embed = discord.Embed(color=ctx.author.colour, title=f"Bounty location for {name}:",
+                                  description=description)
+            embed.set_footer(icon_url=image, text=f"aliases: {text}")
+            await ctx.channel.send(embed=embed)
+
         else:
-            await ctx.channel.send("Hi! I can help you find bounty locations. Please type `;b <shikigami>`")
+            await ctx.channel.send("No results. If you believe this should have results, use `;suggest` command")
+
+    @commands.command(aliases=["baa"])
+    @commands.is_owner()
+    async def bounty_add_alias(self, ctx, *args):
+        name = args[0].replace("_", " ").lower()
+        alias = " ".join(args[1::]).replace("_", " ").lower()
+        bounty.update_one({"aliases": name}, {"$push": {"aliases": alias}})
+        await ctx.channel.send(f"Successfully added {alias} to {name}")
 
     @commands.command()
-    async def suggest(self, ctx, *args):
+    async def suggest(self, ctx, *, suggestion):
         administrator = self.client.get_user(180717337475809281)
-        try:
-            if args[0] != "":
-                await administrator.send(f"{ctx.author} suggested: {' '.join(args)}")
-                await ctx.channel.send(f"{ctx.author.mention}, thank you for that suggestion.")
-        except IndexError:
-            await ctx.channel.send(f"Hi, {ctx.author.mention}!, I can collect suggestions. Please provide one.")
+        await administrator.send(f"{ctx.author} suggested: {suggestion}")
+        await ctx.channel.send(f"{ctx.author.mention}, thank you for that suggestion.")
 
 
 def setup(client):
