@@ -73,9 +73,6 @@ class Events(commands.Cog):
         ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
         new_castle = self.client.get_channel(int(castle_id))
 
-        for channel in new_castle.text_channels:
-            print(channel.name)
-
         i = 0
         while i < len(new_castle.text_channels):
 
@@ -141,7 +138,7 @@ class Events(commands.Cog):
         await landing_zone.send(msg)
 
         # Acceptance Letter
-        description = f"Dear {member.name},\n\nWe are pleased to accept you at House Patronus.\nDo browse " \
+        description = f"Dear {member.display_name},\n\nWe are pleased to accept you at House Patronus.\nDo browse " \
             f"the server's <#{request['welcome']}> channel for the basics and essentials of the guild then " \
             f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\nWe await your return owl.\n\n" \
             f"Yours Truly,\nThe Headmaster "
@@ -150,7 +147,7 @@ class Events(commands.Cog):
 
         # Scroll of Everything
         embed = discord.Embed(color=0xffffff)
-        embed.set_author(name=f"{member.name} has joined the house!")
+        embed.set_author(name=f"{member.display_name} has joined the house!")
         embed.set_footer(text=f"{member.guild.member_count} members | {time_stamp}", icon_url=member.avatar_url)
         await record_scroll.send(embed=embed)
 
@@ -163,7 +160,7 @@ class Events(commands.Cog):
         record_scroll = self.client.get_channel(int(request["scroll-of-everything"]))
 
         embed = discord.Embed(color=0xffffff)
-        embed.set_author(name=f"{member.name} has left the house!")
+        embed.set_author(name=f"{member.display_name} has left the house!")
         embed.set_footer(text=f"{member.guild.member_count} members | {time_stamp}", icon_url=member.avatar_url)
         await record_scroll.send(embed=embed)
 
@@ -181,36 +178,32 @@ class Events(commands.Cog):
             changed_role2 = list(set(before.roles) - set(after.roles))
 
             if not changed_role1:
-                embed = discord.Embed(color=0x50e3c2, title=f"Removed {changed_role2[0].name} role for {after.name}")
+                embed = discord.Embed(color=0x50e3c2,
+                                      title=f"Removed {changed_role2[0].display_name} role for {after.display_name}")
                 embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
+
                 await record_scroll.send(embed=embed)
 
             elif not changed_role2:
-                embed = discord.Embed(color=0x50e3c2, title=f"Added {changed_role1[0].name} role for {after.name}")
+                embed = discord.Embed(color=0x50e3c2,
+                                      title=f"Added {changed_role1[0].display_name} role for {after.display_name}")
                 embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
+
                 await record_scroll.send(embed=embed)
 
                 if changed_role1[0].name == "Auror":
 
-                    if before.nick is None:
-                        name = before.name
-                    else:
-                        name = before.nick
-
                     auror_channel = self.client.get_channel(int(request["auror-department"]))
                     embed = discord.Embed(color=0x50e3c2,
-                                          title=f"{name} has been promoted to :fleur_de_lis: Auror")
+                                          title=f"{before.display_name} has been promoted to :fleur_de_lis: Auror")
                     embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
                     await auror_channel.send(embed=embed)
 
         elif before.nick != after.nick:
+
             embed = discord.Embed(color=0x7ed321)
             embed.set_footer(text=f"{time_stamp}", icon_url=before.avatar_url)
-
-            if before.nick is None:
-                embed.add_field(name="Before | New nickname:", value=f"{before.name} | {after.nick}")
-            else:
-                embed.add_field(name="Before | New nickname:", value=f"{before.nick} | {after.nick}")
+            embed.add_field(name="Before | New nickname:", value=f"{before.display_name} | {after.display_name}")
 
             await record_scroll.send(embed=embed)
 
