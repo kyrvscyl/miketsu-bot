@@ -35,9 +35,9 @@ traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-lo
 lengths = ["short", "long", "average"]
 flexibilities = ["high", "low", "medium"]
 cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
-flexibility = ["bendy", "brittle", "fairly bendy", "hard", "pliant", "quite bendy", "quite flexible",
-               "reasonably supple", "rigid", "slightly springy", "swishy", "unbending", "unyielding",
-               "very flexible", "whippy"]
+flexibility_types = ["bendy", "brittle", "fairly bendy", "hard", "pliant", "quite bendy", "quite flexible",
+                     "reasonably supple", "rigid", "slightly springy", "swishy", "unbending", "unyielding",
+                     "very flexible", "whippy"]
 
 
 def current_timestamp():
@@ -1196,14 +1196,14 @@ class Magic(commands.Cog):
                             description = owl_description["description"]
                             msg = "What a lovely choice of owl!"
                             embed = discord.Embed(title=f":owl: {owl_description['type'].title()} | "
-                            f"{owl_description['trait'].capitalize()}",
+                                                        f"{owl_description['trait'].capitalize()}",
                                                   description="*" + description + "*", color=user.colour)
                             embed.set_thumbnail(url=owl_description["thumbnail"])
 
                             owls.update_one({"type": owl_buy}, {"$set": {"purchaser": str(user.id)}})
                             sendoff.insert_one({"user_id": str(user.id), "type": owl_buy, "cycle": cycle})
                             quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                                              {"$set": {"quest1.$.purchase": False, "owl": owl_buy}})
+                                              {"$set": {"quest1.$.purchase": False, "quest1.$.owl": owl_buy}})
 
                             await ctx.message.add_reaction("🦉")
                             await asyncio.sleep(2)
@@ -1386,6 +1386,10 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
             await asyncio.sleep(3)
             await message.delete()
+
+            if path in ["path10", "path3"]:
+                await self.update_path(user, cycle, path_new="path11")
+
             await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
@@ -1399,6 +1403,10 @@ class Magic(commands.Cog):
             await asyncio.sleep(1)
             await asyncio.sleep(3)
             await message.delete()
+
+            if path in ["path10", "path3"]:
+                await self.update_path(user, cycle, path_new="path11")
+
             await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
 
         else:
@@ -1435,7 +1443,7 @@ class Magic(commands.Cog):
         if answer == "Wrong":
             await self.penalize(user, cycle, points=5)
 
-        elif user not in role_star.members and path == "path6":
+        elif user not in role_star.members and path == "path11":
 
             msg = f"{user}, I see you want wands. Allow me to guide you through your wand selection, shall we?"
             topic = "Every choice affects your ending results."
@@ -1786,7 +1794,7 @@ class Magic(commands.Cog):
 
         await self.logging(f"{user} is trying to select flexibility -> awaits flexibility")
 
-        formatted_flexibility = "`, `".join(flexibility)
+        formatted_flexibility = "`, `".join(flexibility_types)
         msg1 = f"Now {user}, wands can come too in various flexibility, it entails the ability of the person to " \
             f"adapt to various circumstances. Tell me, how much can you adapt?\n\n" \
             f"Choose from the following: `{formatted_flexibility}`"
@@ -1797,7 +1805,7 @@ class Magic(commands.Cog):
         def check(guess):
             if guess.author != user:
                 return
-            elif guess.content.lower() in flexibility and guess.author == user:
+            elif guess.content.lower() in flexibility_types and guess.author == user:
                 return channel == guess.channel
             else:
                 raise KeyError
