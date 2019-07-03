@@ -923,10 +923,10 @@ class Magic(commands.Cog):
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
-            description = f"Dear {user.name},\n\nIt is wondrous to have such another promising magic " \
+            description = f"*Dear {user.name},\n\nIt is wondrous to have such another promising magic " \
                 f"practitioner. At the castle, everyone there is special, but what makes them " \
                 f"more special is their Patronus charm.\n\nYour term awaits soon. Good luck!\n\n" \
-                f"Yours Sincerely,\nThe Headmaster "
+                f"Yours Sincerely,\nThe Headmaster*"
 
             embed = discord.Embed(color=0xffff80, description=description)
             embed.set_thumbnail(url=self.client.get_guild(int(server["server"])).icon_url)
@@ -1386,10 +1386,6 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
             await asyncio.sleep(3)
             await message.delete()
-
-            if path == "path3":
-                await self.update_path(user, cycle, path_new="path6")
-
             await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
@@ -1403,10 +1399,6 @@ class Magic(commands.Cog):
             await asyncio.sleep(1)
             await asyncio.sleep(3)
             await message.delete()
-
-            if path == "path3":
-                await self.update_path(user, cycle, path_new="path6")
-
             await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
 
         else:
@@ -1443,7 +1435,7 @@ class Magic(commands.Cog):
         if answer == "Wrong":
             await self.penalize(user, cycle, points=5)
 
-        elif user not in role_star.members and path == "path3":
+        elif user not in role_star.members and path == "path6":
 
             msg = f"{user}, I see you want wands. Allow me to guide you through your wand selection, shall we?"
             topic = "Every choice affects your ending results."

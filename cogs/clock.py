@@ -107,7 +107,7 @@ class Clock(commands.Cog):
                     msg1 = "*\"You heard a sound of a bird above you.\"*"
                     msg2 = "*\"It was your owl flocking gracefully with its wings " \
                            "and holding a paper with its feet.\"*"
-                    msg3 = f"*\"Your {entry['type']} has returned with a letter from the Headmaster\"*"
+                    msg3 = f"*\"Your {entry['type'].capitalize()} owl has returned with a letter from the Headmaster\"*"
                     await user.send(msg1)
                     await asyncio.sleep(4)
                     await user.send(msg2)
