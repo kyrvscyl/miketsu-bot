@@ -721,7 +721,7 @@ class Magic(commands.Cog):
                                              {"$project": {"_id": 0, "quest1": {"$slice": ["$quest1", -1]}}}])
 
                     for profile in data:
-                        patronus_summon = profile["quest1"][0]["current_path"]
+                        patronus_summon = profile["quest1"][0]["patronus"]["patronus"]
                         score = profile["quest1"][0]["score"]
                         timestamp_start = profile["quest1"][0]["timestamp_start"]
                         hints_unlocked = profile["quest1"][0]["hints_unlocked"]
@@ -733,9 +733,6 @@ class Magic(commands.Cog):
 
                 score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand = get_profile(user)
 
-                print(score)
-                print(timestamp_start)
-
                 t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
                 t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
                 delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
@@ -743,11 +740,12 @@ class Magic(commands.Cog):
                 patronus_profile = patronus.find_one({"patronus": patronus_summon.lower()},
                                                      {"_id": 0, "trait": 1, "link": 1})
 
+                description = f"• Cycle Score: {score}\n" \
+                    f"• Hints unlocked: {hints_unlocked}\n" \
+                    f"• Owl: {owl_final.title()} Owl [{patronus_profile['trait']}]"
+
                 embed = discord.Embed(title=f"Your Patronus Strength: {strength}% | {patronus_summon.title()}",
-                                      colour=discord.Colour(0x50e3c2),
-                                      description=f"• Cycle Score: {score}\n"
-                                      f"• Hints unlocked: {hints_unlocked}\n"
-                                      f"• Owl: {owl_final.title()} Owl [{patronus_profile['trait']}]")
+                                      color=0x50e3c2, description=description)
 
                 embed.set_image(url=patronus_profile["link"])
                 embed.set_author(name=f"{user.name} | Cycle #{cycle}", icon_url=user.avatar_url)
