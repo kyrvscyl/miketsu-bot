@@ -35,6 +35,9 @@ traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-lo
 lengths = ["short", "long", "average"]
 flexibilities = ["high", "low", "medium"]
 cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
+flexibility = ["bendy", "brittle", "fairly bendy", "hard", "pliant", "quite bendy", "quite flexible",
+               "reasonably supple", "rigid", "slightly springy", "swishy", "unbending", "unyielding",
+               "very flexible", "whippy"]
 
 
 def current_timestamp():
@@ -1193,7 +1196,7 @@ class Magic(commands.Cog):
                             description = owl_description["description"]
                             msg = "What a lovely choice of owl!"
                             embed = discord.Embed(title=f":owl: {owl_description['type'].title()} | "
-                                                        f"{owl_description['trait'].capitalize()}",
+                            f"{owl_description['trait'].capitalize()}",
                                                   description="*" + description + "*", color=user.colour)
                             embed.set_thumbnail(url=owl_description["thumbnail"])
 
@@ -1364,7 +1367,6 @@ class Magic(commands.Cog):
 
     async def create_ollivanders(self, category, guild, msg, message, user):
 
-        role_star = discord.utils.get(guild.roles, name="🌟")
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
@@ -1385,9 +1387,10 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if user not in role_star.members:
+            if path == "path3":
                 await self.update_path(user, cycle, path_new="path6")
-                await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
+
+            await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
 
@@ -1401,9 +1404,10 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if user not in role_star.members:
+            if path == "path3":
                 await self.update_path(user, cycle, path_new="path6")
-                await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
+
+            await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
 
         else:
             await self.reaction_closed(message)
@@ -1416,10 +1420,13 @@ class Magic(commands.Cog):
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
+
             if guess.author != user:
                 return
+
             elif "wand" in guess.content.lower() or "wands" in guess.content.lower():
                 return guess.author == user and channel == guess.channel
+
             else:
                 raise KeyError
 
@@ -1434,7 +1441,7 @@ class Magic(commands.Cog):
 
         # Processing
         if answer == "Wrong":
-            return
+            await self.penalize(user, cycle, points=5)
 
         elif user not in role_star.members and path == "path3":
 
@@ -1444,15 +1451,15 @@ class Magic(commands.Cog):
             await self.secret_response(guild.id, channel.name, msg)
             await channel.edit(topic=topic)
             await asyncio.sleep(3)
-            await self.wand_personalise(user, guild, channel, cycle)
+            await self.wand_personalise(user, guild, channel, cycle, role_star)
 
-        elif user in role_star.members:
+        else:
+            await self.penalize(user, cycle, points=25)
             topic = "Ollivanders! Home of the best crafted wands!"
             await channel.edit(topic=topic)
 
     # noinspection PyUnboundLocalVariable,PyMethodMayBeStatic,PyShadowingNames
-    async def wand_personalise(self, user, guild, channel, cycle):
-        role_star = discord.utils.get(guild.roles, name="✨")
+    async def wand_personalise(self, user, guild, channel, cycle, role_star):
 
         data = quests.aggregate([{"$match": {"user_id": str(user.id)}},
                                  {"$project": {"_id": 0, "quest1": {"$slice": ["$quest1", -1]}}}])
@@ -1468,31 +1475,31 @@ class Magic(commands.Cog):
                               "And perhaps also, a person who is attracted to those with inner conflicts..\n\n"
                               "Very unyielding yet faithful to those who are honest with themselves.",
 
-                              ""),
+                              "Core rarity: Unicorn Hair < Dragon Heartstring < Phoenix Feather\nChoose wisely."),
 
             "strong-willed": ("My child, do you ever believe in self-sacrificing. You are a strong-willed person. "
                               "Capable of being the bravest of them all and with outstanding passion and strong "
                               "sense of self, belief, and above all, justice.",
 
-                              ""),
+                              "Certain Woods are rare in nature and inherently possess rare Patronus'"),
 
             "adventurous": ("One stepped in this house, I knew how creative and brilliant youngster you are. "
                             "Hmm.. Very ambitious as well. Destined for a final quest.. Wise and rich in "
                             "experiences. A great partner with uninterrupted excitement and fun.",
 
-                            ""),
+                            "Casting the spells require diction, it must be concentrated and pure."),
 
             "nature-loving": ("Do you perhaps have high interest in nature? You are well fitted to be someone with "
                               "exceptional skills in magical beasts and herbalogy. Great talent requires great "
                               "wand",
 
-                              ""),
+                              "Owl selection plays an important role in Patronus summoning"),
 
             "special": ("A very special person. With traits of care and love for others. I know just the perfect "
                         "wands for you, wands with healing, defensive, and legilimency properties. Utterly loved "
                         "by nature, indeed.",
 
-                        "")
+                        "There are a total of 142 collectible Patronus'")
         }
 
         msg1 = responses[trait][0]
@@ -1547,8 +1554,9 @@ class Magic(commands.Cog):
                     if __patronus is None:
 
                         msg = f"It seems that you're out of luck, {user}. I do not have that kind of wand. " \
-                            f"Perhaps, you're looking for a rare wand. But no such wand is crafted yet by me. I " \
-                            f"suggest you wield a common core, I'm sure there are lots of available for your choice."
+                            f"Perhaps, you're looking for a rare combination of wand properties. " \
+                            f"But no such wand is crafted yet by me. I suggest you try to wield a common core, " \
+                            f"I'm sure there are lots of available for your choice."
 
                         await self.secret_response(guild.id, channel.name, msg)
 
@@ -1580,7 +1588,7 @@ class Magic(commands.Cog):
                                                                                  check=check)
                                 if str(reaction.emoji) == "✅":
 
-                                    msg = f"{user.mention} has acquired :sparkles: role"
+                                    msg = f"{user.mention} has acquired :star2: role"
                                     quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
                                                       {"$set": {"quest1.$.wand": wand_creation,
                                                                 "patronus": __patronus}})
@@ -1602,8 +1610,7 @@ class Magic(commands.Cog):
     async def get_wand_core(self, user, guild, channel, cycle):
 
         formatted_cores = "`, `".join(cores)
-        msg = f"{user}, lastly, the wand cores.\n\n" \
-            f"Select from the choices: `{formatted_cores}`"
+        msg = f"{user}, lastly, the wand cores.\n\nSelect from the choices: `{formatted_cores}`"
 
         await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
@@ -1611,8 +1618,10 @@ class Magic(commands.Cog):
         def check(guess):
             if guess.author != user:
                 return
+
             elif guess.content.lower() in cores and guess.author == user:
                 return channel == guess.channel
+
             else:
                 raise KeyError
 
@@ -1623,7 +1632,7 @@ class Magic(commands.Cog):
                 answer = await self.client.wait_for("message", timeout=60, check=check)
                 wand_core = answer.content
                 msg = f"{user}, {wand_core.capitalize()}. Another Interesting choice."  # change
-                topic = "Wand flexibility is categorized into 3 major parts."  # change
+                topic = "Wand flexibility is categorized into 3 major divisions"  # change
 
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
@@ -1640,6 +1649,7 @@ class Magic(commands.Cog):
                 break
 
             except KeyError:
+
                 if i == 0:
                     msg = "I don't think I craft that kind of length, do you mind telling me again?"
                     await self.penalize(user, cycle, points=5)
@@ -1784,23 +1794,6 @@ class Magic(commands.Cog):
 
         await self.logging(f"{user} is trying to select flexibility -> awaits flexibility")
 
-        flexibility = ["bendy",
-                       "brittle",
-                       "fairly bendy",
-                       "hard",
-                       "pliant",
-                       "quite bendy",
-                       "quite flexible",
-                       "reasonably supple",
-                       "rigid",
-                       "slightly springy",
-                       "swishy",
-                       "unbending",
-                       "unyielding",
-                       "very flexible",
-                       "whippy"
-                       ]
-
         formatted_flexibility = "`, `".join(flexibility)
         msg1 = f"Now {user}, wands can come too in various flexibility, it entails the ability of the person to " \
             f"adapt to various circumstances. Tell me, how much can you adapt?\n\n" \
@@ -1821,7 +1814,6 @@ class Magic(commands.Cog):
         while i < 2:
 
             try:
-
                 answer = await self.client.wait_for("message", timeout=60, check=check)
                 wand_flexibility = answer.content
                 msg = f"{user}, {wand_flexibility.capitalize()}. Another Interesting choice."
@@ -1881,18 +1873,16 @@ class Magic(commands.Cog):
 
             await self.action_update(user, cycle, actions=3)
             await self.secret_response(guild.id, message.channel.name, msg)
-            await self.penalize(user, cycle, points=10)
+            await self.penalize(user, cycle, points=20)
             await self.logging(f"{user} went back to Gringotts for nothing: {msg}")
 
         elif user not in role_galleons.members:
 
             if message.content.startswith == ";" or actions >= 3:
-                await self.logging(f"{user} tried to used a command with >= 3 actions -> ignoring")
+                return
 
             elif actions < 3 and "vault" in msg:
-
                 await self.action_update(user, cycle, actions=5)
-                await self.update_path(user, cycle, path_new="path18")
                 await self.vault_access(cycle, user, guild, role_galleons, message)
 
             elif actions < 3:
@@ -1904,7 +1894,7 @@ class Magic(commands.Cog):
                     "Now, what do you want from us?",
 
                     "{}, I don't think you are well aware of what is happening here.\n\n"
-                    "I have other clients to assist, come back again once you know, because I do not like my time "
+                    "I have other clients to assist, come back once you know, because I do not like my time "
                     "being wasted. "
                 ]
 
@@ -1983,6 +1973,7 @@ class Magic(commands.Cog):
 
             try:
                 guess = await self.client.wait_for("message", timeout=120, check=check)
+                answer = "Correct"
                 await guess.add_reaction("✅")
                 await asyncio.sleep(3)
                 await guess.delete()
@@ -1990,8 +1981,7 @@ class Magic(commands.Cog):
                 if path == "path18":
                     await self.update_path(user, cycle, path_new="path5")
 
-                answer = "Correct"
-                i = 4
+                break
 
             except asyncio.TimeoutError:
 
@@ -2003,11 +1993,12 @@ class Magic(commands.Cog):
                 topic = "The goblins can await for two minutes for every question they ask"
                 answer = "Wrong"
 
+                await self.update_path(user, cycle, path_new="path18")
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
                 await message.channel.edit(topic=topic)
-                i = 4
+                break
 
             except KeyError:
 
@@ -2037,6 +2028,7 @@ class Magic(commands.Cog):
                     topic = "Banking Hours: 08:00 - 15:00"
                     answer = "Wrong"
 
+                    await self.update_path(user, cycle, path_new="path18")
                     await self.action_update(user, cycle, actions=3)
                     await self.penalize(user, cycle, points=10)
                     await message.channel.edit(topic=topic)
@@ -2078,7 +2070,7 @@ class Magic(commands.Cog):
                 await asyncio.sleep(3)
                 await guess.delete()
                 await message.channel.edit(topic=topic)
-                i = 4
+                break
 
             except asyncio.TimeoutError:
 
@@ -2091,7 +2083,7 @@ class Magic(commands.Cog):
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
-                i = 4
+                break
 
             except KeyError:
                 if i == 0:
@@ -2159,7 +2151,7 @@ class Magic(commands.Cog):
                 await guess.add_reaction("✅")
                 await asyncio.sleep(3)
                 await guess.delete()
-                i = 4
+                break
 
             except asyncio.TimeoutError:
 
@@ -2172,7 +2164,7 @@ class Magic(commands.Cog):
                 await self.action_update(user, cycle, actions=3)
                 await self.penalize(user, cycle, points=5)
                 await self.secret_response(guild.id, message.channel.name, msg)
-                i = 4
+                break
 
             except KeyError:
                 if i == 0:
