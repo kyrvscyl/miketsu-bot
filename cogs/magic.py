@@ -327,11 +327,14 @@ class Magic(commands.Cog):
                 await info.delete()
                 return True
 
-    async def get_link(self, patronus_name, trait, length, flexibility, wood, core, msg):
+    async def get_link(self, ctx, patronus_name, trait, length, flexibility, wood, core, msg):
+
+        def check_link(_link):
+            return _link.author == ctx.message.author
 
         while True:
             try:
-                link = await self.client.wait_for("message", timeout=60)
+                link = await self.client.wait_for("message", timeout=60, check=check_link)
                 await link.add_reaction("✅")
                 description = f"• Patronus: {patronus_name}\n" \
                     f"• Trait: {trait}\n" \
@@ -387,7 +390,7 @@ class Magic(commands.Cog):
         flexibility = await self.get_flexibility(ctx, patronus_name, trait, length, wood, core, link, msg)
         wood = await self.get_wood(ctx, patronus_name, trait, length, flexibility, core, link, msg)
         core = await self.get_core(ctx, patronus_name, trait, length, flexibility, wood, link, msg)
-        link = await self.get_link(patronus_name, trait, length, flexibility, wood, core, msg)
+        link = await self.get_link(ctx, patronus_name, trait, length, flexibility, wood, core, msg)
 
         def check(_answer):
             return _answer.author == ctx.message.author and _answer.content.lower() == "y"
@@ -417,12 +420,10 @@ class Magic(commands.Cog):
                 i = 2
 
             else:
-                info = await ctx.channel.send("Invalid Input")
-                await asyncio.sleep(1)
-                await info.delete()
                 i = 2
 
         if i == 2:
+            await ctx.channel.send("Cancelled")
             return
 
         elif i == 5:
@@ -1458,6 +1459,10 @@ class Magic(commands.Cog):
                 wand_length_category = get_length_category(wand_length)
                 wand_flexibility_category = get_flexibility_category(wand_flexibility)
 
+                print(wand_flexibility_category)
+                print(wand_length_category)
+                print(trait)
+
                 wood_selection = []
                 for wand in patronus.find({"flexibility": wand_flexibility_category,
                                            "length": wand_length_category, "trait": trait}, {"_id": 0, "wood": 1}):
@@ -1493,6 +1498,7 @@ class Magic(commands.Cog):
         msg = f"{user}, lastly, the wand cores.\n\n" \
             f"Select from the choices: `{formatted_cores}`"
 
+        await asyncio.sleep(2)
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
@@ -1546,7 +1552,7 @@ class Magic(commands.Cog):
                 i += 1
 
         await self.logging(f"{user} is trying to personalise wand: -> awaits wood -> Ended")
-        return wand_core
+        return wand_core.lower()
 
     # noinspection PyUnboundLocalVariable
     async def get_wand_wood(self, user, guild, channel, cycle, wood_selection):
@@ -1555,6 +1561,7 @@ class Magic(commands.Cog):
         msg = f"{user}, I just happen to have the appropriate woods for your wand characteristics.\n\n" \
             f"Select from the choices: `{formatted_woods}`"
 
+        await asyncio.sleep(2)
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
@@ -1603,14 +1610,15 @@ class Magic(commands.Cog):
                 i += 1
 
         await self.logging(f"{user} is trying to personalise wand: -> awaits wood -> Ended")
-        return wand_wood
+        return wand_wood.lower()
 
     # noinspection PyUnboundLocalVariable
     async def get_wand_length(self, user, guild, channel, cycle):
 
-        msg = f"We have wand lengths, {user}. Do tell me, which length in inches best suits your personality?\n\n" \
+        msg = f"We have wand lengths, {user}.\nDo tell me, which length in inches best suits your personality?\n\n" \
             f"Enter your choice: 8, 9, 10, 11, 12, 13, or 14."
 
+        await asyncio.sleep(2)
         await self.secret_response(guild.id, channel.name, msg)
 
         def check(guess):
@@ -1691,6 +1699,7 @@ class Magic(commands.Cog):
             f"adapt to various circumstances. Tell me, how much can you adapt?\n\n" \
             f"Choose from the following: `{formatted_flexibility}`"
 
+        await asyncio.sleep(2)
         await self.secret_response(guild.id, channel.name, msg1)
 
         def check(guess):
@@ -1702,7 +1711,7 @@ class Magic(commands.Cog):
                 raise KeyError
 
         i = 0
-        while i < 1:
+        while i < 2:
 
             try:
 
@@ -1729,18 +1738,30 @@ class Magic(commands.Cog):
 
             except KeyError:
 
-                wand_flexibility = "Wrong"
-                msg = f"{user}, I've never heard of that kind of flexibility,."
-                topic = "Wand flexibility is categorized into 3 major parts."  # change
+                if i == 0:
+                    wand_flexibility = "Wrong"
+                    msg = f"{user}, I've never heard of that kind of flexibility.."
+                    topic = "Wand flexibility is categorized into 3 major parts."  # change
 
-                await channel.edit(topic=topic)
-                await self.penalize(user, cycle, points=15)
-                await self.action_update(user, cycle, actions=3)
-                await self.secret_response(guild.id, channel.name, msg)
+                    await channel.edit(topic=topic)
+                    await self.penalize(user, cycle, points=15)
+                    await self.action_update(user, cycle, actions=3)
+                    await self.secret_response(guild.id, channel.name, msg)
+
+                else:
+                    wand_flexibility = "Wrong"
+                    msg = f"{user}, That too. Do come back once you are able to distinguish."
+                    topic = "Wand flexibility is categorized into 3 major parts."  # change
+
+                    await channel.edit(topic=topic)
+                    await self.penalize(user, cycle, points=25)
+                    await self.action_update(user, cycle, actions=3)
+                    await self.secret_response(guild.id, channel.name, msg)
+
                 i += 1
 
         await self.logging(f"{user} is trying to personalise wand: -> awaits flexibility -> Ended")
-        return wand_flexibility
+        return wand_flexibility.lower()
 
     async def transaction_gringotts(self, user, guild, msg, message):
 
