@@ -43,7 +43,7 @@ async def load(ctx, extension):
 async def unload(ctx, extension):
     client.unload_extension(f"cogs.{extension}")
     print(f"Unloading {extension}.py..")
-    await ctx.channel.send("Extension {extension}.py has been unloaded")
+    await ctx.channel.send(f"Extension {extension}.py has been unloaded")
 
 
 @client.command(aliases=["rl"])
