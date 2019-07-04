@@ -58,7 +58,8 @@ class Admin(commands.Cog):
                          inline=False)
         embed2.add_field(name=":crystal_ball: Patronus", value="• Existing members of the guild", inline=False)
         embed2.add_field(name=":fire: No-Maj", value="• Obliviated, former members, guests", inline=False)
-        embed2.add_field(name=":panda_face: Animagus", value="• Transformed members during Night time", inline=False)
+        embed2.add_field(name=":panda_face: Animagus", value="• Transformed members during Night time, Bots",
+                         inline=False)
 
         # Rules
         embed3 = discord.Embed(title=":clipboard: Rules", colour=discord.Colour(0xf8e71c),
