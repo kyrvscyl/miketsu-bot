@@ -937,11 +937,11 @@ class Magic(commands.Cog):
             await self.logging(f"{user} opened the letter of Headmaster response.")
 
         elif str(reaction.emoji) == "🦉":
-            role_owl = discord.utils.get(reaction.message.guild.roles, name="🦉").members
+            role_owl = discord.utils.get(reaction.message.guild.roles, name="🦉")
             request = books.find_one({"server": f"{reaction.message.guild.id}"},
                                      {"_id": 0, "tower": 1})
 
-            if user not in role_owl:
+            if user not in role_owl.members:
                 await self.logging(f"{user} tried to sendoff an owl but doesnt have the owl role")
 
             elif (request["tower"] not in str(reaction.message.content) or
@@ -1391,7 +1391,7 @@ class Magic(commands.Cog):
             if path in ["path10", "path3"]:
                 await self.update_path(user, cycle, path_new="path11")
 
-            await self.transaction_ollivanders(guild, user, ollivanders, path, cycle)
+            await self.transaction_ollivanders(guild, user, ollivanders)
 
         elif "ollivanders" in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
 
@@ -1408,15 +1408,16 @@ class Magic(commands.Cog):
             if path in ["path10", "path3"]:
                 await self.update_path(user, cycle, path_new="path11")
 
-            await self.transaction_ollivanders(guild, user, ollivanders_channel, path, cycle)
+            await self.transaction_ollivanders(guild, user, ollivanders_channel)
 
         else:
             await self.reaction_closed(message)
 
-    async def transaction_ollivanders(self, guild, user, channel, path, cycle):
+    async def transaction_ollivanders(self, guild, user, channel):
 
         msg = f"{user}, what can I help you for?"
         role_star = discord.utils.get(guild.roles, name="🌟")
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         await self.secret_response(guild.id, channel.name, msg)
 
@@ -1512,16 +1513,10 @@ class Magic(commands.Cog):
 
         wand_length = await self.get_wand_length(user, guild, channel, cycle)
 
-        if wand_length == "Wrong":
-            return
-
-        elif wand_length != "Wrong":
+        if wand_length != "Wrong":
             wand_flexibility = await self.get_wand_flexibility(user, guild, channel, cycle)
 
-            if wand_flexibility == "Wrong":
-                return
-
-            elif wand_flexibility != "Wrong":
+            if wand_flexibility != "Wrong":
                 wand_length_category = get_length_category(wand_length)
                 wand_flexibility_category = get_flexibility_category(wand_flexibility)
 
@@ -1534,10 +1529,7 @@ class Magic(commands.Cog):
 
                 wand_wood = await self.get_wand_wood(user, guild, channel, cycle, wood_selection)
 
-                if wand_wood == "Wrong":
-                    return
-
-                elif wand_wood != "Wrong":
+                if wand_wood != "Wrong":
                     wand_core = await self.get_wand_core(user, guild, channel, cycle)
 
                     wand_creation = {"flexibility_category": wand_flexibility_category,
