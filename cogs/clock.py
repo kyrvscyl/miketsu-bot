@@ -83,6 +83,38 @@ class Clock(commands.Cog):
             else:
                 await asyncio.sleep(1)
 
+    async def transformation_end(self):
+
+        for entry in books.find({}, {"_id": 0}):
+
+            try:
+                server = self.client.get_guild(int(entry["server"]))
+                patronus_role = server.get_role(int(entry["patronus_role"]))
+                auror_role = server.get_role(int(entry["auror_role"]))
+                no_maj_role = server.get_role(int(entry["no_maj_role"]))
+
+                await no_maj_role.edit(position=auror_role.position - 1)
+                await patronus_role.edit(position=auror_role.position - 1)
+
+            except AttributeError:
+                continue
+
+    async def transformation_start(self):
+
+        for entry in books.find({}, {"_id": 0}):
+
+            try:
+                server = self.client.get_guild(int(entry["server"]))
+                patronus_role = server.get_role(int(entry["patronus_role"]))
+                head_role = server.get_role(int(entry["head_role"]))
+                no_maj_role = server.get_role(int(entry["no_maj_role"]))
+
+                await no_maj_role.edit(position=head_role.position-1)
+                await patronus_role.edit(position=head_role.position-1)
+
+            except AttributeError:
+                continue
+
     # noinspection PyShadowingNames
     async def penalty_hour(self):
         quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -2}})
@@ -207,6 +239,13 @@ class Clock(commands.Cog):
                 await Admin(self.client).reset_boss(spell_spam)
                 await frame_starlight(server, spell_spam)
                 await frame_blazing(server, spell_spam)
+
+            # Start transformation
+            if hour_minute == "20:00":
+                await self.transformation_start()
+
+            elif hour_minute == "06:00":
+                await self.transformation_end()
 
             for clock_channel in clock_channels:
                 clock = self.client.get_channel(int(clock_channel))
