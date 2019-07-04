@@ -97,8 +97,9 @@ class Economy(commands.Cog):
             elif profile[str(user.id)] == "claimed":
                 await ctx.channel.send(f"{ctx.author.mention}, you can only claim this once!")
 
+    # noinspection PyTypeChecker
     @commands.command(aliases=["p"])
-    async def profile(self, ctx, user: discord.User = None):
+    async def profile(self, ctx, *, user: discord.Member = None):
 
         if user is None:
             await self.profile_post(ctx.author, ctx)
@@ -107,34 +108,37 @@ class Economy(commands.Cog):
             await self.profile_post(user, ctx)
 
     async def profile_post(self, user, ctx):
-        profile = users.find_one({"user_id": str(user.id)},
-                                 {"_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
-                                  "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
-                                  "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1})
 
-        amulets = profile["amulets"]
-        amulets_spent = profile["amulets_spent"]
-        experience = profile["experience"]
-        level = profile["level"]
-        level_exp_next = profile["level_exp_next"]
-        jades = profile["jades"]
-        coins = profile["coins"]
-        medals = profile["medals"]
-        realm_ticket = profile["realm_ticket"]
+        try:
+            profile = users.find_one({"user_id": str(user.id)},
+                                     {"_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
+                                      "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
+                                      "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1})
 
-        embed = discord.Embed(color=user.colour)
-        embed.set_thumbnail(url=user.avatar_url)
-        embed.set_author(name=f"{user.name}\'s profile")
-        embed.add_field(inline=True, name=":arrow_heading_up: Experience",
-                        value=f"Level: {level} ({experience}/{level_exp_next})")
-        embed.add_field(inline=True, name="SP | SSR | SR | R",
-                        value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']}")
-        embed.add_field(inline=True, name="<:amulet:573071120685596682> Amulets",
-                        value=f"On Hand: {amulets} | Used: {amulets_spent}")
-        embed.add_field(inline=True, name=f":tickets: | {emoji_m} | {emoji_j} | {emoji_c}",
-                        value=f"{realm_ticket} | {medals} | {jades:,d} | {coins:,d}")
+            amulets = profile["amulets"]
+            amulets_spent = profile["amulets_spent"]
+            exp = profile["experience"]
+            level = profile["level"]
+            level_exp_next = profile["level_exp_next"]
+            jades = profile["jades"]
+            coins = profile["coins"]
+            medals = profile["medals"]
+            realm_ticket = profile["realm_ticket"]
 
-        await ctx.channel.send(embed=embed)
+            embed = discord.Embed(color=user.colour)
+            embed.set_thumbnail(url=user.avatar_url)
+            embed.set_author(name=f"{user.name}\'s profile")
+            embed.add_field(name=":arrow_heading_up: Experience", value=f"Level: {level} ({exp}/{level_exp_next})")
+            embed.add_field(name="SP | SSR | SR | R",
+                            value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']}")
+            embed.add_field(name=f"{emoji_a} Amulets", value=f"On Hand: {amulets} | Used: {amulets_spent}")
+            embed.add_field(name=f":tickets: | {emoji_m} | {emoji_j} | {emoji_c}",
+                            value=f"{realm_ticket} | {medals} | {jades:,d} | {coins:,d}")
+
+            await ctx.channel.send(embed=embed)
+
+        except KeyError:
+            return
 
     @commands.command(aliases=["list"])
     async def shikigami_list(self, ctx, arg1, user: discord.User = None):
@@ -362,7 +366,7 @@ class Economy(commands.Cog):
                         await ctx.channel.send(f"{user.mention}, you do not own that shikigami!")
 
                     elif count <= 20:
-                        msg = f"{user.mention}, you lack {21-count} more {query} dupes to evolve yours"
+                        msg = f"{user.mention}, you lack {21 - count} more {query} dupes to evolve yours"
                         await ctx.channel.send(msg)
 
             elif rarity == "SR":
@@ -384,7 +388,7 @@ class Economy(commands.Cog):
                         await ctx.channel.send(msg)
 
                     elif count <= 10:
-                        msg = f"{user.mention}, you lack {11-count} more {query} dupes to evolve yours"
+                        msg = f"{user.mention}, you lack {11 - count} more {query} dupes to evolve yours"
                         await ctx.channel.send(msg)
 
             elif rarity == "SSR":
@@ -404,7 +408,8 @@ class Economy(commands.Cog):
                         await ctx.channel.send(f"{user.mention}, you do not own that shikigami!")
 
                     elif count == 1:
-                        await ctx.channel.send(f"{user.mention}, you lack {2-count} more {query} dupe to evolve yours")
+                        await ctx.channel.send(
+                            f"{user.mention}, you lack {2 - count} more {query} dupe to evolve yours")
 
             elif rarity == "SP":
                 await ctx.channel.send("{user.mention}, SPs are pre-evolved")
