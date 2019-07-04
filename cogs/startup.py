@@ -43,8 +43,9 @@ class Startup(commands.Cog):
 
     @commands.command()
     async def info(self, ctx):
-        await ctx.channel.send(
-            "Hello! I'm Miketsu. I am sharded by kyrvscyl. To see the list of my commands, type `;help` or `;help dm`")
+        
+        msg = "Hello! I'm Miketsu. I am sharded by kyrvscyl. To see the list of my commands, type `;help` or `;help dm`"
+        await ctx.channel.send(msg)
 
     @commands.command(aliases=["h"])
     async def help(self, ctx, *args):
@@ -100,6 +101,7 @@ class Startup(commands.Cog):
     @commands.command(aliases=["baa"])
     @commands.is_owner()
     async def bounty_add_alias(self, ctx, *args):
+
         name = args[0].replace("_", " ").lower()
         alias = " ".join(args[1::]).replace("_", " ").lower()
         bounty.update_one({"aliases": name}, {"$push": {"aliases": alias}})
@@ -107,6 +109,7 @@ class Startup(commands.Cog):
 
     @commands.command()
     async def suggest(self, ctx, *, suggestion):
+
         administrator = self.client.get_user(180717337475809281)
         await administrator.send(f"{ctx.author} suggested: {suggestion}")
         await ctx.channel.send(f"{ctx.author.mention}, thank you for that suggestion.")
