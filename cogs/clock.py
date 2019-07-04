@@ -92,9 +92,11 @@ class Clock(commands.Cog):
                 patronus_role = server.get_role(int(entry["patronus_role"]))
                 auror_role = server.get_role(int(entry["auror_role"]))
                 no_maj_role = server.get_role(int(entry["no_maj_role"]))
+                quidditch_role = server.get_role(int(entry["quidditch_role"]))
 
-                await no_maj_role.edit(position=auror_role.position - 1)
-                await patronus_role.edit(position=auror_role.position - 1)
+                await auror_role.edit(position=quidditch_role.position - 1)
+                await patronus_role.edit(position=quidditch_role.position - 1)
+                await no_maj_role.edit(position=quidditch_role.position - 1)
 
             except AttributeError:
                 continue
@@ -106,11 +108,13 @@ class Clock(commands.Cog):
             try:
                 server = self.client.get_guild(int(entry["server"]))
                 patronus_role = server.get_role(int(entry["patronus_role"]))
+                auror_role = server.get_role(int(entry["auror_role"]))
                 head_role = server.get_role(int(entry["head_role"]))
                 no_maj_role = server.get_role(int(entry["no_maj_role"]))
 
-                await no_maj_role.edit(position=head_role.position-1)
-                await patronus_role.edit(position=head_role.position-1)
+                await no_maj_role.edit(position=head_role.position - 1)
+                await patronus_role.edit(position=head_role.position - 1)
+                await auror_role.edit(position=head_role.position - 1)
 
             except AttributeError:
                 continue
