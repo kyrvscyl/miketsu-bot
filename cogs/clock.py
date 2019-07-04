@@ -107,14 +107,20 @@ class Clock(commands.Cog):
 
             try:
                 server = self.client.get_guild(int(entry["server"]))
-                patronus_role = server.get_role(int(entry["patronus_role"]))
-                auror_role = server.get_role(int(entry["auror_role"]))
                 head_role = server.get_role(int(entry["head_role"]))
+                senior_role = server.get_role(int(entry["senior_duel_role"]))
+                junior_role = server.get_role(int(entry["junior_duel_role"]))
+                dementor_role = server.get_role(int(entry["dementor_role"]))
+                auror_role = server.get_role(int(entry["auror_role"]))
+                patronus_role = server.get_role(int(entry["patronus_role"]))
                 no_maj_role = server.get_role(int(entry["no_maj_role"]))
 
                 await no_maj_role.edit(position=head_role.position - 1)
                 await patronus_role.edit(position=head_role.position - 1)
                 await auror_role.edit(position=head_role.position - 1)
+                await dementor_role.edit(position=head_role.position - 1)
+                await junior_role.edit(position=head_role.position - 1)
+                await senior_role.edit(position=head_role.position - 1)
 
             except AttributeError:
                 continue
