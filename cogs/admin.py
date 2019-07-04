@@ -132,6 +132,55 @@ class Admin(commands.Cog):
             "requirements_id": str(msg4.id), "events_id": str(msg5.id), "invite_id": str(msg6.id),
         }})
 
+    @commands.command(aliases=["beasts"])
+    @commands.is_owner()
+    async def post_beasts(self, ctx):
+
+        request = books.find_one({"server": f"{ctx.guild.id}"}, {"_id": 0})
+        sorting = self.client.get_channel(int(request["sorting"]))
+        beast_select = await sorting.fetch_message(int(request["beasts_id"]))
+
+        thunderbirds = discord.utils.get(ctx.guild.roles, name="Thunderbirds")
+        maledictus = discord.utils.get(ctx.guild.roles, name="Maledictus")
+        graphorns = discord.utils.get(ctx.guild.roles, name="Graphorns")
+        phoenixes = discord.utils.get(ctx.guild.roles, name="Phoenixes")
+        obscurus = discord.utils.get(ctx.guild.roles, name="Obscurus")
+        zouwus = discord.utils.get(ctx.guild.roles, name="Zouwus")
+        kelpies = discord.utils.get(ctx.guild.roles, name="Kelpies")
+        mooncalves = discord.utils.get(ctx.guild.roles, name="Mooncalves")
+        bowtruckles = discord.utils.get(ctx.guild.roles, name="Bowtruckles")
+        streelers = discord.utils.get(ctx.guild.roles, name="Streelers")
+
+        embed = discord.Embed(title="Role Color Selection", colour=discord.Colour(0x3b70ff),
+                              description="Freely select your preferred Animagus form. "
+                                          "Transformation time: 19:00-06:00")
+
+        embed.add_field(name=":eagle: Thunderbirds",
+                        value="{} are able to create storms as they fly".format(thunderbirds.mention))
+        embed.add_field(name=":snake: Maledictus",
+                        value="{} can transform into anything but they are cursed".format(maledictus.mention))
+        embed.add_field(name=":rhino: Graphorns",
+                        value="{} are large beasts with extremely aggressive nature".format(graphorns.mention))
+        embed.add_field(name=":bird: Phoenixes",
+                        value="{} are immensely old creatures and can regenerate through bursting in flames".format(
+                            phoenixes.mention))
+        embed.add_field(name=":eye_in_speech_bubble: Obscurus",
+                        value="{} are very dark parasitical magical entities, beware".format(obscurus.mention))
+        embed.add_field(name=":lion: Zouwus",
+                        value="{}, gigantic elephant-sized cats easily tamed by furry-balls".format(zouwus.mention))
+        embed.add_field(name=":dragon_face: Kelpies",
+                        value="{} are shape-shifting, demonic, and water-dwelling creatures".format(kelpies.mention))
+        embed.add_field(name=":cow: Mooncalves",
+                        value="{}, shy magical bulging blue eyed creatures who only comes out during the night".format(
+                            mooncalves.mention))
+        embed.add_field(name=":seedling: Bowtruckles",
+                        value="{}, they are very smart, bipedal twig-like creatures".format(bowtruckles.mention))
+        embed.add_field(name=":snail: Streelers",
+                        value="{}, dangerous and huge poisonous color-changing snails".format(streelers.mention))
+
+        await beast_select.edit(embed=embed)
+        await ctx.message.delete()
+
     @commands.command(aliases=["start"])
     @commands.is_owner()
     async def post_announcement_magic(self, ctx):
