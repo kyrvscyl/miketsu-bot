@@ -241,7 +241,7 @@ class Clock(commands.Cog):
                 await frame_blazing(server, spell_spam)
 
             # Start transformation
-            if hour_minute == "20:00":
+            if hour_minute == "19:00":
                 await self.transformation_start()
 
             elif hour_minute == "06:00":
