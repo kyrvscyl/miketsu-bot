@@ -168,6 +168,7 @@ class Encounter(commands.Cog):
                 await msg_question.delete()
                 guesses = 3
                 self.client.get_command("encounter").reset_cooldown(ctx)
+                break
 
             except KeyError:
                 guesses += 1
@@ -175,6 +176,7 @@ class Encounter(commands.Cog):
                     await ctx.channel.send(f"{user.mention}, wrong answer. You failed the quiz")
                     await msg_question.delete()
                     self.client.get_command("encounter").reset_cooldown(ctx)
+                    break
 
                 elif guesses == 1:
                     await ctx.channel.send(f"{user.mention}, wrong answer! 1 more try left.")
