@@ -38,24 +38,98 @@ class Admin(commands.Cog):
     @commands.command(aliases=["welcome"])
     @commands.is_owner()
     async def post_welcome(self, ctx):
-        request = books.find_one({"server": f"{ctx.guild.id}"}, {"_id": 0, "welcome": 1})
+        request = books.find_one({"server": f"{ctx.guild.id}"}, {"_id": 0})
         welcome = self.client.get_channel(int(request["welcome"]))
+        sorting = request["sorting"]
+        patronus_role = request["patronus_role"]
 
+        # Welcome
         embed1 = discord.Embed(title="Welcome to House Patronus!", colour=discord.Colour(0xe77eff),
                                description="Herewith are the rules and information of our server!\n\n"
-                                           "Crest designed by <@&281223518103011340>")
+                                           "Crest designed by <@!281223518103011340>")
         embed1.set_thumbnail(
-            url="https/cdn.discordapp.com/attachments/556032841897607178/584001678316142607/Patronus_Crest.png")
+            url="https://cdn.discordapp.com/attachments/556032841897607178/584001678316142607/Patronus_Crest.png")
 
-        embed2 = discord.Embed(title="Primary Server Roles", colour=discord.Colour(0xff44))
+        # Server roles
+        embed2 = discord.Embed(title="Primary Server Roles", colour=discord.Colour(0xff44),
+                               description=f"• Sub roles are provided at the <#{sorting}>")
         embed2.add_field(name=":trident: Head", value="• The Ministers of Patronus")
         embed2.add_field(name=":fleur_de_lis: Auror", value="• Prime Witches, Wizards, & Spirits of Patronus",
                          inline=False)
-        embed2.add_field(name=":crystal_ball: Patronus", value=" Existing members of the guild", inline=False)
+        embed2.add_field(name=":crystal_ball: Patronus", value="• Existing members of the guild", inline=False)
         embed2.add_field(name=":fire: No-Maj", value="• Obliviated, former members, guests", inline=False)
-        embed2.add_field(name=":wolf: Animagus", value="• Transformed members during Full Moon", inline=False)
+        embed2.add_field(name=":panda_face: Animagus", value="• Transformed members during Night time", inline=False)
 
-        await welcome.send(embed=embed1)
+        # Rules
+        embed3 = discord.Embed(title=":clipboard: Rules", colour=discord.Colour(0xf8e71c),
+                               description="• Useless warnings may be given!")
+
+        embed3.add_field(name="# 1. Server nickname", value="• It must contain your actual in-game name\n​ ")
+        embed3.add_field(name="# 2. Message content",
+                         value="• No any form of harassment, racism, toxicity, etc.\n• Avoid posting NSFW or NSFL\n​ ",
+                         inline=False)
+        embed3.add_field(name="# 3. Role/member mention",
+                         value="• Avoid unnecessary pinging\n• Check for the specific roles for free pinging\n​ ",
+                         inline=False)
+        embed3.add_field(name="# 4. Spamming",
+                         value="• Posting at the wrong channel is spamming\n• Channels are provided for spamming bot "
+                               "commands\n​ ",
+                         inline=False)
+        embed3.add_field(name="# 5. No unsolicited promotions",
+                         value="• Like advertising of other guilds/servers without permission\n​ ", inline=False)
+        embed3.add_field(name="# 6. Extensions",
+                         value="• Above rules apply on members' direct messages\n• Follow [Discord Community "
+                               "Guidelines](https://discordapp.com/guidelines)\n​ ",
+                         inline=False)
+
+        # Requirements
+        embed4 = discord.Embed(title=":ribbon: Benefits & Requirements", colour=discord.Colour(0xb8e986),
+                               description=f"• <@&{patronus_role}> are requested to be guided for #5")
+
+        embed4.add_field(name="# 1. No duel/tier requirements", value="• But do test your limits and improve!\n​ ")
+        embed4.add_field(name="# 2. Guild Quest (GQ) requirements",
+                         value="• For apprentices, min 30 weekly GQ\n• For qualified mentors, min 90 weekly GQ\n​ ",
+                         inline=False)
+        embed4.add_field(name="# 3. Alternate Accounts",
+                         value="• We can accommodate if slots are available\n• Notify the Head before applying\n​ ",
+                         inline=False)
+        embed4.add_field(name="# 4. Guild Bonuses",
+                         value="• Top 10 guild in overall activeness ranking\n• Rated at 60-70 guild packs per "
+                               "week\n• Weekly 1-hour soul & evo bonus\n• 24/7 exp, coin, & medal buffs\n• Max guild "
+                               "feast rewards\n• Ultimate Orochi carries\n• Souls 10 carries\n• Rich Discord "
+                               "contents\n• Fun, playful, & experienced members\n​ ",
+                         inline=False)
+        embed4.add_field(name="# 5. Absenteeism/leave",
+                         value="• If leaving for shards, specify amount of days\n• File your applications "
+                               "prior long vacations\n• Up to 25-35 days of leave for old members\n​ ",
+                         inline=False)
+
+        # Events
+        embed5 = discord.Embed(title=":confetti_ball: Events & Timings", colour=discord.Colour(0x50e3c2),
+                               description=f"• <@&{patronus_role}> role is pinged for events #2-5")
+
+        embed5.add_field(name="# 1. Guild Raid", value="• `05:00 EST` | Resets Everyday \n​")
+        embed5.add_field(name="# 2. Kirin Hunt", value="• `19:00 EST` | Every Mon to Thu\n​", inline=False)
+        embed5.add_field(name="# 3. Guild Feast", value="• `10:00 EST` | Every Sat \n• `00:00 EST` | Every Sun\n​",
+                         inline=False)
+        embed5.add_field(name="# 4. Boss Defense", value="• `10:15 EST` | Every Sat \n​", inline=False)
+        embed5.add_field(name="# 5. Exclusive Guild Contests", value="• Announced once in a while in Discord\n​ ",
+                         inline=False)
+
+        # Message posting
+        msg1 = await welcome.send(embed=embed1)
+        msg2 = await welcome.send(embed=embed2)
+        msg3 = await welcome.send(embed=embed3)
+        msg4 = await welcome.send(embed=embed4)
+        msg5 = await welcome.send(embed=embed5)
+        msg6 = await welcome.send(content="Our invite link: https://discord.gg/H6N8AHB")
+
+        # Post processing
+        await ctx.message.delete()
+        books.update_one({"server": f"{ctx.guild.id}"}, {"$set": {
+            "intro_id": str(msg1.id), "roles_id": str(msg2.id), "rules_id": str(msg3.id),
+            "requirements_id": str(msg4.id), "events_id": str(msg5.id), "invite_id": str(msg6.id),
+        }})
 
     @commands.command(aliases=["start"])
     @commands.is_owner()
@@ -223,6 +297,7 @@ class Admin(commands.Cog):
     async def broadcast(self, ctx, *args):
         channel = self.client.get_channel(int(re.sub("[<>#]", "", args[0])))
         await channel.send(f"{' '.join(args[1:])}")
+        await ctx.message.add_reaction("✅")
 
     @commands.command(aliases=["m"])
     @commands.has_role("Head")
@@ -563,10 +638,10 @@ class Admin(commands.Cog):
                 continue
 
     async def management_stats(self, ctx):
+
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         registered_users = members.count()
         guild_members = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}})
-        # status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
         guild_members_actv = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "Active"})
         guild_members_inac = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "Inactive"})
         guild_members_onlv = members.count({"role": {"$in": ["Officer", "Member", "Leader"]}, "status": "On-leave"})
