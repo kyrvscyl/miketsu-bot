@@ -117,6 +117,17 @@ class Clock(commands.Cog):
             else:
                 await asyncio.sleep(1)
 
+    @commands.command(aliases=["transform"])
+    @commands.is_owner()
+    async def transformation_trigger(self, ctx, *, args):
+        await ctx.message.delete()
+
+        if args.lower() == "start":
+            await self.transformation_start()
+
+        elif args.lower() == "end":
+            await self.transformation_start()
+
     async def transformation_end(self):
 
         for entry in books.find({}, {"_id": 0}):
@@ -288,7 +299,7 @@ class Clock(commands.Cog):
                 await frame_starlight(server, spell_spam)
                 await frame_blazing(server, spell_spam)
 
-            if hour_minute == "19:30":
+            if hour_minute == "19:00":
                 await self.transformation_start()
 
             elif hour_minute == "06:00":
