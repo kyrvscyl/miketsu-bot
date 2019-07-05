@@ -212,13 +212,14 @@ async def management_update_field(ctx, args):
     try:  # check if code is provided
         id = int(args[1])
         find_query = {"#": id}
+        name = "kyrvscyl"  # dummy name
 
     except ValueError:
-        id = args[1]
         find_query = {"name_lower": args[1].lower()}
+        id = 1
 
     # Check if registered
-    if id not in ids_registered or args[1].lower() not in members_registered:
+    if id not in ids_registered or name not in members_registered:
         await ctx.channel.send("Provided ID/name is not in the guild database")
 
     # Updating the Status
