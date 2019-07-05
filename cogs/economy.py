@@ -409,38 +409,42 @@ class Economy(commands.Cog):
         except KeyError:
             await ctx.channel.send(f"{user.mention}, that shikigami does not exist nor you have it")
 
-    @commands.command(aliases=["shiki", "shikigami"])
-    async def shikigami_info(self, ctx, *args):
-        query = (" ".join(args)).title()
+    @commands.command(aliases=["addshiki"])
+    @commands.is_owner()
+    async def shikigami_add(self, ctx, *args):
 
-        profile_shikigami = shikigami.find_one({
-            "shikigami.name": query}, {
-            "_id": 0,
-            "shikigami": {
-                "$elemMatch": {
-                    "name": query
-                }}
-        })
+        if len(args) < 4:
+            return
 
-        normal = profile_shikigami["shikigami"][0]["skills"]["normal"]
-        special = profile_shikigami["shikigami"][0]["skills"]["special"]
-        specialty = profile_shikigami["shikigami"][0]["specialty"]
-        pre_evo = profile_shikigami["shikigami"][0]["thumbnail"]["pre_evo"]
-        evo = profile_shikigami["shikigami"][0]["thumbnail"]["evo"]
+        # ;addshiki ssr shiranui link link
+        elif len(args) == 4:
 
-        embed = discord.Embed(
-            color=ctx.author.colour,
-            description=f"**Skills:**\nNormal: {normal}\nSpecial: {special}\n\nSpecialty: {specialty}"
-        )
-        embed.set_thumbnail(url=evo)
-        embed.set_author(
-            name=f"{query}",
-            icon_url=pre_evo
-        )
+            rarity = args[0].upper()
+            query = (args[1].replace("_", " ")).title()
 
-        await ctx.channel.send(embed=embed)
+            profile = {
+                "name": query,
+                "skills":{
+                    "normal": "",
+                    "special": ""
+                },
+                "thumbnail": {
+                    "pre_evo": args[2],
+                    "evo": args[3]
+                },
+                "specialty": "None"
+            }
+
+            shikigami.update_one({
+                "rarity": rarity}, {
+                "$push": {"shikigami": profile}
+            })
+            await ctx.message.add_reaction("✅")
+        else:
+            await ctx.channel.send("Try again. Lacks input")
 
     @commands.command(aliases=["update"])
+    @commands.is_owner()
     async def shikigami_update(self, ctx, *args):
 
         if len(args) == 0:
