@@ -59,7 +59,7 @@ class Startup(commands.Cog):
                                           ":bow_and_arrow: Game play\n`;raidc`, `;raidc <@mention>`, "
                                           "`;raid <@mention>`, `;encounter`, `;binfo <boss>`\n\n"
                                           ":information_source: Information\n`;bounty <shikigami>`\n\n:heart: "
-                                          "Others\n`;compensate`, `;suggest`, `;update`, `;stickers`")
+                                          "Others\n`;compensate`, `;suggest`, `;stickers`")
         try:
 
             if args[0].lower() == "dm":
