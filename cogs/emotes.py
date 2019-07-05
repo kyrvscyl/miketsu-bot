@@ -72,6 +72,16 @@ class Emotes(commands.Cog):
                 await message.channel.send(embed=embed)
                 await message.delete()
 
+        elif "@{}".format(self.client.user.id) in message.content:
+            await message.delete()
+            msg = "<:0_0:596721853448454203><:1_0:596721853305978882>" \
+                  "<:2_0:596721853528014880><:3_0:596721853259841564><:4_0:596721853779804219>\n" \
+                  "<:0_1:596721853775740948><:1_1:596721853205315596>" \
+                  "<:2_1:596721853465231362><:3_1:596721853716889641><:4_1:596721853691592705>\n" \
+                  "<:0_2:596721853569957918><:1_2:596721853624483840>" \
+                  "<:2_2:596721853561569280><:3_2:596721853620420627><:4_2:596721853612163152>"
+            await message.channel.send(msg)
+
 
 def setup(client):
     client.add_cog(Emotes(client))
