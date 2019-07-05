@@ -288,7 +288,7 @@ class Clock(commands.Cog):
                 await frame_starlight(server, spell_spam)
                 await frame_blazing(server, spell_spam)
 
-            if hour_minute == "19:00":
+            if hour_minute == "19:30":
                 await self.transformation_start()
 
             elif hour_minute == "06:00":
