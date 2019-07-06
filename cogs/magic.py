@@ -647,15 +647,11 @@ class Magic(commands.Cog):
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
-        role_dolphin = discord.utils.get(reaction.message.guild.roles, name="🐬")
 
         if user == self.client.user:
             return
 
         elif user.bot:
-            return
-
-        elif user not in role_dolphin.members:
             return
 
         elif str(reaction.emoji) == "✉" and user != self.client.user \
@@ -839,7 +835,8 @@ class Magic(commands.Cog):
 
             # noinspection PyShadowingNames
             if actions == 3:
-                return
+                if ctx.message.content in [";knock", ";inquire"]:
+                    await ctx.message.delete()
 
             elif ctx.message.content == ";knock":
 
@@ -1008,7 +1005,6 @@ class Magic(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
 
         if message.author == self.client.user:
             return
@@ -1016,26 +1012,38 @@ class Magic(commands.Cog):
         elif message.author.bot:
             return
 
-        elif not check_quest(message.author) or message.author not in role_dolphin.members:
+        elif isinstance(message.channel, discord.DMChannel):
+            return
+
+        elif not check_quest(message.author):
             return
 
         elif message.content.lower() == "eeylops owl emporium" and str(
                 message.channel.category) == "⛲ Diagon Alley" and str(message.channel) != "eeylops-owl-emporium":
 
-            await self.create_emporium(message.channel.category, message.guild,
-                                       message.content.lower(), message, message.author)
+            role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
+
+            if message.author in role_dolphin.members:
+                await self.create_emporium(message.channel.category, message.guild,
+                                           message.content.lower(), message, message.author)
 
         elif message.content.lower() in ["gringotts bank", "gringotts wizarding bank"] \
                 and str(message.channel.category) == "⛲ Diagon Alley" and str(message.channel) != "gringotts-bank":
 
-            await self.create_gringotts(message.channel.category, message.guild,
-                                        message.content.lower(), message, message.author)
+            role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
+
+            if message.author in role_dolphin.members:
+                await self.create_gringotts(message.channel.category, message.guild,
+                                            message.content.lower(), message, message.author)
 
         elif message.content.lower() == "ollivanders" and str(message.channel.category) == "⛲ Diagon Alley" \
                 and str(message.channel) != "ollivanders":
 
-            await self.create_ollivanders(message.channel.category, message.guild,
-                                          message.content.lower(), message, message.author)
+            role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
+
+            if message.author in role_dolphin.members:
+                await self.create_ollivanders(message.channel.category, message.guild,
+                                              message.content.lower(), message, message.author)
 
         elif "gringotts-bank" == str(message.channel) and message.content.startswith != ";":
             await self.transaction_gringotts(message.author, message.guild, message.content.lower(), message)
