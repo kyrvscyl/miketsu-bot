@@ -128,53 +128,75 @@ class Clock(commands.Cog):
         elif args.lower() == "end":
             await self.transformation_end()
 
-    async def transformation_start(self):
-
-        for entry in books.find({}, {"_id": 0}):
-
-            try:
-                server = self.client.get_guild(int(entry["server"]))
-                senior_role = server.get_role(int(entry["senior_duel_role"]))
-                junior_role = server.get_role(int(entry["junior_duel_role"]))
-                dementor_role = server.get_role(int(entry["dementor_role"]))
-                auror_role = server.get_role(int(entry["auror_role"]))
-                patronus_role = server.get_role(int(entry["patronus_role"]))
-                no_maj_role = server.get_role(int(entry["no_maj_role"]))
-                quidditch_role = server.get_role(int(entry["quidditch_role"]))
-
-                await senior_role.edit(position=quidditch_role.position + 1)
-                await junior_role.edit(position=quidditch_role.position + 1)
-                await dementor_role.edit(position=quidditch_role.position + 1)
-                await auror_role.edit(position=quidditch_role.position + 1)
-                await patronus_role.edit(position=quidditch_role.position + 1)
-                await no_maj_role.edit(position=quidditch_role.position + 1)
-
-            except AttributeError:
-                continue
-
     async def transformation_end(self):
 
-        for entry in books.find({}, {"_id": 0}):
+        for entry in books.find_one({}, {"_id": 0, "server": 1}):
 
             try:
                 server = self.client.get_guild(int(entry["server"]))
-                head_role = server.get_role(int(entry["head_role"]))
-                senior_role = server.get_role(int(entry["senior_duel_role"]))
-                junior_role = server.get_role(int(entry["junior_duel_role"]))
-                dementor_role = server.get_role(int(entry["dementor_role"]))
-                auror_role = server.get_role(int(entry["auror_role"]))
-                patronus_role = server.get_role(int(entry["patronus_role"]))
-                no_maj_role = server.get_role(int(entry["no_maj_role"]))
+                reference_role = discord.utils.get(server.roles, name="Head")
 
-                await no_maj_role.edit(position=head_role.position - 1)
-                await patronus_role.edit(position=head_role.position - 1)
-                await auror_role.edit(position=head_role.position - 1)
-                await dementor_role.edit(position=head_role.position - 1)
-                await junior_role.edit(position=head_role.position - 1)
-                await senior_role.edit(position=head_role.position - 1)
+                no_maj_role = discord.utils.get(server.roles, name="No-Maj")
+                await asyncio.sleep(1)
+                await no_maj_role.edit(position=reference_role.position - 1)
+
+                patronus_role = discord.utils.get(server.roles, name="Patronus")
+                await asyncio.sleep(1)
+                await patronus_role.edit(position=reference_role.position - 1)
+
+                auror_role = discord.utils.get(server.roles, name="Auror")
+                await asyncio.sleep(1)
+                await auror_role.edit(position=reference_role.position - 1)
+
+                dementor_role = discord.utils.get(server.roles, name="Dementor")
+                await asyncio.sleep(1)
+                await dementor_role.edit(position=reference_role.position - 1)
+
+                junior_role = discord.utils.get(server.roles, name="Junior Duel Champion")
+                await asyncio.sleep(1)
+                await junior_role.edit(position=reference_role.position - 1)
+
+                senior_role = discord.utils.get(server.roles, name="Senior Duel Champion")
+                await asyncio.sleep(1)
+                await senior_role.edit(position=reference_role.position - 1)
 
             except AttributeError:
-                continue
+                return
+
+    async def transformation_start(self):
+
+        for entry in books.find_one({}, {"_id": 0, "server": 1}):
+
+            try:
+                server = self.client.get_guild(int(entry["server"]))
+                reference_role = discord.utils.get(server.roles, name="🏆")
+
+                no_maj_role = discord.utils.get(server.roles, name="No-Maj")
+                await asyncio.sleep(1)
+                await no_maj_role.edit(position=reference_role.position - 1)
+
+                patronus_role = discord.utils.get(server.roles, name="Patronus")
+                await asyncio.sleep(1)
+                await patronus_role.edit(position=reference_role.position - 1)
+
+                auror_role = discord.utils.get(server.roles, name="Auror")
+                await asyncio.sleep(1)
+                await auror_role.edit(position=reference_role.position - 1)
+
+                dementor_role = discord.utils.get(server.roles, name="Dementor")
+                await asyncio.sleep(1)
+                await dementor_role.edit(position=reference_role.position - 1)
+
+                junior_role = discord.utils.get(server.roles, name="Junior Duel Champion")
+                await asyncio.sleep(1)
+                await junior_role.edit(position=reference_role.position - 1)
+
+                senior_role = discord.utils.get(server.roles, name="Senior Duel Champion")
+                await asyncio.sleep(1)
+                await senior_role.edit(position=reference_role.position - 1)
+
+            except AttributeError:
+                return
 
     # noinspection PyShadowingNames
     async def penalty_hour(self):
