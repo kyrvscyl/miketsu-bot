@@ -10,7 +10,8 @@ import random
 import asyncio
 from discord.ext import commands
 
-from cogs.mongo.db import books, users
+from cogs.mongo.db import books, users, quests
+from cogs.magic import get_data
 
 # Timezone
 tz_target = pytz.timezone("America/Atikokan")
@@ -228,6 +229,18 @@ class Events(commands.Cog):
                 )
 
                 await record_scroll.send(embed=embed)
+
+                if changed_role2[0].name == "🐬":
+                    cycle, path, timestamp, user_hints, actions, purchase = get_data(before)
+
+                    quests.update_one({
+                        "user_id": str(before.id),
+                        "quest1.cycle": cycle}, {
+                        "$set": {
+                            "quest1.$.status": "completed"
+                        }
+                    })
+
 
             elif not changed_role2:
 
