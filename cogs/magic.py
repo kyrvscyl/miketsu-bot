@@ -1010,7 +1010,7 @@ class Magic(commands.Cog):
         elif message.author.bot:
             return
 
-        elif not check_quest(message.author) or message.author not in role_dolphin:
+        elif not check_quest(message.author) or message.author not in role_dolphin.members:
             return
 
         elif message.content.lower() == "eeylops owl emporium" and str(
