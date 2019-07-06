@@ -847,6 +847,15 @@ class Magic(commands.Cog):
                       "Please tell me, what can I be of service to you?"
                 topic = "Due to the increasing demand of owls, the emporium can only supply that much"
 
+                if path == "path6":
+                    await self.update_path(user, cycle, path_new="path9")
+
+                await ctx.channel.edit(topic=topic)
+                await ctx.message.delete()
+                await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await self.penalize(user, cycle, points=15)
+                await self.logging(f"{user} interacted using command {ctx.message.content} with action# {actions}")
+
             elif ctx.message.content == ";inquire":
 
                 responses = [
@@ -868,15 +877,12 @@ class Magic(commands.Cog):
 
                 msg, topic = responses[actions]
 
-            if path == "path6":
-                await self.update_path(user, cycle, path_new="path9")
-
-            await self.penalize(user, cycle, points=10)
-            await ctx.channel.edit(topic=topic)
-            await self.action_update(user, cycle, actions=1)
-            await ctx.message.delete()
-            await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
-            await self.logging(f"{user} interacted using command {ctx.message.content} with action# {actions}")
+                await ctx.channel.edit(topic=topic)
+                await ctx.message.delete()
+                await self.action_update(user, cycle, actions=1)
+                await self.penalize(user, cycle, points=15)
+                await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await self.logging(f"{user} interacted using command {ctx.message.content} with action# {actions}")
 
     # noinspection PyShadowingNames
     @commands.command(aliases=["purchase"])
