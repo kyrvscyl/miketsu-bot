@@ -521,14 +521,6 @@ class Magic(commands.Cog):
 
                 content = f"{user.mention}, :confetti_ball: **Congratulations!** You have finished the quest!"
 
-                quests.update_one({
-                    "user_id": str(user.id),
-                    "quest1.cycle": cycle}, {
-                    "$set": {
-                        "quest1.$.status": "completed"
-                    }
-                })
-
                 await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
                 await channel.send(content=content, embed=embed)
                 await self.logging(f"{user} successfully finished the quest")
@@ -591,6 +583,7 @@ class Magic(commands.Cog):
             member = server.get_member(user.id)
 
             if quests.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
+
                 profile = {"user_id": str(payload.user_id), "server": str(payload.guild_id), "quest1": []}
                 quests.insert_one(profile)
 
@@ -601,15 +594,18 @@ class Magic(commands.Cog):
                 cycle = i + 1
 
                 if len(quests.find_one({"user_id": str(payload.user_id)}, {"_id": 0})["quest1"]) != cycle:
+
                     quests.update_one({
                         "user_id": str(user.id)}, {
                         "$push": {
                             "quest1": dict(
                                 status="ongoing",
-                                cycle=cycle, score=1000,
+                                cycle=cycle,
+                                score=1000,
                                 timestamp=current_timestamp(),
                                 timestamp_start=current_timestamp(),
-                                current_path="path1", actions=0,
+                                current_path="path1",
+                                actions=0,
                                 purchase=True,
                                 hints_unlocked=0,
                                 hints=["locked", "locked", "locked", "locked", "locked"]
