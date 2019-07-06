@@ -126,9 +126,9 @@ class Clock(commands.Cog):
             await self.transformation_start()
 
         elif args.lower() == "end":
-            await self.transformation_start()
+            await self.transformation_end()
 
-    async def transformation_end(self):
+    async def transformation_start(self):
 
         for entry in books.find({}, {"_id": 0}):
 
@@ -152,7 +152,7 @@ class Clock(commands.Cog):
             except AttributeError:
                 continue
 
-    async def transformation_start(self):
+    async def transformation_end(self):
 
         for entry in books.find({}, {"_id": 0}):
 
@@ -196,6 +196,7 @@ class Clock(commands.Cog):
             cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
 
             if entry["scenario"] == 2:
+
                 async with user.typing():
                     msg1 = "*\"You heard a sound of a bird above you.\"*"
                     msg2 = "*\"It was your owl flocking gracefully with its wings " \
