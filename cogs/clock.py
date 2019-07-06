@@ -142,12 +142,12 @@ class Clock(commands.Cog):
                 no_maj_role = server.get_role(int(entry["no_maj_role"]))
                 quidditch_role = server.get_role(int(entry["quidditch_role"]))
 
-                await senior_role.edit(position=quidditch_role.position - 1)
-                await junior_role.edit(position=quidditch_role.position - 1)
-                await dementor_role.edit(position=quidditch_role.position - 1)
-                await auror_role.edit(position=quidditch_role.position - 1)
-                await patronus_role.edit(position=quidditch_role.position - 1)
-                await no_maj_role.edit(position=quidditch_role.position - 1)
+                await senior_role.edit(position=quidditch_role.position + 1)
+                await junior_role.edit(position=quidditch_role.position + 1)
+                await dementor_role.edit(position=quidditch_role.position + 1)
+                await auror_role.edit(position=quidditch_role.position + 1)
+                await patronus_role.edit(position=quidditch_role.position + 1)
+                await no_maj_role.edit(position=quidditch_role.position + 1)
 
             except AttributeError:
                 continue
