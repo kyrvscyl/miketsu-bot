@@ -886,7 +886,6 @@ class Magic(commands.Cog):
             return
 
         elif ctx.channel.name == "eeylops-owl-emporium":
-            await ctx.message.delete()
 
             try:
                 owl_buy = args[0].lower()
@@ -905,6 +904,7 @@ class Magic(commands.Cog):
                 await self.penalize(user, cycle, points=5)
                 await user.send(msg)
                 await self.logging(f"{user} is trying purchase again but on hour cooldown")
+                await ctx.message.delete()
 
             elif owl_buy not in owls_list:
 
@@ -913,6 +913,7 @@ class Magic(commands.Cog):
                 await self.penalize(user, cycle, points=10)
                 await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                 await self.logging(f"{user} tried to buy {owl_buy} but its not in the available list of owls")
+                await ctx.message.delete()
 
             elif owl_buy in owls_list:
 
@@ -927,6 +928,7 @@ class Magic(commands.Cog):
                     await self.penalize(user, cycle, points=25)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await self.logging(f"{user} tried to buy {owl_buy} again")
+                    await ctx.message.delete()
 
                 elif purchaser_id != "None":
 
@@ -937,9 +939,16 @@ class Magic(commands.Cog):
 
                     await self.penalize(user, cycle, points=10)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
-                    await quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                                            {"$set": {"quest1.$.purchase": False}})
+
+                    quests.update_one({
+                        "user_id": str(user.id), "quest1.cycle": cycle}, {
+                        "$set": {
+                            "quest1.$.purchase": False
+                        }
+                    })
+
                     await self.logging(f"{user} tried to buy {owl_buy} but it has been purchased already")
+                    await ctx.message.delete()
 
                 elif purchaser_id == "None":
 
@@ -954,9 +963,16 @@ class Magic(commands.Cog):
                         await self.update_path(user, cycle, path_new="path7")
                         await self.penalize(user, cycle, points=5)
                         await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
-                        quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle},
-                                          {"$set": {"quest1.$.purchase": False}})
+
+                        quests.update_one({
+                            "user_id": str(user.id), "quest1.cycle": cycle}, {
+                            "$set": {
+                                "quest1.$.purchase": False
+                            }
+                        })
+
                         await self.logging(f"{user} tried to buy {owl_buy} but they have no moneybag role")
+                        await ctx.message.delete()
 
                     else:
 
@@ -998,6 +1014,7 @@ class Magic(commands.Cog):
 
                             await ctx.channel.send(embed=embed)
                             await asyncio.sleep(2)
+                            await ctx.message.delete()
 
     @commands.Cog.listener()
     async def on_message(self, message):
