@@ -1076,7 +1076,7 @@ class Admin(commands.Cog):
                                        )
 
                     await answer.add_reaction("✅")
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(3)
                     await answer.delete()
                     break
 
@@ -1084,21 +1084,21 @@ class Admin(commands.Cog):
                     break
 
                 except TypeError:
-                    msg = await ctx.channel.send("Exiting environment..")
-                    await msg.add_reaction("✅")
+                    msg1 = await ctx.channel.send("Exiting environment..")
+                    await msg1.add_reaction("✅")
                     i = "cancel"
                     break
 
                 except KeyError:
-                    msg = await ctx.channel.send("Invalid input")
+                    msg2 = await ctx.channel.send("Invalid input")
                     await asyncio.sleep(2)
-                    await msg.delete()
+                    await msg2.delete()
                     i = 0
 
                 except asyncio.TimeoutError:
-                    msg = await ctx.channel.send("Exiting environment due to timeout error")
+                    msg3 = await ctx.channel.send("Exiting environment due to timeout error")
                     await asyncio.sleep(1)
-                    await msg.add_reaction("✅")
+                    await msg3.add_reaction("✅")
                     i = "cancel"
                     break
 
