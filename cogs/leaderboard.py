@@ -19,16 +19,21 @@ emoji_a = "<:amulet:573071120685596682>"
 
 # noinspection PyUnusedLocal
 def post(page, embed1, embed2, embed3):
+
     if page == 1:
         return embed1
-    if page == 2:
+
+    elif page == 2:
         return embed2
-    if page == 3:
+
+    elif page == 3:
         return embed3
-    if page > 3:
+
+    elif page > 3:
         page = 1
         return embed1
-    if page < 1:
+
+    elif page < 1:
         page = 3
         return embed3
 
@@ -45,29 +50,37 @@ class Leaderboard(commands.Cog):
         try:
             if args[0].upper() == "SSR":
                 await self.leaderboard_post_ssr(ctx)
+
             elif args[0] == "medal" or args[0] == "medals":
                 await self.leaderboard_post_medals(ctx)
+
             elif args[0] == "amulet" or args[0] == "amulets":
                 await self.leaderboard_post_amulet(ctx)
+
             elif args[0] == "friendship" or args[0] == "fp":
                 await self.leaderboard_friendship(ctx)
+
             elif args[0] == "ship" or args[0] == "ships":
                 await self.leaderboard_post_ship(ctx)
+
             elif args[0] == "streak":
                 await self.leaderboard_post_streak(ctx)
+
             else:
                 await self.leaderboard_post_level(ctx)
 
-        # At any argument, return the Level Leaderboard
         except IndexError:
             await self.leaderboard_post_level(ctx)
 
     async def leaderboard_post_ssr(self, ctx):
-        ssr_board1 = []
 
-        for user in users.find({}, {"_id": 0, "user_id": 1, "SSR": 1}):
+        ssr_board1 = []
+        query = users.find({}, {"_id": 0, "user_id": 1, "SSR": 1})
+
+        for user in query:
             try:
-                ssr_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["SSR"]))
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                ssr_board1.append((member_name, user["SSR"]))
             
             except AttributeError:
                 continue
@@ -80,12 +93,14 @@ class Leaderboard(commands.Cog):
 
         for user in ssr_board2[0:10]:
             description1 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in ssr_board2[10:20]:
             description2 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in ssr_board2[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
-        title = ":trophy: SSR LeaderBoard"
+        title = "🏆 SSR LeaderBoard"
 
         embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
@@ -101,12 +116,14 @@ class Leaderboard(commands.Cog):
         await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_medals(self, ctx):
-        medal_board1 = []
 
-        for user in users.find({}, {"_id": 0, "user_id": 1, "medals": 1}):
-            
+        medal_board1 = []
+        query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})
+
+        for user in query:
             try:
-                medal_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["medals"]))
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                medal_board1.append((member_name, user["medals"]))
             
             except AttributeError:
                 continue
@@ -119,8 +136,10 @@ class Leaderboard(commands.Cog):
 
         for user in medal_board2[0:10]:
             description1 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in medal_board2[10:20]:
             description2 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in medal_board2[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
@@ -140,11 +159,14 @@ class Leaderboard(commands.Cog):
         await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_level(self, ctx):
-        level_board1 = []
 
-        for user in users.find({}, {"_id": 0, "user_id": 1, "level": 1}):
+        level_board1 = []
+        query = users.find({}, {"_id": 0, "user_id": 1, "level": 1})
+
+        for user in query:
             try:
-                level_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["level"]))
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                level_board1.append((member_name, user["level"]))
             
             except AttributeError:
                 continue
@@ -157,12 +179,14 @@ class Leaderboard(commands.Cog):
 
         for user in level_board2[0:10]:
             description1 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in level_board2[10:20]:
             description2 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in level_board2[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
-        title = ":arrow_heading_up: Level LeaderBoard"
+        title = "⤴ Level LeaderBoard"
 
         embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
@@ -178,12 +202,14 @@ class Leaderboard(commands.Cog):
         await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_amulet(self, ctx):
+
         amulet_board1 = []
+        query = users.find({}, {"_id": 0, "user_id": 1, "amulets_spent": 1})
 
-        for user in users.find({}, {"_id": 0, "user_id": 1, "amulets_spent": 1}):
-
+        for user in query:
             try:
-                amulet_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["amulets_spent"]))
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                amulet_board1.append((member_name, user["amulets_spent"]))
 
             except AttributeError:
                 continue
@@ -196,8 +222,10 @@ class Leaderboard(commands.Cog):
 
         for user in amulet_board2[0:10]:
             description1 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in amulet_board2[10:20]:
             description2 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in amulet_board2[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
@@ -217,12 +245,14 @@ class Leaderboard(commands.Cog):
         await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_friendship(self, ctx):
+
         fp_board1 = []
+        query = users.find({}, {"_id": 0, "user_id": 1, "friendship": 1})
 
-        for user in users.find({}, {"_id": 0, "user_id": 1, "friendship": 1}):
-
+        for user in query:
             try:
-                fp_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["friendship"]))
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                fp_board1.append((member_name, user["friendship"]))
 
             except AttributeError:
                 continue
@@ -235,8 +265,10 @@ class Leaderboard(commands.Cog):
 
         for user in fp_board12[0:10]:
             description1 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in fp_board12[10:20]:
             description2 += f"🔸{user[0]}, x{user[1]}\n"
+
         for user in fp_board12[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
@@ -256,10 +288,18 @@ class Leaderboard(commands.Cog):
         await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_ship(self, ctx):
-        ship_board1 = []
 
-        for ship in friendship.find({},
-                                    {"_id": 0, "points": 1, "shipper1": 1, "shipper2": 1, "ship_name": 1, "level": 1}):
+        ship_board1 = []
+        query = friendship.find({}, {
+            "_id": 0,
+            "points": 1,
+            "shipper1": 1,
+            "shipper2": 1,
+            "ship_name": 1,
+            "level": 1
+        })
+
+        for ship in query:
             ship_board1.append((ship["ship_name"], ship["shipper1"], ship["shipper2"], ship["level"], ship["points"]))
 
         ship_board2 = sorted(ship_board1, key=lambda x: x[4], reverse=True)
@@ -270,12 +310,14 @@ class Leaderboard(commands.Cog):
 
         for ship in ship_board2[0:10]:
             description1 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
+
         for ship in ship_board2[10:20]:
             description2 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
+
         for ship in ship_board2[20:30]:
             description3 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
 
-        title = ":ship: Ships LeaderBoard"
+        title = "🚢 Ships LeaderBoard"
 
         embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
@@ -291,12 +333,14 @@ class Leaderboard(commands.Cog):
         await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_streak(self, ctx):
+
         streakboard1 = []
+        query = streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1})
 
-        for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
-
+        for user in query:
             try:
-                streakboard1.append((self.client.get_user(int(user["user_id"])).display_name, user["SSR_current"]))
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                streakboard1.append((member_name, user["SSR_current"]))
             
             except AttributeError:
                 continue
@@ -309,12 +353,14 @@ class Leaderboard(commands.Cog):
 
         for user in streakboard2[0:10]:
             description1 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
+
         for user in streakboard2[10:20]:
             description2 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
+
         for user in streakboard2[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
 
-        title = "No SSR Streak LeaderBoard"
+        title = "NO SSR Streak LeaderBoard"
 
         embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
@@ -343,10 +389,13 @@ class Leaderboard(commands.Cog):
             try:
                 timeout = 60
                 reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+
                 if str(reaction.emoji) == "➡":
                     page += 1
+
                 if str(reaction.emoji) == "⬅":
                     page -= 1
+
                 await msg.edit(embed=post(page, embed1, embed2, embed3))
 
             except asyncio.TimeoutError:
