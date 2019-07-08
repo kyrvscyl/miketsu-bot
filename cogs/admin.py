@@ -24,6 +24,7 @@ emoji_j = "<:jade:555630314282811412>"
 
 
 def get_status(value):
+
     status = {
         "30": "Inactive",
         "60": "Semi-active",
@@ -33,10 +34,12 @@ def get_status(value):
 
 
 def shorten(key):
+
     keyword = {
         "Leader": "LDR",
         "Member": "MEM",
         "Officer": "OFR",
+        "Ex-member": "EXM",
         "Active": "ACTV",
         "Inactive": "INAC",
         "On-leave": "ONLV",
@@ -44,12 +47,12 @@ def shorten(key):
         "Away": "AWAY",
         "Left": "LEFT"
     }
-
     return keyword[key]
 
 
 # noinspection PyUnboundLocalVariable
 def lengthen(index):
+
     if index < 10:
         prefix = "#00{}"
 
