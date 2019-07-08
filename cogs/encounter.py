@@ -114,7 +114,7 @@ class Encounter(commands.Cog):
             await self.encounter_roll(user, ctx)
 
         else:
-            await ctx.channel.send("You have used up all your :ticket:")
+            await ctx.channel.send("You have used up all your 🎫")
             self.client.get_command("encounter").reset_cooldown(ctx)
 
     async def encounter_roll(self, user, ctx):
@@ -251,7 +251,7 @@ class Encounter(commands.Cog):
 
         except asyncio.TimeoutError:
 
-            await ctx.channel.send(f"{user.mention}, the treasure you found turned into ashes :fire:")
+            await ctx.channel.send(f"{user.mention}, the treasure you found turned into ashes 🔥")
             self.client.get_command("encounter").reset_cooldown(ctx)
 
         else:
@@ -350,7 +350,7 @@ class Encounter(commands.Cog):
                 reaction, user = await self.client.wait_for("reaction_add", timeout=timer, check=check)
 
             except asyncio.TimeoutError:
-                await ctx.channel.send(":crossed_flags: Assembly ends!")
+                await ctx.channel.send("🎌 Assembly ends!")
                 count_players += 15
 
             else:
@@ -377,8 +377,8 @@ class Encounter(commands.Cog):
                     timer /= 1.20
 
                     msg = \
-                        f"{user.mention} joins the assembly! :checkered_flag: {count_players + 1}/10 players; " \
-                            f":alarm_clock:{round(timer)} seconds before closing!"
+                        f"{user.mention} joins the assembly! 🏁 {count_players + 1}/10 players; " \
+                        f"⏰{round(timer)} seconds before closing!"
 
                     await ctx.channel.send(msg)
 
@@ -456,11 +456,11 @@ class Encounter(commands.Cog):
             boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.075)
 
             description1 = \
-                f":dash: Rare Boss {boss_select} has fled with {round(boss_currenthp)} remaining Hp"
+                f"💨 Rare Boss {boss_select} has fled with {round(boss_currenthp)} remaining Hp"
 
             description2 = \
-                f":money_with_wings: Stealing {boss_jadesteal:,d}{emoji_j} & " \
-                    f"{boss_coinsteal}{emoji_c} each from its attackers!"
+                f"💸 Stealing {boss_jadesteal:,d}{emoji_j} & " \
+                f"{boss_coinsteal}{emoji_c} each from its attackers!"
 
             embed = discord.Embed(
                 color=0xffff80,
@@ -531,7 +531,7 @@ class Encounter(commands.Cog):
             rewards_zip = list(
                 zip(challengers, boss_coins_user, boss_jades_users, boss_medals_users, boss_exp_users, distribution))
 
-            await ctx.channel.send(f":bow_and_arrow: Rare Boss {boss_select} has been defeated!")
+            await ctx.channel.send(f"🎯 Rare Boss {boss_select} has been defeated!")
             await self.boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
 
     async def boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
@@ -539,7 +539,7 @@ class Encounter(commands.Cog):
         discoverer = boss_profile_new["discoverer"]
         embed = discord.Embed(
             color=0xffff80,
-            title=":confetti_ball: Boss Defeat Rewards!"
+            title="🎊 Boss Defeat Rewards!"
         )
         embed.set_thumbnail(url=boss_url)
 
@@ -555,7 +555,7 @@ class Encounter(commands.Cog):
 
                 embed.add_field(
                     name=f"{name}, {damage_contribution}%",
-                    value=f"{coins_r:,d}{emoji_c}, {jades_r}{emoji_j}, {medal_r}{emoji_m}, {exp_r} :arrow_heading_up:"
+                    value=f"{coins_r:,d}{emoji_c}, {jades_r}{emoji_j}, {medal_r}{emoji_m}, {exp_r} ⤴"
                 )
 
                 users.update_one({
@@ -587,7 +587,7 @@ class Encounter(commands.Cog):
         try:
             user = self.client.get_user(int(discoverer))
             msg = f"{user.mention} earned an extra 100{emoji_j}, 50,000{emoji_c}, " \
-                f"15{emoji_m} and 100 :arrow_heading_up: for initially discovering {boss_select}!"
+                f"15{emoji_m} and 100 ⤴ for initially discovering {boss_select}!"
 
             await ctx.channel.send(msg)
 
