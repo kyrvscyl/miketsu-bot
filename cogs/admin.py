@@ -217,6 +217,7 @@ async def management_update_field(ctx, args):
     except ValueError:
         find_query = {"name_lower": args[1].lower()}
         id = 1
+        name = args[1].lower()
 
     # Check if registered
     if id not in ids_registered or name not in members_registered:
