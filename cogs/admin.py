@@ -1304,7 +1304,7 @@ class Admin(commands.Cog):
 
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         query_list = []
-        query = members.find({}, {"_id": 0, "name": 1, "role": 1, "#": 1})
+        query = members.find({}, {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1})
 
         for member in query.sort([("name_lower", 1)]):
             role = member['role']
