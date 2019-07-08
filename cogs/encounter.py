@@ -32,12 +32,12 @@ def get_emoji(item):
         "realm_ticket": "🎟",
         "amulets": emoji_a
     }
-
     return emoji_dict[item]
 
 
 # noinspection PyShadowingNames,PyUnboundLocalVariable
 async def boss_create(user, boss_select):
+
     discoverer = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})
     boss_lvl = discoverer["level"] + 60
 
@@ -54,7 +54,8 @@ async def boss_create(user, boss_select):
     for document in query:
         total_medals = document["medals"]
 
-    boss.update_one({"boss": boss_select}, {
+    boss.update_one({
+        "boss": boss_select}, {
         "$set": {
             "discoverer": str(user.id),
             "level": boss_lvl,
@@ -317,10 +318,10 @@ class Encounter(commands.Cog):
 
         description = \
             f"The Rare Boss `{boss_select}` has been triggered!\n" \
-                f"Boss Level: `{boss_lvl}`\n" \
-                f"Remaining Hp: `{boss_hp_remaining}%`\n\n" \
-                f"Max players: 10\n" \
-                f"Click the 🏁 to participate in the assembly! "
+            f"Boss Level: `{boss_lvl}`\n" \
+            f"Remaining Hp: `{boss_hp_remaining}%`\n\n" \
+            f"Max players: 10\n" \
+            f"Click the 🏁 to participate in the assembly! "
 
         embed = discord.Embed(
             color=user.colour,
@@ -333,8 +334,8 @@ class Encounter(commands.Cog):
         )
 
         await asyncio.sleep(2)
-        msg = await ctx.channel.send(embed=embed)
-        await msg.add_reaction("🏁")
+        msg_boss = await ctx.channel.send(embed=embed)
+        await msg_boss.add_reaction("🏁")
 
         timer = 180
         count_players = 0
@@ -342,7 +343,7 @@ class Encounter(commands.Cog):
 
         # noinspection PyShadowingNames
         def check(reaction, user):
-            return user != self.client.user and str(reaction.emoji) == "🏁" and reaction.message.id == msg.id
+            return user != self.client.user and str(reaction.emoji) == "🏁" and reaction.message.id == msg_boss.id
 
         while count_players < 10:
 
@@ -357,6 +358,7 @@ class Encounter(commands.Cog):
                 if not str(user.id) in assembly_players:
 
                     if boss.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1}) is None:
+
                         boss.update_one({
                             "boss": boss_select}, {
                             "$push": {
