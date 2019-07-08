@@ -45,7 +45,8 @@ def shorten(key):
         "On-leave": "ONLV",
         "Semi-active": "SMAC",
         "Away": "AWAY",
-        "Left": "LEFT"
+        "Left": "LEFT",
+        "Kicked": "KCKD"
     }
     return keyword[key]
 
