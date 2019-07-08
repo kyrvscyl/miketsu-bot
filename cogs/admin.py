@@ -112,28 +112,28 @@ async def reset_boss(channel):
 async def management_stats(ctx):
 
     time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
-    registered_users = members.count_documents()
+    registered_users = members.count()
 
-    guild_members_all = members.count_documents({"role": {
+    guild_members_all = members.count({"role": {
         "$in": ["Officer", "Member", "Leader"]}
     })
-    guild_members_actv = members.count_documents({"role": {
+    guild_members_actv = members.count({"role": {
         "$in": ["Officer", "Member", "Leader"]},
         "status": "Active"
     })
-    guild_members_inac = members.count_documents({"role": {
+    guild_members_inac = members.count({"role": {
         "$in": ["Officer", "Member", "Leader"]},
         "status": "Inactive"
     })
-    guild_members_onlv = members.count_documents({"role": {
+    guild_members_onlv = members.count({"role": {
         "$in": ["Officer", "Member", "Leader"]},
         "status": "On-leave"
     })
-    guild_members_smac = members.count_documents({"role": {
+    guild_members_smac = members.count({"role": {
         "$in": ["Officer", "Member", "Leader"]},
         "status": "Semi-active"
     })
-    ex_members_away = members.count_documents({"role": "Ex-member", "status": "Away"})
+    ex_members_away = members.count({"role": "Ex-member", "status": "Away"})
 
     content = f"Estimated guild quests per week: {guild_members_actv * 90 + guild_members_smac * 30:,d}"
     description = f"Registered Accounts: `{registered_users}`\n" \
@@ -969,7 +969,7 @@ class Admin(commands.Cog):
         elif args[0].lower() == "show" and len(args) == 3 and args[1].lower() == "role" and args[2].lower() in roles:
             await self.management_show_field_role(ctx, args)
 
-        # ;m show role <value>
+        # ;m stats
         elif args[0].lower() == "stats" and len(args) == 1:
             await management_stats(ctx)
 
