@@ -81,6 +81,7 @@ class Events(commands.Cog):
         while i < len(castle_category.text_channels):
 
             if castle_category.text_channels[i].name != "prefects-bathroom":
+
                 channel_topic = castle_category.text_channels[i].topic[12:]
                 floor = i + 1
 
@@ -141,10 +142,10 @@ class Events(commands.Cog):
     async def on_member_join(self, member):
 
         time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
-        request = books.find_one(
-            {"server": f"{member.guild.id}"},
-            {"_id": 0, "welcome": 1, "sorting": 1, "landing_zone": 1, "scroll-of-everything": 1, "default_role": 1}
-        )
+        request = books.find_one({
+            "server": f"{member.guild.id}"}, {
+            "_id": 0, "welcome": 1, "sorting": 1, "landing_zone": 1, "scroll-of-everything": 1, "default_role": 1
+        })
 
         landing_zone_channel = self.client.get_channel(int(request["landing_zone"]))
         record_scroll_channel = self.client.get_channel(int(request["scroll-of-everything"]))
@@ -152,7 +153,8 @@ class Events(commands.Cog):
         msg = f":sparkles:Welcome to House Patronus, {member.mention}. Kindly read your acceptance letter first"
 
         # Welcome DM message
-        description = f"Dear {member.display_name},\n\n" \
+        description = \
+            f"Dear {member.display_name},\n\n" \
             f"We are pleased to accept you at House Patronus.\n" \
             f"Do browse the server's <#{request['welcome']}> channel for the basics and essentials of the guild then " \
             f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\n" \
@@ -187,13 +189,14 @@ class Events(commands.Cog):
 
         users.delete_one({"user_id": str(member.id)})
         time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
-        request = books.find_one({"server": str(member.guild.id)}, {"_id": 0, "scroll-of-everything": 1})
+        request = books.find_one({
+            "server": str(member.guild.id)}, {
+            "_id": 0, "scroll-of-everything": 1
+        })
         record_scroll = self.client.get_channel(int(request["scroll-of-everything"]))
 
         embed = discord.Embed(color=0xffffff)
-        embed.set_author(
-            name=f"{member.display_name} has left the house!"
-        )
+        embed.set_author(name=f"{member.display_name} has left the house!")
         embed.set_footer(
             text=f"{member.guild.member_count} members | {time_stamp}",
             icon_url=member.avatar_url
@@ -206,9 +209,9 @@ class Events(commands.Cog):
     async def on_member_update(self, before, after):
 
         time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %m:%M EST")
-        request = books.find_one(
-            {"server": str(before.guild.id)},
-            {"_id": 0, "scroll-of-everything": 1, "auror-department": 1}
+        request = books.find_one({
+            "server": str(before.guild.id)}, {
+            "_id": 0, "scroll-of-everything": 1, "auror-department": 1}
         )
         record_scroll = self.client.get_channel(int(request["scroll-of-everything"]))
 
