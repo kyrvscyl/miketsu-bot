@@ -66,8 +66,12 @@ class Leaderboard(commands.Cog):
         ssr_board1 = []
 
         for user in users.find({}, {"_id": 0, "user_id": 1, "SSR": 1}):
-            ssr_board1.append((self.client.get_user(int(user["user_id"])).name, user["SSR"]))
-
+            try:
+                ssr_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["SSR"]))
+            
+            except AttributeError:
+                continue
+                
         ssr_board2 = sorted(ssr_board1, key=lambda x: x[1], reverse=True)
 
         description1 = ""
@@ -75,11 +79,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for user in ssr_board2[0:10]:
-            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description1 += f"🔸{user[0]}, x{user[1]}\n"
         for user in ssr_board2[10:20]:
-            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description2 += f"🔸{user[0]}, x{user[1]}\n"
         for user in ssr_board2[20:30]:
-            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = ":trophy: SSR LeaderBoard"
 
@@ -94,32 +98,18 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        # Embed pagination max 3 pages
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                await msg.edit(embed=post(page, embed1, embed2, embed3))
-
-            except asyncio.TimeoutError:
-                return False
+        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_medals(self, ctx):
         medal_board1 = []
 
         for user in users.find({}, {"_id": 0, "user_id": 1, "medals": 1}):
-            medal_board1.append((self.client.get_user(int(user["user_id"])).name, user["medals"]))
+            
+            try:
+                medal_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["medals"]))
+            
+            except AttributeError:
+                continue
 
         medal_board2 = sorted(medal_board1, key=lambda x: x[1], reverse=True)
 
@@ -128,11 +118,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for user in medal_board2[0:10]:
-            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description1 += f"🔸{user[0]}, x{user[1]}\n"
         for user in medal_board2[10:20]:
-            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description2 += f"🔸{user[0]}, x{user[1]}\n"
         for user in medal_board2[20:30]:
-            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = "{} Medal LeaderBoard".format("<:medal:573071121545560064>")
 
@@ -147,33 +137,17 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        # Embed pagination max 3 pages
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                await msg.edit(embed=post(page, embed1, embed2, embed3))
-
-            except asyncio.TimeoutError:
-                return False
+        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_level(self, ctx):
         level_board1 = []
 
         for user in users.find({}, {"_id": 0, "user_id": 1, "level": 1}):
-            print(user["user_id"])
-            level_board1.append((self.client.get_user(int(user["user_id"])).name, user["level"]))
+            try:
+                level_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["level"]))
+            
+            except AttributeError:
+                continue
 
         level_board2 = sorted(level_board1, key=lambda x: x[1], reverse=True)
 
@@ -182,11 +156,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for user in level_board2[0:10]:
-            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description1 += f"🔸{user[0]}, x{user[1]}\n"
         for user in level_board2[10:20]:
-            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description2 += f"🔸{user[0]}, x{user[1]}\n"
         for user in level_board2[20:30]:
-            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = ":arrow_heading_up: Level LeaderBoard"
 
@@ -201,32 +175,18 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        # Embed pagination max 3 pages
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                await msg.edit(embed=post(page, embed1, embed2, embed3))
-
-            except asyncio.TimeoutError:
-                return False
+        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_amulet(self, ctx):
         amulet_board1 = []
 
         for user in users.find({}, {"_id": 0, "user_id": 1, "amulets_spent": 1}):
-            amulet_board1.append((self.client.get_user(int(user["user_id"])).name, user["amulets_spent"]))
+
+            try:
+                amulet_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["amulets_spent"]))
+
+            except AttributeError:
+                continue
 
         amulet_board2 = sorted(amulet_board1, key=lambda x: x[1], reverse=True)
 
@@ -235,11 +195,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for user in amulet_board2[0:10]:
-            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description1 += f"🔸{user[0]}, x{user[1]}\n"
         for user in amulet_board2[10:20]:
-            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description2 += f"🔸{user[0]}, x{user[1]}\n"
         for user in amulet_board2[20:30]:
-            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = f"{emoji_a} Spender LeaderBoard"
 
@@ -254,32 +214,18 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        # Embed pagination max 3 pages
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                await msg.edit(embed=post(page, embed1, embed2, embed3))
-
-            except asyncio.TimeoutError:
-                return False
+        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_friendship(self, ctx):
         fp_board1 = []
 
         for user in users.find({}, {"_id": 0, "user_id": 1, "friendship": 1}):
-            fp_board1.append((self.client.get_user(int(user["user_id"])).name, user["friendship"]))
+
+            try:
+                fp_board1.append((self.client.get_user(int(user["user_id"])).display_name, user["friendship"]))
+
+            except AttributeError:
+                continue
 
         fp_board12 = sorted(fp_board1, key=lambda x: x[1], reverse=True)
 
@@ -288,11 +234,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for user in fp_board12[0:10]:
-            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description1 += f"🔸{user[0]}, x{user[1]}\n"
         for user in fp_board12[10:20]:
-            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description2 += f"🔸{user[0]}, x{user[1]}\n"
         for user in fp_board12[20:30]:
-            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}\n"
+            description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = f"{emoji_f} Friendship LeaderBoard"
 
@@ -307,26 +253,7 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        # Embed pagination max 3 pages
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                await msg.edit(embed=post(page, embed1, embed2, embed3))
-
-            except asyncio.TimeoutError:
-                return False
+        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_ship(self, ctx):
         ship_board1 = []
@@ -342,11 +269,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for ship in ship_board2[0:10]:
-            description1 += f":small_orange_diamond:{ship[0]}, x{ship[4]}{emoji_f}\n"
+            description1 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
         for ship in ship_board2[10:20]:
-            description2 += f":small_orange_diamond:{ship[0]}, x{ship[4]}{emoji_f}\n"
+            description2 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
         for ship in ship_board2[20:30]:
-            description3 += f":small_orange_diamond:{ship[0]}, x{ship[4]}{emoji_f}\n"
+            description3 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
 
         title = ":ship: Ships LeaderBoard"
 
@@ -361,33 +288,19 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
-
-        # Embed pagination max 3 pages
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                await msg.edit(embed=post(page, embed1, embed2, embed3))
-
-            except asyncio.TimeoutError:
-                return False
+        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_streak(self, ctx):
         streakboard1 = []
 
         for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
-            streakboard1.append((self.client.get_user(int(user["user_id"])).name, user["SSR_current"]))
 
+            try:
+                streakboard1.append((self.client.get_user(int(user["user_id"])).display_name, user["SSR_current"]))
+            
+            except AttributeError:
+                continue
+            
         streakboard2 = sorted(streakboard1, key=lambda x: x[1], reverse=True)
 
         description1 = ""
@@ -395,11 +308,11 @@ class Leaderboard(commands.Cog):
         description3 = ""
 
         for user in streakboard2[0:10]:
-            description1 += f":small_orange_diamond:{user[0]}, x{user[1]}{emoji_a}\n"
+            description1 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
         for user in streakboard2[10:20]:
-            description2 += f":small_orange_diamond:{user[0]}, x{user[1]}{emoji_a}\n"
+            description2 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
         for user in streakboard2[20:30]:
-            description3 += f":small_orange_diamond:{user[0]}, x{user[1]}{emoji_a}\n"
+            description3 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
 
         title = "No SSR Streak LeaderBoard"
 
@@ -413,6 +326,10 @@ class Leaderboard(commands.Cog):
         embed3.set_footer(text="page 3")
 
         msg = await ctx.channel.send(embed=embed1)
+
+        await self.paginate_embed(msg, embed1, embed2, embed3)
+
+    async def paginate_embed(self, msg, embed1, embed2, embed3):
 
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
