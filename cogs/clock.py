@@ -130,7 +130,7 @@ class Clock(commands.Cog):
 
     async def transformation_end(self):
 
-        for entry in books.find_one({}, {"_id": 0, "server": 1}):
+        for entry in books.find({}, {"_id": 0, "server": 1}):
 
             try:
                 server = self.client.get_guild(int(entry["server"]))
@@ -165,7 +165,7 @@ class Clock(commands.Cog):
 
     async def transformation_start(self):
 
-        for entry in books.find_one({}, {"_id": 0, "server": 1}):
+        for entry in books.find({}, {"_id": 0, "server": 1}):
 
             try:
                 server = self.client.get_guild(int(entry["server"]))
