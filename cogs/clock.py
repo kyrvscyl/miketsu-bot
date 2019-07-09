@@ -11,7 +11,7 @@ import pytz
 from discord.ext import commands
 
 from cogs.magic import Magic
-from cogs.magic import get_data
+from cogs.magic import get_data, get_dictionary
 from cogs.mongo.db import books, weather, sendoff, quests, owls
 from cogs.frame import frame_starlight, frame_blazing
 from cogs.admin import Admin, reset_boss
@@ -95,6 +95,14 @@ def get_emoji(hours, minutes):
 
 
 # noinspection PyCallingNonCallable
+async def penalty_hour():
+    quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -2}})
+
+
+async def actions_reset():
+    quests.update_many({"quest1.status": "ongoing"}, {"$set": {"quest1.$.actions": 0}})
+
+
 class Clock(commands.Cog):
 
     def __init__(self, client):
@@ -103,17 +111,14 @@ class Clock(commands.Cog):
     async def logging(self, msg):
         channel = self.client.get_channel(592270990894170112)
         date_time = datetime.now(tz=tz_target).strftime("%Y-%b-%d %HH")
-
         await channel.send(f"[{date_time}] " + msg)
 
     @commands.Cog.listener()
     async def on_ready(self):
-
         while True:
             if get_time().strftime("%S") == "00":
                 await self.clock_update()
                 await asyncio.sleep(1)
-
             else:
                 await asyncio.sleep(1)
 
@@ -198,51 +203,44 @@ class Clock(commands.Cog):
             except AttributeError:
                 return
 
-    # noinspection PyShadowingNames
-    async def penalty_hour(self):
-        quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -2}})
-        await self.logging("Penalizing everyone with 2 points for every hour passed")
-
     async def owls_restock(self):
         owls.update_many({}, {"$set": {"purchaser": "None"}})
         await self.logging("Restocking emporium with all owls")
 
-    async def actions_reset(self):
-        quests.update_many({"quest1.status": "ongoing"}, {"$set": {"quest1.$.actions": 0}})
-        await self.logging("Resetting all user actions to 0")
+    # noinspection PyUnusedLocal
+    @commands.command()
+    @commands.is_owner()
+    async def complete(self, ctx):
+        await self.send_off_complete()
 
     async def send_off_complete(self):
-
         for entry in sendoff.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
             user = self.client.get_user(int(entry["user_id"]))
             cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
 
             if entry["scenario"] == 2:
-
                 async with user.typing():
-                    msg1 = "*\"You heard a sound of a bird above you.\"*"
-                    msg2 = "*\"It was your owl flocking gracefully with its wings " \
-                           "and holding a paper with its feet.\"*"
-                    msg3 = f"*\"Your {entry['type'].capitalize()} owl has returned with a letter from the Headmaster\"*"
+                    responses = get_dictionary("send_off")["complete"]
 
-                    await user.send(msg1)
+                    if path != "path0":
+                        await Magic(self.client).update_path(user, cycle, path_new="path3")
+
+                    await user.send(responses[0])
                     await asyncio.sleep(4)
-                    await user.send(msg2)
+                    await user.send(responses[1])
                     await asyncio.sleep(4)
-                    msg = await user.send(msg3)
+                    msg = await user.send(responses[2].format(entry['type'].capitalize()))
                     await msg.add_reaction("✉")
-
-                await self.logging(f"Sent {user}: Confirmation letter received from the Headmaster")
 
             elif entry["scenario"] == 1:
                 user = self.client.get_user(int(entry["user_id"]))
                 msg = f"Your {entry['type']} has fully recovered"
-
                 await Magic(self.client).update_path(user, cycle, path_new="path20")
                 await user.send(msg)
 
-    async def send_off_report(self):
+            sendoff.delete_one({"user_id": entry["user_id"]})
 
+    async def send_off_report(self):
         for entry in sendoff.find({"timestamp_update": {"$exists": True}}, {"_id": 0}):
             if entry["timestamp_update"] == get_time().strftime("%Y-%b-%d %HH"):
                 user = self.client.get_user(int(entry["user_id"]))
@@ -252,15 +250,14 @@ class Clock(commands.Cog):
                     await Magic(self.client).penalize(user, cycle, points=20)
 
                 description = entry["report"]
-
                 embed = discord.Embed(
                     color=0xffffff,
                     title="Owl Report",
                     description=description
                 )
                 embed.set_footer(text=f"{entry['timestamp_update']}")
-
                 await user.send(embed=embed)
+                await asyncio.sleep(1)
 
     async def reset_purchase(self):
         quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
@@ -302,15 +299,15 @@ class Clock(commands.Cog):
             if minute == "00":
                 weather1, weather2 = generate_weather(hour_24)
 
-                await self.penalty_hour()
-                await self.actions_reset()
+                await penalty_hour()
+                await actions_reset()
                 await self.reset_purchase()
                 await self.clear_secrets()
                 await self.send_off_report()
                 await self.send_off_complete()
                 await Events(self.client).reset_prefects()
 
-            if hour_minute in ["00:00", "06:00", "12:00", "18:00"]:
+            if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await self.owls_restock()
 
             if hour_minute == "00:00":

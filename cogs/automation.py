@@ -26,17 +26,20 @@ class Events(commands.Cog):
         query = books.find({}, {"_id": 0, "server": 1, "prefects": 1})
 
         for entry in query:
+            try:
+                server = int(entry["server"])
+                role_bathroom = discord.utils.get(self.client.get_guild(server).roles, name="🚿")
 
-            server = int(entry["server"])
-            role_bathroom = discord.utils.get(self.client.get_guild(server).roles, name="🚿")
+                if len(role_bathroom.members) == 0:
+                    return
 
-            if len(role_bathroom.members) == 0:
-                return
+                elif len(role_bathroom.members) != 0:
 
-            elif len(role_bathroom.members) != 0:
+                    for member in role_bathroom.members:
+                        await member.remove_roles(role_bathroom)
 
-                for member in role_bathroom.members:
-                    await member.remove_roles(role_bathroom)
+            except AttributeError:
+                continue
 
     @commands.Cog.listener()
     async def on_message(self, message):

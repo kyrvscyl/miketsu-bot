@@ -1,0 +1,256 @@
+{
+  "ollivanders": {
+    "intro": "{}, what can I help you for?",
+    "timeout_intro": "",
+    "invalid": "Oh! You do not want wands? Feel free to browse my shop then.",
+    "valid": [
+      "{}, I see you want wands. Allow me to guide you through your wand selection, shall we?",
+      "Every choice affects your ending results."
+    ],
+    "valid_no_owl": [
+      "There seems to be lacking with you {}. You are not yet prepared to wield one. Remember, the wand chooses the wizard",
+      "Ollivanders! Home of the best crafted wands!"
+    ],
+    "owl_analysis": {
+      "pure emotions": [
+        "I see you... I see that you have a temperamental and sensitive character.. And perhaps also, a person who is attracted to those with inner conflicts.. Very unyielding yet faithful to those who are honest with themselves.",
+        "Core rarity: Unicorn Hair < Dragon Heartstring < Phoenix Feather\nChoose wisely."
+      ],
+      "strong-willed": [
+        "My child, do you ever believe in self-sacrificing. You are a strong-willed person. Capable of being the bravest of them all and with outstanding passion and strong sense of self, belief, and above all, justice.",
+        "Certain Woods are rare in nature and inherently possess rare Patronus'"
+      ],
+      "adventurous": [
+        "One step in this house, I knew how creative and brilliant youngster you are. Hmm.. Very ambitious as well. Destined for a final quest.. Wise and rich in experiences. A great partner with uninterrupted excitement and fun.",
+        "Casting the spells require diction, it must be concentrated and pure"
+      ],
+      "nature-loving": [
+        "Do you perhaps have high interest in nature? You are well fitted to be someone with exceptional skills in magical beasts and herbalogy. Great talent requires great wand",
+        "Owl selection plays an important role in Patronus summoning"
+      ],
+      "special": [
+        "A very special person. With traits of care and love for others. I know just the perfect wands for you, wands with healing, defensive, and legilimency properties. Utterly loved by nature, indeed.",
+        "There is a total of 142 collectible Patronus'"
+      ]
+    },
+    "no_patronus": "It seems that you're out of luck, {}. I do not have that kind of wand. Perhaps, you're looking for a rare combination of wand properties. But no such wand is crafted yet by me. I suggest you try to wield a common core, I'm sure there are lots of available for your choice.",
+    "timeout_response": "{}, come back soon once you've decided",
+    "core_selection": {
+      "1": "{}, lastly, the wand cores.\n\nSelect from the choices: `{}`",
+      "chose": [
+        "{}, {}. Another interesting choice.",
+        ""
+      ],
+      "timeout": "{}, you can return again once you have decided well.",
+      "invalid1": [
+        "I don't think I craft that kind of length, do you mind telling me again?",
+        ""
+      ],
+      "invalid2": [
+        "{}, I don't think I craft that kind of length, do come again, should you wish to pursue your path.",
+        ""
+      ]
+    },
+    "wood_selection": {
+      "1": "{}, I just happen to have the appropriate woods for your wand characteristics.\n\nSelect from the choices: `{}`",
+      "chose": [
+        "{}, {}. Another interesting choice.",
+        ""
+      ],
+      "timeout": "{}, you can return again once you have decided well.",
+      "invalid1": [
+        "{}, it seems that I have no kind of that wood design ready for now.",
+        ""
+      ],
+      "invalid2": [
+        "",
+        ""
+      ]
+    },
+    "length_selection": {
+      "1": "We have wand lengths, {}.\nDo tell me, which length in inches best suits your personality?\n\nEnter your choice: 8, 9, 10, 11, 12, 13, or 14.",
+      "chose": [
+        "{}, {} inches. Another interesting choice.",
+        "Wand length is categorized into 3 major parts"
+      ],
+      "timeout": "{}, you can return again once you have decided well.",
+      "invalid1": [
+        "I don't think I craft that kind of length, do come back once you figure out your best choice of wand length, {}",
+        "Wand length is categorized into 3 major parts"
+      ],
+      "invalid2": [
+        "",
+        ""
+      ]
+    },
+    "flexibility_selection": {
+      "1": "Now {}, wands can come too in various flexibility, it entails the ability of the person to adapt to various circumstances. Tell me, how much can you adapt?\n\nChoose from the following: `{}`",
+      "chose": [
+        "{}, {}. Another interesting choice.",
+        "Wand length is categorized into 3 major parts"
+      ],
+      "timeout": "{}, you can return again once you have decided well.",
+      "invalid1": [
+        "{}, I've never heard of that kind of flexibility..",
+        ""
+      ],
+      "invalid2": [
+        "{}, That too. Do come back once you are able to distinguish.",
+        ""
+      ]
+    }
+  },
+  "gringotts_bank": {
+    "has_moneybag": "{}, what are you doing here again.\n\nI thought you got what you wanted here already.",
+    "transaction": [
+      "Greetings, {}. What do you want?",
+      "{}, I am assuming you do not know, we secure the wizarding families' treasuries here.\n\nNow, what do you want from us?",
+      "{}, I don't think you are well aware of what is happening here.\n\nI have other clients to assist, come back once you know, because I do not like my time being wasted."
+    ],
+    "success": "Very well {}. You can get out of my bank now.",
+    "get_identity": {
+      "1": "Your identification, please? {}",
+      "timeout": [
+        "{}, it seems that you have trouble showing me your identification.\n\nI'm gonna have to ask you to get out of my bank. You are wasting my time.",
+        "The goblins can await for two minutes for every question they ask"
+      ],
+      "invalid1": [
+        "{}, that is not what we call identification here!",
+        "One customer vault access request ticket can be used every hour"
+      ],
+      "invalid2": [
+        "{}, neither that one!\n\nWhat are you even suggesting to me? The identification I am looking for is a 32 alpha-numeric character!",
+        "Identification cards equate to the wizards'/witches'/spirits' avatar"
+      ],
+      "invalid3": [
+        "{}, I don't think you have any business here!\n\nI'm gonna have to ask you to get out of my bank. You are plainly wasting my time.",
+        "Banking Hours: 08:00 - 15:00"
+      ]
+    },
+    "get_vault": {
+      "1": "Very well then, {}. And the vault number?",
+      "timeout": [
+        "{}. Are you stealing from someone?\n\nGet the hell out of my bank now!",
+        "There can only be two break-ins in this bank and nothing more!"
+      ],
+      "invalid1": [
+        "{}, my records cannot be wrong, that is an invalid vault number.",
+        ""
+      ],
+      "invalid2": [
+        "{}, that does not show either!",
+        "Gringotts, the wizard bank! Ain't no safer place. Not one. Except perhaps Patronus Castle."
+      ],
+      "invalid3": [
+        "{}, I don't think you have any business here!\n\nI'm gonna have to ask you to get out of my bank. You are just wasting my time.",
+        "Most commonly used passwords:\n1. ALOHOMORA\n2. vault number reversal\n3. Password1234"
+      ]
+    },
+    "get_password": {
+      "1": "Come. We will apparate to your vault. {}",
+      "2": "Ahhh. Here we are, and your password, {}?",
+      "timeout": [
+        "{}. What do you mean that you forgot? You wasted my time! Get out of my bank!",
+        ""
+      ],
+      "invalid1": [
+        "Well that's weird. It did not work, {}",
+        ""
+      ],
+      "invalid2": [
+        "Huhh.. Are you sure that is your correct password?! {}",
+        ""
+      ],
+      "invalid3": [
+        "{}, I don't think you have any business here!\n\nI'm gonna have to ask you to get out of my bank. You are wasting my time.",
+        ""
+      ]
+    }
+  },
+  "eeylops_owl": {
+    "knock": [
+      "Welcome to the Emporium!\n\nWe have all your feathered friend's requirements here!\nPlease tell me, what can I be of service to you?",
+      "Due to the increasing demand of owls, the emporium can only supply that much"
+    ],
+    "inquire": [
+      [
+        "Here at the Emporium, we sell **Eeylops Premium Owl Treats!**\n\nA treat shaped like a mice which is the best thing for a happy and healthy owl.",
+        "Stocks refresh every 12:00"
+      ],
+      [
+        "We sell only the best of our trained owls to carry your letters.\n\nNo address is needed as owls can find any witch or wizard whose name is on the letter.",
+        "You & Your Owl Book:\nA snippet from Chapter 3, Page#44:\n\n... To send off your owl, add your owl to your message with your :item: plus the @recipient or #address ..."
+      ],
+      [
+        "We have the following kinds of owls for all your wizarding needs! Find your precious feathered friend from the low price of 11 galleons! Which owl you desire to purchase?\n\nBrown, Screech, Snowy, Tawny, and Barred owls",
+        "Store Hours: 07:00 - 14:00\nMomentarily closed during thunderstorms and rain"
+      ]
+    ],
+    "purchasing": {
+      "max_actions": "*Relentlessly, you queued in line. Only to to realize that it would be best to just return on the next hour instead*",
+      "invalid_owl": "My hearing must have been getting old.\n\nWhich kind of owl is it again?",
+      "buying_again": [
+        "My dear {}, it would be best to sell this owl to those who do not own any yet as my stocks are very limited.",
+        "Greediness results to high stakes of losses"
+      ],
+      "out_of_stock": [
+        "My dear {}, that owl has been bought earlier by {}.\n\nShould you wish to buy the same kind of owl again, do visit us just when our stocks arrived. So you don't run out of.",
+        "The emporium restocks its owls up to four times a day"
+      ],
+      "no_moneybag": [
+        "I'm sorry my dear {}, this does not come for free.\n\nI put into good efforts in training my owls to the best they can. You're gonna have to pay me, should you yearn to get any owl from my emporium.",
+        "Owl restocking starts on two hours past midnight"
+      ],
+      "success_purchase": [
+        "{}, what a lovely choice of owl!",
+        "Your owl is your companion to your wizarding adventure"
+      ]
+    }
+  },
+  "send_off": {
+    "reports": {
+      "thunderstorms": {
+        "delay": 4,
+        "scenario": 1,
+        "content": "Your owl returned to you crawling on its feathers due to the thunderstorms.\n\nYour owl will recover in 3 hours before you can send it off again."
+      },
+      "snowy_snowy_owl": {
+        "delay": 2,
+        "scenario": 2,
+        "content": "Your owl travelled hastily to the Headmaster's Office due to favorable weather for the owl.\n\nEstimated time of return: in 1 hour"
+      },
+      "night_time": {
+        "delay": 2,
+        "scenario": 2,
+        "content": "Owls are best at night and can return faster than normal travel time.\n\nEstimated time of return: in 1 hour "
+      },
+      "rainy_snowy": {
+        "delay": 3,
+        "scenario": 2,
+        "content": "Your owl struggled to reached the Headmaster's Office on time due to unfavoured weather.\n\nEstimated time of return: in 2 hours"
+      },
+      "cloudy_sunny": {
+        "delay": 2,
+        "scenario": 2,
+        "content": "Your owl has safely arrived at the Headmaster's Office.\n\nEstimated time of return: in 1 hour"
+      }
+    },
+    "success1": "*Sending off owl to the Headmaster's Tower*",
+    "success2": "*You will receive an update when the clock moves an hour*",
+    "penalize": "*\"Your owl was paralyzed due to the storms. It needs time to heal itself.\"*",
+    "letter": "*Dear {},\n\nIt is wondrous to have such another promising magic practitioner. At the castle, everyone there is special, but what makes them more special is their Patronus charm.\n\nYour term awaits soon. Good luck!\n\nYours Sincerely,\nThe Headmaster*",
+    "complete": [
+      "*\"You heard a sound of a bird above you.\"*",
+      "*\"It was your owl flocking gracefully with its wings and holding a paper with its feet.\"*",
+      "*\"Your {} owl has returned with a letter from the Headmaster\"*"
+    ]
+  },
+  "start_quest": {
+    "1": "~~:sparkles: You have been obliviated.~~",
+    "2": "*\"You almost lost your consciousness and balance...\"*",
+    "3": "*\"... and as you opened your eyes, it brought sheer wonder of what exactly happened just a few moments ago..\"* ",
+    "4": "*\"You quickly scanned the surrounding and saw nothing but the one at your hand...\"*",
+    "5": "*\"It's an envelope with a very familiar wax seal\"*",
+    "letter": "*Dear {},\n\nWe are pleased to accept you at House Patronus.\nDo browse the server's <#{}> channel for the basics and essentials of the guild then proceed to <#{}> to assign yourself some roles.\n\nWe await your return owl.\n\nYours Truly,\nThe Headmaster*"
+  }
+}
