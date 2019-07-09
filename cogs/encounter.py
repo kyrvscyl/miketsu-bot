@@ -119,35 +119,31 @@ class Encounter(commands.Cog):
             self.client.get_command("encounter").reset_cooldown(ctx)
 
     async def encounter_roll(self, user, ctx):
-
         async with ctx.channel.typing():
-
             await ctx.channel.send("🔍Searching the depths of Netherworld...")
+            await asyncio.sleep(3)
 
             survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
             discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
             roll1 = random.randint(0, 100)
             roll2 = random.randint(0, 100)
 
-            await asyncio.sleep(3)
-
-            if survivability > 0 or discoverability > 0 and roll1 <= 20:
+            if (survivability > 0 or discoverability > 0) and roll1 <= 20:
                 await self.boss_roll(user, ctx)
 
-            elif survivability > 0 or discoverability > 0 and roll1 > 20 and roll2 > 40:
+            elif (survivability > 0 or discoverability > 0) and roll1 > 20 and roll2 > 40:
                 await self.treasure_roll(user, ctx)
 
-            elif survivability > 0 or discoverability > 0 and roll1 > 20 and roll2 <= 40:
+            elif (survivability > 0 or discoverability > 0) and roll1 > 20 and roll2 <= 40:
                 await self.quiz_roll(user, ctx)
 
-            elif survivability == 0 and discoverability == 0 and roll1 > 20 and roll2 > 40:
+            elif (survivability == 0 and discoverability == 0) and roll1 > 20 and roll2 > 40:
                 await self.treasure_roll(user, ctx)
 
-            elif survivability == 0 and discoverability == 0 and roll1 > 20 and roll2 <= 40:
+            elif (survivability == 0 and discoverability == 0) and roll1 > 20 and roll2 <= 40:
                 await self.quiz_roll(user, ctx)
 
     async def quiz_roll(self, user, ctx):
-
         with open("data/quiz.json") as f:
             quiz = json.load(f)
 
@@ -159,7 +155,6 @@ class Encounter(commands.Cog):
                 questions.append(quiz[answer][entry])
 
         question = random.choice(questions)
-
         embed = discord.Embed(
             color=user.colour,
             description=f"❔Who is this shikigami: {question}"
@@ -169,35 +164,28 @@ class Encounter(commands.Cog):
             text=f"Quiz for {user.display_name}. 10 sec | 3 guesses",
             icon_url=user.avatar_url
         )
-
         msg = await ctx.channel.send(embed=embed)
 
         def check(guess):
             guess_formatted = ("".join(guess.content)).title()
-
             if guess.author != user:
                 return False
-
             elif guess_formatted == answer:
                 return True
-
             elif guess_formatted != answer:
                 raise KeyError
 
         guesses = 0
         while guesses != 3:
-
             try:
                 await self.client.wait_for("message", timeout=10, check=check)
 
             except asyncio.TimeoutError:
-
                 await ctx.channel.send(f"{user.mention}, time is up! You failed the quiz")
                 await msg.delete()
                 break
 
             except KeyError:
-
                 if guesses == 0:
                     await ctx.channel.send(f"{user.mention}, wrong answer! 2 more tries left")
                     guesses += 1
@@ -220,7 +208,6 @@ class Encounter(commands.Cog):
         self.client.get_command("encounter").reset_cooldown(ctx)
 
     async def treasure_roll(self, user, ctx):
-
         with open("data/rewards.json") as f:
             rewards = json.load(f)
 
@@ -251,7 +238,6 @@ class Encounter(commands.Cog):
             reaction, user = await self.client.wait_for("reaction_add", timeout=8.0, check=check)
 
         except asyncio.TimeoutError:
-
             await ctx.channel.send(f"{user.mention}, the treasure you found turned into ashes 🔥")
             self.client.get_command("encounter").reset_cooldown(ctx)
 
