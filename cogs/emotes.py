@@ -8,7 +8,7 @@ import random
 import discord
 from discord.ext import commands
 
-with open("data/emotes.json", "r") as f:
+with open("data/emotes.json") as f:
     stickers = json.load(f)
 
 actions = list(stickers.keys())
@@ -58,16 +58,11 @@ class Emotes(commands.Cog):
                 return
 
             else:
-                if message.author.nick is None:
-                    user = message.author.name
-                else:
-                    user = message.author.nick
-
                 color = message.author.colour
                 selection = [v for v in emotes[action_recognized].values()]
                 thumbnail = random.choice(selection)
                 embed = discord.Embed(color=color)
-                embed.set_footer(text=f"pulled by {user}", icon_url=message.author.avatar_url)
+                embed.set_footer(text=f"{message.author.display_name}", icon_url=message.author.avatar_url)
                 embed.set_image(url=thumbnail)
                 await message.channel.send(embed=embed)
                 await message.delete()
