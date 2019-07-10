@@ -123,24 +123,29 @@ class Encounter(commands.Cog):
             await ctx.channel.send("🔍Searching the depths of Netherworld...")
             await asyncio.sleep(3)
 
-            survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
-            discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
-            roll1 = random.randint(0, 100)
-            roll2 = random.randint(0, 100)
+        survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
+        discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
 
-            if (survivability > 0 or discoverability > 0) and roll1 <= 20:
+        if survivability > 0 or discoverability > 0:
+            roll = random.randint(0, 100)
+
+            if roll <= 20:
                 await self.boss_roll(user, ctx)
+            else:
+                roll2 = random.randint(0, 100)
+                await asyncio.sleep(3)
 
-            elif (survivability > 0 or discoverability > 0) and roll1 > 20 and roll2 > 40:
+                if roll2 > 40:
+                    await self.treasure_roll(user, ctx)
+                else:
+                    await self.quiz_roll(user, ctx)
+        else:
+            roll2 = random.randint(0, 100)
+            await asyncio.sleep(3)
+
+            if roll2 > 40:
                 await self.treasure_roll(user, ctx)
-
-            elif (survivability > 0 or discoverability > 0) and roll1 > 20 and roll2 <= 40:
-                await self.quiz_roll(user, ctx)
-
-            elif (survivability == 0 and discoverability == 0) and roll1 > 20 and roll2 > 40:
-                await self.treasure_roll(user, ctx)
-
-            elif (survivability == 0 and discoverability == 0) and roll1 > 20 and roll2 <= 40:
+            else:
                 await self.quiz_roll(user, ctx)
 
     async def quiz_roll(self, user, ctx):
