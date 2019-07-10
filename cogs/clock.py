@@ -120,14 +120,19 @@ class Clock(commands.Cog):
         date_time = datetime.now(tz=tz_target).strftime("%Y-%b-%d %HH")
         await channel.send(f"[{date_time}] " + msg)
 
+    # noinspection PyBroadException
     @commands.Cog.listener()
     async def on_ready(self):
         while True:
-            if get_time().strftime("%S") == "00":
-                await self.clock_update()
-                await asyncio.sleep(1)
-            else:
-                await asyncio.sleep(1)
+            try:
+                if get_time().strftime("%S") == "00":
+                    await self.clock_update()
+                    await asyncio.sleep(1)
+                else:
+                    await asyncio.sleep(1)
+            except:
+                await self.client.get_user(180717337475809281).send("The Clock has Stopped.")
+                break
 
     @commands.command(aliases=["transform"])
     @commands.is_owner()
