@@ -30,7 +30,8 @@ def get_emoji(item):
         "jades": emoji_j,
         "coins": emoji_c,
         "realm_ticket": "🎟",
-        "amulets": emoji_a
+        "amulets": emoji_a,
+        "medals": emoji_m
     }
     return emoji_dict[item]
 
