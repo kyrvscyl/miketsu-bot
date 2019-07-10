@@ -173,9 +173,11 @@ class Library(commands.Cog):
                     image_url = None
 
                 try:
-                    footer_text = check_if_none(embedding, "footer")["icon_url"]
-                    footer_text = "Guide contributed by {}".format(self.client.get_user(int(footer_text)))
+                    footer_text = check_if_none(embedding, "footer")["text"]
+                    footer_text = f"Guide contributed by {self.client.get_user(int(footer_text)).name}"
                 except TypeError:
+                    footer_text = None
+                except AttributeError:
                     footer_text = None
 
                 try:
