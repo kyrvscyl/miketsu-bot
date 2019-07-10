@@ -12,7 +12,7 @@ from discord.ext import commands
 
 from cogs.magic import Magic
 from cogs.magic import get_data, get_dictionary
-from cogs.mongo.db import books, weather, sendoff, quests, owls
+from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
 from cogs.frame import frame_starlight, frame_blazing
 from cogs.admin import Admin, reset_boss
 from cogs.automation import Events
@@ -101,6 +101,13 @@ async def penalty_hour():
 
 async def actions_reset():
     quests.update_many({"quest1.status": "ongoing"}, {"$set": {"quest1.$.actions": 0}})
+
+
+async def reset_library():
+
+    for entry in daily.find({"key": "library"}, {"key": 0, "_id": 0}):
+        for user_id in entry:
+            daily.update_one({"key": "library"}, {"$set": {f"{user_id}": 0}})
 
 
 class Clock(commands.Cog):
@@ -316,6 +323,7 @@ class Clock(commands.Cog):
 
                 await Admin(self.client).reset_daily(spell_spam)
                 await reset_boss(spell_spam)
+                await reset_library()
                 await frame_starlight(server, spell_spam)
                 await frame_blazing(server, spell_spam)
 
