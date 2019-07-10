@@ -7,6 +7,7 @@ import random
 
 import discord
 from discord.ext import commands
+from cogs.mongo.db import users
 
 with open("data/emotes.json") as f:
     stickers = json.load(f)
@@ -45,6 +46,7 @@ class Emotes(commands.Cog):
             return
 
         elif "mike" in message.content.lower():
+            user = message.author
             list = message.content.lower().split()
             action_recognized = None
 
@@ -58,11 +60,15 @@ class Emotes(commands.Cog):
                 return
 
             else:
+                users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": 15}})
                 color = message.author.colour
                 selection = [v for v in emotes[action_recognized].values()]
                 thumbnail = random.choice(selection)
                 embed = discord.Embed(color=color)
-                embed.set_footer(text=f"{message.author.display_name}", icon_url=message.author.avatar_url)
+                embed.set_footer(
+                    text=f"{message.author.display_name}, +20exp",
+                    icon_url=message.author.avatar_url
+                )
                 embed.set_image(url=thumbnail)
                 await message.channel.send(embed=embed)
                 await message.delete()
