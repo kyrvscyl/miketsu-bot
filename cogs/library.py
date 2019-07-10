@@ -111,7 +111,7 @@ class Library(commands.Cog):
 
         return webhook
 
-    @commands.command(aliases=["table"])
+    @commands.command(aliases=["toc", "table"])
     @commands.check(check_if_reference_section)
     async def post_table_of_content(self, ctx):
 
