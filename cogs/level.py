@@ -38,9 +38,28 @@ async def level_up(user, ctx):
 
 async def create_user(user):
     if users.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-        profile = {"user_id": str(user.id), "experience": 0, "level": 1, "level_exp_next": 5, "amulets": 10,
-                   "amulets_spent": 0, "SP": 0, "SSR": 0, "SR": 0, "R": 0, "jades": 0, "coins": 0, "medals": 0,
-                   "realm_ticket": 0, "honor": 0, "talisman": 0, "friendship": 0, "guild_medal": 0, "shikigami": []}
+        profile = {
+            "user_id": str(user.id),
+            "experience": 0,
+            "level": 1,
+            "level_exp_next": 5,
+            "amulets": 10,
+            "amulets_spent": 0,
+            "SP": 0,
+            "SSR": 0,
+            "SR": 0,
+            "R": 0,
+            "jades": 0,
+            "coins": 0,
+            "medals": 0,
+            "realm_ticket": 0,
+            "honor": 0,
+            "talisman": 0,
+            "friendship": 0,
+            "guild_medal": 0,
+            "shikigami": [],
+            "display": "None"
+        }
 
         # Creates a profile
         users.insert_one(profile)
