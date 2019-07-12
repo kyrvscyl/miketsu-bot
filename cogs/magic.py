@@ -1261,14 +1261,14 @@ class Magic(commands.Cog):
 
                         # noinspection PyShadowingNames
                         def check(_answer):
-                            return msg_confirm.id == _answer.id and user.id == _answer.author.id \
-                                   and _answer.content.lower() in ["y", "n"]
+                            return user.id == _answer.author.id \
+                                   and _answer.content.lower() in ["y", "n"] \
+                                   and msg_confirm.channel.id == _answer.channel.id
 
                         while True:
                             try:
-                                answer = await self.client.wait_for(
-                                    "message", timeout=60, check=check
-                                )
+                                answer = await self.client.wait_for("message", timeout=120, check=check)
+
                             except asyncio.TimeoutError:
                                 msg = responses["timeout_response"].format(user.mention)
                                 await self.penalize(user, cycle, points=20)
@@ -1444,7 +1444,7 @@ class Magic(commands.Cog):
 
     # noinspection PyUnboundLocalVariable
     async def get_wand_length(self, user, guild, channel, responses):
-        msg = responses["length_selection"]["1"].format(user.display_name)
+        msg = responses["length_selection"]["1"].format(user.mention)
         await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
@@ -1512,7 +1512,7 @@ class Magic(commands.Cog):
     async def get_wand_flexibility(self, user, guild, channel, responses):
 
         formatted_flexibility = "`, `".join(flexibility_types)
-        msg = responses["flexibility_selection"]["1"].format(user.display_name, formatted_flexibility)
+        msg = responses["flexibility_selection"]["1"].format(user.mention, formatted_flexibility)
         await asyncio.sleep(2)
         await self.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
