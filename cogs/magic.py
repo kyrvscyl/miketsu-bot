@@ -941,7 +941,7 @@ class Magic(commands.Cog):
         if "eeylops-owl-emporium" not in channels:  # and 7 <= int(current_time2()) <= 14:  # 07:00 - 14:00
 
             overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                guild.default_role: discord.PermissionOverwrite(read_messages=False, add_reactions=True),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
@@ -1008,7 +1008,7 @@ class Magic(commands.Cog):
         if "gringotts-bank" not in channels:  # and 8 <= int(current_time2()) <= 15:  # 08:00 - 15:00
 
             overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                guild.default_role: discord.PermissionOverwrite(read_messages=False, add_reactions=True),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
@@ -1072,7 +1072,7 @@ class Magic(commands.Cog):
         if "ollivanders" not in channels:  # and 13 <= int(current_time2()) <= 16:  # 1PM-4PM:
 
             overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                guild.default_role: discord.PermissionOverwrite(read_messages=False, add_reactions=True),
                 guild.me: discord.PermissionOverwrite(read_messages=True),
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
@@ -1131,7 +1131,7 @@ class Magic(commands.Cog):
             msg1 = responses["intro1"].format(user.mention)
             msg2 = responses["intro2"].format(user.mention)
             await self.secret_response(guild.id, channel.name, msg1)
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
             await self.secret_response(guild.id, channel.name, msg2)
 
             def check(guess):
