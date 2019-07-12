@@ -1261,21 +1261,19 @@ class Magic(commands.Cog):
                             name="Wand Properties",
                             icon_url=user.avatar_url
                         )
-                        embed.set_footer(text="Confirm purchase?")
+                        embed.set_footer(text="Confirm purchase? Y/N")
 
                         msg_confirm = await channel.send(embed=embed)
-                        await msg_confirm.add_reaction("✅")
-                        await msg_confirm.add_reaction("❌")
 
                         # noinspection PyShadowingNames
-                        def check(reaction, purchaser):
-                            return msg_confirm.id == reaction.message.id and user.id == purchaser.id \
-                                   and str(reaction.emoji) in ["✅", "❌"]
+                        def check(_answer):
+                            return msg_confirm.id == _answer.id and user.id == _answer.author.id \
+                                   and _answer.content.lower() in ["y", "n"]
 
                         while True:
                             try:
-                                reaction, purchaser = await self.client.wait_for(
-                                    "reaction_add", timeout=60, check=check
+                                answer = await self.client.wait_for(
+                                    "message", timeout=60, check=check
                                 )
                             except asyncio.TimeoutError:
                                 msg = responses["timeout_response"].format(user.mention)
@@ -1284,7 +1282,7 @@ class Magic(commands.Cog):
                                 break
 
                             else:
-                                if str(reaction.emoji) == "✅":
+                                if answer.content.lower() == "y":
                                     msg = f"{user.mention} has acquired 🌟 role"
                                     quests.update_one({
                                         "user_id": str(user.id),
@@ -1299,7 +1297,7 @@ class Magic(commands.Cog):
                                     await channel.send(msg)
                                     break
 
-                                elif str(reaction.emoji) == "❌":
+                                elif answer.content.lower() == "n":
                                     msg = responses["timeout_response"].format(user.mention)
                                     cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
