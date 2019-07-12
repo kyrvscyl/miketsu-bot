@@ -223,6 +223,8 @@ class Clock(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def complete(self, ctx):
+        await self.send_off_report()
+        await asyncio.sleep(5)
         await self.send_off_complete()
 
     async def send_off_complete(self):
