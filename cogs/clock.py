@@ -10,7 +10,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.magic import Magic
+from cogs.magic import penalize, update_path
 from cogs.magic import get_data, get_dictionary
 from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
 from cogs.frame import frame_starlight, frame_blazing
@@ -243,7 +243,7 @@ class Clock(commands.Cog):
                     responses = get_dictionary("send_off")["complete"]
 
                     if path != "path0":
-                        await Magic(self.client).update_path(user, cycle, path_new="path3")
+                        await update_path(user, cycle, path_new="path3")
 
                     await user.send(responses[0])
                     await asyncio.sleep(4)
@@ -255,7 +255,7 @@ class Clock(commands.Cog):
             elif entry["scenario"] == 1:
                 user = self.client.get_user(int(entry["user_id"]))
                 msg = f"Your {entry['type']} has fully recovered"
-                await Magic(self.client).update_path(user, cycle, path_new="path20")
+                await update_path(user, cycle, path_new="path20")
                 await user.send(msg)
 
             sendoff.update_one({
@@ -279,7 +279,7 @@ class Clock(commands.Cog):
 
                 if entry["scenario"] == 1:
                     cycle, path, timestamp, user_hint, actions, purchase = get_data(user)
-                    await Magic(self.client).penalize(user, cycle, points=20)
+                    await penalize(user, cycle, points=20)
 
                 description = entry["report"]
                 embed = discord.Embed(
