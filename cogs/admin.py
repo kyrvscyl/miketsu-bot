@@ -597,6 +597,9 @@ class Admin(commands.Cog):
             title=":confetti_ball: Special Guild Contest",
             description=description
         )
+        embed.set_image(
+            url="https://media.discordapp.net/attachments/473127659136614431/"
+                "599172714057695242/show_us_ur_patronus.png")
         embed.add_field(
             name=":tada: Event Overview",
             value="@everyone can role-play in the wizarding server of Patronusverse, "
@@ -620,11 +623,10 @@ class Admin(commands.Cog):
         )
         embed.add_field(
             name=":gift_heart: Rewards System",
-            value="• Two current guild members will win Nitros:\n"
+            value="• Two current guild members will win Nitro\n"
                   "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
-                  "• The 1st one to complete a quest cycle without moving from path0\n\n"
-                  "• Note:`;progress` and `;cycle` can only be used by members who have finished "
-                  "the quest at least once\n\n"
+                  "• The 1st one to complete a quest cycle without a moving a path\n\\n​ "
+                  "• Note: Commands `;progress` and `;cycle` are unlocked once a cycle is finished\n\n​ "
                   ":four_leaf_clover: Good luck!​\n "
         )
         embed.set_footer(
