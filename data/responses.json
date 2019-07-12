@@ -1,36 +1,38 @@
 {
   "ollivanders": {
-    "intro": "{}, what can I help you for?",
-    "timeout_intro": "",
-    "invalid": "Oh! You do not want wands? Feel free to browse my shop then.",
+    "intro1": "Welcome{}, what can I help you with?",
+    "intro2": "I wondered when I’ll be seeing you, {}. Here to buy your first wand?",
+    "timeout_intro": "No interest to buy wands yet, {}? Maybe in time you'll find yours.",
+    "invalid": "Oh! You are not here to choose a wand? Feel free to browse my shop then, maybe a wand will choose you instead.",
     "valid": [
-      "{}, I see you want wands. Allow me to guide you through your wand selection, shall we?",
+      "{}, I see you want to buy your first wand. Allow me to guide you through your wand selection, shall we?",
+      "Each wand has different length, flexibility, wood, and core, making each one unique. I wonder what yours would be like, come with me.",
       "Every choice affects your ending results."
     ],
     "valid_no_owl": [
-      "There seems to be lacking with you {}. You are not yet prepared to wield one. Remember, the wand chooses the wizard",
-      "Ollivanders! Home of the best crafted wands!"
+      "Something seems to be lacking with you {}. Remember, a wand is not merely a tool to perform magic.",
+      "Ollivanders! Makers of fine wands since 382 B.C.!"
     ],
     "owl_analysis": {
       "pure emotions": [
-        "I see you... I see that you have a temperamental and sensitive character.. And perhaps also, a person who is attracted to those with inner conflicts.. Very unyielding yet faithful to those who are honest with themselves.",
-        "Core rarity: Unicorn Hair < Dragon Heartstring < Phoenix Feather\nChoose wisely."
+        "Ah… I see that you have a temperamental and sensitive character, some wands have a notable peculiarity in that they are attracted to those with inner conflicts. When this type of wand is happily matched with the right owner, it can prove to be very unyielding and faithful especially to those who are honest with themselves.",
+        "Wands made of Unicorn hair core are very common, but the core are also the most faithful and produces the most consistent magic."
       ],
       "strong-willed": [
-        "My child, do you ever believe in self-sacrificing. You are a strong-willed person. Capable of being the bravest of them all and with outstanding passion and strong sense of self, belief, and above all, justice.",
+        "My child, do you ever believe in self-sacrifices? You are a strong-willed person with a great sense of self, belief, and above all, justice. Capable of being the bravest of them all and with outstanding passion, your wand will stay true to you as they are the happiest when paired with someone with the courage to be themselves.",
         "Certain Woods are rare in nature and inherently possess rare Patronus'"
       ],
       "adventurous": [
-        "One step in this house, I knew how creative and brilliant youngster you are. Hmm.. Very ambitious as well. Destined for a final quest.. Wise and rich in experiences. A great partner with uninterrupted excitement and fun.",
-        "Casting the spells require diction, it must be concentrated and pure"
+        "As soon as you stepped into the shop, I knew how creative and brilliant you are. Hmm.. a very ambitious youngster as well. I am sure you will be destined for a great quest. You will grow as a wise wizard and rich in experiences. The wand that chooses you will be happy with such a great partner that can provide it with uninterrupted excitement and fun.",
+        "Wands made with a Phoenix feather core are the rarest and they are also the pickiest when choosing it’s master. However, it is capable of the greatest range of magic should one were to able to wield it."
       ],
       "nature-loving": [
-        "Do you perhaps have high interest in nature? You are well fitted to be someone with exceptional skills in magical beasts and herbalogy. Great talent requires great wand",
-        "Owl selection plays an important role in Patronus summoning"
+        "Do you perhaps have a high interest in the natural world? You seemed well fitted to be someone with exceptional skills in taming magical beasts or possibly possess a great gift in Herbology. Great talent requires great wand.",
+        "The wand chooses the wizard… it is not always clear why. Perhaps it is because the wand creates a special bond with whom they will serve."
       ],
       "special": [
-        "A very special person. With traits of care and love for others. I know just the perfect wands for you, wands with healing, defensive, and legilimency properties. Utterly loved by nature, indeed.",
-        "There is a total of 142 collectible Patronus'"
+        "A very special person. Someone with a clear-head and a pure-heart with traits of care and love for others. I know just the perfect wand for you. Depending on how you use it, the wand could you provide with a remarkable healing power or a strong defensive charms that is difficult to break, and even some legilimency properties. Utterly loved by nature, indeed.",
+        "Wands with a Dragon heartstring core are the quickest to learn new magic. Though they might be prone to accidents compared to other cores, when used right, they are capable of producing the strongest magic."
       ]
     },
     "no_patronus": "It seems that you're out of luck, {}. I do not have that kind of wand. Perhaps, you're looking for a rare combination of wand properties. But no such wand is crafted yet by me. I suggest you try to wield a common core, I'm sure there are lots of available for your choice.",
@@ -38,66 +40,111 @@
     "core_selection": {
       "1": "{}, lastly, the wand cores.\n\nSelect from the choices: `{}`",
       "chose": [
-        "{}, {}. Another interesting choice.",
-        ""
+        "{}, {}. {}",
+        "The core of a wand is a magical substance placed within the length of wood, usually extracted from a magical creature."
       ],
       "timeout": "{}, you can return again once you have decided well.",
       "invalid1": [
-        "I don't think I craft that kind of length, do you mind telling me again?",
-        ""
+        "I don't think I ever crafted that kind of length, maybe in the future but for now, you can only choose those.",
+        "There is a total of 142 collectible Patronus'"
       ],
       "invalid2": [
         "{}, I don't think I craft that kind of length, do come again, should you wish to pursue your path.",
-        ""
+        "Do take good care of your wand. While most wands are attached to their master, they can take on a new one when the master is disarmed or stunned."
       ]
     },
     "wood_selection": {
       "1": "{}, I just happen to have the appropriate woods for your wand characteristics.\n\nSelect from the choices: `{}`",
       "chose": [
-        "{}, {}. Another interesting choice.",
-        ""
+        "{}, {}. {}",
+        "The wood is embedded with a core of a magical substance and can vary in length."
       ],
-      "timeout": "{}, you can return again once you have decided well.",
+      "timeout": "{}, perhaps you could choose only from the available wands?",
       "invalid1": [
         "{}, it seems that I have no kind of that wood design ready for now.",
-        ""
+        "Every single wand is unique and will depend for its character on the particular tree and magical creature from which it derives its materials"
       ],
       "invalid2": [
-        "",
-        ""
+        "{}, you can return again once you have decided well.",
+        "Moreover, each wand, from the moment it finds its ideal owner, will begin to learn from and teach its human partner. Therefore, the following must be seen as general notes on each of the wood types, and ought not to be taken to describe any individual wand."
       ]
     },
     "length_selection": {
       "1": "We have wand lengths, {}.\nDo tell me, which length in inches best suits your personality?\n\nEnter your choice: 8, 9, 10, 11, 12, 13, or 14.",
       "chose": [
-        "{}, {} inches. Another interesting choice.",
+        "{}, {} inches. Interesting choice.",
         "Wand length is categorized into 3 major parts"
       ],
       "timeout": "{}, you can return again once you have decided well.",
       "invalid1": [
         "I don't think I craft that kind of length, do come back once you figure out your best choice of wand length, {}",
-        "Wand length is categorized into 3 major parts"
+        "Many wandmakers simply match the wand length to the size of the witch or wizard who will use it, but this is a crude measure, and fails to take into account many other, important considerations."
       ],
       "invalid2": [
-        "",
-        ""
+        "{}, do return again once you have decided well.",
+        "Wand flexibility or rigidity denotes the degree of adaptability and willingness to change possessed by the wand-and-owner pair"
       ]
     },
     "flexibility_selection": {
       "1": "Now {}, wands can come too in various flexibility, it entails the ability of the person to adapt to various circumstances. Tell me, how much can you adapt?\n\nChoose from the following: `{}`",
       "chose": [
         "{}, {}. Another interesting choice.",
-        "Wand length is categorized into 3 major parts"
+        "Wand flexibility or rigidity denotes the degree of adaptability and willingness to change possessed by the wand-and-owner pair"
       ],
       "timeout": "{}, you can return again once you have decided well.",
       "invalid1": [
         "{}, I've never heard of that kind of flexibility..",
-        ""
+        "The scale of flexibility: Unyielding – Rigid – Inflexible - Firm – Supple – Pliable – Flexible – Springy – Yielding"
       ],
       "invalid2": [
-        "{}, That too. Do come back once you are able to distinguish.",
-        ""
+        "{}, That too. Do come back once you are able to distinguish. I agree that wand selection is not a quick thing to decide.",
+        "The more flexible a wand is, the more adaptable and easily changeable the wizard is, whereas a more rigid wand indicates steadfastness and stubbornness."
       ]
+    },
+    "wood_description": {
+      "acacia": "The Thief, Subtle and skilled, illusion magic affinity",
+      "alder": "The Stalwart, Loyalty, non-verbal magic affinity",
+      "apple": "The Leader, charismatic idealist, magical creature affinity",
+      "ash": "The Implacable, Stubborn and Brave, loyal wand",
+      "aspen": "The Revolutionary, martial magic affinity",
+      "beech": "The Elder, Wise and Tolerant, particularly articulate wand",
+      "black walnut": "The Warrior, powerful and loyal after going through hardship",
+      "blackthorn": "The True, good instincts, a loyal wand as long as the wielder is honest",
+      "cedar": "The Keen, perception and affinity for observation",
+      "cherry": "The Monk powerful, but particularly volatile, for people with good self-control",
+      "chestnut": "The Wild Card adaptive, amplifies coreâ€™s tendencies",
+      "cypress": "The Champion bold and self-sacrificing, tendency to confront evil",
+      "dogwood": "The Trickster mischievous and playful, tendency for dramatic and clever spells",
+      "ebony": "The Rebel, affinity for combat magic and transfiguration",
+      "elder": "The Fate-Touched, very powerful, but unlucky and fickle. Particularly rare",
+      "elm": "The Noble, sophisticated and delicate, capable of advanced magic",
+      "english oak": "The Paragon, powerful intuition and particular affinity for 'natural' magic",
+      "fir": "The Survivor, indicates staying power, affinity for transfiguration",
+      "hawthorn": "The Conflicted, power and flexibility, but can backfire when used incorrectly",
+      "hazel": "The Mindful, empathic properties, amplifies talent, loyal, detects water underground",
+      "holly": "The Underdog, indicates impulsivity, protection affinity, super powerful with PF core",
+      "hornbeam": "The Specialist, particularly easy-going, tunes itself to its owner, near-sentient",
+      "larch": "The Diamond in the Rough, powerful, with unexpected depths",
+      "laurel": "The Glory Seeker, loyal and powerful, so long as its master continues to seek",
+      "maple": "The Challenger, prefers high achievers who continuously seek fresh challenges",
+      "pear": "The Pillar, warm hearted, generous, and wise. Tend to be resilient and popular",
+      "pine": "The Venerable, independent, mysterious, creative. Wielder tends to have a long life",
+      "poplar": "The Reliable, consistency, strength, uniform power, clear moral vision",
+      "red oak": "The Whirlwind - Fast reactions, light touch, quick witted, adaptable, and distinctive.",
+      "redwood": "The Fortunate, lucky, quick thinking, good intuition",
+      "rowan": "The Guardian - Strong in defensive spells, Good, powerful in 1 on 1 combat",
+      "silver lime": "The Clairvoyant - Affinity for mental magic and Seer powers",
+      "spruce": "The Bold - Loyal and dramatic for those who can tame it",
+      "sycamore": "The Adventurer - Curious, vital, and adventurous. Learns and adapts quickly",
+      "vine": "The Visionary - Attracted by hidden depth, and vision, high affinity with the owner",
+      "walnut": "The Inventor - Attracted by the intelligent, susceptible to feedback loops of power",
+      "willow": "The Fledgling - Attracted by high potential, healing affinity",
+      "yew": "The Great - Attracted to prominence, whether good or evil. Affinity for curses/combat"
+    },
+    "core_description": {
+      "unicorn hair": "This core usually produces consistent, safe, and reliable magic. These cores are also the hardest to turn to the Dark Arts, but are the most faithful and loyal of all wands. What it gains in consistency and loyalty, it loses in power and sensitivity however. Unicorn hair wands tend to be less powerful than Dragon Heartstring or Phoenix Feather, and if seriously mishandled, they may wilt and die.",
+      "dragon heartstring": " As a rule, dragon heartstrings produce wands of the most power and flamboyance. They also tend to learn more quickly their other types. On the other hand, wands bearing a dragon heartstring core bear little ‘memory’ of their owners, and can not only be won away, but tend to bond strongly with their current master. As a whole, dragon heartstrings tend to be the easiest to turn to the dark arts (though it has no particular affinity or tendency towards them), and tends to be fairly temperamental and more prone to accidents than the other two cores.",
+      "phoenix feather": "The rarest core type, Phoenix feathers have access to a wide range of magic and are more flexible than the other two cores. They also bear a certain initiative, and have a tendency to act of their own accord regardless of their masters wishes. Finally, these cores tend to make for a difficult wand to tame and personalize, and their allegiance is hard won."
     }
   },
   "gringotts_bank": {
@@ -105,7 +152,7 @@
     "transaction": [
       "Greetings, {}. What do you want?",
       "{}, I am assuming you do not know, we secure the wizarding families' treasuries here.\n\nNow, what do you want from us?",
-      "{}, I don't think you are well aware of what is happening here.\n\nI have other clients to assist, come back once you know, because I do not like my time being wasted."
+      "{}, I don't think you are well aware of what is happening here.\n\nI have other clients to assist, come back once you know, because I do not like my time wasted."
     ],
     "success": "Very well {}. You can get out of my bank now.",
     "get_identity": {
@@ -150,7 +197,7 @@
       "1": "Come. We will apparate to your vault. {}",
       "2": "Ahhh. Here we are, and your password, {}?",
       "timeout": [
-        "{}. What do you mean that you forgot? You wasted my time! Get out of my bank!",
+        "{}. What do you mean that you forgot? Did you just waste my time here! Get out of my bank!",
         ""
       ],
       "invalid1": [
@@ -169,7 +216,7 @@
   },
   "eeylops_owl": {
     "knock": [
-      "Welcome to the Emporium!\n\nWe have all your feathered friend's requirements here!\nPlease tell me, what can I be of service to you?",
+      "Welcome to the Emporium!\n\nWe have all your feathered friend's requirements here!\nPlease tell me, how can I be of service to you?",
       "Due to the increasing demand of owls, the emporium can only supply that much"
     ],
     "inquire": [
@@ -183,7 +230,7 @@
       ],
       [
         "We have the following kinds of owls for all your wizarding needs! Find your precious feathered friend from the low price of 11 galleons! Which owl you desire to purchase?\n\nBrown, Screech, Snowy, Tawny, and Barred owls",
-        "Store Hours: 07:00 - 14:00\nMomentarily closed during thunderstorms and rain"
+        "Store Hours: 07:00 - 14:00\nMomentarily closed during thunderstorms and rain."
       ]
     ],
     "purchasing": {
@@ -191,19 +238,19 @@
       "invalid_owl": "My hearing must have been getting old.\n\nWhich kind of owl is it again?",
       "buying_again": [
         "My dear {}, it would be best to sell this owl to those who do not own any yet as my stocks are very limited.",
-        "Greediness results to high stakes of losses"
+        "Greediness results to high stakes of losses."
       ],
       "out_of_stock": [
         "My dear {}, that owl has been bought earlier by {}.\n\nShould you wish to buy the same kind of owl again, do visit us just when our stocks arrived. So you don't run out of.",
-        "The emporium restocks its owls up to four times a day"
+        "The emporium restocks its owls up to four times a day."
       ],
       "no_moneybag": [
         "I'm sorry my dear {}, this does not come for free.\n\nI put into good efforts in training my owls to the best they can. You're gonna have to pay me, should you yearn to get any owl from my emporium.",
-        "Owl restocking starts on two hours past midnight"
+        "Owl restocking starts on two hours past midnight."
       ],
       "success_purchase": [
         "{}, what a lovely choice of owl!",
-        "Your owl is your companion to your wizarding adventure"
+        "Your owl is your companion to your wizarding adventure."
       ]
     }
   },
@@ -217,7 +264,7 @@
       "snowy_snowy_owl": {
         "delay": 2,
         "scenario": 2,
-        "content": "Your owl travelled hastily to the Headmaster's Office due to favorable weather for the owl.\n\nEstimated time of return: in 1 hour"
+        "content": "Your owl travelled hastily to the Headmaster's Office due to favorable weather for your snowy owl.\n\nEstimated time of return: in 1 hour"
       },
       "night_time": {
         "delay": 2,

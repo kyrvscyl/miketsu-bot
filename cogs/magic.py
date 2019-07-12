@@ -1121,13 +1121,16 @@ class Magic(commands.Cog):
 
             role_star = discord.utils.get(guild.roles, name="🌟")
             responses = get_dictionary("ollivanders")
-            msg = responses["intro"].format(user.display_name)
-            await self.secret_response(guild.id, channel.name, msg)
+            msg1 = responses["intro1"].format(user.display_name)
+            msg2 = responses["intro2"].format(user.display_name)
+            await self.secret_response(guild.id, channel.name, msg1)
+            await asyncio.sleep(2)
+            await self.secret_response(guild.id, channel.name, msg2)
 
             def check(guess):
                 if guess.author != user:
                     return
-                elif guess.content.lower() in ["wand", "wands"]:
+                elif guess.content.lower() in ["yes", "yeah", "yea", "maybe"]:
                     return guess.author == user and channel == guess.channel
                 else:
                     raise KeyError
@@ -1136,7 +1139,7 @@ class Magic(commands.Cog):
                 await self.client.wait_for("message", timeout=30, check=check)
 
             except asyncio.TimeoutError:
-                msg = responses["timeout_intro"]
+                msg = responses["timeout_intro"].format(user.display_name)
                 await self.action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
 
@@ -1148,10 +1151,13 @@ class Magic(commands.Cog):
 
             else:
                 if user not in role_star.members and path in ["path11", "path3", "path10", "path0"]:
-                    msg = responses["valid"][0].format(user.display_name)
-                    topic = responses["valid"][1]
+                    msg1 = responses["valid"][0].format(user.display_name)
+                    msg2 = responses["valid"][1].format(user.display_name)
+                    topic = responses["valid"][2]
                     await self.action_update(user, cycle, actions=3)
-                    await self.secret_response(guild.id, channel.name, msg)
+                    await self.secret_response(guild.id, channel.name, msg1)
+                    await asyncio.sleep(1)
+                    await self.secret_response(guild.id, channel.name, msg2)
                     await channel.edit(topic=topic)
                     await asyncio.sleep(3)
                     await self.wand_personalise(user, guild, channel, cycle, role_star, responses)
@@ -1355,7 +1361,11 @@ class Magic(commands.Cog):
 
             else:
                 wand_core = answer.content
-                msg = responses["core_selection"]["chose"][0].format(user.display_name, wand_core.capitalize())
+                msg = responses["core_selection"]["chose"][0].format(
+                    user.display_name,
+                    wand_core.capitalize(),
+                    responses["core_description"][f'{wand_core.lower()}']
+                )
                 topic = responses["core_selection"]["chose"][1]
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
@@ -1422,7 +1432,11 @@ class Magic(commands.Cog):
 
             else:
                 wand_wood = answer.content
-                msg = responses["wood_selection"]["chose"][0].format(user.display_name, wand_wood.capitalize())
+                msg = responses["wood_selection"]["chose"][0].format(
+                    user.display_name,
+                    wand_wood.capitalize(),
+                    responses["wood_description"][f'{wand_wood.lower()}']
+                )
                 topic = responses["wood_selection"]["chose"][1]
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
