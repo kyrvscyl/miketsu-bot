@@ -96,7 +96,7 @@ class Library(commands.Cog):
                     user = self.client.get_user(int(user_id))
                     embed.set_footer(
                         text=f"Guide by {user.name}",
-                        icon_url=user.avatar_url
+                        icon_url=str(user.avatar_url_as(format="jpg", size=128))
                     )
                 except TypeError:
                     pass
@@ -189,7 +189,7 @@ class Library(commands.Cog):
 
             webhook = self.create_webhook_post(webhooks, book)
             webhook.execute()
-            await post_process_books(user, ctx, query)
+            # await post_process_books(user, ctx, query)
 
 
 def setup(client):
