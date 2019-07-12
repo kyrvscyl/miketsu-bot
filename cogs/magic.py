@@ -381,7 +381,7 @@ async def expecto(guild, user, channel, message):
             if strength > 100:
                 strength = round(random.uniform(98, 99.99), 2)
 
-            added_points = round(75 * (strength / 100))
+            added_points = round(50 * (strength / 100))
 
             score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths \
                 = get_profile_finished(user)
@@ -808,13 +808,10 @@ class Magic(commands.Cog):
         t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
         delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
-        # Hint cooldown of 3 hours  # if delta <= 2:
-        if delta >= 101:
+        if delta < 2:
+            await ctx.channel.send(f"{user.mention}, you must wait for {2 - delta} hr before you can unlock a hint")
 
-            await ctx.channel.send(f"{user.mention}, you must wait for {3 - delta} hr before you can reveal a hint")
-
-        # More than 3 hours passed  # elif delta >= 3:
-        elif delta <= 100:
+        elif delta >= 2:
             with open("data/hints.json") as f:
                 hints = json.load(f)
 

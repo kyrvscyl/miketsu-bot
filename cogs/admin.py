@@ -582,54 +582,53 @@ class Admin(commands.Cog):
 
         request = books.find_one(
             {"server": f"{ctx.guild.id}"},
-            {"_id": 0, "sorting": 1, "patronus_role": 1, "headlines": 1}
+            {"_id": 0, "sorting": 1, "patronus_role": 1, "headlines": 1, "gift-game": 1}
         )
 
         headlines = self.client.get_channel(int(request["headlines"]))
+        gift_game = self.client.get_channel(int(request["gift-game"]))
         sorting = self.client.get_channel(int(request["sorting"]))
         patronus = ctx.guild.get_role(int(request['patronus_role']))
 
-        description = f"{patronus.mention}, in late celebration of our not so recent merge with Crusaders, " \
-            f"it is timely to have our next once in a while Discord Event!\n "
+        description = f"{patronus.mention}, Time for another Gift Game!\n​ "
 
         embed = discord.Embed(
             colour=discord.Colour(0x50e3c2),
             title=":confetti_ball: Special Guild Contest",
-            description=description)
-
-        embed.add_field(
-            name=":tada: Event Overview",
-            value="Members can role-play as a wizard/witch/spirit in the wizarding server of Patronusverse "
-                  "where you will be given a quest to complete. This quest can be casually interacted in "
-                  "the server and it will be an idle and riddle kind of game.\n"
+            description=description
         )
         embed.add_field(
-            name=":notepad_spiral:  Game Mechanics",
-            value=f"`1. `You must allow direct messages from our bot Miketsu to be able to join. "
-            f"Use command `;help dm` to test if Miketsu can direct message you.\n"
-            f"`2. ` Interested players can voluntarily accept the quest at the {sorting.name} to "
-            f"kick start their adventure.\n"
-            f"`3. `Messages sent to the players may be crucial to finish the quest.\n`"
-            f"4. `Hints will be available to use via command `;hint`\n"
-            f"`5. `Also, once the clock ticks a new hour, various events can happen, "
-            f"it's up for players to learn and notice them.\n"
-            f"`6. `Quest cycle can be checked via command `;progress`\n"
+            name=":tada: Event Overview",
+            value="@everyone can role-play in the wizarding server of Patronusverse, "
+                  "where you will be given a quest to complete. "
+                  "This quest can be casually interacted in the server and it will be a riddle kind of game.\n​ "
+        )
+        embed.add_field(
+            name=":notepad_spiral: Game Mechanics",
+            value=f"• Allow direct messages from our bot Miketsu to join. Try `;help dm`\n"
+                  f"• Interested players can start by accepting the quest at the <#{sorting.id}>\n"
+                  f"• Hints will be available to use via `;hint`\n"
+                  f"• When the clock ticks a new hour, various events can happen.\n​ "
+                  f"• Use <#{gift_game.id}> for any discussion, visible once accepted\n​ "
         )
         embed.add_field(
             name=":goal: Scoring System",
-            value="`1. `Players will have a base score of 1000 points\n`2. `Every hour that passes reduces "
-                  "their score by 2 points\n`3. `Every hint revealed reduces their score by 10 points \n"
-                  "`4. `Certain wrong and irrelevant actions made can reduce their score as well\n")
+            value="• Players will have a base score of 1000 points\n"
+                  "• Reduced by 5 points every hour\n"
+                  "• Reduced by every hint unlocked \n"
+                  "• Reduced by any irrelevant actions done\n​ "
+        )
         embed.add_field(
             name=":gift_heart: Rewards System",
-            value="`1. `Two players will win the event. One is a pre-merge Patronus member and the other "
-                  "is a pre-merge Crusaders member.\n`2. `The 1st person to complete the quest will "
-                  "automatically earn themselves 1-month Discord Nitro\n`3. `Whereas, the next 5 people "
-                  "who completed the quest for the 2nd time will compete for the highest 2nd cycle score "
-                  "to earn another Discord Nitro.\n\n__Note: The 5 people who will compete for the 2nd "
-                  "reward will be of the same pre-merge Guild as opposed to the Guild of the 1st "
-                  "winner.__ Moreover, the 2nd cycle means that you need to re-do the whole quest AFTER "
-                  "you finished the 1st cycle to get a higher score than your previous one."
+            value="• Two current Patronus members will win Nitro packs:\n"
+                  "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
+                  "• The 1st one to complete a quest cycle without moving from path0\n\n"
+                  "• Note:`;progress` and `;cycle` can only be used by members who have finished "
+                  "the quest at least once\n\n"
+                  ":four_leaf_clover: Good luck!​\n "
+        )
+        embed.set_footer(
+            text="special thanks to xann! :3"
         )
         msg = await headlines.send(embed=embed)
 

@@ -96,7 +96,7 @@ def get_emoji(hours, minutes):
 
 # noinspection PyCallingNonCallable
 async def penalty_hour():
-    quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -2}})
+    quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -5}})
 
 
 async def actions_reset():
