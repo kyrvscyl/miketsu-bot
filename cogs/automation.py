@@ -180,7 +180,6 @@ class Events(commands.Cog):
             icon_url=member.avatar_url
         )
 
-        # Sending of messages
         await member.add_roles(default_role)
         await landing_zone_channel.send(msg)
         await member.send(embed=embed1)
@@ -204,7 +203,6 @@ class Events(commands.Cog):
             text=f"{member.guild.member_count} members | {time_stamp}",
             icon_url=member.avatar_url
         )
-
         await record_scroll.send(embed=embed)
 
     # Spying members
@@ -289,9 +287,20 @@ class Events(commands.Cog):
                 name="Before | New nickname:",
                 value=f"{before.display_name} | {after.display_name}"
             )
-
             await record_scroll.send(embed=embed)
 
+        elif before.name != after.name:
+
+            embed = discord.Embed(color=0x7ed321)
+            embed.set_footer(
+                text=f"{time_stamp}",
+                icon_url=before.avatar_url
+            )
+            embed.add_field(
+                name="Before | New username:",
+                value=f"{before.name} | {after.name}"
+            )
+            await record_scroll.send(embed=embed)
 
 def setup(client):
     client.add_cog(Events(client))
