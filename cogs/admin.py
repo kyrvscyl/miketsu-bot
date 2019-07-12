@@ -594,7 +594,7 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(
             colour=discord.Colour(0x50e3c2),
-            title=":confetti_ball: Special Guild Contest",
+            title=":confetti_ball: Patronus Guild Contest",
             description=description
         )
         embed.set_image(

@@ -1157,7 +1157,7 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
 
             if user not in role_galleons.members:
-                if path not in ["path8", "path18", "path12", "path13"]:
+                if path not in ["path8", "path18", "path12", "path13", "path0"]:
                     await self.update_path(user, cycle, path_new="path8")
                 await asyncio.sleep(3)
                 await message.delete()
