@@ -416,7 +416,7 @@ async def expecto(guild, user, channel, message):
 
             embed = discord.Embed(
                 color=0x50e3c2,
-                title=f"Your Patronus: {patronus_summon.title()} | Strength: {strength}%",
+                title=f"Patronus: {patronus_summon.title()} | Strength: {strength}%",
                 description=description
             )
             embed.set_image(url=patronus_profile["link"])

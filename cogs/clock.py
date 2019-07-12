@@ -221,7 +221,6 @@ class Clock(commands.Cog):
 
     async def owls_restock(self):
         owls.update_many({}, {"$set": {"purchaser": "None"}})
-        await self.logging("Restocking emporium with all owls")
 
     # noinspection PyUnusedLocal
     @commands.command()
@@ -260,6 +259,9 @@ class Clock(commands.Cog):
 
             sendoff.update_one({
                 "user_id": str(user.id)}, {
+                "$set": {
+                    "status": "done"
+                },
                 "$unset": {
                     "report": "",
                     "weather1": "",
