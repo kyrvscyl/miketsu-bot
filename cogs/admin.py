@@ -620,7 +620,7 @@ class Admin(commands.Cog):
         )
         embed.add_field(
             name=":gift_heart: Rewards System",
-            value="• Two current Patronus members will win Nitro packs:\n"
+            value="• Two current guild members will win Nitros:\n"
                   "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
                   "• The 1st one to complete a quest cycle without moving from path0\n\n"
                   "• Note:`;progress` and `;cycle` can only be used by members who have finished "

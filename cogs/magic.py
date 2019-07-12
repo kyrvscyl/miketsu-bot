@@ -285,160 +285,161 @@ async def update_hint(user, cycle, hint):
     })
 
 
-async def update_path(user, cycle, path_new):
-    quests.update_one({
-        "user_id": str(user.id), "quest1.cycle": cycle}, {
-        "$set": {
-            "quest1.$.current_path": path_new,
-            "quest1.$.timestamp": current_timestamp(),
-            "quest1.$.hints": ["locked", "locked", "locked", "locked", "locked"]
-        },
-        "$inc": {
-            "quest1.$.paths_unlocked": 1
-        }
-    })
-
-
-# noinspection PyUnboundLocalVariable
-async def generate_owl_report(user, cycle, responses):
-
-    profile = sendoff.find_one({"user_id": str(user.id), "cycle": cycle}, {"_id": 0})
-    weather1 = weather.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
-    weather2 = weather.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
-
-    def get_specific_report(key):
-        return responses["reports"][key]["delay"], \
-               responses["reports"][key]["scenario"], \
-               responses["reports"][key]["content"]
-
-    if weather1 == "⛈":
-        delay, scenario, content = get_specific_report("thunderstorms")
-        await update_path(user, cycle, path_new="path19")
-
-    elif weather1 == "🌨" and profile["type"] == "snowy":
-        delay, scenario, content = get_specific_report("snowy_snowy_owl")
-
-    elif weather2 == "🌕" or weather2 == "🌑":
-        delay, scenario, content = get_specific_report("night_time")
-
-    elif weather1 == "🌧" or weather1 == "🌨":
-        delay, scenario, content = get_specific_report("rainy_snowy")
-
-    elif weather1 == "☁" or weather1 == "⛅" or weather1 == "☀":
-        delay, scenario, content = get_specific_report("cloudy_sunny")
-
-    timestamp_update = (datetime.now(tz=tz_target) + timedelta(days=1 / 24)).strftime("%Y-%b-%d %HH")
-    timestamp_complete = (datetime.now(tz=tz_target) + timedelta(days=delay / 24)).strftime("%Y-%b-%d %HH")
-
-    sendoff.update_one({
-        "user_id": str(user.id)}, {
-        "$set": {
-            "report": content,
-            "weather1": weather1,
-            "weather2": weather2,
-            "timestamp": current_timestamp(),
-            "timestamp_update": timestamp_update,
-            "timestamp_complete": timestamp_complete,
-            "delay": delay,
-            "scenario": scenario
-        }
-    })
-
-
-async def sendoff_owl(user, cycle):
-    responses = get_dictionary("send_off")
-    await user.send(responses["success1"])
-    await asyncio.sleep(2)
-    await user.send(responses["success2"])
-    await generate_owl_report(user, cycle, responses)
-
-
-async def expecto(guild, user, channel, message):
-    role_star = discord.utils.get(guild.roles, name="🌟")
-    cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
-
-    if path == "path3":
-        await message.add_reaction("❎")
-        await update_path(user, cycle, path_new="path10")
-        await penalize(user, cycle, points=5)
-
-    elif path == "path10":
-        await message.add_reaction("❔")
-        await penalize(user, cycle, points=15)
-
-    elif user in role_star.members:
-        async with channel.typing():
-            role_dolphin = discord.utils.get(guild.roles, name="🐬")
-            role_galleon = discord.utils.get(guild.roles, name="💰")
-            role_owl = discord.utils.get(guild.roles, name="🦉")
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
-            uppers = len([char for char in message.content if char.isupper()])
-            lowers = len([char for char in message.content if char.islower()])
-            symbol = len([char for char in message.content if char == "!"])
-            strength = round((uppers * 1.35) + lowers + (symbol * 1.5), 2)
-            strength = round(random.uniform(strength - 5, strength + 5), 2)
-
-            if strength > 100:
-                strength = round(random.uniform(98, 99.99), 2)
-
-            added_points = round(50 * (strength / 100))
-
-            score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths \
-                = get_profile_finished(user)
-
-            t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
-            t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
-            delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
-
-            patronus_profile = patronus.find_one({
-                "patronus": patronus_summon.lower()}, {
-                "_id": 0,
-                "trait": 1,
-                "link": 1
-            })
-
-            description = \
-                f"• Cycle Score: {score + added_points} points, (+{added_points} bonus points)\n" \
-                    f"• Hints unlocked: {hints_unlocked}\n" \
-                    f"• Paths unlocked: {paths}\n" \
-                    f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
-
-            quests.update_one({
-                "user_id": str(user.id), "quest1.cycle": cycle}, {
-                "$inc": {
-                    "quest1.$.cycle": added_points
-                },
-                "$set": {
-                    "quest1.$.strength": strength,
-                    "quest1.$.timestamp": current_timestamp()
-                }
-            })
-
-            embed = discord.Embed(
-                color=0x50e3c2,
-                title=f"Patronus: {patronus_summon.title()} | Strength: {strength}%",
-                description=description
-            )
-            embed.set_image(url=patronus_profile["link"])
-            embed.set_footer(text=f"Hours spent: {delta} hours")
-            embed.set_author(
-                name=f"{user.display_name} | Cycle #{cycle} results!",
-                icon_url=user.avatar_url
-            )
-            embed.add_field(
-                name="Wand Properties",
-                value=f"{wand['length']} inches, {wand['flexibility']}, {wand['core'].replace(' ', '-')}-cored, "
-                f"{wand['wood']} wand"
-            )
-            content = f"{user.mention}, 🎊 **Congratulations!** You have finished the quest!"
-            await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
-            await channel.send(content=content, embed=embed)
-
-
 class Magic(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    async def expecto(self, guild, user, channel, message):
+        role_star = discord.utils.get(guild.roles, name="🌟")
+        cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
+
+        if path == "path3":
+            await message.add_reaction("❎")
+            await self.update_path(user, cycle, path_new="path10")
+            await penalize(user, cycle, points=5)
+
+        elif path == "path10":
+            await message.add_reaction("❔")
+            await penalize(user, cycle, points=15)
+
+        elif user in role_star.members:
+            async with channel.typing():
+                role_dolphin = discord.utils.get(guild.roles, name="🐬")
+                role_galleon = discord.utils.get(guild.roles, name="💰")
+                role_owl = discord.utils.get(guild.roles, name="🦉")
+                cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
+                uppers = len([char for char in message.content if char.isupper()])
+                lowers = len([char for char in message.content if char.islower()])
+                symbol = len([char for char in message.content if char == "!"])
+                strength = round((uppers * 1.35) + lowers + (symbol * 1.5), 2)
+                strength = round(random.uniform(strength - 5, strength + 5), 2)
+
+                if strength > 100:
+                    strength = round(random.uniform(98, 99.99), 2)
+
+                added_points = round(50 * (strength / 100))
+
+                score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths \
+                    = get_profile_finished(user)
+
+                t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
+                t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
+                delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
+
+                patronus_profile = patronus.find_one({
+                    "patronus": patronus_summon.lower()}, {
+                    "_id": 0,
+                    "trait": 1,
+                    "link": 1
+                })
+
+                description = \
+                    f"• Cycle Score: {score + added_points} points, (+{added_points} bonus points)\n" \
+                        f"• Hints unlocked: {hints_unlocked}\n" \
+                        f"• Paths unlocked: {paths}\n" \
+                        f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
+
+                quests.update_one({
+                    "user_id": str(user.id), "quest1.cycle": cycle}, {
+                    "$inc": {
+                        "quest1.$.cycle": added_points
+                    },
+                    "$set": {
+                        "quest1.$.strength": strength,
+                        "quest1.$.timestamp": current_timestamp()
+                    }
+                })
+
+                embed = discord.Embed(
+                    color=0x50e3c2,
+                    title=f"Patronus: {patronus_summon.title()} | Strength: {strength}%",
+                    description=description
+                )
+                embed.set_image(url=patronus_profile["link"])
+                embed.set_footer(text=f"Hours spent: {delta} hours")
+                embed.set_author(
+                    name=f"{user.display_name} | Cycle #{cycle} results!",
+                    icon_url=user.avatar_url
+                )
+                embed.add_field(
+                    name="Wand Properties",
+                    value=f"{wand['length']} inches, {wand['flexibility']}, {wand['core'].replace(' ', '-')}-cored, "
+                    f"{wand['wood']} wand"
+                )
+                content = f"{user.mention}, 🎊 **Congratulations!** You have finished the quest!"
+                await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
+                await channel.send(content=content, embed=embed)
+
+    async def logging(self, msg):
+        channel = self.client.get_channel(592270990894170112)
+        date_time = datetime.now(tz=tz_target).strftime("%Y-%b-%d %HH")
+        await channel.send(f"[{date_time}] " + msg)
+
+    async def sendoff_owl(self, user, cycle):
+        responses = get_dictionary("send_off")
+        await user.send(responses["success1"])
+        await asyncio.sleep(2)
+        await user.send(responses["success2"])
+        await self.generate_owl_report(user, cycle, responses)
+
+    # noinspection PyUnboundLocalVariable
+    async def generate_owl_report(self, user, cycle, responses):
+        profile = sendoff.find_one({"user_id": str(user.id), "cycle": cycle}, {"_id": 0})
+        weather1 = weather.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
+        weather2 = weather.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
+
+        def get_specific_report(key):
+            return responses["reports"][key]["delay"], \
+                   responses["reports"][key]["scenario"], \
+                   responses["reports"][key]["content"]
+
+        if weather1 == "⛈":
+            delay, scenario, content = get_specific_report("thunderstorms")
+            await self.update_path(user, cycle, path_new="path19")
+
+        elif weather1 == "🌨" and profile["type"] == "snowy":
+            delay, scenario, content = get_specific_report("snowy_snowy_owl")
+
+        elif weather2 == "🌕" or weather2 == "🌑":
+            delay, scenario, content = get_specific_report("night_time")
+
+        elif weather1 == "🌧" or weather1 == "🌨":
+            delay, scenario, content = get_specific_report("rainy_snowy")
+
+        elif weather1 == "☁" or weather1 == "⛅" or weather1 == "☀":
+            delay, scenario, content = get_specific_report("cloudy_sunny")
+
+        timestamp_update = (datetime.now(tz=tz_target) + timedelta(days=1 / 24)).strftime("%Y-%b-%d %HH")
+        timestamp_complete = (datetime.now(tz=tz_target) + timedelta(days=delay / 24)).strftime("%Y-%b-%d %HH")
+
+        sendoff.update_one({
+            "user_id": str(user.id)}, {
+            "$set": {
+                "report": content,
+                "weather1": weather1,
+                "weather2": weather2,
+                "timestamp": current_timestamp(),
+                "timestamp_update": timestamp_update,
+                "timestamp_complete": timestamp_complete,
+                "delay": delay,
+                "scenario": scenario
+            }
+        })
+
+    async def update_path(self, user, cycle, path_new):
+        quests.update_one({
+            "user_id": str(user.id), "quest1.cycle": cycle}, {
+            "$set": {
+                "quest1.$.current_path": path_new,
+                "quest1.$.timestamp": current_timestamp(),
+                "quest1.$.hints": ["locked", "locked", "locked", "locked", "locked"]
+            },
+            "$inc": {
+                "quest1.$.paths_unlocked": 1
+            }
+        })
+        await self.logging(f"Shifted {user.name} path to {path_new}")
 
     # noinspection PyUnboundLocalVariable
     @commands.command(aliases=["patronus"])
@@ -511,8 +512,6 @@ class Magic(commands.Cog):
                 elif str(reaction.emoji) == "⬅":
                     page -= 1
                 await msg.edit(embed=create_embed(page))
-
-    # noinspection PyUnboundLocalVariable,PyUnusedLocal
 
     # noinspection PyTypeChecker,PyUnboundLocalVariable
     @commands.command(aliases=["cycle"])
@@ -624,7 +623,7 @@ class Magic(commands.Cog):
 
             elif profile["cycle"][0] >= 2:
 
-                score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked\
+                score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked \
                     = get_profile_progress(ctx.message.author)
                 t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
                 t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
@@ -747,7 +746,7 @@ class Magic(commands.Cog):
             )
             embed.set_thumbnail(url=self.client.get_guild(int(server["server"])).icon_url)
             await user.send(embed=embed)
-            await update_path(user, cycle, path_new="path1")
+            await self.update_path(user, cycle, path_new="path1")
             await penalize(user, cycle, points=20)
 
         elif str(reaction.emoji) == "✉" and "returned with" in reaction.message.content \
@@ -783,9 +782,9 @@ class Magic(commands.Cog):
 
                 if path in ["path0", "path2", "path20"]:
                     if path != "path0":
-                        await update_path(user, cycle, path_new="path4")
+                        await self.update_path(user, cycle, path_new="path4")
 
-                    await sendoff_owl(user, cycle)
+                    await self.sendoff_owl(user, cycle)
                     await reaction.message.add_reaction("✅")
                     await asyncio.sleep(2)
                     await reaction.message.delete()
@@ -875,9 +874,9 @@ class Magic(commands.Cog):
 
             elif ctx.message.content == ";knock":
                 if path == "path6":
-                    await update_path(user, cycle, path_new="path9")
+                    await self.update_path(user, cycle, path_new="path9")
                 elif path == "path15":
-                    await update_path(user, cycle, path_new="path16")
+                    await self.update_path(user, cycle, path_new="path16")
 
                 responses = get_dictionary("eeylops_owl")
                 msg = responses["knock"][0]
@@ -889,9 +888,9 @@ class Magic(commands.Cog):
 
             elif ctx.message.content == ";inquire":
                 if path == "path9":
-                    await update_path(user, cycle, path_new="path14")
+                    await self.update_path(user, cycle, path_new="path14")
                 elif path == "path15":
-                    await update_path(user, cycle, path_new="path16")
+                    await self.update_path(user, cycle, path_new="path16")
 
                 responses = get_dictionary("eeylops_owl")["inquire"]
                 msg, topic = responses[actions]
@@ -947,7 +946,7 @@ class Magic(commands.Cog):
                 elif user not in role_galleons.members:
                     msg = responses["purchasing"]["no_moneybag"][0].format(user.display_name)
                     topic = responses["purchasing"]["no_moneybag"][1]
-                    await update_path(user, cycle, path_new="path7")
+                    await self.update_path(user, cycle, path_new="path7")
                     await penalize(user, cycle, points=5)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
@@ -964,7 +963,7 @@ class Magic(commands.Cog):
                     purchaser = ctx.guild.get_member(int(purchaser_id))
                     msg = responses["purchasing"]["out_of_stock"][0].format(user.display_name, purchaser.display_name)
                     topic = responses["purchasing"]["out_of_stock"][1]
-                    await update_path(user, cycle, path_new="path24")
+                    await self.update_path(user, cycle, path_new="path24")
                     await penalize(user, cycle, points=10)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
@@ -1005,7 +1004,7 @@ class Magic(commands.Cog):
                         await ctx.channel.edit(topic=topic)
 
                         if path != "path0":
-                            await update_path(user, cycle, path_new="path2")
+                            await self.update_path(user, cycle, path_new="path2")
 
                         await user.add_roles(role_owl)
                         await ctx.channel.send(f"{user.mention} has acquired 🦉 role")
@@ -1062,7 +1061,7 @@ class Magic(commands.Cog):
             await self.transaction_gringotts(message.author, message.guild, message)
 
         elif spell_check(message.content):
-            await expecto(message.guild, message.author, message.channel, message)
+            await self.expecto(message.guild, message.author, message.channel, message)
 
     async def create_emporium(self, category, guild, msg, message, user):
 
@@ -1089,7 +1088,7 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
 
             if user not in role_owl.members and user not in role_galleons.members:
-                await update_path(user, cycle, path_new="path6")
+                await self.update_path(user, cycle, path_new="path6")
 
             await asyncio.sleep(3)
             await message.delete()
@@ -1112,7 +1111,7 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
 
             if user not in role_owl.members and user not in role_galleons.members:
-                await update_path(user, cycle, path_new="path6")
+                await self.update_path(user, cycle, path_new="path6")
 
             await asyncio.sleep(3)
             await message.delete()
@@ -1160,7 +1159,7 @@ class Magic(commands.Cog):
 
             if user not in role_galleons.members:
                 if path not in ["path8", "path18", "path12", "path13"]:
-                    await update_path(user, cycle, path_new="path8")
+                    await self.update_path(user, cycle, path_new="path8")
                 await asyncio.sleep(3)
                 await message.delete()
             else:
@@ -1184,7 +1183,7 @@ class Magic(commands.Cog):
 
             if user not in role_galleons.members:
                 if path not in ["path8", "path18", "path12", "path13"]:
-                    await update_path(user, cycle, path_new="path8")
+                    await self.update_path(user, cycle, path_new="path8")
                 await asyncio.sleep(3)
                 await message.delete()
             else:
@@ -1217,7 +1216,7 @@ class Magic(commands.Cog):
             await message.delete()
 
             if path in ["path10", "path3"]:
-                await update_path(user, cycle, path_new="path11")
+                await self.update_path(user, cycle, path_new="path11")
 
             await self.transaction_ollivanders(guild, user, ollivanders)
 
@@ -1238,7 +1237,7 @@ class Magic(commands.Cog):
             await message.delete()
 
             if path in ["path10", "path3"]:
-                await update_path(user, cycle, path_new="path11")
+                await self.update_path(user, cycle, path_new="path11")
 
             await self.transaction_ollivanders(guild, user, ollivanders_channel)
 
@@ -1252,14 +1251,11 @@ class Magic(commands.Cog):
             return
 
         elif actions < 3:
-
             role_star = discord.utils.get(guild.roles, name="🌟")
             responses = get_dictionary("ollivanders")
-            msg1 = responses["intro1"].format(user.mention)
-            msg2 = responses["intro2"].format(user.mention)
+            msg1 = responses["intro"].format(user.mention)
             await self.secret_response(guild.id, channel.name, msg1)
             await asyncio.sleep(3)
-            await self.secret_response(guild.id, channel.name, msg2)
 
             def check(guess):
                 if guess.author != user:
@@ -1429,7 +1425,7 @@ class Magic(commands.Cog):
                                     cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
                                     if path == "path0":
-                                        await update_path(user, cycle, path_new="path17")
+                                        await self.update_path(user, cycle, path_new="path17")
 
                                     await penalize(user, cycle, points=20)
                                     await self.secret_response(guild.id, channel.name, msg)
@@ -1462,7 +1458,7 @@ class Magic(commands.Cog):
                 wand_core = "Wrong"
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 await action_update(user, cycle, actions=3)
                 await penalize(user, cycle, points=10)
@@ -1472,7 +1468,7 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["core_selection"]["invalid1"][0].format(answer.content.title())
@@ -1531,7 +1527,7 @@ class Magic(commands.Cog):
                 msg = responses["wood_selection"]["timeout"]
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 await penalize(user, cycle, points=15)
                 await action_update(user, cycle, actions=3)
@@ -1541,7 +1537,7 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["wood_selection"]["invalid1"][0].format(answer.content.title())
@@ -1599,7 +1595,7 @@ class Magic(commands.Cog):
                 msg = responses["length_selection"]["timeout"]
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 await penalize(user, cycle, points=15)
                 await action_update(user, cycle, actions=3)
@@ -1609,7 +1605,7 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["length_selection"]["invalid1"][0].format(answer.content.title())
@@ -1665,7 +1661,7 @@ class Magic(commands.Cog):
                 msg = responses["flexibility_selection"]["timeout"]
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 await penalize(user, cycle, points=15)
                 await action_update(user, cycle, actions=3)
@@ -1675,7 +1671,7 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if path == "path0":
-                    await update_path(user, cycle, path_new="path17")
+                    await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["flexibility_selection"]["invalid1"][0].format(answer.content.title())
@@ -1766,7 +1762,7 @@ class Magic(commands.Cog):
                     webhook.execute()
 
                     if path != "path0":
-                        await update_path(user, cycle, path_new="path15")
+                        await self.update_path(user, cycle, path_new="path15")
 
                     await user.add_roles(role_galleons)
                     await asyncio.sleep(6)
@@ -1783,7 +1779,7 @@ class Magic(commands.Cog):
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         if path != "path0":
-            await update_path(user, cycle, path_new="path21")
+            await self.update_path(user, cycle, path_new="path21")
 
         # noinspection PyShadowingNames
         def check(guess):
@@ -1808,7 +1804,7 @@ class Magic(commands.Cog):
                 if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
                     thieves.update_one({}, {"$push": {"names": str(user.id)}})
 
-                await update_path(user, cycle, path_new="path18")
+                await self.update_path(user, cycle, path_new="path18")
                 await action_update(user, cycle, actions=3)
                 await penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
@@ -1834,7 +1830,7 @@ class Magic(commands.Cog):
                     if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
                         thieves.update_one({}, {"$push": {"names": str(user.id)}})
 
-                    await update_path(user, cycle, path_new="path18")
+                    await self.update_path(user, cycle, path_new="path18")
                     await action_update(user, cycle, actions=3)
                     await penalize(user, cycle, points=10)
 
@@ -1859,10 +1855,10 @@ class Magic(commands.Cog):
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         if path != "path0":
-            await update_path(user, cycle, path_new="path22")
+            await self.update_path(user, cycle, path_new="path22")
 
         if path == "path18":
-            await update_path(user, cycle, path_new="path5")
+            await self.update_path(user, cycle, path_new="path5")
 
         # noinspection PyShadowingNames
         def check(guess):
@@ -1886,7 +1882,7 @@ class Magic(commands.Cog):
                 if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
                     thieves.update_one({}, {"$push": {"names": str(user.id)}})
 
-                await update_path(user, cycle, path_new="path12")
+                await self.update_path(user, cycle, path_new="path12")
                 await action_update(user, cycle, actions=3)
                 await penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
@@ -1913,7 +1909,7 @@ class Magic(commands.Cog):
                     if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
                         thieves.update_one({}, {"$push": {"names": str(user.id)}})
 
-                    await update_path(user, cycle, path_new="path12")
+                    await self.update_path(user, cycle, path_new="path12")
                     await action_update(user, cycle, actions=3)
                     await penalize(user, cycle, points=10)
 
@@ -1942,7 +1938,7 @@ class Magic(commands.Cog):
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
         if path != "path0":
-            await update_path(user, cycle, path_new="path23")
+            await self.update_path(user, cycle, path_new="path23")
 
         # noinspection PyShadowingNames
         def check(guess):
@@ -1967,7 +1963,7 @@ class Magic(commands.Cog):
                 if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
                     thieves.update_one({}, {"$push": {"names": str(user.id)}})
 
-                await update_path(user, cycle, path_new="path13")
+                await self.update_path(user, cycle, path_new="path13")
                 await action_update(user, cycle, actions=3)
                 await penalize(user, cycle, points=5)
                 await self.secret_response(guild.id, message.channel.name, msg)
@@ -1994,7 +1990,7 @@ class Magic(commands.Cog):
                     if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
                         thieves.update_one({}, {"$push": {"names": str(user.id)}})
 
-                    await update_path(user, cycle, path_new="path13")
+                    await self.update_path(user, cycle, path_new="path13")
                     await action_update(user, cycle, actions=3)
                     await penalize(user, cycle, points=10)
 

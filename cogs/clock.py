@@ -10,8 +10,8 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.magic import penalize, update_path
-from cogs.magic import get_data, get_dictionary
+from cogs.magic import penalize, get_data, get_dictionary
+from cogs.magic import Magic
 from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
 from cogs.frame import frame_starlight, frame_blazing
 from cogs.admin import Admin, reset_boss
@@ -112,6 +112,10 @@ async def reset_library():
 
 async def reset_purchase():
     quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
+
+
+async def owls_restock():
+    owls.update_many({}, {"$set": {"purchaser": "None"}})
 
 
 class Clock(commands.Cog):
@@ -219,9 +223,6 @@ class Clock(commands.Cog):
             except AttributeError:
                 return
 
-    async def owls_restock(self):
-        owls.update_many({}, {"$set": {"purchaser": "None"}})
-
     # noinspection PyUnusedLocal
     @commands.command()
     @commands.is_owner()
@@ -242,7 +243,7 @@ class Clock(commands.Cog):
                     responses = get_dictionary("send_off")["complete"]
 
                     if path != "path0":
-                        await update_path(user, cycle, path_new="path3")
+                        await Magic(self).update_path(user, cycle, path_new="path3")
 
                     await user.send(responses[0])
                     await asyncio.sleep(4)
@@ -254,7 +255,7 @@ class Clock(commands.Cog):
             elif entry["scenario"] == 1:
                 user = self.client.get_user(int(entry["user_id"]))
                 msg = f"Your {entry['type']} has fully recovered"
-                await update_path(user, cycle, path_new="path20")
+                await Magic(self).update_path(user, cycle, path_new="path20")
                 await user.send(msg)
 
             sendoff.update_one({
@@ -338,7 +339,7 @@ class Clock(commands.Cog):
                 await Events(self.client).reset_prefects()
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
-                await self.owls_restock()
+                await owls_restock()
 
             if hour_minute == "00:00":
                 server = self.client.get_guild(412057028887052288)
