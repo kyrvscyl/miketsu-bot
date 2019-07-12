@@ -91,10 +91,36 @@ def get_profile_finished(user):
         hints_unlocked = profile["quest1"][0]["hints_unlocked"]
         owl_final = profile["quest1"][0]["owl"]
         wand = profile["quest1"][0]["wand"]
+        paths = profile["quest1"][0]["paths_unlocked"]
 
         break
 
-    return score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand
+    return score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths
+
+
+# noinspection PyUnboundLocalVariable
+def get_profile_history(user, cycle):
+    data = quests.aggregate([
+        {
+            '$match': {
+                'user_id': str(user.id)
+            }
+        }, {
+            '$unwind': {
+                'path': '$quest1'
+            }
+        }, {
+            '$match': {
+                'quest1.cycle': int(cycle)
+            }
+        }
+    ])
+
+    for result in data:
+        profile = result
+        break
+
+    return profile
 
 
 # noinspection PyUnboundLocalVariable
@@ -265,13 +291,13 @@ class Magic(commands.Cog):
 
             description = \
                 f"Owl Requirements: \n" \
-                f"• Type: {get_owl_type(trait)} owl\n" \
-                f"•Trait: {trait.title()}\n\n" \
-                f"Wand Requirements:\n" \
-                f"• Flexibility: {flexibility.title()}\n" \
-                f"• Length: {length.title()}\n" \
-                f"• Core: {core.title()}\n" \
-                f"• Wood: {wood.title()}\n"
+                    f"• Type: {get_owl_type(trait)} owl\n" \
+                    f"•Trait: {trait.title()}\n\n" \
+                    f"Wand Requirements:\n" \
+                    f"• Flexibility: {flexibility.title()}\n" \
+                    f"• Length: {length.title()}\n" \
+                    f"• Core: {core.title()}\n" \
+                    f"• Wood: {wood.title()}\n"
 
             patronus_descriptions.append(description)
 
@@ -435,7 +461,11 @@ class Magic(commands.Cog):
                 if strength > 100:
                     strength = round(random.uniform(98, 99.99), 2)
 
-                score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand = get_profile_finished(user)
+                added_points = round(75 * (strength / 100))
+
+                score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths \
+                    = get_profile_finished(user)
+
                 t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
                 t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
                 delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
@@ -448,9 +478,20 @@ class Magic(commands.Cog):
                 })
 
                 description = \
-                    f"• Cycle Score: {score} points\n" \
-                    f"• Hints unlocked: {hints_unlocked}\n" \
-                    f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
+                    f"• Cycle Score: {score + added_points} points, (+{added_points} bonus points)\n" \
+                        f"• Hints unlocked: {hints_unlocked}\n" \
+                        f"• Paths unlocked: {paths}\n" \
+                        f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
+
+                quests.update_one({
+                    "user_id": str(user.id), "quest1.cycle": cycle}, {
+                    "$inc": {
+                        "quest1.$.cycle": added_points
+                    },
+                    "$set": {
+                        "quest1.$.strength": strength
+                    }
+                })
 
                 embed = discord.Embed(
                     color=0x50e3c2,
@@ -472,6 +513,88 @@ class Magic(commands.Cog):
                 await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
                 await channel.send(content=content, embed=embed)
 
+    # noinspection PyTypeChecker,PyUnboundLocalVariable
+    @commands.command(aliases=["cycle"])
+    async def show_cycle(self, ctx, user: discord.Member = None, *, args):
+
+        requestor = ctx.message.author
+        requestor_profile = quests.find_one({"user_id": str(requestor)}, {"_id": 0}) is None
+
+        if requestor_profile is None:
+            await ctx.channel.send("You have to finish your own first cycle first.")
+
+        elif requestor_profile is not None:
+
+            query = quests.aggregate([{
+                '$match': {
+                    'user_id': str(requestor.id)}}, {
+                '$project': {
+                    '_id': 0,
+                    'cycle': {
+                        '$slice': ['$quest1.cycle', -1]
+                    }
+                }}
+            ])
+
+            for result in query:
+                profile = result
+                break
+
+            if profile["cycle"][0] <= 1:
+                await ctx.channel.send("You have to finish your own first cycle first.")
+
+            elif profile["cycle"][0] >= 2:
+
+                try:
+                    cycle_query = int(args)
+                    profile = get_profile_history(user, cycle_query)
+                except ValueError:
+                    return
+
+                patronus_summon = profile["quest1"][0]["patronus"]["patronus"]
+                score = profile["quest1"][0]["score"]
+                timestamp_start = profile["quest1"][0]["timestamp_start"]
+                hints_unlocked = profile["quest1"][0]["hints_unlocked"]
+                owl_final = profile["quest1"][0]["owl"]
+                wand = profile["quest1"][0]["wand"]
+                paths = profile["quest1"][0]["paths_unlocked"]
+                strength = profile["quest1"][0]["strength"]
+
+                t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
+                t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
+                delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
+
+                patronus_profile = patronus.find_one({
+                    "patronus": patronus_summon.lower()}, {
+                    "_id": 0,
+                    "trait": 1,
+                    "link": 1
+                })
+
+                description = \
+                    f"• Cycle Score: {score} points\n" \
+                        f"• Hints unlocked: {hints_unlocked}\n" \
+                        f"• Paths unlocked: {paths}\n" \
+                        f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
+
+                embed = discord.Embed(
+                    color=0x50e3c2,
+                    title=f"Your Patronus: {patronus_summon.title()} | Strength: {strength}%",
+                    description=description
+                )
+                embed.set_image(url=patronus_profile["link"])
+                embed.set_footer(text=f"Hours spent: {delta} hours")
+                embed.set_author(
+                    name=f"{user.name} | Cycle #{cycle_query} results",
+                    icon_url=user.avatar_url
+                )
+                embed.add_field(
+                    name="Wand Properties",
+                    value=f"{wand['length']} inches, {wand['flexibility']}, {wand['core'].replace(' ', '-')}-cored, "
+                    f"{wand['wood']} wand"
+                )
+                await ctx.channel.send(embed=embed)
+
     @commands.command(aliases=["progress"])
     @commands.has_role("🐬")
     async def show_progress(self, ctx):
@@ -487,10 +610,10 @@ class Magic(commands.Cog):
 
             description = \
                 f"• Current Score: {score}\n" \
-                f"• Hours passed: {hours_passed}\n" \
-                f"• Penalties: {1000 - score}\n" \
-                f"• Current Path: {current_path.capitalize()}\n" \
-                f"• Hints Unlocked: {hints_unlocked}"
+                    f"• Hours passed: {hours_passed}\n" \
+                    f"• Penalties: {1000 - score}\n" \
+                    f"• Current Path: {current_path.capitalize()}\n" \
+                    f"• Hints Unlocked: {hints_unlocked}"
 
             embed = discord.Embed(
                 color=ctx.message.author.colour,
@@ -592,7 +715,7 @@ class Magic(commands.Cog):
                 "server": server["server"]}, {
                 "_id": 0, "welcome": 1, "sorting": 1, "letter": 1
             })
-            
+
             description = get_dictionary("start_quest")["letter"].format(
                 user.name, request["welcome"], request["sorting"]
             )
@@ -1614,7 +1737,7 @@ class Magic(commands.Cog):
 
                 if vault_password != "Wrong":
                     msg1 = f"{user.mention} has acquired 💰 role"
-                    msg2 = responses["success"].format(user.display_name)
+                    msg2 = responses["success"].format(user.mention)
                     vault = f"{str(user.id).replace('1', '@').replace('5', '%').replace('7', '&').replace('3', '#')}"
 
                     secret = books.find_one({"server": str(guild.id)}, {"_id": 0, str(message.channel.name): 1})
