@@ -140,9 +140,10 @@ def get_profile_progress(user):
         score = profile["quest1"][0]["score"]
         timestamp_start = profile["quest1"][0]["timestamp_start"]
         hints_unlocked = profile["quest1"][0]["hints_unlocked"]
+        paths_unlocked = profile["quest1"][0]["paths_unlocked"]
         break
 
-    return score, timestamp_start, current_path, cycle, hints_unlocked
+    return score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked
 
 
 def check_quest(user):
@@ -489,7 +490,8 @@ class Magic(commands.Cog):
                         "quest1.$.cycle": added_points
                     },
                     "$set": {
-                        "quest1.$.strength": strength
+                        "quest1.$.strength": strength,
+                        "quest1.$.timestamp": current_timestamp()
                     }
                 })
 
@@ -501,7 +503,7 @@ class Magic(commands.Cog):
                 embed.set_image(url=patronus_profile["link"])
                 embed.set_footer(text=f"Hours spent: {delta} hours")
                 embed.set_author(
-                    name=f"{user.name} | Cycle #{cycle} results!",
+                    name=f"{user.display_name} | Cycle #{cycle} results!",
                     icon_url=user.avatar_url
                 )
                 embed.add_field(
@@ -551,25 +553,20 @@ class Magic(commands.Cog):
                 except ValueError:
                     return
 
-                patronus_summon = profile["quest1"][0]["patronus"]["patronus"]
-                score = profile["quest1"][0]["score"]
-                timestamp_start = profile["quest1"][0]["timestamp_start"]
-                hints_unlocked = profile["quest1"][0]["hints_unlocked"]
-                owl_final = profile["quest1"][0]["owl"]
-                wand = profile["quest1"][0]["wand"]
-                paths = profile["quest1"][0]["paths_unlocked"]
-                strength = profile["quest1"][0]["strength"]
+                patronus_summon = profile["quest1"]["patronus"]["patronus"]
+                score = profile["quest1"]["score"]
+                timestamp_start = profile["quest1"]["timestamp_start"]
+                timestamp_end = profile["quest1"]["timestamp"]
+                hints_unlocked = profile["quest1"]["hints_unlocked"]
+                owl_final = profile["quest1"]["owl"]
+                wand = profile["quest1"]["wand"]
+                paths = profile["quest1"]["paths_unlocked"]
+                strength = profile["quest1"]["strength"]
+                patronus_profile = profile["quest1"]["patronus"]
 
                 t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
-                t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
+                t2 = datetime.strptime(timestamp_end, "%Y-%b-%d %HH")
                 delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
-
-                patronus_profile = patronus.find_one({
-                    "patronus": patronus_summon.lower()}, {
-                    "_id": 0,
-                    "trait": 1,
-                    "link": 1
-                })
 
                 description = \
                     f"• Cycle Score: {score} points\n" \
@@ -585,7 +582,7 @@ class Magic(commands.Cog):
                 embed.set_image(url=patronus_profile["link"])
                 embed.set_footer(text=f"Hours spent: {delta} hours")
                 embed.set_author(
-                    name=f"{user.name} | Cycle #{cycle_query} results",
+                    name=f"{user.display_name} | Cycle #{cycle_query} results",
                     icon_url=user.avatar_url
                 )
                 embed.add_field(
@@ -595,35 +592,62 @@ class Magic(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+    # noinspection PyUnboundLocalVariable
     @commands.command(aliases=["progress"])
     @commands.has_role("🐬")
     async def show_progress(self, ctx):
 
-        if not check_quest(ctx.message.author):
-            return
+        requestor = ctx.message.author
+        requestor_profile = quests.find_one({"user_id": str(requestor)}, {"_id": 0}) is None
 
-        elif check_quest(ctx.message.author):
-            score, timestamp_start, current_path, cycle, hints_unlocked = get_profile_progress(ctx.message.author)
-            t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
-            t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
-            hours_passed = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
+        if requestor_profile is None:
+            await ctx.channel.send("You have to finish your own first cycle first.")
 
-            description = \
-                f"• Current Score: {score}\n" \
-                    f"• Hours passed: {hours_passed}\n" \
-                    f"• Penalties: {1000 - score}\n" \
-                    f"• Current Path: {current_path.capitalize()}\n" \
-                    f"• Hints Unlocked: {hints_unlocked}"
+        elif requestor_profile is not None:
 
-            embed = discord.Embed(
-                color=ctx.message.author.colour,
-                description=description
-            )
-            embed.set_author(
-                name=f"{ctx.message.author}'s Cycle #{cycle}",
-                icon_url=ctx.message.author.avatar_url
-            )
-            await ctx.message.author.send(embed=embed)
+            query = quests.aggregate([{
+                '$match': {
+                    'user_id': str(requestor.id)}}, {
+                '$project': {
+                    '_id': 0,
+                    'cycle': {
+                        '$slice': ['$quest1.cycle', -1]
+                    }
+                }}
+            ])
+
+            for result in query:
+                profile = result
+                break
+
+            if profile["cycle"][0] <= 1:
+                await ctx.channel.send("You have to finish your own first cycle first.")
+
+            elif profile["cycle"][0] >= 2:
+
+                score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked\
+                    = get_profile_progress(ctx.message.author)
+                t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
+                t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
+                hours_passed = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
+
+                description = \
+                    f"• Current Score: {score}\n" \
+                        f"• Hours passed: {hours_passed}\n" \
+                        f"• Penalties: {1000 - score}\n" \
+                        f"• Current Path: {current_path.replace('path', 'Path ').capitalize()}\n" \
+                        f"• Paths unlocked: {paths_unlocked}\n" \
+                        f"• Hints Unlocked: {hints_unlocked}"
+
+                embed = discord.Embed(
+                    color=ctx.message.author.colour,
+                    description=description
+                )
+                embed.set_author(
+                    name=f"{ctx.message.author}'s Cycle #{cycle}",
+                    icon_url=ctx.message.author.avatar_url
+                )
+                await ctx.message.author.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
