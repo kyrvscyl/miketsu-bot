@@ -83,7 +83,6 @@ class Library(commands.Cog):
 
                 try:
                     for field in entry["fields"]:
-                        print(field)
                         embed.add_embed_field(
                             name=field["name"],
                             value=field["value"],
@@ -96,7 +95,7 @@ class Library(commands.Cog):
                     user_id = generate_embed_value_1(entry, "footer")["text"]
                     user = self.client.get_user(int(user_id))
                     embed.set_footer(
-                        text=f"Guide by {user}",
+                        text=f"Guide by {user.name}",
                         icon_url=user.avatar_url
                     )
                 except TypeError:
