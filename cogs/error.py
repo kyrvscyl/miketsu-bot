@@ -68,8 +68,12 @@ class Error(commands.Cog):
 
         # Lacks arguments
         elif isinstance(error, commands.MissingRequiredArgument):
+
             if str(ctx.command) == "summon":
                 await ctx.channel.send("Use `;summon <1 or 10>`")
+
+            elif str(ctx.command) != "bounty":
+                await ctx.channel.send("Hi! I can search for bounty locations. Use `;bounty <shikigami>`")
 
             elif str(ctx.command) != "summon":
                 await self.submit_error(ctx, error)
