@@ -946,7 +946,9 @@ class Magic(commands.Cog):
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
                     send_messages=True,
-                    read_message_history=False)
+                    read_message_history=False,
+                    add_reactions=True
+                )
             }
 
             emporium = await guild.create_text_channel("eeylops-owl-emporium", category=category, overwrites=overwrites)
@@ -971,7 +973,8 @@ class Magic(commands.Cog):
             await emporium_channel.set_permissions(
                 user, read_messages=True,
                 send_messages=True,
-                read_message_history=False
+                read_message_history=False,
+                add_reactions=True
             )
             await message.add_reaction("✨")
 
@@ -1010,7 +1013,9 @@ class Magic(commands.Cog):
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
                     send_messages=True,
-                    read_message_history=False)
+                    read_message_history=False,
+                    add_reactions=True
+                )
             }
 
             gringotts = await guild.create_text_channel(
@@ -1041,7 +1046,8 @@ class Magic(commands.Cog):
                 user,
                 read_messages=True,
                 send_messages=True,
-                read_message_history=False
+                read_message_history=False,
+                add_reactions=True
             )
             await message.add_reaction("✨")
             await gringotts_channel.edit(topic=topic)
@@ -1071,7 +1077,8 @@ class Magic(commands.Cog):
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
                     send_messages=True,
-                    read_message_history=False
+                    read_message_history=False,
+                    add_reactions=True
                 )
             }
 
@@ -1095,7 +1102,8 @@ class Magic(commands.Cog):
                 user,
                 read_messages=True,
                 send_messages=True,
-                read_message_history=False
+                read_message_history=False,
+                add_reactions=True
             )
             await message.add_reaction("✨")
             await asyncio.sleep(1)
@@ -1120,8 +1128,8 @@ class Magic(commands.Cog):
 
             role_star = discord.utils.get(guild.roles, name="🌟")
             responses = get_dictionary("ollivanders")
-            msg1 = responses["intro1"].format(user.display_name)
-            msg2 = responses["intro2"].format(user.display_name)
+            msg1 = responses["intro1"].format(user.mention)
+            msg2 = responses["intro2"].format(user.mention)
             await self.secret_response(guild.id, channel.name, msg1)
             await asyncio.sleep(2)
             await self.secret_response(guild.id, channel.name, msg2)
@@ -1138,7 +1146,7 @@ class Magic(commands.Cog):
                 await self.client.wait_for("message", timeout=30, check=check)
 
             except asyncio.TimeoutError:
-                msg = responses["timeout_intro"].format(user.display_name)
+                msg = responses["timeout_intro"].format(user.mention)
                 await self.action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
 
@@ -1150,19 +1158,19 @@ class Magic(commands.Cog):
 
             else:
                 if user not in role_star.members and path in ["path11", "path3", "path10", "path0"]:
-                    msg1 = responses["valid"][0].format(user.display_name)
-                    msg2 = responses["valid"][1].format(user.display_name)
+                    msg1 = responses["valid"][0].format(user.mention)
+                    msg2 = responses["valid"][1].format(user.mention)
                     topic = responses["valid"][2]
                     await self.action_update(user, cycle, actions=3)
                     await self.secret_response(guild.id, channel.name, msg1)
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(3)
                     await self.secret_response(guild.id, channel.name, msg2)
                     await channel.edit(topic=topic)
                     await asyncio.sleep(3)
                     await self.wand_personalise(user, guild, channel, cycle, role_star, responses)
 
                 else:
-                    msg = responses["valid_no_owl"][0].format(user.display_name)
+                    msg = responses["valid_no_owl"][0].format(user.mention)
                     topic = responses["valid_no_owl"][1]
                     await self.penalize(user, cycle, points=25)
                     await self.action_update(user, cycle, actions=3)
@@ -1270,7 +1278,7 @@ class Magic(commands.Cog):
                                     "reaction_add", timeout=60, check=check
                                 )
                             except asyncio.TimeoutError:
-                                msg = responses["timeout_response"].format(user.display_name)
+                                msg = responses["timeout_response"].format(user.mention)
                                 await self.penalize(user, cycle, points=20)
                                 await self.secret_response(guild.id, channel.name, msg)
                                 break
@@ -1292,7 +1300,7 @@ class Magic(commands.Cog):
                                     break
 
                                 elif str(reaction.emoji) == "❌":
-                                    msg = responses["timeout_response"].format(user.display_name)
+                                    msg = responses["timeout_response"].format(user.mention)
                                     cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
                                     if path == "path0":
@@ -1306,7 +1314,7 @@ class Magic(commands.Cog):
     async def get_wand_core(self, user, guild, channel, responses):
 
         formatted_cores = "`, `".join(cores)
-        msg = responses["core_selection"]["1"].format(user.display_name, formatted_cores)
+        msg = responses["core_selection"]["1"].format(user.mention, formatted_cores)
         await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
@@ -1361,7 +1369,6 @@ class Magic(commands.Cog):
             else:
                 wand_core = answer.content
                 msg = responses["core_selection"]["chose"][0].format(
-                    user.display_name,
                     wand_core.capitalize(),
                     responses["core_description"][f'{wand_core.lower()}']
                 )
@@ -1377,7 +1384,7 @@ class Magic(commands.Cog):
     async def get_wand_wood(self, user, guild, channel, wood_selection, responses):
 
         formatted_woods = "`, `".join(wood_selection)
-        msg = responses["wood_selection"]["1"].format(user.display_name, formatted_woods)
+        msg = responses["wood_selection"]["1"].format(user.mention, formatted_woods)
         await asyncio.sleep(1)
         await self.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
@@ -1432,7 +1439,6 @@ class Magic(commands.Cog):
             else:
                 wand_wood = answer.content
                 msg = responses["wood_selection"]["chose"][0].format(
-                    user.display_name,
                     wand_wood.capitalize(),
                     responses["wood_description"][f'{wand_wood.lower()}']
                 )
@@ -1501,7 +1507,7 @@ class Magic(commands.Cog):
 
             else:
                 wand_length = answer.content
-                msg = responses["length_selection"]["chose"][0].format(user.display_name, wand_length)
+                msg = responses["length_selection"]["chose"][0].format(wand_length)
                 topic = responses["length_selection"]["chose"][1]
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
@@ -1568,7 +1574,7 @@ class Magic(commands.Cog):
 
             else:
                 wand_flexibility = answer.content
-                msg = responses["flexibility_selection"]["chose"][0].format(user.display_name, wand_flexibility.title())
+                msg = responses["flexibility_selection"]["chose"][0].format(wand_flexibility.title())
                 topic = responses["flexibility_selection"]["chose"][1]
                 await channel.edit(topic=topic)
                 await self.secret_response(guild.id, channel.name, msg)
