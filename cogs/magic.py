@@ -378,7 +378,6 @@ class Magic(commands.Cog):
             "$set": {
                 "quest1.$.current_path": path_new,
                 "quest1.$.timestamp": current_timestamp(),
-                "quest1.$.actions": 0,
                 "quest1.$.hints": ["locked", "locked", "locked", "locked", "locked"]
             },
             "$inc": {
