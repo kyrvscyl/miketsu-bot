@@ -1708,9 +1708,9 @@ class Magic(commands.Cog):
 
         role_galleons = discord.utils.get(message.guild.roles, name="💰")
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
-        responses = get_dictionary("gringotts_bank")
 
         if user in role_galleons.members:
+            responses = get_dictionary("gringotts_bank")
             msg = responses["has_moneybag"].format(user.display_name)
             await self.secret_response(guild.id, message.channel.name, msg)
             await action_update(user, cycle, actions=3)
@@ -1722,10 +1722,12 @@ class Magic(commands.Cog):
                 return
 
             elif actions < 3 and "vault" in message.content:
-                await action_update(user, cycle, actions=5)
+                responses = get_dictionary("gringotts_bank")
+                await action_update(user, cycle, actions=10)
                 await self.vault_access(user, guild, role_galleons, message, responses)
 
             elif actions < 3:
+                responses = get_dictionary("gringotts_bank")
                 msg = responses["transaction"][actions].format(user.mention)
                 await self.secret_response(guild.id, message.channel.name, msg)
                 await action_update(user, cycle, actions=1)

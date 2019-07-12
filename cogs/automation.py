@@ -237,16 +237,19 @@ class Events(commands.Cog):
                 await record_scroll.send(embed=embed)
 
                 if changed_role2[0].name == "🐬":
-                    cycle, path, timestamp, user_hints, actions, purchase = get_data(before)
+                    try:
 
-                    quests.update_one({
-                        "user_id": str(before.id),
-                        "quest1.cycle": cycle}, {
-                        "$set": {
-                            "quest1.$.status": "completed"
-                        }
-                    })
+                        cycle, path, timestamp, user_hints, actions, purchase = get_data(before)
 
+                        quests.update_one({
+                            "user_id": str(before.id),
+                            "quest1.cycle": cycle}, {
+                            "$set": {
+                                "quest1.$.status": "completed"
+                            }
+                        })
+                    except UnboundLocalError:
+                        return
 
             elif not changed_role2:
 
