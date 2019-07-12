@@ -226,6 +226,8 @@ class Clock(commands.Cog):
         await self.send_off_report()
         await asyncio.sleep(5)
         await self.send_off_complete()
+        await actions_reset()
+        await self.reset_purchase()
 
     async def send_off_complete(self):
         for entry in sendoff.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
