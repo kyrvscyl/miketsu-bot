@@ -1599,7 +1599,7 @@ class Magic(commands.Cog):
                 await self.vault_access(user, guild, role_galleons, message, responses)
 
             elif actions < 3:
-                msg = responses["transaction"][actions].format(user)
+                msg = responses["transaction"][actions].format(user.mention)
                 await self.secret_response(guild.id, message.channel.name, msg)
                 await self.action_update(user, cycle, actions=1)
                 await self.penalize(user, cycle, points=10)
@@ -1649,7 +1649,7 @@ class Magic(commands.Cog):
     # noinspection PyUnboundLocalVariable
     async def obtain_identity(self, user, guild, message, responses):
 
-        msg = responses["get_identity"]["1"].format(user.display_name)
+        msg = responses["get_identity"]["1"].format(user.mention)
         await self.secret_response(guild.id, message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
@@ -1673,7 +1673,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 answer = "Wrong"
-                msg = responses["get_identity"]["timeout"][0].format(user.display_name)
+                msg = responses["get_identity"]["timeout"][0].format(user.mention)
                 topic = responses["get_identity"]["timeout"][1]
 
                 if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
@@ -1689,17 +1689,17 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if i == 0:
-                    msg = responses["get_identity"]["invalid1"][0].format(user.display_name)
+                    msg = responses["get_identity"]["invalid1"][0].format(user.mention)
                     topic = responses["get_identity"]["invalid1"][1]
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 1:
-                    msg = responses["get_identity"]["invalid2"][0].format(user.display_name)
+                    msg = responses["get_identity"]["invalid2"][0].format(user.mention)
                     topic = responses["get_identity"]["invalid2"][1]
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 2:
-                    msg = responses["get_identity"]["invalid3"][0].format(user.display_name)
+                    msg = responses["get_identity"]["invalid3"][0].format(user.mention)
                     topic = responses["get_identity"]["invalid3"][1]
 
                     if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
@@ -1726,7 +1726,7 @@ class Magic(commands.Cog):
     # noinspection PyUnboundLocalVariable
     async def obtain_vault_number(self, user, guild, message, responses):
 
-        msg = responses["get_vault"]["1"].format(user.display_name)
+        msg = responses["get_vault"]["1"].format(user.mention)
         await self.secret_response(guild.id, message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
 
@@ -1752,7 +1752,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 answer = "Wrong"
-                msg = responses["get_vault"]["timeout"][0].format(user.display_name)
+                msg = responses["get_vault"]["timeout"][0].format(user.mention)
                 topic = responses["get_vault"]["timeout"][1]
 
                 if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
@@ -1768,18 +1768,18 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if i == 0:
-                    msg = responses["get_vault"]["invalid1"][0].format(user.display_name)
+                    msg = responses["get_vault"]["invalid1"][0].format(user.mention)
                     topic = responses["get_vault"]["invalid1"][1]
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 1:
-                    msg = responses["get_vault"]["invalid2"][0].format(user.display_name)
+                    msg = responses["get_vault"]["invalid2"][0].format(user.mention)
                     topic = responses["get_vault"]["invalid2"][1]
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 2:
                     answer = "Wrong"
-                    msg = responses["get_vault"]["invalid3"][0].format(user.display_name)
+                    msg = responses["get_vault"]["invalid3"][0].format(user.mention)
                     topic = responses["get_vault"]["invalid3"][1]
 
                     if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
@@ -1806,8 +1806,8 @@ class Magic(commands.Cog):
     # noinspection PyUnboundLocalVariable
     async def obtain_vault_password(self, user, guild, message, responses):
 
-        msg1 = responses["get_password"]["1"].format(user.display_name)
-        msg2 = responses["get_password"]["2"].format(user.display_name)
+        msg1 = responses["get_password"]["1"].format(user.mention)
+        msg2 = responses["get_password"]["2"].format(user.mention)
         await asyncio.sleep(1)
         await self.secret_response(guild.id, message.channel.name, msg1)
         await asyncio.sleep(3)
@@ -1834,7 +1834,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 answer = "Wrong"
-                msg = responses["get_password"]["timeout"][0].format(user.display_name)
+                msg = responses["get_password"]["timeout"][0].format(user.mention)
                 topic = responses["get_password"]["timeout"][1]
 
                 if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
@@ -1850,18 +1850,18 @@ class Magic(commands.Cog):
             except KeyError:
 
                 if i == 0:
-                    msg = responses["get_password"]["invalid1"][0].format(user.display_name)
+                    msg = responses["get_password"]["invalid1"][0].format(user.mention)
                     topic = responses["get_password"]["invalid1"][1]
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 1:
-                    msg = responses["get_password"]["invalid2"][0].format(user.display_name)
+                    msg = responses["get_password"]["invalid2"][0].format(user.mention)
                     topic = responses["get_password"]["invalid2"][1]
                     await self.penalize(user, cycle, points=5)
 
                 elif i == 2:
                     answer = "Wrong"
-                    msg = responses["get_password"]["invalid3"][0].format(user.display_name)
+                    msg = responses["get_password"]["invalid3"][0].format(user.mention)
                     topic = responses["get_password"]["invalid3"][1]
 
                     if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:

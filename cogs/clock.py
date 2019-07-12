@@ -110,6 +110,10 @@ async def reset_library():
             daily.update_one({"key": "library"}, {"$set": {f"{user_id}": 0}})
 
 
+async def reset_purchase():
+    quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
+
+
 class Clock(commands.Cog):
 
     def __init__(self, client):
@@ -227,7 +231,7 @@ class Clock(commands.Cog):
         await asyncio.sleep(5)
         await self.send_off_complete()
         await actions_reset()
-        await self.reset_purchase()
+        await reset_purchase()
 
     async def send_off_complete(self):
         for entry in sendoff.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
@@ -254,7 +258,19 @@ class Clock(commands.Cog):
                 await Magic(self.client).update_path(user, cycle, path_new="path20")
                 await user.send(msg)
 
-            sendoff.delete_one({"user_id": entry["user_id"]})
+            sendoff.update_one({
+                "user_id": str(user.id)}, {
+                "$unset": {
+                    "report": "",
+                    "weather1": "",
+                    "weather2": "",
+                    "timestamp": "",
+                    "timestamp_update": "",
+                    "timestamp_complete": "",
+                    "delay": "",
+                    "scenario": ""
+                }
+            })
 
     async def send_off_report(self):
         for entry in sendoff.find({"timestamp_update": {"$exists": True}}, {"_id": 0}):
@@ -274,10 +290,6 @@ class Clock(commands.Cog):
                 embed.set_footer(text=f"{entry['timestamp_update']}")
                 await user.send(embed=embed)
                 await asyncio.sleep(1)
-
-    async def reset_purchase(self):
-        quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
-        await self.logging("Resetting everyone's ability to purchase owls to True")
 
     async def clear_secrets(self):
 
@@ -317,7 +329,7 @@ class Clock(commands.Cog):
 
                 await penalty_hour()
                 await actions_reset()
-                await self.reset_purchase()
+                await reset_purchase()
                 await self.clear_secrets()
                 await self.send_off_report()
                 await self.send_off_complete()
