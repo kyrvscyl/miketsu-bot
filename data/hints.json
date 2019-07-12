@@ -33,7 +33,7 @@
     },
     "path7": {
         "1": "Seeing others exchanged their galleons everywhere made you ponder about that dragon-like statue you saw earlier.",
-        "2": "It was told that it is the only wizarding bank that ever existed and it is operated by goblins"
+        "2": "It was told that it is the only wizarding bank that ever existed and it is operated by goblins."
     },
     "path8": {
         "1": "While you were walking at the busy aisle of the bank, you overheard one witch saying, 'I cannot believe that's how easy your vault password is. I mean, revers...'",
@@ -41,21 +41,21 @@
         "3": "Usage of hints may be viable in between goblin queries"
     },
     "path9":{
-        "1": "You contemplated that the Store Manager seems to be welcoming of guests and thought of perhaps, it would be of ease to inquire about the store's owls and everything",
-        "2": "Multiple inquiries may change the responses of the Manager",
-        "3": "Using command `inquire` will able you to interact with the Store Manager"
+        "1": "You contemplated that the Store Manager seems to be welcoming of guests and thought of perhaps, it would be of ease to inquire about the store's owls and everything.",
+        "2": "Multiple inquiries may change the responses of the Manager.",
+        "3": "Using command `inquire` will able you to interact with the Store Manager."
     },
     "path10": {
         "1": "You casted the spell in total confusion that something was entirely missing",
         "2": "Abruptly realizing that back in the alley there was a store that sold magical rods."
     },
     "path11": {
-        "1": "The Ollivanders family is known as the best wandmakers in Britain",
-        "2": "Ollivander remembers every wand he has ever sold"
+        "1": "The Ollivanders family is known as the best wandmakers in Britain.",
+        "2": "Ollivander remembers every wand he has ever sold."
     },
     "path12": {
-        "1": "1st attempt: You politely asked one person who just transacted but she did not entertain you",
-        "2": "2nd attempt: The wizard told you, \"Try to spell your name yourself but with the backward-sloping diagonal line\"",
+        "1": "1st attempt: You politely asked one person who just transacted but she did not entertain you.",
+        "2": "2nd attempt: The wizard told you, \"Try to spell your name yourself but with the backward-sloping diagonal line.\"",
         "3": "Perhaps \\@name works."
     },
     "path13": {
