@@ -596,7 +596,7 @@ class Magic(commands.Cog):
     async def show_progress(self, ctx):
 
         requestor = ctx.message.author
-        requestor_profile = quests.find_one({"user_id": str(requestor)}, {"_id": 0}) is None
+        requestor_profile = quests.find_one({"user_id": str(requestor)}, {"_id": 0})
 
         if requestor_profile is None:
             await ctx.channel.send("You have to finish your own first cycle first.")
@@ -807,16 +807,16 @@ class Magic(commands.Cog):
         t2 = datetime.strptime(current_timestamp(), "%Y-%b-%d %HH")
         delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
-        if delta < 2:
-            await ctx.channel.send(f"{user.mention}, you must wait for {2 - delta} hr before you can unlock a hint")
+        if delta < 1:
+            await ctx.channel.send(f"{user.mention}, you must wait for 1 hr before you can unlock one")
 
-        elif delta >= 2:
+        elif delta >= 1:
             with open("data/hints.json") as f:
                 hints = json.load(f)
 
             try:
                 h = 0
-                while h <= 5:  # Iterating through locked hints
+                while h <= 5:
 
                     if user_hints[h] == "locked":
                         hint_num = str(h + 1)
@@ -839,10 +839,10 @@ class Magic(commands.Cog):
                 await user.send(embed=embed)
 
             except IndexError:
-                await user.send(f"You have used up all your hints for the path.")
+                await user.send(f"You have used up all your hints for this path.")
 
             except KeyError:
-                await user.send(f"You have used up all your hints for the path.")
+                await user.send(f"You have used up all your hints for this path.")
 
     # noinspection PyMethodMayBeStatic
     async def secret_response(self, guild_id, channel_name, description):
@@ -1135,7 +1135,6 @@ class Magic(commands.Cog):
         formatted_thieves = "\n".join(list_thieves_name)
         topic = f"List of Potential Thieves:\n{formatted_thieves}"
 
-        # Topic creation
         if "gringotts-bank" not in channels and int(current_time2()) in [9, 10, 11, 12, 21, 22, 23, 0]:
 
             overwrites = {
@@ -1270,6 +1269,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 msg = responses["timeout_intro"].format(user.mention)
+                await penalize(user, cycle, points=5)
                 await action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
 
