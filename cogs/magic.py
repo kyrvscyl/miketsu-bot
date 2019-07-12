@@ -1050,8 +1050,7 @@ class Magic(commands.Cog):
             role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
 
             if message.author in role_dolphin.members:
-                await self.create_gringotts(message.channel.category, message.guild,
-                                            message.content.lower(), message, message.author)
+                await self.create_gringotts(message.channel.category, message.guild, message, message.author)
 
         elif message.content.lower() == "ollivanders" and str(message.channel.category) == "⛲ Diagon Alley" \
                 and str(message.channel) != "ollivanders":
@@ -1124,7 +1123,7 @@ class Magic(commands.Cog):
         else:
             await reaction_closed(message)
 
-    async def create_gringotts(self, category, guild, msg, message, user):
+    async def create_gringotts(self, category, guild, message, user):
         role_galleons = discord.utils.get(message.guild.roles, name="💰")
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user)
