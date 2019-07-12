@@ -1,7 +1,6 @@
 {
   "ollivanders": {
-    "intro1": "Welcome {}, what can I help you with?",
-    "intro2": "I wondered when I’ll be seeing you, {}. Here to buy your first wand?",
+    "intro": "Welcome {}, what can I help you with? I wondered when I’ll be seeing you. Here to buy your first wand?",
     "timeout_intro": "No interest to buy wands yet, {}? Maybe in time you'll find yours.",
     "invalid": "Oh! You are not here to choose a wand? Feel free to browse my shop then, maybe a wand will choose you instead.",
     "valid": [
