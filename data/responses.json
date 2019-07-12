@@ -1,6 +1,6 @@
 {
   "ollivanders": {
-    "intro1": "Welcome{}, what can I help you with?",
+    "intro1": "Welcome {}, what can I help you with?",
     "intro2": "I wondered when I’ll be seeing you, {}. Here to buy your first wand?",
     "timeout_intro": "No interest to buy wands yet, {}? Maybe in time you'll find yours.",
     "invalid": "Oh! You are not here to choose a wand? Feel free to browse my shop then, maybe a wand will choose you instead.",
@@ -40,7 +40,7 @@
     "core_selection": {
       "1": "{}, lastly, the wand cores.\n\nSelect from the choices: `{}`",
       "chose": [
-        "{}, {}. {}",
+        "{}. {}",
         "The core of a wand is a magical substance placed within the length of wood, usually extracted from a magical creature."
       ],
       "timeout": "{}, you can return again once you have decided well.",
@@ -56,7 +56,7 @@
     "wood_selection": {
       "1": "{}, I just happen to have the appropriate woods for your wand characteristics.\n\nSelect from the choices: `{}`",
       "chose": [
-        "{}, {}. {}",
+        "{}. {}",
         "The wood is embedded with a core of a magical substance and can vary in length."
       ],
       "timeout": "{}, perhaps you could choose only from the available wands?",
@@ -72,7 +72,7 @@
     "length_selection": {
       "1": "We have wand lengths, {}.\nDo tell me, which length in inches best suits your personality?\n\nEnter your choice: 8, 9, 10, 11, 12, 13, or 14.",
       "chose": [
-        "{}, {} inches. Interesting choice.",
+        "{} inches. Interesting choice.",
         "Wand length is categorized into 3 major parts"
       ],
       "timeout": "{}, you can return again once you have decided well.",
@@ -88,7 +88,7 @@
     "flexibility_selection": {
       "1": "Now {}, wands can come too in various flexibility, it entails the ability of the person to adapt to various circumstances. Tell me, how much can you adapt?\n\nChoose from the following: `{}`",
       "chose": [
-        "{}, {}. Another interesting choice.",
+        "{}. Another interesting choice.",
         "Wand flexibility or rigidity denotes the degree of adaptability and willingness to change possessed by the wand-and-owner pair"
       ],
       "timeout": "{}, you can return again once you have decided well.",
