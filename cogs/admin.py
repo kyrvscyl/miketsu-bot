@@ -625,7 +625,7 @@ class Admin(commands.Cog):
             name=":gift_heart: Rewards System",
             value="• Two current guild members will win Nitro\n"
                   "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
-                  "• The 1st one to complete a quest cycle without a moving a path\n\\n​ "
+                  "• The 1st one to complete a quest cycle without a moving a path\n​\n "
                   "• Note: Commands `;progress` and `;cycle` are unlocked once a cycle is finished\n\n​ "
                   ":four_leaf_clover: Good luck!​\n "
         )
