@@ -1062,8 +1062,8 @@ class Magic(commands.Cog):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
-        if "eeylops-owl-emporium" not in channels:  # \
-            # and int(current_time2()) in [8, 9, 10, 11, 12, 13, 20, 21, 22, 23, 0, 1]:
+        if "eeylops-owl-emporium" not in channels \
+                and int(current_time2()) in [8, 9, 10, 11, 12, 13, 20, 21, 22, 23, 0, 1]:
 
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -1085,8 +1085,8 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-        elif "eeylops-owl-emporium" in channels:  # \
-            # and int(current_time2()) in [8, 9, 10, 11, 12, 13, 20, 21, 22, 23, 0, 1]:
+        elif "eeylops-owl-emporium" in channels \
+                and int(current_time2()) in [8, 9, 10, 11, 12, 13, 20, 21, 22, 23, 0, 1]:
 
             emporium_id = books.find_one({
                 "server": str(guild.id)}, {
@@ -1127,7 +1127,7 @@ class Magic(commands.Cog):
         formatted_thieves = "\n".join(list_thieves_name)
         topic = f"List of Potential Thieves:\n{formatted_thieves}"
 
-        if "gringotts-bank" not in channels:  # and int(current_time2()) in [9, 10, 11, 12, 21, 22, 23, 0]:
+        if "gringotts-bank" not in channels and int(current_time2()) in [9, 10, 11, 12, 21, 22, 23, 0]:
 
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -1158,7 +1158,7 @@ class Magic(commands.Cog):
                 await message.delete()
                 await penalize(user, cycle, points=30)
 
-        elif "gringotts-bank" in channels:  # and int(current_time2()) in [9, 10, 11, 12, 21, 22, 23, 0]:
+        elif "gringotts-bank" in channels and int(current_time2()) in [9, 10, 11, 12, 21, 22, 23, 0]:
 
             gringotts_id = books.find_one({"server": str(guild.id)}, {"gringotts-bank": 1})["gringotts-bank"]["id"]
             gringotts_channel = self.client.get_channel(int(gringotts_id))
@@ -1188,7 +1188,7 @@ class Magic(commands.Cog):
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
-        if "ollivanders" not in channels:  # and int(current_time2()) in [13, 14, 15, 16, 17, 1, 2, 3, 4, 5]:
+        if "ollivanders" not in channels and int(current_time2()) in [13, 14, 15, 16, 17, 1, 2, 3, 4, 5]:
 
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(read_messages=False),
@@ -1211,7 +1211,7 @@ class Magic(commands.Cog):
 
             await self.transaction_ollivanders(guild, user, ollivanders)
 
-        elif "ollivanders" in channels:  # and int(current_time2()) in [13, 14, 15, 16, 17, 1, 2, 3, 4, 5]:
+        elif "ollivanders" in channels and int(current_time2()) in [13, 14, 15, 16, 17, 1, 2, 3, 4, 5]:
 
             ollivanders_id = books.find_one({"server": str(guild.id)}, {"ollivanders": 1})["ollivanders"]["id"]
             ollivanders_channel = self.client.get_channel(int(ollivanders_id))
@@ -1711,7 +1711,7 @@ class Magic(commands.Cog):
             if actions >= 3:
                 return
 
-            elif actions < 3 and "vault" in message.content:
+            elif actions < 3 and message.content.lower() in ["vault", "money", "galleon", "galleons"]:
                 responses = get_dictionary("gringotts_bank")
                 await action_update(user, cycle, actions=10)
                 await self.vault_access(user, guild, role_galleons, message, responses)
