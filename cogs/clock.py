@@ -102,7 +102,7 @@ class Clock(commands.Cog):
                 else:
                     await asyncio.sleep(1)
             except:
-                print(f"Clock has momentarily stopped at {get_time().strftime('%H:%S EST')}")
+                print(f"Clock has momentarily stopped at {get_time().strftime('%H:%M EST')}")
                 continue
 
     @commands.command(aliases=["transform"])
