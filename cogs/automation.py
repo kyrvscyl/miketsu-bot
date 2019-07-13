@@ -10,8 +10,7 @@ import random
 import asyncio
 from discord.ext import commands
 
-from cogs.mongo.db import books, users, quests
-from cogs.magic import get_data
+from cogs.mongo.db import books, users
 
 # Timezone
 tz_target = pytz.timezone("America/Atikokan")
@@ -32,12 +31,9 @@ class Events(commands.Cog):
 
                 if len(role_bathroom.members) == 0:
                     return
-
                 elif len(role_bathroom.members) != 0:
-
                     for member in role_bathroom.members:
                         await member.remove_roles(role_bathroom)
-
             except AttributeError:
                 continue
 
@@ -82,13 +78,9 @@ class Events(commands.Cog):
 
         i = 0
         while i < len(castle_category.text_channels):
-
             if castle_category.text_channels[i].name != "prefects-bathroom":
-
                 channel_topic = castle_category.text_channels[i].topic[12:]
-                floor = i + 1
-
-                await castle_category.text_channels[i].edit(topic=f"{ordinal(floor)} Floor -\n{channel_topic}")
+                await castle_category.text_channels[i].edit(topic=f"{ordinal(i + 1)} Floor -\n{channel_topic}")
                 i += 1
 
             elif castle_category.text_channels[i].name == "prefects-bathroom":
@@ -126,14 +118,10 @@ class Events(commands.Cog):
                         name=f"{user.name} is looking for shards!",
                         icon_url=user.avatar_url
                     )
-                    embed.set_footer(
-                        text=f"#{shard_trading.name} | {time_stamp}"
-                    )
+                    embed.set_footer(text=f"#{shard_trading.name} | {time_stamp}")
 
                     if len(payload.data["attachments"]) != 0:
-                        embed.set_image(
-                            url=payload.data["attachments"][0]["url"]
-                        )
+                        embed.set_image(url=payload.data["attachments"][0]["url"])
 
                     await headlines_channel.send(embed=embed)
 
@@ -158,18 +146,18 @@ class Events(commands.Cog):
         # Welcome DM message
         description = \
             f"Dear {member.display_name},\n\n" \
-            f"We are pleased to accept you at House Patronus.\n" \
-            f"Do browse the server's <#{request['welcome']}> channel for the basics and essentials of the guild then " \
-            f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\n" \
-            f"We await your return owl.\n\n" \
-            f"Yours Truly,\nThe Headmaster "
+                f"We are pleased to accept you at House Patronus.\n" \
+                f"Do browse the server's <#{request[
+                    'welcome']}> channel for the basics and essentials of the guild then " \
+                f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\n" \
+                f"We await your return owl.\n\n" \
+                f"Yours Truly,\nThe Headmaster "
 
         embed1 = discord.Embed(
             color=0xffff80,
             title=":envelope: Acceptance Letter",
             description=description
         )
-
         # Record Scroll
         embed2 = discord.Embed(color=0xffffff)
         embed2.set_author(
@@ -179,7 +167,6 @@ class Events(commands.Cog):
             text=f"{member.guild.member_count} members | {time_stamp}",
             icon_url=member.avatar_url
         )
-
         await member.add_roles(default_role)
         await landing_zone_channel.send(msg)
         await member.send(embed=embed1)
@@ -217,12 +204,10 @@ class Events(commands.Cog):
         record_scroll = self.client.get_channel(int(request["scroll-of-everything"]))
 
         if before.roles != after.roles:
-
             changed_role1 = list(set(after.roles) - set(before.roles))
             changed_role2 = list(set(before.roles) - set(after.roles))
 
             if not changed_role1:
-
                 embed = discord.Embed(
                     color=0x50e3c2,
                     title=f"Removed {changed_role2[0].name} role for {after.display_name}"
@@ -231,26 +216,9 @@ class Events(commands.Cog):
                     text=f"{time_stamp}",
                     icon_url=before.avatar_url
                 )
-
                 await record_scroll.send(embed=embed)
 
-                if changed_role2[0].name == "🐬":
-                    try:
-
-                        cycle, path, timestamp, user_hints, actions, purchase = get_data(before)
-
-                        quests.update_one({
-                            "user_id": str(before.id),
-                            "quest1.cycle": cycle}, {
-                            "$set": {
-                                "quest1.$.status": "completed"
-                            }
-                        })
-                    except UnboundLocalError:
-                        return
-
             elif not changed_role2:
-
                 embed = discord.Embed(
                     color=0x50e3c2,
                     title=f"Added {changed_role1[0].name} role for {after.display_name}"
@@ -259,11 +227,9 @@ class Events(commands.Cog):
                     text=f"{time_stamp}",
                     icon_url=before.avatar_url
                 )
-
                 await record_scroll.send(embed=embed)
 
                 if changed_role1[0].name == "Auror":
-
                     auror_channel = self.client.get_channel(int(request["auror-department"]))
                     embed = discord.Embed(
                         color=0x50e3c2,
@@ -273,11 +239,9 @@ class Events(commands.Cog):
                         text=f"{time_stamp}",
                         icon_url=before.avatar_url
                     )
-
                     await auror_channel.send(embed=embed)
 
         elif before.nick != after.nick:
-
             embed = discord.Embed(color=0x7ed321)
             embed.set_footer(
                 text=f"{time_stamp}",
@@ -290,7 +254,6 @@ class Events(commands.Cog):
             await record_scroll.send(embed=embed)
 
         elif before.name != after.name:
-
             embed = discord.Embed(color=0x7ed321)
             embed.set_footer(
                 text=f"{time_stamp}",
@@ -301,6 +264,7 @@ class Events(commands.Cog):
                 value=f"{before.name} | {after.name}"
             )
             await record_scroll.send(embed=embed)
+
 
 def setup(client):
     client.add_cog(Events(client))
