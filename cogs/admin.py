@@ -550,9 +550,9 @@ class Admin(commands.Cog):
         embed.add_field(
             name=":notepad_spiral: Game Mechanics",
             value=f"• Allow direct messages from our bot Miketsu to join. Try `;help dm`\n"
-            f"• Interested players can start by accepting the quest at the <#{sorting.id}>\n"
+            f"• Interested players can start by reacting at the <#{sorting.id}>\n"
             f"• Hints will be available to use via `;hint`\n"
-            f"• When the clock ticks a new hour, various events can happen.\n​ "
+            f"• When the clock ticks a new hour, various events can happen\n"
             f"• Use <#{gift_game.id}> for any discussion, visible once accepted\n​ "
         )
         embed.add_field(
@@ -566,8 +566,8 @@ class Admin(commands.Cog):
             name=":gift_heart: Rewards System",
             value="• Two current guild members will win Nitro\n"
                   "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
-                  "• The 1st one to complete a quest cycle without a moving a path\n​\n "
-                  "• Note: Commands `;progress` and `;cycle` are unlocked once a cycle is finished\n\n​ "
+                  "• The 1st one to complete a quest cycle without moving a path\n​\n "
+                  "• Note: Commands `;progress` and `;cycle` are unlocked once your first cycle is finished\n\n​ "
                   ":four_leaf_clover: Good luck!​\n "
         )
         embed.set_footer(
