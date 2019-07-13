@@ -146,12 +146,11 @@ class Events(commands.Cog):
         # Welcome DM message
         description = \
             f"Dear {member.display_name},\n\n" \
-                f"We are pleased to accept you at House Patronus.\n" \
-                f"Do browse the server's <#{request[
-                    'welcome']}> channel for the basics and essentials of the guild then " \
-                f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\n" \
-                f"We await your return owl.\n\n" \
-                f"Yours Truly,\nThe Headmaster "
+            f"We are pleased to accept you at House Patronus.\n" \
+            f"Do browse the server's <#{request['welcome']}> channel for the basics and essentials of the guild then " \
+            f"proceed to <#{request['sorting']}> to assign yourself some roles.\n\n" \
+            f"We await your return owl.\n\n" \
+            f"Yours Truly,\nThe Headmaster "
 
         embed1 = discord.Embed(
             color=0xffff80,

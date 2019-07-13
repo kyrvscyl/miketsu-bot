@@ -912,7 +912,7 @@ class Magic(commands.Cog):
 
             if purchase is False:
                 msg = responses["purchasing"]["max_actions"]
-                await penalize(user, cycle, points=5)
+                await penalize(user, cycle, points=20)
                 await user.send(msg)
                 await ctx.message.delete()
 
@@ -928,7 +928,7 @@ class Magic(commands.Cog):
                 role_galleons = discord.utils.get(ctx.guild.roles, name="💰")
 
                 if user in role_owl.members:
-                    msg = responses["purchasing"]["buying_again"][0].format(user.display_name)
+                    msg = responses["purchasing"]["buying_again"][0].format(user.mention)
                     topic = responses["purchasing"]["buying_again"][1]
                     await penalize(user, cycle, points=75)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
@@ -936,10 +936,10 @@ class Magic(commands.Cog):
                     await ctx.message.delete()
 
                 elif user not in role_galleons.members:
-                    msg = responses["purchasing"]["no_moneybag"][0].format(user.display_name)
+                    msg = responses["purchasing"]["no_moneybag"][0].format(user.mention)
                     topic = responses["purchasing"]["no_moneybag"][1]
                     await self.update_path(user, cycle, path_new="path7")
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
@@ -953,10 +953,10 @@ class Magic(commands.Cog):
 
                 elif purchaser_id != "None":
                     purchaser = ctx.guild.get_member(int(purchaser_id))
-                    msg = responses["purchasing"]["out_of_stock"][0].format(user.display_name, purchaser.display_name)
+                    msg = responses["purchasing"]["out_of_stock"][0].format(user.mention, purchaser.display_name)
                     topic = responses["purchasing"]["out_of_stock"][1]
                     await self.update_path(user, cycle, path_new="path24")
-                    await penalize(user, cycle, points=10)
+                    await penalize(user, cycle, points=20)
                     await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
@@ -973,11 +973,10 @@ class Magic(commands.Cog):
                         role_owl = discord.utils.get(ctx.guild.roles, name="🦉")
                         owl_profile = owls.find_one({"type": owl_buy}, {"_id": 0})
                         description = owl_profile["description"]
-                        msg = responses["purchasing"]["success_purchase"][0].format(user.display_name)
+                        msg = responses["purchasing"]["success_purchase"][0].format(user.mention)
                         topic = responses["purchasing"]["success_purchase"][1]
 
                         embed = discord.Embed(
-                            title=f"🦉 {owl_profile['type'].title()} | {owl_profile['trait'].capitalize()}",
                             description="*" + description + "*",
                             color=user.colour
                         )
@@ -998,9 +997,10 @@ class Magic(commands.Cog):
                         if path != "path0":
                             await self.update_path(user, cycle, path_new="path2")
 
-                        await user.add_roles(role_owl)
-                        await ctx.channel.send(f"{user.mention} has acquired 🦉 role")
                         await ctx.message.add_reaction("🦉")
+                        await user.add_roles(role_owl)
+                        await asyncio.sleep(1)
+                        await ctx.channel.send(f"{user.mention} has acquired 🦉 role")
                         await asyncio.sleep(2)
                         await self.secret_response(ctx.guild.id, ctx.channel.name, msg)
                         await asyncio.sleep(3)
@@ -1173,7 +1173,7 @@ class Magic(commands.Cog):
             await gringotts_channel.edit(topic=topic)
 
             if user not in role_galleons.members:
-                if path not in ["path8", "path18", "path12", "path13"]:
+                if path not in ["path8", "path18", "path12", "path13", "path0"]:
                     await self.update_path(user, cycle, path_new="path8")
                 await asyncio.sleep(3)
                 await message.delete()
@@ -1206,7 +1206,7 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if path in ["path10", "path3"]:
+            if path in ["path10", "path3", "path25"]:
                 await self.update_path(user, cycle, path_new="path11")
 
             await self.transaction_ollivanders(guild, user, ollivanders)
@@ -1227,7 +1227,7 @@ class Magic(commands.Cog):
             await asyncio.sleep(3)
             await message.delete()
 
-            if path in ["path10", "path3"]:
+            if path in ["path10", "path3", "path25"]:
                 await self.update_path(user, cycle, path_new="path11")
 
             await self.transaction_ollivanders(guild, user, ollivanders_channel)
@@ -1261,27 +1261,27 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 msg = responses["timeout_intro"].format(user.mention)
-                await penalize(user, cycle, points=5)
+                await penalize(user, cycle, points=10)
                 await action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
 
             except KeyError:
                 msg = responses["invalid"]
-                await penalize(user, cycle, points=5)
+                await penalize(user, cycle, points=10)
                 await action_update(user, cycle, actions=3)
                 await self.secret_response(guild.id, channel.name, msg)
 
             else:
-                if user not in role_star.members and path in ["path11", "path3", "path10", "path0"]:
+                if user not in role_star.members and path in ["path11", "path3", "path10", "path0", "path25", "path17"]:
                     msg1 = responses["valid"][0].format(user.mention)
                     msg2 = responses["valid"][1].format(user.mention)
                     topic = responses["valid"][2]
                     await action_update(user, cycle, actions=3)
                     await self.secret_response(guild.id, channel.name, msg1)
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(6)
                     await self.secret_response(guild.id, channel.name, msg2)
                     await channel.edit(topic=topic)
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(5)
                     await self.wand_personalise(user, guild, channel, cycle, role_star, responses)
 
                 else:
@@ -1361,7 +1361,7 @@ class Magic(commands.Cog):
                     })
 
                     if __patronus is None:
-                        msg = responses["no_patronus"].format(user.display_name)
+                        msg = responses["no_patronus"].format(user.mention)
                         await self.secret_response(guild.id, channel.name, msg)
 
                     elif __patronus is not None:
@@ -1398,7 +1398,8 @@ class Magic(commands.Cog):
 
                             else:
                                 if answer.content.lower() == "y":
-                                    msg = f"{user.mention} has acquired 🌟 role"
+                                    msg1 = f"{user.mention} has acquired 🌟 role"
+                                    msg2 = responses["success_purchase"].format(user.mention)
                                     quests.update_one({
                                         "user_id": str(user.id),
                                         "quest1.cycle": cycle}, {
@@ -1409,7 +1410,8 @@ class Magic(commands.Cog):
                                     })
 
                                     await user.add_roles(role_star)
-                                    await channel.send(msg)
+                                    await channel.send(msg1)
+                                    await self.secret_response(guild.id, channel.name, msg2)
                                     break
 
                                 elif answer.content.lower() == "n":
@@ -1446,7 +1448,7 @@ class Magic(commands.Cog):
                 answer = await self.client.wait_for("message", timeout=60, check=check)
 
             except asyncio.TimeoutError:
-                msg = responses["core_selection"]["timeout"]
+                msg = responses["core_selection"]["timeout"].format(user.mention)
                 wand_core = "Wrong"
 
                 if path == "path0":
@@ -1463,14 +1465,14 @@ class Magic(commands.Cog):
                     await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
-                    msg = responses["core_selection"]["invalid1"][0].format(answer.content.title())
+                    msg = responses["core_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["core_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
                     await penalize(user, cycle, points=5)
 
                 elif i == 1:
                     wand_core = "Wrong"
-                    msg = responses["core_selection"]["invalid2"][0].format(answer.content.title())
+                    msg = responses["core_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["core_selection"]["invalid2"][1]
                     await action_update(user, cycle, actions=3)
                     await penalize(user, cycle, points=10)
@@ -1516,7 +1518,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 wand_wood = "Wrong"
-                msg = responses["wood_selection"]["timeout"]
+                msg = responses["wood_selection"]["timeout"].format(user.mention)
 
                 if path == "path0":
                     await self.update_path(user, cycle, path_new="path17")
@@ -1532,14 +1534,14 @@ class Magic(commands.Cog):
                     await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
-                    msg = responses["wood_selection"]["invalid1"][0].format(answer.content.title())
+                    msg = responses["wood_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["wood_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 1:
                     wand_wood = "Wrong"
-                    msg = responses["wood_selection"]["invalid2"][0].format(answer.content.title())
+                    msg = responses["wood_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["wood_selection"]["invalid2"][1]
                     await action_update(user, cycle, actions=3)
                     await penalize(user, cycle, points=10)
@@ -1584,7 +1586,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 wand_length = "Wrong"
-                msg = responses["length_selection"]["timeout"]
+                msg = responses["length_selection"]["timeout"].format(user.mention)
 
                 if path == "path0":
                     await self.update_path(user, cycle, path_new="path17")
@@ -1600,17 +1602,17 @@ class Magic(commands.Cog):
                     await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
-                    msg = responses["length_selection"]["invalid1"][0].format(answer.content.title())
+                    msg = responses["length_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["length_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 1:
                     wand_length = "Wrong"
-                    msg = responses["length_selection"]["invalid2"][0].format(answer.content.title())
+                    msg = responses["length_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["length_selection"]["invalid2"][1]
                     await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
+                    await penalize(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
                 await self.secret_response(guild.id, channel.name, msg)
@@ -1650,7 +1652,7 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 wand_flexibility = "Wrong"
-                msg = responses["flexibility_selection"]["timeout"]
+                msg = responses["flexibility_selection"]["timeout"].format(user.mention)
 
                 if path == "path0":
                     await self.update_path(user, cycle, path_new="path17")
@@ -1666,17 +1668,17 @@ class Magic(commands.Cog):
                     await self.update_path(user, cycle, path_new="path17")
 
                 if i == 0:
-                    msg = responses["flexibility_selection"]["invalid1"][0].format(answer.content.title())
+                    msg = responses["flexibility_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["flexibility_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 1:
                     wand_flexibility = "Wrong"
-                    msg = responses["flexibility_selection"]["invalid2"][0].format(answer.content.title())
+                    msg = responses["flexibility_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["flexibility_selection"]["invalid2"][1]
                     await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
+                    await penalize(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
                 await self.secret_response(guild.id, channel.name, msg)
@@ -1699,7 +1701,7 @@ class Magic(commands.Cog):
 
         if user in role_galleons.members:
             responses = get_dictionary("gringotts_bank")
-            msg = responses["has_moneybag"].format(user.display_name)
+            msg = responses["has_moneybag"].format(user.mention)
             await self.secret_response(guild.id, message.channel.name, msg)
             await action_update(user, cycle, actions=3)
             await penalize(user, cycle, points=20)
@@ -1808,12 +1810,12 @@ class Magic(commands.Cog):
                 if i == 0:
                     msg = responses["get_identity"]["invalid1"][0].format(user.mention)
                     topic = responses["get_identity"]["invalid1"][1]
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 1:
                     msg = responses["get_identity"]["invalid2"][0].format(user.mention)
                     topic = responses["get_identity"]["invalid2"][1]
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 2:
                     msg = responses["get_identity"]["invalid3"][0].format(user.mention)
@@ -1886,12 +1888,12 @@ class Magic(commands.Cog):
                 if i == 0:
                     msg = responses["get_vault"]["invalid1"][0].format(user.mention)
                     topic = responses["get_vault"]["invalid1"][1]
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 1:
                     msg = responses["get_vault"]["invalid2"][0].format(user.mention)
                     topic = responses["get_vault"]["invalid2"][1]
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 2:
                     answer = "Wrong"
@@ -1957,7 +1959,7 @@ class Magic(commands.Cog):
 
                 await self.update_path(user, cycle, path_new="path13")
                 await action_update(user, cycle, actions=3)
-                await penalize(user, cycle, points=5)
+                await penalize(user, cycle, points=10)
                 await self.secret_response(guild.id, message.channel.name, msg)
                 await message.channel.edit(topic=topic)
                 break
@@ -1967,12 +1969,12 @@ class Magic(commands.Cog):
                 if i == 0:
                     msg = responses["get_password"]["invalid1"][0].format(user.mention)
                     topic = responses["get_password"]["invalid1"][1]
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 1:
                     msg = responses["get_password"]["invalid2"][0].format(user.mention)
                     topic = responses["get_password"]["invalid2"][1]
-                    await penalize(user, cycle, points=5)
+                    await penalize(user, cycle, points=10)
 
                 elif i == 2:
                     answer = "Wrong"

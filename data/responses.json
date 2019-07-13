@@ -23,7 +23,7 @@
       ],
       "adventurous": [
         "As soon as you stepped into the shop, I knew how creative and brilliant you are. Hmm.. a very ambitious youngster as well. I am sure you will be destined for a great quest. You will grow as a wise wizard and rich in experiences. The wand that chooses you will be happy with such a great partner that can provide it with uninterrupted excitement and fun.",
-        "Wands made with a Phoenix feather core are the rarest and they are also the pickiest when choosing it’s master. However, it is capable of the greatest range of magic should one were to able to wield it."
+        "Wands made with a Phoenix feather core are the rarest and they are also the pickiest when choosing it's master. However, it is capable of the greatest range of magic should one were to able to wield it."
       ],
       "nature-loving": [
         "Do you perhaps have a high interest in the natural world? You seemed well fitted to be someone with exceptional skills in taming magical beasts or possibly possesses a great gift in Herbology. Great talent requires great wand.",
@@ -44,11 +44,11 @@
       ],
       "timeout": "{}, you can return again once you have decided well.",
       "invalid1": [
-        "I don't think I ever crafted that kind of length, maybe in the future but for now, you can only choose those.",
+        "{}, there are many cores, of course. But we only craft the three items I told you. Again?",
         "There is a total of 142 collectible Patronus'"
       ],
       "invalid2": [
-        "{}, I don't think I craft that kind of length, do come again, should you wish to pursue your path.",
+        "{}, aspiring indeed, but maybe soon I could utilize that kind of core.",
         "Do take good care of your wand. While most wands are attached to their master, they can take on a new one when the master is disarmed or stunned."
       ]
     },
@@ -60,7 +60,7 @@
       ],
       "timeout": "{}, perhaps you could choose only from the available wands?",
       "invalid1": [
-        "{}, it seems that I have no kind of that wood design ready for now.",
+        "{}, it seems that I have no kind of that wood design ready for now. Can you pick a different one?",
         "Every single wand is unique and will depend for its character on the particular tree and magical creature from which it derives its materials"
       ],
       "invalid2": [
@@ -76,7 +76,7 @@
       ],
       "timeout": "{}, you can return again once you have decided well.",
       "invalid1": [
-        "I don't think I craft that kind of length, do come back once you figure out your best choice of wand length, {}",
+        "I don't think I craft that kind of length, care to pick a different one? {}",
         "Many wandmakers simply match the wand length to the size of the witch or wizard who will use it, but this is a crude measure, and fails to take into account many other, important considerations."
       ],
       "invalid2": [
@@ -92,11 +92,11 @@
       ],
       "timeout": "{}, you can return again once you have decided well.",
       "invalid1": [
-        "{}, I've never heard of that kind of flexibility..",
+        "I've never heard of that kind of flexibility.. Only those said are valid.",
         "The scale of flexibility: Unyielding – Rigid – Inflexible - Firm – Supple – Pliable – Flexible – Springy – Yielding"
       ],
       "invalid2": [
-        "{}, That too. Do come back once you are able to distinguish. I agree that wand selection is not a quick thing to decide.",
+        "That too. Do come back once you are able to distinguish. I agree that wand selection is not a quick thing to decide.",
         "Store Hours: 01:00 - 05:00\nThe more flexible a wand is, the more adaptable and easily changeable the wizard is, whereas a more rigid wand indicates steadfastness and stubbornness."
       ]
     },
@@ -144,16 +144,17 @@
       "unicorn hair": "This core usually produces consistent, safe, and reliable magic. These cores are also the hardest to turn to the Dark Arts, but are the most faithful and loyal of all wands. What it gains in consistency and loyalty, it loses in power and sensitivity however. Unicorn hair wands tend to be less powerful than Dragon Heartstring or Phoenix Feather, and if seriously mishandled, they may wilt and die.",
       "dragon heartstring": " As a rule, dragon heartstrings produce wands of the most power and flamboyance. They also tend to learn more quickly their other types. On the other hand, wands bearing a dragon heartstring core bear little ‘memory’ of their owners, and can not only be won away, but tend to bond strongly with their current master. As a whole, dragon heartstrings tend to be the easiest to turn to the dark arts (though it has no particular affinity or tendency towards them), and tends to be fairly temperamental and more prone to accidents than the other two cores.",
       "phoenix feather": "The rarest core type, Phoenix feathers have access to a wide range of magic and are more flexible than the other two cores. They also bear a certain initiative, and have a tendency to act of their own accord regardless of their masters wishes. Finally, these cores tend to make for a difficult wand to tame and personalize, and their allegiance is hard won."
-    }
+    },
+    "success_purchase": "Good luck, {}."
   },
   "gringotts_bank": {
-    "has_moneybag": "{}, what are you doing here again.\n\nI thought you got what you wanted here already.",
+    "has_moneybag": "{}, what are you doing here again.\n\nI thought you got what's you wanted here already.",
     "transaction": [
       "Greetings, {}. What do you want?",
       "{}, I am assuming you do not know, we secure the wizarding families' treasuries here.\n\nNow, what do you want from us?",
       "{}, I don't think you are well aware of what is happening here.\n\nI have other clients to assist, come back once you know, because I do not like my time wasted."
     ],
-    "success": "Very well {}. You can get out of my bank now.",
+    "success": "So, {}. You can get out of my bank now.",
     "get_identity": {
       "1": "Your identification, please? {}",
       "timeout": [
