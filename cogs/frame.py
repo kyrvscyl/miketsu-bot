@@ -28,23 +28,27 @@ async def frame_starlight(guild, channel):
 
     streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
     starlight_new = guild.get_member(int(streak_list_new[0][0]))
+    starlight_current = starlight_role.members[0]
 
     if len(starlight_role.members) == 0:
         await starlight_new.add_roles(starlight_role)
         await asyncio.sleep(3)
 
-        embed = discord.Embed(color=0xac330f, title=":incoming_envelope: Hall of Framers Update",
-                              description=f"{starlight_new.mention}\"s undying luck of not summoning an SSR has "
-                              f"earned themselves the Rare Starlight Sky Frame!\n\n"
-                              f":four_leaf_clover: No SSR streak as of posting: {streak_list_new[0][1]} summons!")
+        description = \
+            f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
+            f"earned themselves the Rare Starlight Sky Frame!\n\n" \
+            f"🍀 No SSR streak as of posting: {streak_list_new[0][1]} summons!"
+
+        embed = discord.Embed(
+            color=0xac330f,
+            title="📨 Hall of Framers Update",
+            description=description
+        )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
         await channel.send(embed=embed)
 
-    starlight_current = starlight_role.members[0]
-
     if starlight_current == starlight_new:
         users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
-
         msg = f"{starlight_current.mention} has earned 2,000{emoji_j} for wielding the Starlight Sky frame for a day!"
         await channel.send(msg)
 
@@ -54,12 +58,17 @@ async def frame_starlight(guild, channel):
         await starlight_current.remove_roles(starlight_role)
         await asyncio.sleep(3)
 
-        embed = discord.Embed(color=0xac330f, title=":incoming_envelope: Hall of Framers Update",
-                              description=f"{starlight_new.mention} {random.choice(adverb)} {random.choice(verb)} "
-                              f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s "
-                              f"{random.choice(noun)}!! {random.choice(comment)}\n\n"
-                              f":four_leaf_clover: No SSR streak record as of posting: "
-                              f"{streak_list_new[0][1]} summons!")
+        description = \
+            f"{starlight_new.mention} {random.choice(adverb)} {random.choice(verb)} " \
+            f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
+            f"{random.choice(noun)}!! {random.choice(comment)}\n\n" \
+            f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons!"
+
+        embed = discord.Embed(
+            color=0xac330f,
+            title="📨 Hall of Framers Update",
+            description=description
+        )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
         await channel.send(embed=embed)
 
@@ -73,23 +82,26 @@ async def frame_blazing(guild, channel):
 
     ssr_list_new = sorted(ssr_list, key=lambda x: x[1], reverse=True)
     blazing_new = guild.get_member(int(ssr_list_new[0][0]))
+    blazing_current = blazing_role.members[0]
 
     if len(blazing_role.members) == 0:
         await blazing_new.add_roles(blazing_role)
         await asyncio.sleep(3)
 
-        embed = discord.Embed(color=0xac330f, title=":incoming_envelope: Hall of Framers Update",
-                              description=f"{blazing_new.mention}\"s fortune luck earned themselves the Rare Blazing "
-                              f"Sun Frame!\n\n:four_leaf_clover: Distinct SSRs under possession: {ssr_list_new[0][1]} "
-                              f"shikigamis")
+        description = \
+            f"{blazing_new.mention}\"s fortune luck earned themselves the Rare Blazing Sun Frame!\n\n" \
+            f"🍀 Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis"
+
+        embed = discord.Embed(
+            color=0xac330f,
+            title="📨 Hall of Framers Update",
+            description=description
+        )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
         await channel.send(embed=embed)
 
-    blazing_current = blazing_role.members[0]
-
     if blazing_current == blazing_new:
         users.update_one({"user_id": str(blazing_current.id)}, {"$inc": {"amulets": 10}})
-
         msg = f"{blazing_current.mention} has earned 10{emoji_a} for wielding the Blazing Sun frame for a day!"
         await channel.send(msg)
 
@@ -99,11 +111,15 @@ async def frame_blazing(guild, channel):
         await blazing_current.remove_roles(blazing_role)
         await asyncio.sleep(3)
 
-        embed = discord.Embed(color=0xffff80, title=":incoming_envelope: Hall of Framers Update",
-                              description=f"{blazing_new.mention} {random.choice(adverb)} {random.choice(verb)} "
-                              f"the Rare Blazing Sun Frame from { blazing_current.mention}\"s {random.choice(noun)}!! "
-                              f"{random.choice(comment)}\n\n:"
-                              f"four_leaf_clover: Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis")
+        description = f"{blazing_new.mention} {random.choice(adverb)} {random.choice(verb)} " \
+            f"the Rare Blazing Sun Frame from {blazing_current.mention}\"s {random.choice(noun)}!! " \
+            f"{random.choice(comment)}\n\n: 🍀 Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis"
+
+        embed = discord.Embed(
+            color=0xffff80,
+            title="📨 Hall of Framers Update",
+            description=description
+        )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
         await channel.send(embed=embed)
 
@@ -113,12 +129,18 @@ class Frame(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    # noinspection PyUnusedLocal
     @commands.command()
     @commands.is_owner()
     async def frame(self, ctx):
-        await frame_starlight(ctx.guild, ctx.channel)
-        await asyncio.sleep(2)
-        await frame_blazing(ctx.guild, ctx.channel)
+        await self.frame_automate()
+
+    async def frame_automate(self):
+        guild = self.client.get_guild(412057028887052288)
+        channel = self.client.get_channel(417507997846339585)
+        await frame_starlight(guild, channel)
+        await asyncio.sleep(1)
+        await frame_blazing(guild, channel)
 
 
 def setup(client):
