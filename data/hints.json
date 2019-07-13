@@ -17,8 +17,7 @@
         "2": "The emporium shop was definitely bestowed with magic as the shop information variably changed depending on the guests' courses of actions"
     },
     "path3": {
-        "1": "You tried investigating the Patronus charm and found out that it is a very interesting spell",
-        "2": "As you investigated further, it is a powerful defensive spell which produces a silver animal guardian and can be casted using a specific spell"
+        "1": "You gazed upon the letter that was given by the owl to you wondering what is the content of it."
     },
     "path4": {
         "1": "As per the information you read in the book, owls may travel differently due to the weather.",
@@ -103,5 +102,9 @@
     },
     "path24": {
          "1": "Keeping an eye out of the shop every hour could help you sneak in which owls are getting in and out."
+    },
+    "path25": {
+         "1": "You tried investigating the Patronus charm and found out that it is a very interesting spell",
+         "2": "As you investigated further, it is a powerful defensive spell which produces a silver animal guardian and can be casted using a specific spell"
     }
 }

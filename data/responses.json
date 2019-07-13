@@ -1,6 +1,6 @@
 {
   "ollivanders": {
-    "intro": "Welcome {}, what can I help you with? I wondered when I’ll be seeing you. Here to buy your first wand?",
+    "intro": "Welcome {}, what can I help you with? I wondered when I will be seeing you. Here to buy your first wand?",
     "timeout_intro": "No interest to buy wands yet, {}? Maybe in time you'll find yours.",
     "invalid": "Oh! You are not here to choose a wand? Feel free to browse my shop then, maybe a wand will choose you instead.",
     "valid": [
@@ -26,8 +26,8 @@
         "Wands made with a Phoenix feather core are the rarest and they are also the pickiest when choosing it’s master. However, it is capable of the greatest range of magic should one were to able to wield it."
       ],
       "nature-loving": [
-        "Do you perhaps have a high interest in the natural world? You seemed well fitted to be someone with exceptional skills in taming magical beasts or possibly possess a great gift in Herbology. Great talent requires great wand.",
-        "The wand chooses the wizard… it is not always clear why. Perhaps it is because the wand creates a special bond with whom they will serve."
+        "Do you perhaps have a high interest in the natural world? You seemed well fitted to be someone with exceptional skills in taming magical beasts or possibly possesses a great gift in Herbology. Great talent requires great wand.",
+        "The wand chooses the wizard... it is not always clear why. Perhaps it is because the wand creates a special bond with whom they will serve."
       ],
       "special": [
         "A very special person. Someone with a clear-head and a pure-heart with traits of care and love for others. I know just the perfect wand for you. Depending on how you use it, the wand could you provide with a remarkable healing power or a strong defensive charms that is difficult to break, and even some legilimency properties. Utterly loved by nature, indeed.",
@@ -37,7 +37,7 @@
     "no_patronus": "It seems that you're out of luck, {}. I do not have that kind of wand. Perhaps, you're looking for a rare combination of wand properties. But no such wand is crafted yet by me. I suggest you try to wield a common core, I'm sure there are lots of available for your choice.",
     "timeout_response": "{}, come back soon once you've decided",
     "core_selection": {
-      "1": "{}, lastly, the wand cores.\n\nSelect from the choices: `{}`",
+      "1": "{}, lastly, the wand core.\n\nSelect from the choices: `{}`",
       "chose": [
         "{}. {}",
         "The core of a wand is a magical substance placed within the length of wood, usually extracted from a magical creature."
