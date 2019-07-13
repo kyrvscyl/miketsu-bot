@@ -72,7 +72,7 @@ class Error(commands.Cog):
             if str(ctx.command) == "summon":
                 await ctx.channel.send("Use `;summon <1 or 10>`")
 
-            elif str(ctx.command) != "bounty":
+            elif str(ctx.command) == "bounty":
                 await ctx.channel.send("Hi! I can search for bounty locations. Use `;bounty <shikigami>`")
 
             elif str(ctx.command) != "summon":
