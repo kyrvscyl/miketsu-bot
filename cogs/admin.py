@@ -134,10 +134,10 @@ async def management_show_profile(ctx, args):
     try:
         embed = discord.Embed(
             color=ctx.author.colour,
-            title=f"#{member['#']} : {member['name']} | :ribbon: {member['role']}"
+            title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
         )
         embed.add_field(
-            name=":golf: Status",
+            name="⛳ Status",
             value=f"{member['status']} [{member['status_update1']}]"
         )
 
@@ -286,59 +286,60 @@ class Admin(commands.Cog):
         embed2 = discord.Embed(
             colour=discord.Colour(0xff44),
             title="Primary Server Roles",
-            description=f"• Sub roles are provided at the <#{sorting}>"
+            description=f"Sub roles are provided at the <#{sorting}>"
         )
         embed2.add_field(
-            name=":trident: Head",
+            name="🔱 Head",
             value="• The Ministers of Patronus",
             inline=False
         )
         embed2.add_field(
-            name=":fleur_de_lis: Auror",
-            value="• Prime Witches, Wizards, & Spirits of Patronus",
+            name="⚜ Auror",
+            value="• The Prime Witches, Wizards, & Spirits",
             inline=False
         )
         embed2.add_field(
-            name=":crystal_ball: Patronus",
+            name="🔮 Patronus",
             value="• Existing members of the guild",
             inline=False
         )
         embed2.add_field(
-            name=":fire: No-Maj",
-            value="• Obliviated, former members, guests",
+            name="🔥 No-Maj",
+            value="• Obliviated, former members; guests",
             inline=False
         )
         embed2.add_field(
-            name=":panda_face: Animagus",
-            value="• Transformed members during Night time, Bots",
+            name="🐼 Animagus",
+            value="• Transformed members during Night; Bots",
             inline=False
         )
 
         # Rules
         embed3 = discord.Embed(
-            title=":clipboard: Rules",
+            title="📋 Rules",
             colour=discord.Colour(0xf8e71c),
-            description="• Useless warnings may be given!"
+            description="• Useless warnings may be issued!\n​ "
         )
-
         embed3.add_field(
             name="# 1. Server nickname",
             value="• It must contain your actual in-game name\n​ "
         )
         embed3.add_field(
             name="# 2. Message content",
-            value="• No any form of harassment, racism, toxicity, etc.\n• Avoid posting NSFW or NSFL\n​ ",
+            value="• No any form of harassment, racism, toxicity, etc.\n"
+                  "• Avoid posting NSFW or NSFL\n​ ",
             inline=False
         )
         embed3.add_field(
             name="# 3. Role/member mention",
-            value="• Avoid unnecessary pinging\n• Check for the specific roles for free pinging\n​ ",
+            value="• Avoid unnecessary pinging\n"
+                  "• Check for the specific roles for free pinging\n​ ",
             inline=False
         )
         embed3.add_field(
             name="# 4. Spamming",
-            value="• Posting at the wrong channel is spamming\n• Channels are provided for spamming bot "
-                  "commands\n​ ",
+            value="• Posting at the wrong channel is spamming\n"
+                  "• Channels are provided for spamming bot commands\n​ ",
             inline=False
         )
         embed3.add_field(
@@ -356,47 +357,54 @@ class Admin(commands.Cog):
         # Requirements
         embed4 = discord.Embed(
             colour=discord.Colour(0xb8e986),
-            title=":ribbon: Benefits & Requirements",
-            description=f"• <@&{patronus_role}> are requested to be guided for #5"
+            title="🎀 Benefits & Requirements",
+            description=f"• <@&{patronus_role}> must be fully guided for #2&5\n​ ",
+            inline=False
         )
         embed4.add_field(
             name="# 1. No duel/tier requirements",
-            value="• But do test your limits and improve!\n​ "
+            value="• But do test your limits and improve!\n​ ",
+            inline=False
         )
         embed4.add_field(
             name="# 2. Guild Quest (GQ) requirements",
             value="• For apprentices, min 30 weekly GQ\n"
-                  "• For qualified mentors, min 90 weekly GQ\n​ "
+                  "• For qualified mentors, min 90 weekly GQ\n"
+                  "• 2-weeks consistent inactivity will be forewarned\n​ ",
+            inline=False
         )
         embed4.add_field(
             name="# 3. Alternate Accounts",
             value="• We can accommodate if slots are available\n"
-                  "• Notify the Head before applying\n​ "
+                  "• Notify a Head before applying\n​ ",
+            inline=False
         )
         embed4.add_field(
             name="# 4. Guild Bonuses",
-            value="• Top 10 guild in overall activeness ranking\n"
-                  "• Rated at 60-70 guild packs per \n"
+            value="• Top 15 guild in overall activeness ranking\n"
+                  "• Rated at 60-70 guild packs per week\n"
                   "• Weekly 1-hour soul & evo bonus\n"
                   "• 24/7 exp, coin, & medal buffs\n"
                   "• Max guild feast rewards\n"
                   "• Ultimate Orochi carries\n"
                   "• Souls 10 carries\n"
-                  "• Rich Discord contents\n"
-                  "• Fun, playful, & experienced members\n​ "
+                  "• Rich Discord content\n"
+                  "• Fun, playful, & experienced members\n​ ",
+            inline=False
         )
         embed4.add_field(
             name="# 5. Absenteeism/leave",
             value="• If leaving for shards, specify amount of days\n"
                   "• File your applications prior long vacations\n"
-                  "• Up to 25-35 days of leave for old members\n​ "
+                  "• Up to 20-30 days of leave for old members\n​ ",
+            inline=False
         )
 
         # Events
         embed5 = discord.Embed(
             colour=discord.Colour(0x50e3c2),
-            title=":confetti_ball: Events & Timings",
-            description=f"• <@&{patronus_role}> role is pinged for events #2-5"
+            title="🎊 Events & Timings",
+            description=f"• <@&{patronus_role}> role is pinged for events #2-5\n​ "
         )
         embed5.add_field(
             name="# 1. Guild Raid",
@@ -424,26 +432,44 @@ class Admin(commands.Cog):
             inline=False
         )
 
+        # Banner
+        embed6 = discord.Embed(
+            colour=discord.Colour(0xffd6ab),
+            title="🎏 Banner"
+        )
+        embed6.set_image(
+            url="https://media.discordapp.net/attachments/556032841897607178/600170789722914847/patronus.png"
+        )
+        embed6.set_footer(
+            text="Assets: Official Onmyoji art; Designed by: xann"
+        )
+
         # Message posting
         msg1 = await welcome.send(embed=embed1)
         msg2 = await welcome.send(embed=embed2)
         msg3 = await welcome.send(embed=embed3)
         msg4 = await welcome.send(embed=embed4)
         msg5 = await welcome.send(embed=embed5)
-        msg6 = await welcome.send(content="Our invite link: https://discord.gg/H6N8AHB")
+        msg6 = await welcome.send(embed=embed6)
+        msg7 = await welcome.send(content="Our invite link: https://discord.gg/H6N8AHB")
 
         # Post processing
         await ctx.message.delete()
 
+        list_welcome = {
+            "intro_id": str(msg1.id),
+            "roles_id": str(msg2.id),
+            "rules_id": str(msg3.id),
+            "requirements_id": str(msg4.id),
+            "events_id": str(msg5.id),
+            "banner_id": str(msg6.id),
+            "invite_id": str(msg7.id)
+        }
+
         books.update_one(
             {"server": f"{ctx.guild.id}"},
             {"$set": {
-                "intro_id": str(msg1.id),
-                "roles_id": str(msg2.id),
-                "rules_id": str(msg3.id),
-                "requirements_id": str(msg4.id),
-                "events_id": str(msg5.id),
-                "invite_id": str(msg6.id)
+                "welcome_msg": list_welcome
             }}
         )
 
@@ -470,7 +496,7 @@ class Admin(commands.Cog):
         embed = discord.Embed(
             title="Role Color Selection",
             colour=discord.Colour(0x3b70ff),
-            description="Freely select your preferred Animagus form. Transformation time: 19:00-06:00"
+            description="• Freely select your preferred Animagus form. Transformation time: 19:00-06:00"
         )
         embed.add_field(
             name=":eagle: Thunderbirds",
@@ -535,20 +561,20 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(
             colour=discord.Colour(0x50e3c2),
-            title=":confetti_ball: Patronus Guild Contest",
+            title="🎊 Patronus Guild Contest",
             description=description
         )
         embed.set_image(
             url="https://media.discordapp.net/attachments/473127659136614431/"
                 "599172714057695242/show_us_ur_patronus.png")
         embed.add_field(
-            name=":tada: Event Overview",
+            name="🎉 Event Overview",
             value="@everyone can role-play in the wizarding server of Patronusverse, "
                   "where you will be given a quest to complete. "
                   "This quest can be casually interacted in the server and it will be a riddle kind of game.\n​ "
         )
         embed.add_field(
-            name=":notepad_spiral: Game Mechanics",
+            name="🗒 Game Mechanics",
             value=f"• Allow direct messages from our bot Miketsu to join. Try `;help dm`\n"
             f"• Interested players can start by reacting at the <#{sorting.id}>\n"
             f"• Hints will be available to use via `;hint`\n"
@@ -556,14 +582,14 @@ class Admin(commands.Cog):
             f"• Use <#{gift_game.id}> for any discussion, visible once accepted\n​ "
         )
         embed.add_field(
-            name=":goal: Scoring System",
+            name="🥅 Scoring System",
             value="• Players will have a base score of 1000 points\n"
                   "• Reduced by 5 points every hour\n"
                   "• Reduced by every hint unlocked \n"
                   "• Reduced by any irrelevant actions done\n​ "
         )
         embed.add_field(
-            name=":gift_heart: Rewards System",
+            name="💝 Rewards System",
             value="• Two current guild members will win Nitro\n"
                   "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
                   "• The 1st one to complete a quest cycle without moving a path\n​\n "
@@ -584,7 +610,7 @@ class Admin(commands.Cog):
 
         link = f"https://discordapp.com/channels/{msg.guild.id}/{msg.channel.id}/{msg.id}"
         embed.add_field(
-            name=":dolphin: Quest #1: Show us your Patronus!",
+            name="🐬 Quest #1: Show us your Patronus!",
             value=f"Learn how to summon one. Refer to the quest mechanics [here!]({link})"
         )
 
@@ -611,23 +637,33 @@ class Admin(commands.Cog):
                         "Clearing your reaction removes the role"
         )
         embed.add_field(
-            name=":books: Apprentice",
+            name="📚 Apprentice",
             value="Patronus can apply as long term associate and later on graduate to Auror",
             inline=False
         )
         embed.add_field(
-            name=":tada: Funfun",
+            name="🎉 Funfun",
             value="Mentionable role for people looking for playmates",
             inline=False
         )
         embed.add_field(
-            name=":mag: Coop Find",
-            value="Mentionable role if you're looking for accompany quest completion",
+            name="🔍 Co-op Find",
+            value="Mentionable role if you're looking for cooperative teams",
             inline=False
         )
         embed.add_field(
-            name=":checkered_flag: Boss Busters",
-            value="Mentionable role for rare boss assembly spawns",
+            name="🏁 Boss Busters",
+            value="Mentionable role for fake rare boss assembly spawns",
+            inline=False
+        )
+        embed.add_field(
+            name="⚾ Shard Seekers",
+            value="Auto-pinged whenever people post their shard list for trading",
+            inline=False
+        )
+        embed.add_field(
+            name="🎰 Big Spenders",
+            value="Auto-pinged whenever a new round of showdown bidding has started",
             inline=False
         )
         special_select = await sorting_channel.fetch_message(int(request["special_id"]))
@@ -665,7 +701,7 @@ class Admin(commands.Cog):
         for ship in friendship.find({}, {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}):
             if ship["level"] > 1:
                 rewards = ship["level"] * 25
-                query_list.append(f":small_orange_diamond: {ship['ship_name']}, {rewards}{emoji_j}\n")
+                query_list.append(f"• {ship['ship_name']}, {rewards}{emoji_j}\n")
                 users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
                 users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
 
@@ -673,7 +709,7 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(
             color=0xffff80,
-            title=":ship: Daily Ship Sail Rewards",
+            title="🚢 Daily Ship Sail Rewards",
             description=description
         )
         embed.set_footer(text="Page 1")
@@ -690,7 +726,7 @@ class Admin(commands.Cog):
 
             embed = discord.Embed(
                 color=0xffff80,
-                title=":ship: Daily Ship Sail Rewards",
+                title="🚢 Daily Ship Sail Rewards",
                 description=description
             )
             embed.set_footer(text=f"Page: {page}")
@@ -777,7 +813,7 @@ class Admin(commands.Cog):
                 description="• `;m add {role} {name}`"
             )
             embed.add_field(
-                name=":ribbon: Role Selection",
+                name="🎀 Role Selection",
                 value="member, ex-member, officer"
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
@@ -821,11 +857,11 @@ class Admin(commands.Cog):
                             "• `;m update inactives` - batch updating"
             )
             embed.add_field(
-                name=":ribbon: Roles",
+                name="🎀 Roles",
                 value="member, ex-member, officer"
             )
             embed.add_field(
-                name=":golf: Status",
+                name="⛳ Status",
                 value="active, inactive, on-leave, kicked, semi-active, away, left"
             )
             embed.add_field(
@@ -866,11 +902,11 @@ class Admin(commands.Cog):
                             "• `;m show {field} {data}`"
             )
             embed.add_field(
-                name=":ribbon: Role",
+                name="🎀 Role",
                 value="member, ex-member, officer"
             )
             embed.add_field(
-                name=":golf: Status",
+                name="⛳ Status",
                 value="active, inactive, on-leave, kicked, semi-active, away, left"
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
@@ -948,31 +984,34 @@ class Admin(commands.Cog):
         def check(feat):
             try:
                 value = int(feat.content)
-                if value not in [90, 60, 30] and feat.author == ctx.message.author:
+                if value not in [90, 60, 30] and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise KeyError
 
             except ValueError:
-                if feat.content.lower() == "stop" and feat.author == ctx.message.author:
+                if feat.content.lower() == "stop" \
+                        and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise TypeError
-                elif feat.content.lower() == "skip" and feat.author == ctx.message.author:
+                elif feat.content.lower() == "skip" \
+                        and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise IndexError
-                elif feat.content.lower() not in ["stop", "skip"] and feat.author == ctx.message.author:
+                elif feat.content.lower() not in ["stop", "skip"] \
+                        and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise KeyError
-            return feat.author == ctx.message.author
+            return feat.author == ctx.message.author and feat.channel == ctx.channel
 
         for member in query.sort([("total_feats", -1)]):
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"#{member['#']} : {member['name']} | :ribbon: {member['role']}"
+                title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.set_footer(text=f"Queried on {time}")
             embed.add_field(
-                name=":golf: Status",
+                name="⛳ Status",
                 value=f"{member['status']} [{member['status_update1']}]"
             )
             embed.add_field(
-                name=":trophy: Feats | GQ",
+                name="🏆 Feats | GQ",
                 value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{week_number}]"
             )
             await asyncio.sleep(2)
@@ -1044,13 +1083,16 @@ class Admin(commands.Cog):
             try:
                 int(feat.content)
             except ValueError:
-                if feat.content.lower() == "stop" and feat.author == ctx.message.author:
+                if feat.content.lower() == "stop" \
+                        and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise TypeError
-                elif feat.content.lower() == "skip" and feat.author == ctx.message.author:
+                elif feat.content.lower() == "skip" \
+                        and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise IndexError
-                elif feat.content.lower() not in ["stop", "skip"] and feat.author == ctx.message.author:
+                elif feat.content.lower() not in ["stop", "skip"] \
+                        and feat.author == ctx.message.author and feat.channel == ctx.channel:
                     raise KeyError
-            return feat.author == ctx.message.author
+            return feat.author == ctx.message.author and feat.channel == ctx.channel
 
         query = members.find({
             "role": {
@@ -1061,15 +1103,15 @@ class Admin(commands.Cog):
         for member in query.sort([("total_feats", 1)]):
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"#{member['#']} : {member['name']} | :ribbon: {member['role']}"
+                title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(
-                name=":golf: Status",
+                name="⛳ Status",
                 value=f"{member['status']} [{member['status_update1']}]"
             )
             embed.add_field(
-                name=":trophy: Feats | GQ",
+                name="🏆 Feats | GQ",
                 value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{week_number}]"
             )
             await asyncio.sleep(2)
