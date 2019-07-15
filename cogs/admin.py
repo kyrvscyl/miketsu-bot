@@ -948,15 +948,15 @@ class Admin(commands.Cog):
         def check(feat):
             try:
                 value = int(feat.content)
-                if value not in [90, 60, 30]:
+                if value not in [90, 60, 30] and feat.author == ctx.message.author:
                     raise KeyError
 
             except ValueError:
-                if feat.content.lower() == "stop":
+                if feat.content.lower() == "stop" and feat.author == ctx.message.author:
                     raise TypeError
-                elif feat.content.lower() == "skip":
+                elif feat.content.lower() == "skip" and feat.author == ctx.message.author:
                     raise IndexError
-                else:
+                elif feat.content.lower() not in ["stop", "skip"] and feat.author == ctx.message.author:
                     raise KeyError
             return feat.author == ctx.message.author
 
@@ -1042,11 +1042,11 @@ class Admin(commands.Cog):
             try:
                 int(feat.content)
             except ValueError:
-                if feat.content.lower() == "stop":
+                if feat.content.lower() == "stop" and feat.author == ctx.message.author:
                     raise TypeError
-                elif feat.content.lower() == "skip":
+                elif feat.content.lower() == "skip" and feat.author == ctx.message.author:
                     raise IndexError
-                else:
+                elif feat.content.lower() not in ["stop", "skip"] and feat.author == ctx.message.author:
                     raise KeyError
             return feat.author == ctx.message.author
 
