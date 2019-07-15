@@ -60,11 +60,11 @@ def lengthen(index):
     return prefix.format(index)
 
 
-def create_embed(ctx, page, query_list, time):
+def create_embed(ctx, page, query_list, time, color):
     end = page * 20
     start = end - 20
     description = "".join(query_list[start:end])
-    embed = discord.Embed(color=0xffff80, title="🔱 Guild Registry", description=f"{description}")
+    embed = discord.Embed(color=color, title="🔱 Guild Registry", description=f"{description}")
     embed.set_footer(text=f"Page: {page} | Queried on {time}")
     embed.set_thumbnail(url=ctx.guild.icon_url)
     return embed
@@ -1024,6 +1024,8 @@ class Admin(commands.Cog):
             else:
                 continue
 
+        await ctx.channel.send("Batch update ended.")
+
     async def management_update_feats(self, ctx):
         week_number = datetime.now(tz=tz_target).isocalendar()[1]
 
@@ -1109,6 +1111,8 @@ class Admin(commands.Cog):
             else:
                 continue
 
+        await ctx.channel.send("Batch update ended.")
+
     async def management_show_guild_current(self, ctx):
         time = (datetime.now(tz=tz_target)).strftime("%d.%b %Y %H:%M EST")
         query_list = []
@@ -1156,7 +1160,7 @@ class Admin(commands.Cog):
                     page -= 1
                 if page == 0:
                     page = 1
-                await msg.edit(embed=create_embed(ctx, page, query_list, time))
+                await msg.edit(embed=create_embed(ctx, page, query_list, time, ctx.author.colour))
             except asyncio.TimeoutError:
                 return False
 
