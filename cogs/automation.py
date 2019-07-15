@@ -98,16 +98,17 @@ class Events(commands.Cog):
         elif payload.data["pinned"] is True:
 
             try:
-                request = books.find_one(
-                    {"server": f"{payload.data['guild_id']}"},
-                    {"_id": 0, "shard-trading": 1, "headlines": 1}
-                )
+                request = books.find_one({
+                    "server": f"{payload.data['guild_id']}"}, {
+                    "_id": 0, "shard-trading": 1, "headlines": 1, "roles": 1
+                })
 
                 if str(payload.data["channel_id"]) == request["shard-trading"]:
 
                     time_stamp = datetime.now(tz=tz_target).strftime("%b %d, %Y %I:%M EST")
                     headlines_channel = self.client.get_channel(int(request["headlines"]))
-                    user = self.client.get_user(int(payload.data["author"]["id"]))
+                    guild = self.client.get_guild(int(payload.data['guild_id']))
+                    user = guild.get_member(int(payload.data["author"]["id"]))
                     shard_trading = self.client.get_channel(int(request["shard-trading"]))
 
                     embed = discord.Embed(
@@ -115,7 +116,7 @@ class Events(commands.Cog):
                         description=f"{payload.data['content']}"
                     )
                     embed.set_author(
-                        name=f"{user.name} is looking for shards!",
+                        name=f"{user.display_name} is looking for shards!",
                         icon_url=user.avatar_url
                     )
                     embed.set_footer(text=f"#{shard_trading.name} | {time_stamp}")
@@ -123,7 +124,7 @@ class Events(commands.Cog):
                     if len(payload.data["attachments"]) != 0:
                         embed.set_image(url=payload.data["attachments"][0]["url"])
 
-                    await headlines_channel.send(embed=embed)
+                    await headlines_channel.send(f"<@&{request['roles']['shard_seekers']}>", embed=embed)
 
             except KeyError:
                 return
