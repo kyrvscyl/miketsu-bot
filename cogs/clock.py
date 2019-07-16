@@ -22,9 +22,8 @@ file = os.path.basename(__file__)[:-3:]
 
 
 clock_channels = []
-for guild_clock in books.find({}, {"clock": 1, "_id": 0}):
-    if guild_clock["clock"] != "":
-        clock_channels.append(guild_clock["clock"])
+for guild_clock in books.find({}, {"channels.clock": 1, "_id": 0}):
+    clock_channels.append(guild_clock["channels"]["clock"])
 
 
 def get_time():
@@ -304,10 +303,8 @@ class Clock(commands.Cog):
                             channel = self.client.get_channel(int(entry[secret][key]))
                             await channel.delete()
                         except AttributeError:
-                            logging(file, get_f(), "AttributeError")
                             continue
                         except discord.errors.Forbidden:
-                            logging(file, get_f(), "discord.errors.Forbidden")
                             continue
                         except discord.errors.NotFound:
                             logging(file, get_f(), "discord.errors.NotFound")
@@ -356,7 +353,6 @@ class Clock(commands.Cog):
                 clock = self.client.get_channel(int(clock_channel))
                 await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
             except AttributeError:
-                logging(file, get_f(), "AttributeError")
                 continue
             except discord.errors.InvalidArgument:
                 logging(file, get_f(), "discord.errors.InvalidArgument")
