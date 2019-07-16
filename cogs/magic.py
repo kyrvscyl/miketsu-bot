@@ -20,6 +20,11 @@ for owl in owls.find({}, {"_id": 0, "type": 1}):
     owls_list.append(owl["type"])
 
 
+diagon_alleys = []
+for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
+    diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
+
+
 patronus_ = open("lists/patronuses.lists")
 patronuses = patronus_.read().splitlines()
 patronus_.close()
@@ -196,6 +201,7 @@ def get_flexibility_category(wand_flexibility):
 
 
 async def secret_banner(webhook_url, avatar, username, url):
+
     webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
     embed = DiscordEmbed(color=0xffffff)
     embed.set_image(url=url)
@@ -210,6 +216,7 @@ def get_dictionary(channel_name):
 
 
 async def generate_data(guild, secret_channel, channel):
+
     channel_name = secret_channel.replace(" ", "-")
     webhook = await channel.create_webhook(name="webhooker")
 
@@ -260,6 +267,7 @@ async def action_update(user, cycle, actions):
 
 
 async def update_hint(user, path, cycle, hint):
+
     quests.update_one({
         "user_id": str(user.id), "quest1.cycle": cycle}, {
         "$set": {
@@ -273,6 +281,7 @@ async def update_hint(user, path, cycle, hint):
 
 
 async def secret_response(guild_id, channel_name, description):
+
     secret = books.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
     webhook_url = secret[str(channel_name)]["webhook"]
     avatar = secret[str(channel_name)]["avatar"]
@@ -290,6 +299,7 @@ class Magic(commands.Cog):
 
 
     async def expecto(self, guild, user, channel, message):
+
         role_star = discord.utils.get(guild.roles, name="🌟")
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
@@ -671,10 +681,10 @@ class Magic(commands.Cog):
 
         request = books.find_one({
             "server": f"{payload.guild_id}"}, {
-            "_id": 0, "welcome": 1, "sorting": 1, "letter": 1
+            "_id": 0, "messages.quests": 1
         })
 
-        if str(payload.emoji) == "🐬" and payload.message_id == int(request['letter']):
+        if str(payload.emoji) == "🐬" and payload.message_id == int(request["messages"]["quests"]):
             member = server.get_member(user.id)
 
             if quests.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
@@ -727,6 +737,8 @@ class Magic(commands.Cog):
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
 
+        msg = reaction.message.content
+
         if user == self.client.user:
             return
 
@@ -734,17 +746,17 @@ class Magic(commands.Cog):
             return
 
         elif str(reaction.emoji) == "✉" and user != self.client.user \
-                and "envelope" in reaction.message.content and reaction.message.author == self.client.user:
+                and "envelope" in msg and reaction.message.author == self.client.user:
 
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             request = books.find_one({
                 "server": server["server"]}, {
-                "_id": 0, "welcome": 1, "sorting": 1, "letter": 1
+                "_id": 0, "channels.welcome": 1, "channels.sorting-hat": 1
             })
 
             description = get_dictionary("start_quest")["letter"].format(
-                user.name, request["welcome"], request["sorting"]
+                user.name, request["channels"]["welcome"], request["channels"]["sorting-hat"]
             )
             embed = discord.Embed(
                 color=0xffff80,
@@ -756,8 +768,7 @@ class Magic(commands.Cog):
             await self.update_path(user, cycle, path_new="path1")
             await penalize(user, cycle, points=20)
 
-        elif str(reaction.emoji) == "✉" and "returned with" in reaction.message.content \
-                and reaction.message.author == self.client.user:
+        elif str(reaction.emoji) == "✉" and "returned with" in msg and reaction.message.author == self.client.user:
 
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
@@ -772,22 +783,25 @@ class Magic(commands.Cog):
             await user.send(embed=embed)
 
         elif str(reaction.emoji) == "🦉":
+
             role_owl = discord.utils.get(reaction.message.guild.roles, name="🦉")
-            request = books.find_one({"server": f"{reaction.message.guild.id}"}, {"_id": 0, "tower": 1})
+            request = books.find_one({
+                "server": f"{reaction.message.guild.id}"}, {
+                "_id": 0,
+                "channels.absence-applications": 1
+            })
+            valid_channel_id = request["channels"]["absence-applications"]
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
             if user not in role_owl.members:
                 await penalize(user, cycle, points=30)
 
-            elif (request["tower"] not in str(reaction.message.content) or
-                  "<@!180717337475809281>" not in str(reaction.message.content)) and \
-                    "✉" not in str(reaction.message.content):
+            elif (valid_channel_id not in msg or "<@!180717337475809281>" not in msg) and "✉" not in msg:
 
                 await reaction.message.add_reaction("❔")
                 await penalize(user, cycle, points=10)
 
-            elif (request["tower"] in str(reaction.message.content) or
-                  "<@!180717337475809281>" in str(reaction.message.content)) and "✉" in str(reaction.message.content):
+            elif (valid_channel_id in msg or "<@!180717337475809281>" in msg) and "✉" in msg:
 
                 cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
@@ -1023,49 +1037,47 @@ class Magic(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        if message.author == self.client.user:
+        category = message.channel.category
+        msg = message.content.lower()
+        channel = message.channel
+        user = message.author
+        role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
+
+        if user == self.client.user:
             return
 
-        elif message.author.bot:
+        elif user.bot:
             return
 
-        elif isinstance(message.channel, discord.DMChannel):
+        elif isinstance(channel, discord.DMChannel):
             return
 
-        elif not check_quest(message.author):
+        elif not check_quest(user):
             return
 
-        elif message.content.lower() == "eeylops owl emporium" and str(
-                message.channel.category) == "⛲ Diagon Alley" and str(message.channel) != "eeylops-owl-emporium":
+        elif user not in role_dolphin.members:
+            return
 
-            role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
+        elif msg == "eeylops owl emporium" and str(category.id) in diagon_alleys \
+                and str(channel) != "eeylops-owl-emporium":
 
-            if message.author in role_dolphin.members:
-                await self.create_emporium(message.channel.category, message.guild,
-                                           message.content.lower(), message, message.author)
+            await self.create_emporium(category, message.guild, msg, message, user)
 
-        elif message.content.lower() in ["gringotts bank", "gringotts wizarding bank"] \
-                and str(message.channel.category) == "⛲ Diagon Alley" and str(message.channel) != "gringotts-bank":
+        elif msg in ["gringotts bank", "gringotts wizarding bank"] \
+                and str(category.id) in diagon_alleys and str(channel) != "gringotts-bank":
 
-            role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
+            await self.create_gringotts(category, message.guild, message, user)
 
-            if message.author in role_dolphin.members:
-                await self.create_gringotts(message.channel.category, message.guild, message, message.author)
+        elif msg == "ollivanders" and str(category.id) in diagon_alleys \
+                and str(channel) != "ollivanders":
 
-        elif message.content.lower() == "ollivanders" and str(message.channel.category) == "⛲ Diagon Alley" \
-                and str(message.channel) != "ollivanders":
+            await self.create_ollivanders(category, message.guild, msg, message, user)
 
-            role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
-
-            if message.author in role_dolphin.members:
-                await self.create_ollivanders(message.channel.category, message.guild,
-                                              message.content.lower(), message, message.author)
-
-        elif "gringotts-bank" == str(message.channel) and message.content.startswith(";") is False:
-            await self.transaction_gringotts(message.author, message.guild, message)
+        elif "gringotts-bank" == str(channel) and message.content.startswith(";") is False:
+            await self.transaction_gringotts(user, message.guild, message)
 
         elif spell_check(message.content):
-            await self.expecto(message.guild, message.author, message.channel, message)
+            await self.expecto(message.guild, user, channel, message)
 
 
     async def create_emporium(self, category, guild, msg, message, user):
@@ -1126,6 +1138,7 @@ class Magic(commands.Cog):
 
 
     async def create_gringotts(self, category, guild, message, user):
+
         role_galleons = discord.utils.get(message.guild.roles, name="💰")
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
@@ -1200,6 +1213,7 @@ class Magic(commands.Cog):
 
 
     async def create_ollivanders(self, category, guild, msg, message, user):
+
         channels = [channel.name for channel in category.text_channels]
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
@@ -1252,6 +1266,7 @@ class Magic(commands.Cog):
 
 
     async def transaction_ollivanders(self, guild, user, channel):
+
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
         if actions >= 3:
