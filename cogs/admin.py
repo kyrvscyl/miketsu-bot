@@ -14,13 +14,12 @@ from discord.ext import commands
 
 from cogs.error import logging, get_f
 from cogs.mongo.db import daily, boss, members, users, friendship, books
-from cogs.startup import pluralize
+from cogs.startup import pluralize, emoji_j
 
 file = os.path.basename(__file__)[:-3:]
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
-emoji_j = "<:jade:555630314282811412>"
 
 
 channels_announcement = []
@@ -275,12 +274,13 @@ class Admin(commands.Cog):
             "server": f"{ctx.guild.id}"}, {
             "_id": 0,
             "channels": 1,
-            "roles.patronus": 1
+            "roles.patronus": 1,
+            "messages": 1
         })
         welcome_id = request["channels"]["welcome"]
         sorting_id = request["channels"]["sorting-hat"]
         patronus_role_id = request["roles"]["patronus"]
-        welcome = self.client.get_channel(int(welcome_id))
+        welcome_channel = self.client.get_channel(int(welcome_id))
 
         embed1 = discord.Embed(
             colour=discord.Colour(0xe77eff),
@@ -449,31 +449,23 @@ class Admin(commands.Cog):
             text="Assets: Official Onmyoji art; Designed by: xann#8194"
         )
 
-        msg1 = await welcome.send(embed=embed1)
-        msg2 = await welcome.send(embed=embed2)
-        msg3 = await welcome.send(embed=embed3)
-        msg4 = await welcome.send(embed=embed4)
-        msg5 = await welcome.send(embed=embed5)
-        msg6 = await welcome.send(embed=embed6)
-        msg7 = await welcome.send(content="Our invite link: https://discord.gg/H6N8AHB")
+        introduction_msg = await welcome_channel.fetch_message(int(request["messages"]["introduction"]))
+        roles_information_msg = await welcome_channel.fetch_message(int(request["messages"]["roles_information"]))
+        rules_msg = await welcome_channel.fetch_message(int(request["messages"]["rules"]))
+        requirements_msg = await welcome_channel.fetch_message(int(request["messages"]["requirements"]))
+        events_schedule_msg = await welcome_channel.fetch_message(int(request["messages"]["events_schedule"]))
+        banner_msg = await welcome_channel.fetch_message(int(request["messages"]["banner"]))
+        invite_link_msg = await welcome_channel.fetch_message(int(request["messages"]["invite_link"]))
+
+        await introduction_msg.edit(embed=embed1)
+        await roles_information_msg.edit(embed=embed2)
+        await rules_msg.edit(embed=embed3)
+        await requirements_msg.edit(embed=embed4)
+        await events_schedule_msg.edit(embed=embed5)
+        await banner_msg.edit(embed=embed6)
+        await invite_link_msg.edit(content="Our invite link: https://discord.gg/H6N8AHB")
         await ctx.message.delete()
 
-        list_welcome = {
-            "introduction": str(msg1.id),
-            "roles_information": str(msg2.id),
-            "rules": str(msg3.id),
-            "requirements": str(msg4.id),
-            "events_schedule": str(msg5.id),
-            "banner": str(msg6.id),
-            "invite_link": str(msg7.id)
-        }
-
-        books.update_one(
-            {"server": f"{ctx.guild.id}"},
-            {"$set": {
-                "messages": list_welcome
-            }}
-        )
 
     @commands.command(aliases=["beasts"])
     @commands.is_owner()
