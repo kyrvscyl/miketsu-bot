@@ -190,7 +190,7 @@ class Clock(commands.Cog):
         await reset_purchase()
         await self.send_off_report()
         await self.send_off_complete()
-        await ctx.channel.send("Actions reset, purchase reset, send off reports performed")
+        await ctx.author.send("Actions reset, purchase reset, send off reports performed")
 
 
     async def send_off_complete(self):
