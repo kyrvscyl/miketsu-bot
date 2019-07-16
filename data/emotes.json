@@ -1,191 +1,193 @@
 {
-	"sorry": {
-		"1": "https://i.imgur.com/pJrDzFa.png",
-		"2": "https://i.imgur.com/0W1s0lr.png"
-	},
-	"sad": {
-		"1": "https://i.imgur.com/bOKD524.png",
-		"2": "https://i.imgur.com/9AIXLxP.png"
-	},
-	"goodnight": {
-		"1": "https://i.imgur.com/QOkrKVS.png",
-		"2": "https://i.imgur.com/FlSdGIQ.png"
-	},
-	"yes": {
-		"1": "https://i.imgur.com/l6Cna0i.png"
-	},
-	"shy": {
-		"1": "https://i.imgur.com/F8v5J1w.png"
-	},
-	"blank": {
-		"1": "https://i.imgur.com/Xdt9hrx.png"
-	},
-	"play": {
-		"1": "https://i.imgur.com/kmk6ldO.png"
-	},
-	"facepalm": {
-		"1": "https://i.imgur.com/urEboB0.png"
-	},
-	"laugh": {
-		"1": "https://i.imgur.com/BhRwB6E.png"
-	},
-	"erm": {
-		"1": "https://i.imgur.com/nOF3UCk.png"
-	},
-	"awkward": {
-		"1": "https://i.imgur.com/UDysqTH.png"
-	},
-	"goodluck": {
-		"1": "https://i.imgur.com/Xt7PnMk.png"
-	},
-	"hello": {
-		"1": "https://i.imgur.com/8DeaQmu.png",
-		"2": "https://i.imgur.com/NPTnl9A.png"
-	},
-	"hug": {
-		"1": "https://i.imgur.com/OFTZEBq.png"
-	},
-	"please": {
-		"1": "https://i.imgur.com/tIILR29.png",
-		"2": "https://i.imgur.com/wcxtI90.png"
-	},
-	"yay": {
-		"1": "https://i.imgur.com/hN4MVoo.png"
-	},
-	"behave": {
-		"1": "https://i.imgur.com/OYPpc0E.png"
-	},
-	"wah": {
-		"1": "https://i.imgur.com/naYwDCn.png"
-	},
-	"hmm": {
-		"1": "https://i.imgur.com/MxTO6X9.png"
-	},
-	"dammit": {
-		"1": "https://i.imgur.com/tCgeITN.png"
-	},
-	"ignore": {
-		"1": "https://i.imgur.com/yCsOKwB.png",
-		"2": "https://i.imgur.com/P1q9Cdv.png"
-	},
-	"woah": {
-		"1": "https://i.imgur.com/YKK2kWT.png"
-	},
-	"kiss": {
-		"1": "https://i.imgur.com/5bXcadC.png"
-	},
-	"cheers": {
-		"1": "https://i.imgur.com/9TSjjn3.png"
-	},
-	"hurry": {
-		"1": "https://i.imgur.com/xwkeeax.png"
-	},
-	"thanks": {
-		"1": "https://i.imgur.com/mUT5vxw.png"
-	},
-	"respect": {
-		"1": "https://i.imgur.com/5nOuUnN.png"
-	},
-	"shutup": {
-		"1": "https://i.imgur.com/FsAjK9k.png"
-	},
-	"nice": {
-		"1": "https://i.imgur.com/D6QNe4P.png"
-	},
-	"aww": {
-		"1": "https://i.imgur.com/JoM9xjb.png"
-	},
-	"bye": {
-		"1": "https://i.imgur.com/NDizy77.png",
-		"2": "https://i.imgur.com/YrLEblF.png"
-	},
-	"tremble": {
-		"1": "https://i.imgur.com/YDV54DL.png"
-	},
-	"bullied": {
-		"1": "https://i.imgur.com/vgyihfb.png",
-		"2": "https://i.imgur.com/VCcdXdr.png"
-	},
-	"awesome": {
-		"1": "https://i.imgur.com/WEX3lcj.png",
-		"2": "https://i.imgur.com/dhAVS71.png"
-	},
-	"buddy": {
-		"1": "https://i.imgur.com/5ELar9q.png"
-	},
-	"ehh": {
-		"1": "https://i.imgur.com/jSj1VuU.png"
-	},
-	"what": {
-		"1": "https://i.imgur.com/VrQ127k.png"
-	},
-	"ltim": {
-		"1": "https://i.imgur.com/1tBPHtt.png"
-	},
-	"fightx2": {
-		"1": "https://i.imgur.com/vEBIyWf.png"
-	},
-	"gawk": {
-		"1": "https://i.imgur.com/PTDye1R.png"
-	},
-	"lalala": {
-		"1": "https://i.imgur.com/eTnSgrt.png"
-	},
-	"painfulsmile": {
-		"1": "https://i.imgur.com/QY9lw5h.png"
-	},
-	"ithurts": {
-		"1": "https://i.imgur.com/wSkXSuL.png"
-	},
-	"deal!": {
-		"1": "https://i.imgur.com/daY8VXE.png"
-	},
-	"cry": {
-		"1": "https://i.imgur.com/Zh1ATYV.png"
-	},
-	"yawn": {
-		"1": "https://i.imgur.com/lwHvMGt.png"
-	},
-	"notgood": {
-		"1": "https://i.imgur.com/PtV4cTH.png"
-	},
-	"hydoin": {
-		"1": "https://i.imgur.com/qh6xDrO.png"
-	},
-	"hpybday": {
-		"1": "https://i.imgur.com/0lHv8xr.png"
-	},
-	"nono": {
-		"1": "https://i.imgur.com/Q9u4WZ4.png"
-	},
-	"ciodawg": {
-		"1": "https://i.imgur.com/ZVdRgCE.png"
-	},
-	"alone": {
-		"1": "https://i.imgur.com/cyyyr56.png"
-	},
-	"jhtwatch": {
-		"1": "https://i.imgur.com/f0F8eyG.png"
-	},
-	"kneel": {
-		"1": "https://i.imgur.com/fhLriRS.png"
-	},
-	"thissucks": {
-		"1": "https://i.imgur.com/fhLriRS.png"
-	},
-	"cleaningup": {
-		"1": "https://i.imgur.com/VCerBFv.png"
-	},
-	"marryme": {
-		"1": "https://i.imgur.com/PRjyr2T.png"
-	},
-	"hmph": {
-		"1": "https://i.imgur.com/Vo67LoR.png"
-	},
-	"ily": {
-		"1": "https://i.imgur.com/IvN7e2i.png"
-	},
-	"comeon": {
-		"1": "https://i.imgur.com/ES0veLg.png"
-	}
+ "sorry": {
+  "1": "https://i.imgur.com/pJrDzFa.png",
+  "2": "https://i.imgur.com/0W1s0lr.png"
+ },
+ "wronged": {
+  "1": "https://i.imgur.com/bOKD524.png"
+ },
+ "nbdylovesme": {
+  "1": "https://i.imgur.com/9AIXLxP.png"
+ },
+ "goodnight": {
+  "1": "https://i.imgur.com/QOkrKVS.png",
+  "2": "https://i.imgur.com/FlSdGIQ.png"
+ },
+ "yes": {
+  "1": "https://i.imgur.com/l6Cna0i.png"
+ },
+ "shy": {
+  "1": "https://i.imgur.com/F8v5J1w.png"
+ },
+ "blank": {
+  "1": "https://i.imgur.com/Xdt9hrx.png"
+ },
+ "play": {
+  "1": "https://i.imgur.com/kmk6ldO.png"
+ },
+ "facepalm": {
+  "1": "https://i.imgur.com/urEboB0.png"
+ },
+ "laugh": {
+  "1": "https://i.imgur.com/BhRwB6E.png"
+ },
+ "erm": {
+  "1": "https://i.imgur.com/nOF3UCk.png"
+ },
+ "awkward": {
+  "1": "https://i.imgur.com/UDysqTH.png"
+ },
+ "goodluck": {
+  "1": "https://i.imgur.com/Xt7PnMk.png"
+ },
+ "hello": {
+  "1": "https://i.imgur.com/8DeaQmu.png",
+  "2": "https://i.imgur.com/NPTnl9A.png"
+ },
+ "hug": {
+  "1": "https://i.imgur.com/OFTZEBq.png"
+ },
+ "please": {
+  "1": "https://i.imgur.com/tIILR29.png",
+  "2": "https://i.imgur.com/wcxtI90.png"
+ },
+ "yay": {
+  "1": "https://i.imgur.com/hN4MVoo.png"
+ },
+ "behave": {
+  "1": "https://i.imgur.com/OYPpc0E.png"
+ },
+ "wah": {
+  "1": "https://i.imgur.com/naYwDCn.png"
+ },
+ "hmm": {
+  "1": "https://i.imgur.com/MxTO6X9.png"
+ },
+ "dammit": {
+  "1": "https://i.imgur.com/tCgeITN.png"
+ },
+ "ignore": {
+  "1": "https://i.imgur.com/yCsOKwB.png",
+  "2": "https://i.imgur.com/P1q9Cdv.png"
+ },
+ "woah": {
+  "1": "https://i.imgur.com/YKK2kWT.png"
+ },
+ "kiss": {
+  "1": "https://i.imgur.com/5bXcadC.png"
+ },
+ "cheers": {
+  "1": "https://i.imgur.com/9TSjjn3.png"
+ },
+ "hurry": {
+  "1": "https://i.imgur.com/xwkeeax.png"
+ },
+ "thanks": {
+  "1": "https://i.imgur.com/mUT5vxw.png"
+ },
+ "respect": {
+  "1": "https://i.imgur.com/5nOuUnN.png"
+ },
+ "shutup": {
+  "1": "https://i.imgur.com/FsAjK9k.png"
+ },
+ "nice": {
+  "1": "https://i.imgur.com/D6QNe4P.png"
+ },
+ "aww": {
+  "1": "https://i.imgur.com/JoM9xjb.png"
+ },
+ "bye": {
+  "1": "https://i.imgur.com/NDizy77.png",
+  "2": "https://i.imgur.com/YrLEblF.png"
+ },
+ "tremble": {
+  "1": "https://i.imgur.com/YDV54DL.png"
+ },
+ "bullied": {
+  "1": "https://i.imgur.com/vgyihfb.png",
+  "2": "https://i.imgur.com/VCcdXdr.png"
+ },
+ "awesome": {
+  "1": "https://i.imgur.com/WEX3lcj.png",
+  "2": "https://i.imgur.com/dhAVS71.png"
+ },
+ "buddy": {
+  "1": "https://i.imgur.com/5ELar9q.png"
+ },
+ "ehh": {
+  "1": "https://i.imgur.com/jSj1VuU.png"
+ },
+ "what": {
+  "1": "https://i.imgur.com/VrQ127k.png"
+ },
+ "ltim": {
+  "1": "https://i.imgur.com/1tBPHtt.png"
+ },
+ "fightx2": {
+  "1": "https://i.imgur.com/vEBIyWf.png"
+ },
+ "gawk": {
+  "1": "https://i.imgur.com/PTDye1R.png"
+ },
+ "lalala": {
+  "1": "https://i.imgur.com/eTnSgrt.png"
+ },
+ "painfulsmile": {
+  "1": "https://i.imgur.com/QY9lw5h.png"
+ },
+ "ithurts": {
+  "1": "https://i.imgur.com/wSkXSuL.png"
+ },
+ "deal!": {
+  "1": "https://i.imgur.com/daY8VXE.png"
+ },
+ "cry": {
+  "1": "https://i.imgur.com/Zh1ATYV.png"
+ },
+ "yawn": {
+  "1": "https://i.imgur.com/lwHvMGt.png"
+ },
+ "notgood": {
+  "1": "https://i.imgur.com/PtV4cTH.png"
+ },
+ "hydoin": {
+  "1": "https://i.imgur.com/qh6xDrO.png"
+ },
+ "happybday": {
+  "1": "https://i.imgur.com/0lHv8xr.png"
+ },
+ "nono": {
+  "1": "https://i.imgur.com/Q9u4WZ4.png"
+ },
+ "ciodawg": {
+  "1": "https://i.imgur.com/ZVdRgCE.png"
+ },
+ "alone": {
+  "1": "https://i.imgur.com/cyyyr56.png"
+ },
+ "jhtwatch": {
+  "1": "https://i.imgur.com/f0F8eyG.png"
+ },
+ "kneel": {
+  "1": "https://i.imgur.com/fhLriRS.png"
+ },
+ "thissucks": {
+  "1": "https://i.imgur.com/fhLriRS.png"
+ },
+ "cleaningup": {
+  "1": "https://i.imgur.com/VCerBFv.png"
+ },
+ "marryme": {
+  "1": "https://i.imgur.com/PRjyr2T.png"
+ },
+ "hmph": {
+  "1": "https://i.imgur.com/Vo67LoR.png"
+ },
+ "ily": {
+  "1": "https://i.imgur.com/IvN7e2i.png"
+ },
+ "comeon": {
+  "1": "https://i.imgur.com/ES0veLg.png"
+ }
 }
