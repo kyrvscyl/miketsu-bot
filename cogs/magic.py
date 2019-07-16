@@ -84,13 +84,13 @@ def get_profile_finished(user):
     score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths = "", "", "", "", "", "", ""
 
     for profile in data:
-        patronus_summon = profile["quest1"][0]["patronus"]["patronus"]
+        patronus_summon = profile["quest1"][0]["patronus"]
         score = profile["quest1"][0]["score"]
         timestamp_start = profile["quest1"][0]["timestamp_start"]
         hints_unlocked = profile["quest1"][0]["hints_unlocked"]
         owl_final = profile["quest1"][0]["owl"]
         wand = profile["quest1"][0]["wand"]
-        paths = profile["quest1"][0]["paths_unlocked"]
+        paths = profile["quest1"][0]["hints"]
         break
 
     return score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths
@@ -121,7 +121,7 @@ def get_profile_progress(user):
         }
     }])
 
-    score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked = "", "", "", "", "", ""
+    score, timestamp_start, current_path, cycle, hints_unlocked, paths = "", "", "", "", "", ""
 
     for profile in data:
         cycle = profile["quest1"][0]["cycle"]
@@ -129,10 +129,10 @@ def get_profile_progress(user):
         score = profile["quest1"][0]["score"]
         timestamp_start = profile["quest1"][0]["timestamp_start"]
         hints_unlocked = profile["quest1"][0]["hints_unlocked"]
-        paths_unlocked = profile["quest1"][0]["paths_unlocked"]
+        paths = profile["quest1"][0]["hints"]
         break
 
-    return score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked
+    return score, timestamp_start, current_path, cycle, hints_unlocked, paths
 
 
 def check_quest(user):
@@ -326,18 +326,16 @@ class Magic(commands.Cog):
                 t2 = datetime.strptime(get_time().strftime("%Y-%b-%d %HH"), "%Y-%b-%d %HH")
                 delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
-                patronus_profile = patronus.find_one({
-                    "patronus": patronus_summon.lower()}, {
-                    "_id": 0,
-                    "trait": 1,
-                    "link": 1
-                })
+                paths_unlocked = ""
+                for y in list(paths.keys()):
+                    paths_unlocked += "{}, ".format(y.replace("path", ""))
 
                 description = \
                     f"• Cycle Score: {score + added_points} points, (+{added_points} bonus points)\n" \
                         f"• Hints unlocked: {hints_unlocked}\n" \
-                        f"• Paths unlocked: {paths}\n" \
-                        f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
+                        f"• No. of Paths unlocked: {len(paths)}\n" \
+                        f"• Paths unlocked: [{paths_unlocked[:-2]}]\n" \
+                        f"• Owl: {owl_final.title()} [{patronus_summon['trait'].title()}]"
 
                 quests.update_one({
                     "user_id": str(user.id), "quest1.cycle": cycle}, {
@@ -356,7 +354,7 @@ class Magic(commands.Cog):
                     title=f"Patronus: {patronus_summon.title()} | Strength: {strength}%",
                     description=description
                 )
-                embed.set_image(url=patronus_profile["link"])
+                embed.set_image(url=patronus_summon["link"])
                 embed.set_footer(text=f"Hours spent: {delta} hours")
                 embed.set_author(
                     name=f"{user.display_name} | Cycle #{cycle} results!",
@@ -437,9 +435,6 @@ class Magic(commands.Cog):
             "user_id": str(user.id), "quest1.cycle": cycle}, {
             "$set": {
                 "quest1.$.current_path": path_new
-            },
-            "$inc": {
-                "quest1.$.paths_unlocked": 1
             }
         })
 
@@ -457,7 +452,7 @@ class Magic(commands.Cog):
                 }
             )
 
-        await self.logging(f"Shifted {user.name} path to {path_new}")
+        await self.logging(f"Shifted {user} path to {path_new}")
 
 
     @commands.command(aliases=["patronus"])
@@ -550,8 +545,8 @@ class Magic(commands.Cog):
                     "status": {
                         "$slice": ["$quest1.status", 1]
                     }
-                }}
-                                      ])
+                }
+            }])
 
             profile = {}
             for result in query:
@@ -573,7 +568,7 @@ class Magic(commands.Cog):
                     hints_unlocked = profile["quest1"]["hints_unlocked"]
                     owl_final = profile["quest1"]["owl"]
                     wand = profile["quest1"]["wand"]
-                    paths = profile["quest1"]["paths_unlocked"]
+                    paths = profile["quest1"]["hints"]
                     strength = profile["quest1"]["strength"]
                     patronus_profile = profile["quest1"]["patronus"]
 
@@ -581,10 +576,15 @@ class Magic(commands.Cog):
                     t2 = datetime.strptime(timestamp_end, "%Y-%b-%d %HH")
                     delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
+                    paths_unlocked = ""
+                    for y in list(paths.keys()):
+                        paths_unlocked += "{}, ".format(y.replace("path", ""))
+
                     description = \
                         f"• Cycle Score: {score} points\n" \
                             f"• Hints unlocked: {hints_unlocked}\n" \
-                            f"• Paths unlocked: {paths}\n" \
+                            f"• No. of paths unlocked: {len(paths)}\n" \
+                            f"• Paths unlocked: {paths_unlocked[:-2]}\n" \
                             f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
 
                     embed = discord.Embed(
@@ -606,9 +606,9 @@ class Magic(commands.Cog):
                     await ctx.channel.send(embed=embed)
 
                 except ValueError:
-                    return
+                    await ctx.channel.send("Use `;cycle <cycle#> <@mention>.")
                 except TypeError:
-                    return
+                    await ctx.channel.send("Use `;cycle <cycle#> <@mention>.")
 
 
     @commands.command(aliases=["progress"])
@@ -619,51 +619,38 @@ class Magic(commands.Cog):
         requestor_profile = quests.find_one({"user_id": str(user.id)}, {"_id": 0})
 
         if requestor_profile is None:
-            await ctx.channel.send("You have to finish your own first cycle first.")
+            await ctx.channel.send("You have to signup first to the quest.")
 
         elif requestor_profile is not None:
-            query = quests.aggregate([{"$match": {"user_id": str(user.id)}}, {
-                "$project": {
-                    "_id": 0,
-                    "status": {
-                        "$slice": ["$quest1.status", 1]
-                    }
-                }
-            }])
 
-            profile = {}
-            for result in query:
-                profile = result
-                break
+            score, timestamp_start, current_path, cycle, hints_unlocked, paths \
+                = get_profile_progress(ctx.message.author)
+            t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
+            t2 = datetime.strptime(get_time().strftime("%Y-%b-%d %HH"), "%Y-%b-%d %HH")
+            hours_passed = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
-            if profile["status"][0] == "ongoing":
-                await ctx.channel.send("You have to finish your own first cycle first.")
+            paths_unlocked = ""
+            for y in list(paths.keys()):
+                paths_unlocked += "{}, ".format(y.replace("path", ""))
 
-            elif profile["status"][0] == "completed":
+            description = \
+                f"• Current Score: {score}\n" \
+                    f"• Hours passed: {hours_passed}\n" \
+                    f"• Penalties: {1000 - score}\n" \
+                    f"• Current path: {current_path.replace('path', 'Path ').capitalize()}\n" \
+                    f"• No. of paths unlocked: {len(paths)}\n" \
+                    f"• Paths unlocked: {paths_unlocked[:-2]}\n" \
+                    f"• Hints unlocked: {hints_unlocked}"
 
-                score, timestamp_start, current_path, cycle, hints_unlocked, paths_unlocked \
-                    = get_profile_progress(ctx.message.author)
-                t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
-                t2 = datetime.strptime(get_time().strftime("%Y-%b-%d %HH"), "%Y-%b-%d %HH")
-                hours_passed = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
-
-                description = \
-                    f"• Current Score: {score}\n" \
-                        f"• Hours passed: {hours_passed}\n" \
-                        f"• Penalties: {1000 - score}\n" \
-                        f"• Current Path: {current_path.replace('path', 'Path ').capitalize()}\n" \
-                        f"• Paths unlocked: {paths_unlocked}\n" \
-                        f"• Hints Unlocked: {hints_unlocked}"
-
-                embed = discord.Embed(
-                    color=ctx.message.author.colour,
-                    description=description
-                )
-                embed.set_author(
-                    name=f"{ctx.message.author}'s Cycle #{cycle}",
-                    icon_url=ctx.message.author.avatar_url
-                )
-                await ctx.message.author.send(embed=embed)
+            embed = discord.Embed(
+                color=ctx.message.author.colour,
+                description=description
+            )
+            embed.set_author(
+                name=f"{ctx.message.author}'s Cycle #{cycle}",
+                icon_url=ctx.message.author.avatar_url
+            )
+            await ctx.message.author.send(embed=embed)
 
 
     @commands.Cog.listener()
@@ -716,6 +703,7 @@ class Magic(commands.Cog):
                             )
                         }
                     })
+                    await self.logging(f"Started cycle#{cycle} for {user}")
                     break
 
             await member.add_roles(role_dolphin)
@@ -864,10 +852,12 @@ class Magic(commands.Cog):
                 await user.send(embed=embed)
 
             except IndexError:
-                await user.send(f"You have used up all your hints for this path.")
+                await user.send(f"You have used up all your hints for this path. "
+                                f"Your hint for this hour is not consumed yet.")
 
             except KeyError:
-                await user.send(f"You have used up all your hints for this path.")
+                await user.send(f"You have used up all your hints for this path. "
+                                f"Your hint for this hour is not consumed yet.")
 
 
     @commands.command(aliases=["knock", "inquire"])
