@@ -5,16 +5,11 @@ kyrvscyl, 2019
 import urllib.request
 
 import discord
-import pytz
 from discord.ext import commands
-
-from cogs.mongo.db import library, users, daily
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-# Timezone
-tz_target = pytz.timezone("America/Atikokan")
+from cogs.mongo.db import library, users, daily
 
-# Global variable
 lists_souls = []
 lists_souls_raw = []
 for soul in library.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_id": 0, "index": 1}):
@@ -23,6 +18,7 @@ for soul in library.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_i
 
 
 async def post_process_books(user, ctx, query):
+
     library.update_one(query, {"$inc": {"borrows": 1}})
     profile = daily.find_one({"key": "library", f"{user.id}": {"$type": "int"}}, {"_id": 0, f"{user.id}": 1})
 
@@ -45,6 +41,7 @@ class Library(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
 
     def create_webhook_post(self, webhooks, book):
 
@@ -110,12 +107,14 @@ class Library(commands.Cog):
 
         return webhook
 
-    @commands.command(aliases=["toc", "table"])
+
+    @commands.command(aliases=["toc", "table", "tableofcontents"])
     @commands.check(check_if_reference_section)
     async def post_table_of_content(self, ctx):
 
         await ctx.message.delete()
         webhooks = await ctx.channel.webhooks()
+
         bukkuman = webhooks[0]
         webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
 
@@ -159,6 +158,7 @@ class Library(commands.Cog):
         webhook.add_embed(embed)
         webhook.execute()
 
+
     @commands.command(aliases=["open"])
     @commands.check(check_if_reference_section)
     async def post_book(self, ctx, arg1, *, args):
@@ -167,7 +167,6 @@ class Library(commands.Cog):
         user = ctx.message.author
         query = {"section": arg1.lower(), "index": args.lower()}
         book = library.find_one(query, {"_id": 0})
-
 
         if arg1.lower() in ["ab", "sbs"] and args.lower() in ["3"]:
 
@@ -189,7 +188,7 @@ class Library(commands.Cog):
 
             webhook = self.create_webhook_post(webhooks, book)
             webhook.execute()
-            # await post_process_books(user, ctx, query)
+            await post_process_books(user, ctx, query)
 
 
 def setup(client):

@@ -8,7 +8,7 @@ from cogs.mongo.db import users
 
 
 async def add_experience(user, exp):
-    # Maximum level check
+
     if users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"] == 60:
         return
     else:
@@ -19,24 +19,22 @@ async def level_up(user, ctx):
     profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
     exp = profile["experience"]
     level = profile["level"]
-    level_end = int(exp ** 0.3556302501)  # 0.3556302501
+    level_end = int(exp ** 0.3556302501)
 
-    # Corrects the level
     if level > level_end:
         users.update_one({"user_id": str(user.id)}, {"$set": {"level": level_end}})
 
-    # Add one level
     if level < level_end:
         level_next = 5 * (round(((level + 2) ** 2.811909279) / 5))
         users.update_one({"user_id": str(user.id)}, {"$set": {"level_exp_next": level_next, "level": level_end}})
         users.update_one({"user_id": str(user.id)},
                          {"$inc": {"jades": 150, "amulets": 10, "coins": 100000}})
 
-        # Add emoji during levelup
         await ctx.add_reaction("⤴")
 
 
 async def create_user(user):
+
     if users.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
         profile = {
             "user_id": str(user.id),
@@ -60,8 +58,6 @@ async def create_user(user):
             "shikigami": [],
             "display": "None"
         }
-
-        # Creates a profile
         users.insert_one(profile)
 
 
@@ -70,21 +66,21 @@ class Level(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
         await create_user(member)
 
+
     @commands.Cog.listener()
     async def on_message(self, ctx):
-        # Ignore myself
+
         if ctx.author == self.client.user:
             return
 
-        # Ignore other bots
         elif ctx.author.bot is True:
             return
 
-        # Perform add experience
         await create_user(ctx.author)
         await add_experience(ctx.author, 5)
         await level_up(ctx.author, ctx)

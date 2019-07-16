@@ -3,6 +3,7 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import asyncio
+import os
 import random
 from datetime import datetime
 
@@ -10,16 +11,16 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.magic import Magic, penalize, get_data, get_dictionary
-from cogs.frame import Frame
 from cogs.admin import Admin
 from cogs.automation import Events
+from cogs.error import logging, get_f
+from cogs.frame import Frame
+from cogs.magic import Magic, penalize, get_data, get_dictionary
 from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
 
-# Timezone
-tz_target = pytz.timezone("America/Atikokan")
+file = os.path.basename(__file__)[:-3:]
 
-# Global Variables
+
 clock_channels = []
 for guild_clock in books.find({}, {"clock": 1, "_id": 0}):
     if guild_clock["clock"] != "":
@@ -27,11 +28,10 @@ for guild_clock in books.find({}, {"clock": 1, "_id": 0}):
 
 
 def get_time():
-    time = datetime.now(tz=tz_target)
-    return time
+    tz_target = pytz.timezone("America/Atikokan")
+    return datetime.now(tz=tz_target)
 
 
-# noinspection PyShadowingNames
 def generate_weather(hour):
     if 18 > hour >= 6:
         day = weather.find_one({"type": "day"}, {"_id": 0, "type": 0})
@@ -91,6 +91,7 @@ class Clock(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+
     # noinspection PyBroadException
     @commands.Cog.listener()
     async def on_ready(self):
@@ -102,7 +103,9 @@ class Clock(commands.Cog):
                 else:
                     await asyncio.sleep(1)
             except:
+                logging(file, get_f(), "Clock has momentarily stopped")
                 continue
+
 
     @commands.command(aliases=["transform"])
     @commands.is_owner()
@@ -115,6 +118,7 @@ class Clock(commands.Cog):
         elif args.lower() == "end":
             await self.transformation_end()
             await ctx.message.delete()
+
 
     async def transformation_end(self):
 
@@ -130,16 +134,22 @@ class Clock(commands.Cog):
                         await current_role.edit(position=reference_role.position - 1)
                         await asyncio.sleep(1)
                     except AttributeError:
+                        logging(file, get_f(), "AttributeError")
                         continue
                     except discord.errors.Forbidden:
+                        logging(file, get_f(), "discord.errors.Forbidden")
                         continue
                     except discord.errors.HTTPException:
+                        logging(file, get_f(), "discord.errors.HTTPException")
                         continue
                     except discord.errors.InvalidArgument:
+                        logging(file, get_f(), "discord.errors.InvalidArgument")
                         continue
 
             except AttributeError:
+                logging(file, get_f(), "AttributeError")
                 continue
+
 
     async def transformation_start(self):
 
@@ -156,18 +166,23 @@ class Clock(commands.Cog):
                         await current_role.edit(position=reference_role.position - 1)
                         await asyncio.sleep(1)
                     except AttributeError:
+                        logging(file, get_f(), "AttributeError")
                         continue
                     except discord.errors.Forbidden:
+                        logging(file, get_f(), "discord.errors.Forbidden")
                         continue
                     except discord.errors.HTTPException:
+                        logging(file, get_f(), "discord.errors.HTTPException")
                         continue
                     except discord.errors.InvalidArgument:
+                        logging(file, get_f(), "discord.errors.InvalidArgument")
                         continue
 
             except AttributeError:
+                logging(file, get_f(), "AttributeError")
                 continue
 
-    # noinspection PyUnusedLocal
+
     @commands.command(aliases=["fastforward"])
     @commands.is_owner()
     async def hourly_task(self, ctx):
@@ -175,6 +190,8 @@ class Clock(commands.Cog):
         await reset_purchase()
         await self.send_off_report()
         await self.send_off_complete()
+        await ctx.channel.send("Actions reset, purchase reset, send off reports performed")
+
 
     async def send_off_complete(self):
 
@@ -183,6 +200,7 @@ class Clock(commands.Cog):
                 user = self.client.get_user(int(entry["user_id"]))
                 cycle, path, timestamp, user_hint, actions, purchase = get_data(user.id)
             except AttributeError:
+                logging(file, get_f(), "AttributeError")
                 continue
 
             if entry["scenario"] == 2:
@@ -206,8 +224,10 @@ class Clock(commands.Cog):
                         })
 
                     except discord.errors.Forbidden:
+                        logging(file, get_f(), "discord.errors.Forbidden")
                         continue
                     except discord.errors.HTTPException:
+                        logging(file, get_f(), "discord.errors.HTTPException")
                         continue
 
             elif entry["scenario"] == 1:
@@ -230,9 +250,12 @@ class Clock(commands.Cog):
                     })
 
                 except discord.errors.Forbidden:
+                    logging(file, get_f(), "discord.errors.Forbidden")
                     continue
                 except discord.errors.HTTPException:
+                    logging(file, get_f(), "discord.errors.HTTPException")
                     continue
+
 
     async def send_off_report(self):
         for entry in sendoff.find({"timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
@@ -243,6 +266,7 @@ class Clock(commands.Cog):
                     cycle, path, timestamp, user_hint, actions, purchase = get_data(user.id)
                     await penalize(user, cycle, points=20)
                 except AttributeError:
+                    logging(file, get_f(), "AttributeError")
                     continue
 
             description = entry["report"]
@@ -257,9 +281,12 @@ class Clock(commands.Cog):
                 await user.send(embed=embed)
                 await asyncio.sleep(1)
             except discord.errors.Forbidden:
+                logging(file, get_f(), "discord.errors.Forbidden")
                 continue
             except discord.errors.HTTPException:
+                logging(file, get_f(), "discord.errors.HTTPException")
                 continue
+
 
     async def clear_secrets(self):
         query = books.find({}, {
@@ -277,26 +304,31 @@ class Clock(commands.Cog):
                             channel = self.client.get_channel(int(entry[secret][key]))
                             await channel.delete()
                         except AttributeError:
+                            logging(file, get_f(), "AttributeError")
                             continue
                         except discord.errors.Forbidden:
+                            logging(file, get_f(), "discord.errors.Forbidden")
                             continue
                         except discord.errors.NotFound:
+                            logging(file, get_f(), "discord.errors.NotFound")
                             continue
                         except discord.errors.HTTPException:
+                            logging(file, get_f(), "discord.errors.HTTPException")
                             continue
+
 
     async def clock_update(self):
 
         time = get_time().strftime("%H:%M EST | %a")
-        hour_minute = datetime.now(tz=tz_target).strftime("%H:%M")
-        minute = datetime.now(tz=tz_target).strftime("%M")
-        hour_24 = int(datetime.now(tz=tz_target).strftime("%H"))
-        hour_12 = datetime.now(tz=tz_target).strftime("%I")
+        hour_minute = get_time().strftime("%H:%M")
+        minute = get_time().strftime("%M")
+        hour_24 = get_time().strftime("%H")
+        hour_12 = get_time().strftime("%I")
         weather1 = weather.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
         weather2 = weather.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
         if minute == "00":
-            weather1, weather2 = generate_weather(hour_24)
+            weather1, weather2 = generate_weather(int(hour_24))
             await penalty_hour()
             await actions_reset()
             await reset_purchase()
@@ -324,12 +356,16 @@ class Clock(commands.Cog):
                 clock = self.client.get_channel(int(clock_channel))
                 await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
             except AttributeError:
+                logging(file, get_f(), "AttributeError")
                 continue
             except discord.errors.InvalidArgument:
+                logging(file, get_f(), "discord.errors.InvalidArgument")
                 continue
             except discord.errors.Forbidden:
+                logging(file, get_f(), "discord.errors.Forbidden")
                 continue
             except discord.errors.HTTPException:
+                logging(file, get_f(), "discord.errors.HTTPException")
                 continue
 
 

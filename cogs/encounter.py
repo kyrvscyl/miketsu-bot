@@ -10,16 +10,10 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users, daily, boss
+from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a
 
-# Global Variables
 demon = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
-emoji_m = "<:medal:573071121545560064>"
-emoji_j = "<:jade:555630314282811412>"
-emoji_c = "<:coin:573071121495097344>"
-emoji_f = "<:friendship:555630314056318979>"
-emoji_a = "<:amulet:573071120685596682>"
 
-# Lists startup
 attack_list = open("lists/attack.lists")
 attack_verb = attack_list.read().splitlines()
 attack_list.close()
@@ -36,7 +30,6 @@ def get_emoji(item):
     return emoji_dict[item]
 
 
-# noinspection PyShadowingNames,PyUnboundLocalVariable
 async def boss_create(user, boss_select):
 
     discoverer = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})
@@ -52,6 +45,7 @@ async def boss_create(user, boss_select):
         }
     }])
 
+    total_medals = 10000
     for document in query:
         total_medals = document["medals"]
 
@@ -71,8 +65,8 @@ async def boss_create(user, boss_select):
     })
 
 
-# noinspection PyShadowingNames,PyUnboundLocalVariable
 async def boss_steal(assembly_players, boss_jadesteal, boss_coinsteal):
+
     for player_id in assembly_players:
 
         if users.find_one({"user_id": player_id}, {"_id": 0, "jades": 1})["jades"] <= boss_jadesteal:
@@ -92,6 +86,7 @@ class Encounter(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
 
     @commands.command(aliases=["enc"])
     @commands.cooldown(1, 180, commands.BucketType.user)
@@ -119,7 +114,9 @@ class Encounter(commands.Cog):
             await ctx.channel.send("You have used up all your 🎫")
             self.client.get_command("encounter").reset_cooldown(ctx)
 
+
     async def encounter_roll(self, user, ctx):
+
         async with ctx.channel.typing():
             await ctx.channel.send("🔍Searching the depths of Netherworld...")
             await asyncio.sleep(3)
@@ -149,7 +146,9 @@ class Encounter(commands.Cog):
             else:
                 await self.quiz_roll(user, ctx)
 
+
     async def quiz_roll(self, user, ctx):
+
         with open("data/quiz.json") as f:
             quiz = json.load(f)
 
@@ -167,7 +166,7 @@ class Encounter(commands.Cog):
         )
         embed.set_author(name="Demon Quiz")
         embed.set_footer(
-            text=f"Quiz for {user.display_name}. 10 sec | 3 guesses",
+            text=f"Quiz for {user.display_name}. 20 sec | 3 guesses",
             icon_url=user.avatar_url
         )
         msg = await ctx.channel.send(embed=embed)
@@ -182,9 +181,9 @@ class Encounter(commands.Cog):
                 raise KeyError
 
         guesses = 0
-        while guesses != 3:
+        while guesses < 3:
             try:
-                await self.client.wait_for("message", timeout=10, check=check)
+                await self.client.wait_for("message", timeout=20, check=check)
 
             except asyncio.TimeoutError:
                 await ctx.channel.send(f"{user.mention}, time is up! You failed the quiz")
@@ -213,7 +212,9 @@ class Encounter(commands.Cog):
 
         self.client.get_command("encounter").reset_cooldown(ctx)
 
+
     async def treasure_roll(self, user, ctx):
+
         with open("data/rewards.json") as f:
             rewards = json.load(f)
 
@@ -236,9 +237,8 @@ class Encounter(commands.Cog):
         msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("✅")
 
-        # noinspection PyShadowingNames
-        def check(reaction, user):
-            return user == ctx.author and str(reaction.emoji) == "✅"
+        def check(r, u):
+            return u == ctx.author and str(r.emoji) == "✅"
 
         try:
             reaction, user = await self.client.wait_for("reaction_add", timeout=8.0, check=check)
@@ -249,6 +249,7 @@ class Encounter(commands.Cog):
 
         else:
             await self.treasure_claim(user, offer_item, offer_amount, cost_item, cost_amount, ctx)
+
 
     async def treasure_claim(self, user, offer_item, offer_amount, cost_item, cost_amount, ctx):
 
@@ -267,6 +268,7 @@ class Encounter(commands.Cog):
             await ctx.channel.send(f"{user.mention}, you do not have sufficient {cost_item}")
 
         self.client.get_command("encounter").reset_cooldown(ctx)
+
 
     async def boss_roll(self, user, ctx):
 
@@ -333,9 +335,8 @@ class Encounter(commands.Cog):
         count_players = 0
         assembly_players = []
 
-        # noinspection PyShadowingNames
-        def check(reaction, user):
-            return user != self.client.user and str(reaction.emoji) == "🏁" and reaction.message.id == msg_boss.id
+        def check(r, u):
+            return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == msg_boss.id
 
         while count_players < 10:
 
@@ -348,9 +349,9 @@ class Encounter(commands.Cog):
 
             else:
                 if not str(user.id) in assembly_players:
+                    query = boss.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1})
 
-                    if boss.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1}) is None:
-
+                    if query is None:
                         boss.update_one({
                             "boss": boss_select}, {
                             "$push": {
@@ -396,6 +397,7 @@ class Encounter(commands.Cog):
                 await asyncio.sleep(3)
                 await self.boss_assembly(boss_select, assembly_players, boss_damagecap, boss_basedmg, boss_url, ctx)
 
+
     async def boss_assembly(self, boss_select, assembly_players, boss_damagecap, boss_basedmg, boss_url, ctx):
 
         damage_players = []
@@ -439,7 +441,7 @@ class Encounter(commands.Cog):
 
         await self.boss_check(assembly_players, boss_select, boss_url, boss_profile_new, ctx)
 
-    # noinspection PyUnboundLocalVariable
+
     async def boss_check(self, assembly_players, boss_select, boss_url, boss_profile_new, ctx):
 
         boss_currenthp = boss.find_one({"boss": boss_select}, {"_id": 0, "current_hp": 1})["current_hp"]
@@ -492,6 +494,7 @@ class Encounter(commands.Cog):
                 }}
             ])
 
+            players_dmg = 0
             for damage in query:
                 players_dmg = damage["total_damage"]
 
@@ -528,6 +531,7 @@ class Encounter(commands.Cog):
             await ctx.channel.send(f"🎯 Rare Boss {boss_select} has been defeated!")
             await self.boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
 
+
     async def boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
 
         discoverer = boss_profile_new["discoverer"]
@@ -540,7 +544,7 @@ class Encounter(commands.Cog):
         for reward in rewards_zip:
 
             try:
-                name = self.client.get_user(int([reward][0][0])).display_name
+                name = ctx.guild.get_member(int([reward][0][0])).display_name
                 damage_contribution = round([reward][0][5] * 100, 2)
                 coins_r = round([reward][0][1])
                 jades_r = round([reward][0][2])
@@ -579,10 +583,9 @@ class Encounter(commands.Cog):
         await asyncio.sleep(2)
 
         try:
-            user = self.client.get_user(int(discoverer))
+            user = ctx.guild.get_member(int(discoverer))
             msg = f"{user.mention} earned an extra 100{emoji_j}, 50,000{emoji_c}, " \
                 f"15{emoji_m} and 100 ⤴ for initially discovering {boss_select}!"
-
             await ctx.channel.send(msg)
 
         except AttributeError:
@@ -590,7 +593,9 @@ class Encounter(commands.Cog):
 
         self.client.get_command("encounter").reset_cooldown(ctx)
 
+
     @commands.command(aliases=["binfo", "bossinfo"])
+    @commands.guild_only()
     async def boss_info(self, ctx, *args):
 
         query = args[0].capitalize()
@@ -607,10 +612,9 @@ class Encounter(commands.Cog):
             })
 
             try:
-                user = self.client.get_user(int(boss_profile["discoverer"])).display_name
-
+                discoverer = ctx.guild.get_member(int(boss_profile["discoverer"])).display_name
             except AttributeError:
-                user = "None"
+                discoverer = "None"
 
             level = boss_profile["level"]
             total_hp = boss_profile["total_hp"]
@@ -620,10 +624,15 @@ class Encounter(commands.Cog):
             coins = boss_profile["rewards"]["coins"]
             jades = boss_profile["rewards"]["jades"]
 
-            msg = f"Rare Boss {query} Stats:\n```Discoverer: {user.display_name}\n     Level: {level}\n" \
-                f"  Total Hp: {total_hp}\nCurrent Hp: {current_hp}\n    Medals: {medals}\n" \
-                f"     Jades: {jades}\n     Coins: {coins}\nExperience: {experience}```"
-
+            msg = f"Rare Boss {query} Stats:\n```" \
+                f"Discoverer: {discoverer}\n" \
+                f"     Level: {level}\n" \
+                f"  Total Hp: {total_hp}\n" \
+                f"Current Hp: {current_hp}\n" \
+                f"    Medals: {medals}\n" \
+                f"     Jades: {jades}\n" \
+                f"     Coins: {coins}\n" \
+                f"Experience: {experience}```"
             await ctx.channel.send(msg)
 
         except IndexError:

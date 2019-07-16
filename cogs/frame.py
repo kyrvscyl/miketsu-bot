@@ -9,17 +9,16 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users, streak
+from cogs.startup import emoji_j, emoji_a
 
-# Global static variables
 adverb = ["deliberately", "deliberately", "forcefully", "unknowingly", "accidentally", "dishonestly"]
 verb = ["snatched", "stole", "took", "looted", "shoplifted", "embezzled"]
-noun = ["custody", "care", "guardianship", "control", "ownership"]
-comment = ["Horrifying!", "Gruesome!", "Madness!", "Unbelievable!"]
-emoji_j = "<:jade:555630314282811412>"
-emoji_a = "<:amulet:573071120685596682>"
+noun = ["custody", "care", "control", "ownership"]
+comment = ["Sneaky!", "Gruesome!", "Madness!", "Unbelievable!"]
 
 
 async def frame_starlight(guild, channel):
+
     starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
 
     streak_list = []
@@ -74,6 +73,7 @@ async def frame_starlight(guild, channel):
 
 
 async def frame_blazing(guild, channel):
+
     blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
 
     ssr_list = []
@@ -129,11 +129,13 @@ class Frame(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    # noinspection PyUnusedLocal
+
     @commands.command()
     @commands.is_owner()
     async def frame(self, ctx):
         await self.frame_automate()
+        await ctx.message.delete()
+
 
     async def frame_automate(self):
         guild = self.client.get_guild(412057028887052288)

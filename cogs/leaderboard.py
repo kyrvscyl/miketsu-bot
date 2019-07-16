@@ -8,41 +8,27 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users, friendship, streak
-
-# Global Variables
-emoji_m = "<:medal:573071121545560064>"
-emoji_j = "<:jade:555630314282811412>"
-emoji_c = "<:coin:573071121495097344>"
-emoji_f = "<:friendship:555630314056318979>"
-emoji_a = "<:amulet:573071120685596682>"
+from cogs.startup import emoji_f, emoji_a, emoji_m
 
 
-# noinspection PyUnusedLocal
 def post(page, embed1, embed2, embed3):
-
     if page == 1:
         return embed1
-
     elif page == 2:
         return embed2
-
     elif page == 3:
         return embed3
-
     elif page > 3:
-        page = 1
         return embed1
-
     elif page < 1:
-        page = 3
         return embed3
 
 
-# noinspection PyShadowingNames
 class Leaderboard(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
 
     @commands.command(aliases=["lb"])
     async def leaderboard(self, ctx, *args):
@@ -71,6 +57,7 @@ class Leaderboard(commands.Cog):
 
         except IndexError:
             await self.leaderboard_post_level(ctx)
+
 
     async def leaderboard_post_ssr(self, ctx):
 
@@ -101,19 +88,8 @@ class Leaderboard(commands.Cog):
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = "🏆 SSR LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
 
-        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
-        embed1.set_footer(text="page 1")
-
-        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
-        embed2.set_footer(text="page 2")
-
-        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
-        embed3.set_footer(text="page 3")
-
-        msg = await ctx.channel.send(embed=embed1)
-
-        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_medals(self, ctx):
 
@@ -143,20 +119,9 @@ class Leaderboard(commands.Cog):
         for user in medal_board2[20:30]:
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
-        title = "{} Medal LeaderBoard".format("<:medal:573071121545560064>")
+        title = f"{emoji_m} Medal LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
 
-        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
-        embed1.set_footer(text="page 1")
-
-        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
-        embed2.set_footer(text="page 2")
-
-        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
-        embed3.set_footer(text="page 3")
-
-        msg = await ctx.channel.send(embed=embed1)
-
-        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_level(self, ctx):
 
@@ -187,19 +152,8 @@ class Leaderboard(commands.Cog):
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = "⤴ Level LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
 
-        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
-        embed1.set_footer(text="page 1")
-
-        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
-        embed2.set_footer(text="page 2")
-
-        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
-        embed3.set_footer(text="page 3")
-
-        msg = await ctx.channel.send(embed=embed1)
-
-        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_amulet(self, ctx):
 
@@ -230,19 +184,8 @@ class Leaderboard(commands.Cog):
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = f"{emoji_a} Spender LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
 
-        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
-        embed1.set_footer(text="page 1")
-
-        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
-        embed2.set_footer(text="page 2")
-
-        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
-        embed3.set_footer(text="page 3")
-
-        msg = await ctx.channel.send(embed=embed1)
-
-        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_friendship(self, ctx):
 
@@ -273,19 +216,8 @@ class Leaderboard(commands.Cog):
             description3 += f"🔸{user[0]}, x{user[1]}\n"
 
         title = f"{emoji_f} Friendship LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
 
-        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
-        embed1.set_footer(text="page 1")
-
-        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
-        embed2.set_footer(text="page 2")
-
-        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
-        embed3.set_footer(text="page 3")
-
-        msg = await ctx.channel.send(embed=embed1)
-
-        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_ship(self, ctx):
 
@@ -318,19 +250,8 @@ class Leaderboard(commands.Cog):
             description3 += f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"
 
         title = "🚢 Ships LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
 
-        embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
-        embed1.set_footer(text="page 1")
-
-        embed2 = discord.Embed(color=ctx.author.colour, title=title, description=description2)
-        embed2.set_footer(text="page 2")
-
-        embed3 = discord.Embed(color=ctx.author.colour, title=title, description=description3)
-        embed3.set_footer(text="page 3")
-
-        msg = await ctx.channel.send(embed=embed1)
-
-        await self.paginate_embed(msg, embed1, embed2, embed3)
 
     async def leaderboard_post_streak(self, ctx):
 
@@ -361,6 +282,10 @@ class Leaderboard(commands.Cog):
             description3 += f"🔸{user[0]}, x{user[1]}{emoji_a}\n"
 
         title = "NO SSR Streak LeaderBoard"
+        await self.paginate_embed(title, ctx, description1, description2, description3)
+
+
+    async def paginate_embed(self, title, ctx, description1, description2, description3):
 
         embed1 = discord.Embed(color=ctx.author.colour, title=title, description=description1)
         embed1.set_footer(text="page 1")
@@ -373,17 +298,12 @@ class Leaderboard(commands.Cog):
 
         msg = await ctx.channel.send(embed=embed1)
 
-        await self.paginate_embed(msg, embed1, embed2, embed3)
-
-    async def paginate_embed(self, msg, embed1, embed2, embed3):
-
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
-        def check(reaction, user):
-            return user != self.client.user and reaction.message.id == msg.id
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
 
-        # Embed pagination max 3 pages
         page = 1
         while True:
             try:
@@ -392,10 +312,8 @@ class Leaderboard(commands.Cog):
 
                 if str(reaction.emoji) == "➡":
                     page += 1
-
-                if str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == "⬅":
                     page -= 1
-
                 await msg.edit(embed=post(page, embed1, embed2, embed3))
 
             except asyncio.TimeoutError:

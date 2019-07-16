@@ -8,8 +8,8 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users, streak, shikigami
+from cogs.startup import emoji_a, pluralize
 
-# Generate summon pool
 pool_sp = []
 for shiki in shikigami.find({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1}):
     for entry in shiki["shikigami"]:
@@ -30,26 +30,13 @@ for shiki in shikigami.find({"rarity": "R"}, {"_id": 0, "shikigami.name": 1}):
     for entry in shiki["shikigami"]:
         pool_r.append(entry["name"])
 
-# Global Variables
-emoji_a = "<:amulet:573071120685596682>"
 
-# Lists startup
 caption = open("lists/summon.lists")
 summon_caption = caption.read().splitlines()
 caption.close()
 
 
-def pluralize(singular, count):
-
-    if count > 1:
-        return singular + "s"
-
-    else:
-        return singular
-
-
-# noinspection PyShadowingNames
-async def summon_update(user, users, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
+async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
 
     users.update_one({
         "user_id": str(user.id)}, {
@@ -121,7 +108,6 @@ async def summon_streak(user, summon_pull):
             streak.update_one({"user_id": str(user.id)}, {"$set": {"SSR_current": 0}})
 
 
-# noinspection PyShadowingNames
 async def summon_perform(ctx, user, amulet_pull):
     summon_pull = []
 
@@ -143,10 +129,10 @@ async def summon_perform(ctx, user, amulet_pull):
         else:
             summon_pull.append(("R", random.choice(pool_r)))
 
-    sum_sp = sum(entry.count("SP") for entry in summon_pull)
-    sum_ssr = sum(entry.count("SSR") for entry in summon_pull)
-    sum_sr = sum(entry.count("SR") for entry in summon_pull)
-    sum_r = sum(entry.count("R") for entry in summon_pull)
+    sum_sp = sum(x.count("SP") for x in summon_pull)
+    sum_ssr = sum(x.count("SSR") for x in summon_pull)
+    sum_sr = sum(x.count("SR") for x in summon_pull)
+    sum_r = sum(x.count("R") for x in summon_pull)
 
     f_sp = str(sum_sp) + " " + pluralize("SP", sum_sp)
     f_ssr = str(sum_ssr) + " " + pluralize("SSR", sum_ssr)
@@ -154,8 +140,8 @@ async def summon_perform(ctx, user, amulet_pull):
     f_r = str(sum_r) + " " + pluralize("R", sum_r)
 
     description = ""
-    for entry in summon_pull:
-        description += ":small_orange_diamond:{}\n".format(entry[1])
+    for x in summon_pull:
+        description += ":small_orange_diamond:{}\n".format(x[1])
 
     embed = discord.Embed(color=user.colour, title="🎊 Results", description=description)
 
@@ -164,22 +150,21 @@ async def summon_perform(ctx, user, amulet_pull):
 
     elif amulet_pull == 1:
         rarity = summon_pull[0][0]
-        shiki = summon_pull[0][1].replace("||", "")
+        shikigami_pulled = summon_pull[0][1].replace("||", "")
 
         thumbnail = shikigami.find_one({
             "rarity": rarity}, {
             "_id": 0, "shikigami": {
                 "$elemMatch": {
-                    "name": shiki
+                    "name": shikigami_pulled
                 }
             }
         })
-
         embed.set_thumbnail(url=thumbnail["shikigami"][0]["thumbnail"]["pre_evo"])
 
     msg = "{}".format(random.choice(summon_caption)).format(user.mention)
     await ctx.channel.send(msg, embed=embed)
-    await summon_update(user, users, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull)
+    await summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull)
     await summon_streak(user, summon_pull)
 
 
@@ -188,9 +173,11 @@ class Summon(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+
     @commands.command(aliases=["s"])
     @commands.guild_only()
     async def summon(self, ctx, arg):
+
         user = ctx.author
 
         try:
@@ -212,10 +199,10 @@ class Summon(commands.Cog):
                     await summon_perform(ctx, user, amulet_pull)
 
                 else:
-                    await ctx.channel.send(f"{user.mention}, summon can only be by ones or by tens")
+                    await ctx.channel.send("Use `;summon <1 or 10>`")
 
         except ValueError:
-            await ctx.channel.send("Type `;summon <1 or 10>` to perform summon")
+            await ctx.channel.send("Use `;summon <1 or 10>`")
 
 
 def setup(client):
