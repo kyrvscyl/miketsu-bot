@@ -15,6 +15,7 @@ from cogs.admin import Admin
 from cogs.automation import Events
 from cogs.error import logging, get_f
 from cogs.frame import Frame
+from cogs.library import Library
 from cogs.magic import Magic, penalize, get_data, get_dictionary
 from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
 
@@ -103,6 +104,7 @@ class Clock(commands.Cog):
                     await asyncio.sleep(1)
             except:
                 logging(file, get_f(), "Clock has momentarily stopped")
+                await asyncio.sleep(60)
                 continue
 
 
@@ -341,6 +343,7 @@ class Clock(commands.Cog):
             await Admin(self.client).reset_daily()
             await Frame(self.client).frame_automate()
             await reset_library()
+            await Library(self.client).post_new_table_of_content()
 
         if hour_minute == "19:00":
             await self.transformation_start()
