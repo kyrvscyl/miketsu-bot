@@ -1764,13 +1764,13 @@ class Magic(commands.Cog):
 
         identity = await self.obtain_identity(user, guild, message, responses)
 
-        if identity != "Wrong":
+        if identity == "Correct":
             vault_number = await self.obtain_vault_number(user, guild, message, responses)
 
-            if vault_number != "Wrong":
+            if vault_number == "Correct":
                 vault_password = await self.obtain_vault_password(user, guild, message, responses)
 
-                if vault_password != "Wrong":
+                if vault_password == "Correct":
                     msg1 = f"{user.mention} has acquired 💰 role"
                     msg2 = responses["success"].format(user.mention)
                     vault = f"{str(user.id).replace('1', '@').replace('5', '%').replace('7', '&').replace('3', '#')}"
@@ -1805,7 +1805,7 @@ class Magic(commands.Cog):
 
     async def obtain_identity(self, user, guild, message, responses):
 
-        answer, topic = "", ""
+        answer, topic = "Wrong", ""
         msg = responses["get_identity"]["1"].format(user.mention)
         await secret_response(guild.id, message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
@@ -1881,7 +1881,7 @@ class Magic(commands.Cog):
 
     async def obtain_vault_number(self, user, guild, message, responses):
 
-        answer, topic = "", ""
+        answer, topic = "Wrong", ""
         msg = responses["get_vault"]["1"].format(user.mention)
         await secret_response(guild.id, message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
@@ -1960,7 +1960,7 @@ class Magic(commands.Cog):
 
     async def obtain_vault_password(self, user, guild, message, responses):
 
-        answer, topic, msg = "", "", ""
+        answer, topic, msg = "Wrong", "", ""
         msg1 = responses["get_password"]["1"].format(user.mention)
         msg2 = responses["get_password"]["2"].format(user.mention)
         await asyncio.sleep(1)
