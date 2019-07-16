@@ -1037,6 +1037,9 @@ class Magic(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
+        if isinstance(message.channel, discord.DMChannel):
+            return
+
         category = message.channel.category
         msg = message.content.lower()
         channel = message.channel
@@ -1047,9 +1050,6 @@ class Magic(commands.Cog):
             return
 
         elif user.bot:
-            return
-
-        elif isinstance(channel, discord.DMChannel):
             return
 
         elif not check_quest(user):

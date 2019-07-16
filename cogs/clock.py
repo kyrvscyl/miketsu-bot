@@ -103,8 +103,6 @@ class Clock(commands.Cog):
                 else:
                     await asyncio.sleep(1)
             except:
-                logging(file, get_f(), "Clock has momentarily stopped")
-                await asyncio.sleep(60)
                 continue
 
 
