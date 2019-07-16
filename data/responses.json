@@ -198,7 +198,7 @@
       "2": "Ahhh. Here we are, and your password, {}?",
       "timeout": [
         "{}. What do you mean that you forgot? Did you just waste my time here! Get out of my bank!",
-        "Banking Hours: 21:00 - 00:00"
+        "Most commonly used passwords:\n1. ALOHOMORA\n2. vault number reversal\n3. Password1234"
       ],
       "invalid1": [
         "Well that's weird. It did not work, {}",
