@@ -14,7 +14,7 @@
     ],
     "owl_analysis": {
       "pure emotions": [
-        "Ah… I see that you have a temperamental and sensitive character, some wands have a notable peculiarity in that they are attracted to those with inner conflicts. When this type of wand is happily matched with the right owner, it can prove to be very unyielding and faithful especially to those who are honest with themselves.",
+        "Ah... I see that you have a temperamental and sensitive character, some wands have a notable peculiarity in that they are attracted to those with inner conflicts. When this type of wand is happily matched with the right owner, it can prove to be very unyielding and faithful especially to those who are honest with themselves.",
         "Wands made of Unicorn hair core are very common, but the core are also the most faithful and produces the most consistent magic."
       ],
       "strong-willed": [
@@ -202,7 +202,7 @@
       ],
       "invalid1": [
         "Well that's weird. It did not work, {}",
-        "Banking Hours: 09:00 - 12:00"
+        "Most commonly used passwords:\n1. ALOHOMORA\n2. vault number reversal\n3. Password1234"
       ],
       "invalid2": [
         "Huhh.. Are you sure that is your correct password?! {}",
@@ -210,7 +210,7 @@
       ],
       "invalid3": [
         "{}, I don't think you have any business here!\n\nI'm gonna have to ask you to get out of my bank. You are wasting my time.",
-        "anking Hours: 21:00 - 00:00"
+        "Banking Hours: 21:00 - 00:00"
       ]
     }
   },
@@ -229,7 +229,7 @@
         "You & Your Owl Book:\nA snippet from Chapter 3, Page#44:\n\n... To send off your owl, add your owl to your message with your :item: plus the @recipient or #address ..."
       ],
       [
-        "We have the following kinds of owls for all your wizarding needs! Find your precious feathered friend from the low price of 11 galleons! Which owl you desire to purchase?\n\nBrown, Screech, Snowy, Tawny, and Barred owls",
+        "We have the following kinds of owls for all your wizarding needs! Find your precious feathered friend from the low price of 11 galleons! Which owl you desire to `purchase`?\n\nBrown, Screech, Snowy, Tawny, or Barred owl",
         "Store Hours: 08:00 - 13:00\nMay momentarily closed during thunderstorms and rain."
       ]
     ],
