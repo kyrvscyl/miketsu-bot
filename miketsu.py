@@ -10,20 +10,18 @@ from discord.ext import commands
 
 from cogs.mongo.db import shikigamis
 
-# Directory/ Bot Name
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 shikigami = os.path.basename(__file__)[:-3:]
-
-# Token
 token = shikigamis.find_one({shikigami: {"$type": "string"}}, {"_id": 0, shikigami: 1})[shikigami]
 
-# Instantiation
+
 client = discord.Client()
+
 # noinspection PyRedeclaration
 client = commands.Bot(command_prefix=";")
 client.remove_command("help")
 
-# Runs the cogs
+
 for filename in os.listdir("./cogs"):
     if filename.endswith(".py"):
         client.load_extension(f"cogs.{filename[:-3]}")
@@ -51,29 +49,27 @@ async def unload(ctx, extension):
 async def reload(ctx, extension):
     client.unload_extension(f"cogs.{extension}")
     client.load_extension(f"cogs.{extension}")
-    print("Reloading {extension}.py..")
+    print(f"Reloading {extension}.py..")
     await ctx.channel.send(f"Extension {extension}.py has been reloaded")
 
 
-# noinspection PyShadowingNames
 @client.command()
 @commands.is_owner()
 async def shutdown(ctx):
-    for filename in os.listdir("./cogs"):
-        if filename.endswith(".py") and filename != "error.py":
-            client.unload_extension(f"cogs.{filename[:-3]}")
-            print(f"Unloading {filename}..")
+    for file_name in os.listdir("./cogs"):
+        if file_name.endswith(".py") and file_name != "error.py":
+            client.unload_extension(f"cogs.{file_name[:-3]}")
+            print(f"Unloading {file_name}..")
     await ctx.channel.send("Bye-bye!")
 
 
-# noinspection PyShadowingNames
 @client.command()
 @commands.is_owner()
 async def initialize(ctx):
-    for filename in os.listdir("./cogs"):
-        if filename.endswith(".py"):
-            client.load_extension(f"cogs.{filename[:-3]}")
-            print(f"Loading {filename}..")
+    for file_name in os.listdir("./cogs"):
+        if file_name.endswith(".py"):
+            client.load_extension(f"cogs.{file_name[:-3]}")
+            print(f"Loading {file_name}..")
     await ctx.channel.send("Loading arrows..")
 
 
