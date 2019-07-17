@@ -118,6 +118,14 @@ class Error(commands.Cog):
             elif str(ctx.command) == "bounty":
                 await ctx.channel.send("Hi! I can search for bounty locations. Use `;bounty <shikigami>`")
 
+            elif str(ctx.command) == "post_book_reference":
+                await ctx.message.add_reaction("❌")
+
+            elif str(ctx.command) == "announcement_post":
+                await ctx.channel.send(
+                    "Use `;announce <#channel> <title|description|image_link>` where title & image_link are optional"
+                )
+
             else:
                 await self.submit_error(ctx, error)
 
