@@ -229,7 +229,7 @@
         "You & Your Owl Book:\nA snippet from Chapter 3, Page#44:\n\n... To send off your owl, add your owl to your message with your :item: plus the @recipient or #address ..."
       ],
       [
-        "We have the following kinds of owls for all your wizarding needs! Find your precious feathered friend from the low price of 11 galleons! Which owl you desire to `purchase`?\n\nBrown, Screech, Snowy, Tawny, or Barred owl",
+        "We have the following kinds of owls for all your wizarding needs! Find your precious feathered friend from the low price of 11 galleons! Which owl you desire to `purchase <>`?\n\nBrown, Screech, Snowy, Tawny, or Barred owl",
         "Store Hours: 08:00 - 13:00\nMay momentarily closed during thunderstorms and rain."
       ]
     ],
@@ -246,7 +246,7 @@
       ],
       "no_moneybag": [
         "I'm sorry my dear {}, this does not come for free.\n\nI put into good efforts in training my owls to the best they can. You're gonna have to pay me, should you yearn to get any owl from my emporium.",
-        "Owl restocking starts on two hours past midnight."
+        "Owl restocking starts on two hours past midnight then the intervals."
       ],
       "success_purchase": [
         "{}, what a lovely choice of owl!",

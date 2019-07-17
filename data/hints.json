@@ -21,7 +21,7 @@
     },
     "path4": {
         "1": "As per the information you read in the book, owls may travel differently due to the weather.",
-        "2": "Snowy owls prioritize snowy weather before thunderstorms"
+        "2": "Snowy owls prioritize snowy weather after thunderstorms"
     },
     "path5": {
         "1": "Based on the witch earlier at the bank, it should be an 18 digit number."
@@ -40,7 +40,7 @@
         "3": "Usage of hints may be viable in between goblin queries"
     },
     "path9":{
-        "1": "You contemplated that the Store Manager seems to be welcoming of guests and thought of perhaps, it would be of ease to inquire about the store's owls and everything.",
+        "1": "You contemplated that the Store Manager seems to be welcoming of guests and thought of perhaps, it would be of ease to `inquire` about the store's owls and everything.",
         "2": "Multiple inquiries may change the responses of the Manager.",
         "3": "Using command `inquire` will able you to interact with the Store Manager."
     },
