@@ -1809,7 +1809,7 @@ class Magic(commands.Cog):
 
     async def obtain_identity(self, user, guild, message, responses):
 
-        answer, topic = "", ""
+        answer, topic = "Wrong", ""
         msg = responses["get_identity"]["1"].format(user.mention)
         await secret_response(guild.id, message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
@@ -1885,7 +1885,7 @@ class Magic(commands.Cog):
 
     async def obtain_vault_number(self, user, guild, message, responses):
 
-        answer, topic = "", ""
+        answer, topic = "Wrong", ""
         msg = responses["get_vault"]["1"].format(user.mention)
         await secret_response(guild.id, message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
@@ -1964,7 +1964,7 @@ class Magic(commands.Cog):
 
     async def obtain_vault_password(self, user, guild, message, responses):
 
-        answer, topic, msg = "", "", ""
+        answer, topic, msg = "Wrong", "", ""
         msg1 = responses["get_password"]["1"].format(user.mention)
         msg2 = responses["get_password"]["2"].format(user.mention)
         await asyncio.sleep(1)
