@@ -75,7 +75,7 @@ class Error(commands.Cog):
     async def on_command_error(self, ctx, error):
 
         if isinstance(error, commands.CheckFailure):
-            logging(file_name, get_f(), "commands.CheckFailure")
+            logging(file_name, get_f(), f"commands.CheckFailure for {ctx.command} from {ctx.author.name}")
 
         elif isinstance(error, commands.NotOwner):
             logging(file_name, get_f(), "commands.NotOwner")
