@@ -361,7 +361,7 @@ class Magic(commands.Cog):
 
                 embed = discord.Embed(
                     color=0x50e3c2,
-                    title=f"Patronus: {patronus_summon.title()} | Strength: {strength}%",
+                    title=f"Patronus: {patronus_summon['patronus'].title()} | Strength: {strength}%",
                     description=description
                 )
                 embed.set_image(url=patronus_summon["link"])
