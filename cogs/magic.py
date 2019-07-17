@@ -885,7 +885,7 @@ class Magic(commands.Cog):
             user = ctx.author
             cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
-            if actions == 3:
+            if actions > 3:
                 if ctx.message.content in [";knock", ";inquire"]:
                     await ctx.message.delete()
 
@@ -926,6 +926,10 @@ class Magic(commands.Cog):
             return
 
         elif ctx.channel.name == "eeylops-owl-emporium":
+
+            if args is None:
+                return
+
             try:
                 owl_buy = args[0].lower()
             except IndexError:
@@ -1742,11 +1746,16 @@ class Magic(commands.Cog):
         cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 
         if user in role_galleons.members:
-            responses = get_dictionary("gringotts_bank")
-            msg = responses["has_moneybag"].format(user.mention)
-            await secret_response(guild.id, message.channel.name, msg)
-            await action_update(user, cycle, actions=3)
-            await penalize(user, cycle, points=20)
+
+            if actions >= 3:
+                return
+
+            else:
+                responses = get_dictionary("gringotts_bank")
+                msg = responses["has_moneybag"].format(user.mention)
+                await secret_response(guild.id, message.channel.name, msg)
+                await action_update(user, cycle, actions=3)
+                await penalize(user, cycle, points=20)
 
         elif user not in role_galleons.members:
 
