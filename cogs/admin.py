@@ -787,7 +787,7 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=["bc"])
     @commands.has_role("Head")
-    async def broadcast(self, ctx, arg1, *args):
+    async def broadcast(self, ctx, arg1, *, args):
 
         channel_id = re.sub("[<>#]", "", arg1)
         channel_target = self.client.get_channel(int(channel_id))
@@ -812,6 +812,38 @@ class Admin(commands.Cog):
             logging(file, get_f(), "discord.errors.Forbidden")
         except discord.errors.HTTPException:
             logging(file, get_f(), "discord.errors.HTTPException")
+
+    @commands.command(aliases=["announce"])
+    @commands.has_role("Head")
+    async def announcement_post(self, ctx, channel: discord.TextChannel = None, *, args):
+
+        list_msg = args.split("|", 2)
+        embed = discord.Embed(
+            color=ctx.author.colour
+        )
+
+        if len(list_msg) == 1:
+            embed.description = list_msg[0]
+
+        elif len(list_msg) == 2:
+            embed.title = list_msg[0]
+            embed.description = list_msg[1]
+
+        elif len(list_msg) == 3:
+            embed.title = list_msg[0]
+            embed.description = list_msg[1]
+            embed.set_image(url=list_msg[2])
+        else:
+            return
+
+        try:
+            await channel.send(embed=embed)
+            await ctx.message.add_reaction("✅")
+        except discord.errors.Forbidden:
+            logging(file, get_f(), "discord.errors.Forbidden")
+        except discord.errors.HTTPException:
+            logging(file, get_f(), "discord.errors.HTTPException")
+
 
     @commands.command(aliases=["m", "manage"])
     @commands.has_role("Head")
