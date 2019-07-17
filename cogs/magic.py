@@ -1040,7 +1040,11 @@ class Magic(commands.Cog):
         if isinstance(message.channel, discord.DMChannel):
             return
 
-        category = message.channel.category
+        try:
+            category = message.channel.category
+        except AttributeError:
+            return
+
         msg = message.content.lower()
         channel = message.channel
         user = message.author
@@ -1764,13 +1768,13 @@ class Magic(commands.Cog):
 
         identity = await self.obtain_identity(user, guild, message, responses)
 
-        if identity != "Wrong":
+        if identity == "Correct":
             vault_number = await self.obtain_vault_number(user, guild, message, responses)
 
-            if vault_number != "Wrong":
+            if vault_number == "Correct":
                 vault_password = await self.obtain_vault_password(user, guild, message, responses)
 
-                if vault_password != "Wrong":
+                if vault_password == "Correct":
                     msg1 = f"{user.mention} has acquired 💰 role"
                     msg2 = responses["success"].format(user.mention)
                     vault = f"{str(user.id).replace('1', '@').replace('5', '%').replace('7', '&').replace('3', '#')}"
