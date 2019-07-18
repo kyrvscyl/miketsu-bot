@@ -51,6 +51,9 @@ class Emotes(commands.Cog):
         elif message.author.bot:
             return
 
+        elif len(message.content.split(" ")) > 3:
+            return
+
         elif "mike" in message.content.lower():
             user = message.author
             list_emotes = message.content.lower().split()
