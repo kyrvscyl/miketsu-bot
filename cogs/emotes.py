@@ -51,7 +51,7 @@ class Emotes(commands.Cog):
         elif message.author.bot:
             return
 
-        elif len(message.content.split(" ")) > 3:
+        elif len(message.content.split(" ")) > 2:
             return
 
         elif "mike" in message.content.lower():
