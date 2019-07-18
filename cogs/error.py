@@ -126,6 +126,9 @@ class Error(commands.Cog):
                     "Use `;announce <#channel> <title|description|image_link>` where title & image_link are optional"
                 )
 
+            elif str(ctx.command) == "show_cycle":
+                await ctx.channel.send("Use `;cycle <cycle#> <@mention or leave blank if for yourself>`")
+
             else:
                 await self.submit_error(ctx, error)
 
