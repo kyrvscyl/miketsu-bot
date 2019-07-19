@@ -553,7 +553,7 @@ class Admin(commands.Cog):
             "_id": 0, "messages.quests": 1, "channels.sorting-hat": 1
         })
 
-        sorting = self.client.get_channel(int(request["sorting"]))
+        sorting = self.client.get_channel(int(request["channels"]["sorting-hat"]))
         quests_msg = sorting.fetch_message(int(request['messages']["quests"]))
 
         embed = discord.Embed(
