@@ -116,7 +116,6 @@ class Castle(commands.Cog):
                         try:
                             new_floor = random.randint(ref_num, end_num)
                             await channel.edit(position=new_floor)
-                            print(f"Moved {channel.name} to {new_floor}")
                             await asyncio.sleep(0.5)
                         except discord.errors.InvalidArgument:
                             logging(file, get_f(), "discord.errors.InvalidArgument")
@@ -134,11 +133,8 @@ class Castle(commands.Cog):
 
                 try:
                     await gift_channel.edit(position=end_num)
-                    print(f"Moved {gift_channel.name} to {end_num}")
                     await auror_channel.edit(position=end_num)
-                    print(f"Moved {auror_channel.name} to {end_num}")
                     await duel_channel.edit(position=end_num)
-                    print(f"Moved {duel_channel.name} to {end_num}")
                     await asyncio.sleep(0.5)
                 except discord.errors.InvalidArgument:
                     logging(file, get_f(), "discord.errors.InvalidArgument")
