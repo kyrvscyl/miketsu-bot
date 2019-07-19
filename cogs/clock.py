@@ -12,12 +12,15 @@ import pytz
 from discord.ext import commands
 
 from cogs.admin import Admin
-from cogs.automation import Events
+from cogs.castle import Castle
 from cogs.error import logging, get_f
 from cogs.frame import Frame
 from cogs.library import Library
 from cogs.magic import Magic, penalize, get_data, get_dictionary
 from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
+
+# from cogs.owl import get_dictionary2
+
 
 file = os.path.basename(__file__)[:-3:]
 
@@ -257,6 +260,8 @@ class Clock(commands.Cog):
 
 
     async def send_off_report(self):
+
+        # add quest number in query
         for entry in sendoff.find({"timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
             user = self.client.get_user(int(entry["user_id"]))
 
@@ -286,6 +291,50 @@ class Clock(commands.Cog):
                 logging(file, get_f(), "discord.errors.HTTPException")
                 continue
 
+    """
+    async def send_off_flourish(self):
+
+        query = sendoff.find({
+            "quest": 2,
+            "status": "incomplete",
+            "timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {
+            "_id": 0
+        })
+
+        for entry in query:
+            try:
+                user = self.client.get_user(int(entry["user_id"]))
+            except AttributeError:
+                continue
+
+            async with user.typing():
+                responses = get_dictionary2("send_off")["complete"]
+
+                try:
+                    await user.send(responses[0])
+                    await asyncio.sleep(4)
+                    await user.send(responses[1])
+                    await asyncio.sleep(4)
+                    msg = await user.send(responses[2].format(entry['type'].capitalize()))
+                    await msg.add_reaction("✉")
+
+                    sendoff.update_one({
+                        "user_id": entry["user_id"],
+                        "cycle": query["cycle"]}, {
+                        "$set": {
+                            "status": "done"
+                        }
+                    })
+                    # Change of path add
+
+                except discord.errors.Forbidden:
+                    logging(file, get_f(), "discord.errors.Forbidden")
+                    continue
+                except discord.errors.HTTPException:
+                    logging(file, get_f(), "discord.errors.HTTPException")
+                    continue
+        
+    """
 
     async def clear_secrets(self):
         query = books.find({}, {
@@ -332,7 +381,8 @@ class Clock(commands.Cog):
             await self.send_off_report()
             await self.send_off_complete()
             await self.clear_secrets()
-            await Events(self.client).reset_prefects()
+            await Castle(self.client).reset_prefects()
+
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
             await owls_restock()
