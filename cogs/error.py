@@ -121,6 +121,23 @@ class Error(commands.Cog):
             elif str(ctx.command) == "post_book_reference":
                 await ctx.message.add_reaction("❌")
 
+            elif str(ctx.command) == "castle_customize_frame":
+
+                description = \
+                    "Have your own frame customized so it would appear at the " \
+                    "castle's channels via `;wander` command\n\n" \
+                    "`;frame add <in_game_name> <floor: 1-6 only> <custom link or put default to use your " \
+                    "discord avatar> <fancy description>`\n\n" \
+                    "Once added, you can edit afterwards via `;frame edit ...`"
+
+                embed = discord.Embed(
+                    color=ctx.author.colour,
+                    title="🖼 Frame Customization",
+                    description=description
+                )
+                embed.set_footer(text="this help also shows if your frame command failed")
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "announcement_post":
                 await ctx.channel.send(
                     "Use `;announce <#channel> <title|description|image_link>` where title & image_link are optional"
@@ -140,6 +157,9 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.ExtensionError):
             logging(file_name, get_f(), f"commands.ExtensionError: {ctx.message.content}")
+
+        elif isinstance(error, commands.CommandInvokeError):
+            return
 
         else:
             await self.submit_error(ctx, error)
