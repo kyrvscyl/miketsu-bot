@@ -382,6 +382,7 @@ class Clock(commands.Cog):
             await self.send_off_complete()
             await self.clear_secrets()
             await Castle(self.client).reset_prefects()
+            await Castle(self.client).castle_shuffle()
 
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:

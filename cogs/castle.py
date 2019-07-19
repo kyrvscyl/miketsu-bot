@@ -165,13 +165,13 @@ class Castle(commands.Cog):
 
         def new_floor_position(x):
             dictionary = {
-                "14": 7,
-                "15": 6,
-                "16": 5,
-                "17": 4,
-                "18": 3,
-                "19": 2,
-                "20": 1
+                f"{ref_num + 0}": 7,
+                f"{ref_num + 1}": 6,
+                f"{ref_num + 2}": 5,
+                f"{ref_num + 3}": 4,
+                f"{ref_num + 4}": 3,
+                f"{ref_num + 5}": 2,
+                f"{ref_num + 6}": 1
             }
             return dictionary[str(x)]
 
