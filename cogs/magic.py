@@ -209,10 +209,10 @@ async def secret_banner(webhook_url, avatar, username, url):
     webhook.execute()
 
 
-def get_dictionary(channel_name):
+def get_dictionary(key):
     with open("data/responses.json") as f:
         responses = json.load(f)
-    return responses[channel_name]
+    return responses[key]
 
 
 async def generate_data(guild, secret_channel, channel):
@@ -434,7 +434,8 @@ class Magic(commands.Cog):
                 "timestamp_update": timestamp_update,
                 "timestamp_complete": timestamp_complete,
                 "delay": delay,
-                "scenario": scenario
+                "scenario": scenario,
+                "quest": 1
             }
         })
 
@@ -570,6 +571,10 @@ class Magic(commands.Cog):
 
                 try:
                     cycle_query = int(cycle_query)
+
+                    if user is None:
+                        user = ctx.message.author
+
                     profile = get_profile_history(user, cycle_query)
                     patronus_summon = profile["quest1"]["patronus"]["patronus"]
                     score = profile["quest1"]["score"]
@@ -594,7 +599,7 @@ class Magic(commands.Cog):
                         f"• Cycle Score: {score} points\n" \
                             f"• Hints unlocked: {hints_unlocked}\n" \
                             f"• No. of paths unlocked: {len(paths)}\n" \
-                            f"• Paths unlocked: {paths_unlocked[:-2]}\n" \
+                            f"• Paths unlocked: [{paths_unlocked[:-2]}]\n" \
                             f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
 
                     embed = discord.Embed(
@@ -661,6 +666,7 @@ class Magic(commands.Cog):
                 icon_url=ctx.message.author.avatar_url
             )
             await ctx.message.author.send(embed=embed)
+            await ctx.message.add_reaction("✅")
 
 
     @commands.Cog.listener()
@@ -713,7 +719,7 @@ class Magic(commands.Cog):
                             )
                         }
                     })
-                    await self.logging(f"Started cycle#{cycle} for {user}")
+                    await self.logging(f"Started quest1: cycle#{cycle} for {user}")
                     break
 
             await member.add_roles(role_dolphin)
@@ -857,7 +863,7 @@ class Magic(commands.Cog):
                 )
                 embed.set_footer(
                     icon_url=user.avatar_url,
-                    text=f"Path {path[4::]} | Hint# {hint_num}"
+                    text=f"Quest# 1 | Path# {path[4::]} | Hint# {hint_num}"
                 )
 
                 await update_hint(user, path, cycle, h)
