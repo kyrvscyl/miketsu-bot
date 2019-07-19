@@ -543,6 +543,37 @@ class Admin(commands.Cog):
         await beast_selection_msg.edit(embed=embed)
         await ctx.message.delete()
 
+
+    @commands.command()
+    @commands.is_owner()
+    async def edit_quest_selection(self, ctx):
+
+        request = books.find_one({
+            "server": f"{ctx.guild.id}"}, {
+            "_id": 0, "messages.quests": 1, "channels.sorting-hat": 1
+        })
+
+        sorting = self.client.get_channel(int(request["sorting"]))
+        quests_msg = sorting.fetch_message(int(request['messages']["quests"]))
+
+        embed = discord.Embed(
+            colour=discord.Colour(0xa661da),
+            title="Quest Selection & Acceptance",
+            description="Only when you finished your current quest, can make you able to restart a "
+                        "new quest and have different outcome and score."
+        )
+
+        link = "https://discordapp.com/channels/412057028887052288/562671830331293716/599522202466910208"
+        embed.add_field(
+            name="🐬 Quest #1: Show us your Patronus!",
+            value=f"Learn how to summon one. Refer to the quest mechanics [here!]({link})"
+        )
+        embed.add_field(
+            name="🍵 Quest #2: Saving Fluffy Birb!",
+            value=f"To be announced far from soon."
+        )
+        await quests_msg.edit(embed=embed)
+
     @commands.command(aliases=["start"])
     @commands.is_owner()
     async def post_announcement_magic(self, ctx):
@@ -623,6 +654,7 @@ class Admin(commands.Cog):
         )
         await ctx.message.delete()
 
+
     @commands.command(aliases=["special"])
     @commands.is_owner()
     async def edit_special_roles(self, ctx):
@@ -674,6 +706,7 @@ class Admin(commands.Cog):
         special_select_msg = await sorting_channel.fetch_message(int(special_roles_id))
         await special_select_msg.edit(embed=embed)
         await ctx.message.delete()
+
 
     @commands.command()
     @commands.is_owner()
