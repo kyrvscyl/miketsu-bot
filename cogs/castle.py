@@ -30,7 +30,7 @@ for document in books.find({}, {"_id": 0, "categories.castle": 1}):
 
 
 def check_if_valid_and_castle(ctx):
-    return str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) in invalid_channels
+    return str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels
 
 
 def get_primary_role(x):
