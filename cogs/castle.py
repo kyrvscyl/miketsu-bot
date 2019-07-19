@@ -389,10 +389,10 @@ class Castle(commands.Cog):
             new_foreground = Image.open(role_frame).resize((width, height), Image.NEAREST)
             background.paste(new_foreground, (0, 0), new_foreground)
 
-            new_address = f"temp/{in_game_name}.jpg"
+            new_address = f"temp/{in_game_name}.png"
             background.save(new_address)
 
-            new_photo = discord.File(new_address, filename=f"{in_game_name}.jpg")
+            new_photo = discord.File(new_address, filename=f"{in_game_name}.png")
             hosting_channel = self.client.get_channel(556032841897607178)
             msg = await hosting_channel.send(file=new_photo)
 
