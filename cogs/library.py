@@ -204,7 +204,11 @@ class Library(commands.Cog):
 
     async def post_new_table_of_content(self):
 
-        query = books.find({}, {"_id": 0, "channels.restricted-section": 1, "channels.reference-section": 1})
+        query = books.find({
+            "server": "412057028887052288"}, {
+            "_id": 0, "channels.restricted-section": 1,
+            "channels.reference-section": 1
+        })
         restricted_sections = []
         reference_sections = []
 
