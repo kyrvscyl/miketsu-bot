@@ -12,7 +12,6 @@ import pytz
 from discord.ext import commands
 
 from cogs.admin import Admin
-from cogs.castle import Castle
 from cogs.error import logging, get_f
 from cogs.frame import Frame
 from cogs.library import Library
@@ -381,8 +380,8 @@ class Clock(commands.Cog):
             await self.send_off_report()
             await self.send_off_complete()
             await self.clear_secrets()
-            await Castle(self.client).reset_prefects()
-            await Castle(self.client).castle_shuffle()
+            # await Castle(self.client).reset_prefects()
+            # await Castle(self.client).castle_shuffle()
 
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:

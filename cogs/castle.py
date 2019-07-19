@@ -18,7 +18,7 @@ file = os.path.basename(__file__)[:-3:]
 
 
 primary_roles = ["Head", "Auror", "Patronus", "No-Maj"]
-invalid_channels = ["auror-department", "gift-game", "royale-lineup"]
+invalid_channels = ["auror-department", "gift-game", "pvp-fair", "duelling-room"]
 
 
 castles_id = []
@@ -180,7 +180,6 @@ class Castle(commands.Cog):
                     position = channel.position
                     new_channel_topic = f"{ordinal(new_floor_position(position))} Floor -\n{current_channel_topic}"
                     await channel.edit(topic=new_channel_topic)
-                    print(f"changed {channel}'s topic to floor # {new_floor_position(position)}")
                 except KeyError:
                     continue
                 except discord.errors.InvalidArgument:
