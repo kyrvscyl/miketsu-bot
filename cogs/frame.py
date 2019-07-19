@@ -130,9 +130,9 @@ class Frame(commands.Cog):
         self.client = client
 
 
-    @commands.command()
+    @commands.command(aliases=["issue"])
     @commands.is_owner()
-    async def frame(self, ctx):
+    async def frame_issuance(self, ctx):
         await self.frame_automate()
         await ctx.message.delete()
 
