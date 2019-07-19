@@ -2,9 +2,7 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-import asyncio
 import os
-import random
 from datetime import datetime
 
 import discord
@@ -15,13 +13,6 @@ from cogs.error import logging, get_f
 from cogs.mongo.db import books, users
 
 file = os.path.basename(__file__)[:-3:]
-
-castles_id = []
-for document in books.find({}, {"_id": 0, "categories.castle": 1}):
-    try:
-        castles_id.append(document["categories"]["castle"])
-    except KeyError:
-        continue
 
 
 def get_time():
@@ -34,150 +25,6 @@ class Events(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-
-        if message.author == self.client.user or message.author.bot:
-            return
-
-        elif message.content.lower() != "pine fresh":
-            return
-
-        elif message.channel.position != 4:
-            return
-
-        elif message.channel.position == 4 and str(message.channel.category.id) in castles_id:
-
-            try:
-                role_bathroom = discord.utils.get(message.guild.roles, name="🚿")
-                await message.author.add_roles(role_bathroom)
-            except discord.errors.Forbidden:
-                logging(file, get_f(), "discord.errors.Forbidden")
-            except discord.errors.HTTPException:
-                logging(file, get_f(), "discord.errors.HTTPException")
-
-    @commands.command(aliases=["shuffle"])
-    @commands.is_owner()
-    async def castle_shuffle(self, ctx):
-
-        server = books.find_one({
-            "server": str(ctx.guild.id)}, {
-            "_id": 0,
-            "categories.castle": 1,
-            "channels.prefects-bathroom": 1
-        })
-
-        try:
-            castle_id = server["categories"]["castle"]
-            prefects_id = server["channels"]["prefects-bathroom"]
-        except KeyError:
-            logging(file, get_f(), "KeyError")
-            return
-
-        try:
-            castle_channel = self.client.get_channel(int(castle_id))
-            prefects_channel = self.client.get_channel(int(prefects_id))
-
-            for channel in castle_channel.text_channels:
-                try:
-                    new_floor = random.randint(1, len(castle_channel.text_channels)) - 1
-                    await channel.edit(position=new_floor)
-                    await asyncio.sleep(1)
-                except discord.errors.InvalidArgument:
-                    logging(file, get_f(), "discord.errors.InvalidArgument")
-                    continue
-                except discord.errors.Forbidden:
-                    logging(file, get_f(), "discord.errors.Forbidden")
-                    continue
-                except discord.errors.HTTPException:
-                    logging(file, get_f(), "discord.errors.HTTPException")
-                    continue
-
-        except AttributeError:
-            logging(file, get_f(), "AttributeError")
-            return
-
-        try:
-            await prefects_channel.edit(position=7)
-            await asyncio.sleep(5)
-        except discord.errors.InvalidArgument:
-            logging(file, get_f(), "discord.errors.InvalidArgument")
-        except discord.errors.Forbidden:
-            logging(file, get_f(), "discord.errors.Forbidden")
-        except discord.errors.HTTPException:
-            logging(file, get_f(), "discord.errors.HTTPException")
-
-        await self.castle_shuffle_topic(castle_id, prefects_channel)
-
-    async def castle_shuffle_topic(self, castle_id, prefects_channel):
-
-        ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
-
-        try:
-            castle_channel = self.client.get_channel(int(castle_id))
-            castle_channels = castle_channel.text_channels
-        except AttributeError:
-            logging(file, get_f(), "AttributeError")
-            return
-
-        i = 0
-        while i < len(castle_channels):
-
-            if castle_channels[i].name != "prefects-bathroom":
-                try:
-                    current_channel_topic = castle_channels[i].topic[12:]
-                    current_channel = castle_channels[i]
-                    new_channel_topic = f"{ordinal(i + 1)} Floor -\n{current_channel_topic}"
-                    await current_channel.edit(topic=new_channel_topic)
-                    i += 1
-                except discord.errors.InvalidArgument:
-                    logging(file, get_f(), "discord.errors.InvalidArgument")
-                    i += 1
-                except discord.errors.Forbidden:
-                    logging(file, get_f(), "discord.errors.Forbidden")
-                    i += 1
-                except discord.errors.HTTPException:
-                    logging(file, get_f(), "discord.errors.HTTPException")
-                    i += 1
-
-            elif castle_channels[i].name == "prefects-bathroom":
-                i += 1
-
-        try:
-            await prefects_channel.edit(position=5)
-        except discord.errors.InvalidArgument:
-            logging(file, get_f(), "discord.errors.InvalidArgument")
-        except discord.errors.Forbidden:
-            logging(file, get_f(), "discord.errors.Forbidden")
-        except discord.errors.HTTPException:
-            logging(file, get_f(), "discord.errors.HTTPException")
-
-    async def reset_prefects(self):
-        query = books.find({}, {"_id": 0, "server": 1, "channels.prefects-bathroom": 1})
-
-        for result in query:
-            try:
-                guild_id = result["server"]
-                guild = self.client.get_guild(int(guild_id))
-                role_bathroom = discord.utils.get(guild.roles, name="🚿")
-
-                if len(role_bathroom.members) == 0:
-                    return
-
-                elif len(role_bathroom.members) > 0:
-                    for member in role_bathroom.members:
-                        try:
-                            await member.remove_roles(role_bathroom)
-                        except discord.errors.Forbidden:
-                            logging(file, get_f(), "discord.errors.Forbidden")
-                            continue
-                        except discord.errors.HTTPException:
-                            logging(file, get_f(), "discord.errors.HTTPException")
-                            continue
-
-            except AttributeError:
-                logging(file, get_f(), "AttributeError")
-                continue
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
