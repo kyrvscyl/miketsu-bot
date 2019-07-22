@@ -31,6 +31,7 @@ def get_raid_count(victim):
     return request["raided_count"]
 
 
+
 async def raid_giverewards_victim_as_winner(victim, raider):
     users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": 50000, "jades": 100, "medals": 50}})
     users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
@@ -184,14 +185,24 @@ class Startup(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif get_raid_count(victim) == 3:
+        try:
+            raid_count = get_raid_count(victim)
+        except TypeError:
+            embed = discord.Embed(
+                title="Invalid member", colour=discord.Colour(0xffe6a7),
+                description="That member doesn't exist in this guild"
+            )
+            await ctx.channel.send(embed=embed)
+            return
+
+        if raid_count == 3:
             embed = discord.Embed(
                 title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(0xffe6a7),
                 description="Raids are capped at 3 times per day and per realm"
             )
             await ctx.channel.send(embed=embed)
 
-        elif get_raid_count(victim) < 4:
+        elif raid_count < 4:
             users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
             await raid_perform_attack(victim, raider, ctx)
 

@@ -147,7 +147,7 @@ class Error(commands.Cog):
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
                 embed.add_field(name="Arguments", value="*SP, SSR, SR, R*", inline=False)
-                embed.add_field(name="Format", value="*`;my <rarity> <optional: @member>`*", inline=False)
+                embed.add_field(name="Format", value="*`;shikis <rarity> <optional: @member>`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "profile_change_display":

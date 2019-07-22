@@ -159,7 +159,7 @@ class Encounter(commands.Cog):
         question = random.choice(questions)
         embed = discord.Embed(
             title=f"Demon Quiz", color=user.colour,
-            description=f"{user.mention}, you have 15 secs & 3 guesses, earn 5 {emoji_a} if correct"
+            description=f"{user.mention}, you have 15 secs & 3 guesses\nearn 5 {emoji_a} if you got it correct"
         )
         embed.add_field(name="Who is this shikigami?", value=f"||{question}||")
         msg = await ctx.channel.send(embed=embed)
@@ -216,7 +216,7 @@ class Encounter(commands.Cog):
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"amulets": 5}})
                 embed = discord.Embed(
-                    title="Correct!", colour=discord.Colour(0xffe6a7),
+                    title="Correct!", color=user.colour,
                     description=f"{user.mention}, you have earned 5 {emoji_a}"
                 )
                 await ctx.channel.send(embed=embed)
@@ -337,7 +337,8 @@ class Encounter(commands.Cog):
 
         embed = discord.Embed(
             title="Encounter Boss", color=discoverer.colour,
-            description=f"The rare boss {boss_select} has been triggered!\n\n⏰ 3 minutes assembly time!"
+            description=f"<@&{roles['boss_busters']}>! The rare boss {boss_select} has been triggered!\n\n"
+            f"⏰ 3 minutes assembly time!"
         )
         embed.add_field(
             name="Stats",
@@ -350,7 +351,7 @@ class Encounter(commands.Cog):
             f"Exp     :  {boss_exp:,d}"
             f"```"
         )
-        embed.add_field(name="Assembly Players", value=f"<@&{roles['boss_busters']}>", inline=False)
+        embed.add_field(name="Assembly Players", value="None", inline=False)
         embed.set_thumbnail(url=boss_url)
         embed.set_footer(
             text=f"Discovered by {discoverer.display_name}",
