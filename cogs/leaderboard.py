@@ -89,7 +89,7 @@ class Leaderboard(commands.Cog):
 
         embed = discord.Embed(
             color=ctx.author.colour, title=title,
-            description="".join(formatted_list[0:20])
+            description="".join(formatted_list[0:15])
         )
         embed.set_footer(text="Page: 1")
         msg = await ctx.channel.send(embed=embed)
@@ -100,8 +100,8 @@ class Leaderboard(commands.Cog):
             return u != self.client.user and r.message.id == msg.id
 
         def create_embed(page_new, query_list, color):
-            end = page * 20
-            start = end - 20
+            end = page * 15
+            start = end - 15
             description = "".join(query_list[start:end])
             embed_new = discord.Embed(
                 color=color,

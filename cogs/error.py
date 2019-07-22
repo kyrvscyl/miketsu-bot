@@ -77,6 +77,18 @@ class Error(commands.Cog):
         elif isinstance(error, commands.NotOwner):
             logging(file_name, get_f(), "commands.NotOwner")
 
+        elif isinstance(error, commands.UserInputError):
+
+            if str(ctx.command) == "friendship_give":
+                embed = discord.Embed(
+                    title="Invalid member", colour=discord.Colour(0xffe6a7),
+                    description="That member doesn't exist in this guild"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                await self.submit_error(ctx, error)
+
         elif isinstance(error, commands.BadArgument):
 
             if str(ctx.command) in ["raid_perform_attack", "raid_perform_calculation", "profile_show"]:
@@ -91,7 +103,7 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CommandInvokeError):
 
-            if str(ctx.command) == "broadcast":
+            if str(ctx.command) == "announcement_post_message":
                 await ctx.channel.send("Please provide a valid channel")
 
             else:
@@ -99,11 +111,8 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CommandOnCooldown):
 
-            if str(ctx.command) == "encounter":
+            if str(ctx.command) == "encounter_search":
                 await ctx.channel.send(f"{ctx.author.mention}, there is an ongoing search, try again once it finishes")
-
-            elif str(ctx.command) == "shoutout":
-                await ctx.channel.send(f"{ctx.author.mention}, there is a shoutout already, try again later")
 
             else:
                 await self.submit_error(ctx, error)
@@ -118,14 +127,6 @@ class Error(commands.Cog):
                                 "available to use through direct message"
                 )
                 embed.add_field(name="Example", value="*`;suggest add new in-game stickers!`*", inline=False)
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "friendship_change_name":
-                embed = discord.Embed(
-                    title="fpchange, fpc", colour=discord.Colour(0xffe6a7),
-                    description="changes your ship name with the mentioned member"
-                )
-                embed.add_field(name="Formats", value="*• `;fpc @member <fancy name>`*")
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "leaderboard_show":

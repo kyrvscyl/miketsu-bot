@@ -178,33 +178,35 @@ class Startup(commands.Cog):
         elif victim.bot or victim.id == ctx.author.id:
             return
 
-        elif raider_tickets == 0:
+        elif raider_tickets < 1:
             embed = discord.Embed(
                 title=f"{raider.display_name}, you have insufficient tickets", colour=discord.Colour(0xffe6a7),
                 description="Purchase at the shop or get your daily rewards"
             )
             await ctx.channel.send(embed=embed)
+            return
 
         try:
             raid_count = get_raid_count(victim)
+
+            if raid_count == 3:
+                embed = discord.Embed(
+                    title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(0xffe6a7),
+                    description="Raids are capped at 3 times per day and per realm"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif raid_count < 4:
+                users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
+                await raid_perform_attack(victim, raider, ctx)
+
         except TypeError:
             embed = discord.Embed(
                 title="Invalid member", colour=discord.Colour(0xffe6a7),
                 description="That member doesn't exist in this guild"
             )
             await ctx.channel.send(embed=embed)
-            return
 
-        if raid_count == 3:
-            embed = discord.Embed(
-                title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(0xffe6a7),
-                description="Raids are capped at 3 times per day and per realm"
-            )
-            await ctx.channel.send(embed=embed)
-
-        elif raid_count < 4:
-            users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
-            await raid_perform_attack(victim, raider, ctx)
 
     @commands.command(aliases=["raidcalc", "raidc", "rc"])
     @commands.guild_only()

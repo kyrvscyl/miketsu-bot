@@ -108,8 +108,8 @@ class Friendship(commands.Cog):
     @commands.command(aliases=["friendship", "fp"])
     @commands.guild_only()
     async def friendship_give(self, ctx, receiver: discord.Member = None):
-        giver = ctx.author
 
+        giver = ctx.author
         profile = users.find_one({"user_id": str(giver.id)}, {"_id": 0, "friendship_pass": 1})
 
         if receiver is None:
@@ -133,7 +133,7 @@ class Friendship(commands.Cog):
         elif receiver.bot is True or receiver == ctx.author:
             return
 
-        elif profile["friendship_pass"] == 0:
+        elif profile["friendship_pass"] < 1:
             embed = discord.Embed(
                 colour=discord.Colour(0xffe6a7),
                 title="Insufficient friendship points",
