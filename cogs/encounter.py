@@ -13,12 +13,14 @@ from cogs.mongo.db import users, boss, books
 from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a, emoji_f
 
 demons = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
+
 boss_comment = [
     "AHAHAHA!!! <:huehue:585442161093509120>",
     "UFUFUFUFU!! <:19:585443879541538826>",
     "KEKEKEKE!! <:huehue:585442161093509120>",
     "NYAHAHA!! <:19:585443879541538826>"
 ]
+
 attack_list = open("lists/attack.lists")
 attack_verb = attack_list.read().splitlines()
 attack_list.close()

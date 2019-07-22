@@ -800,12 +800,12 @@ class Magic(commands.Cog):
             if user not in role_owl.members:
                 await penalize(user, cycle, points=30)
 
-            elif (valid_channel_id not in msg or "<@!180717337475809281>" not in msg) and "✉" not in msg:
+            elif (valid_channel_id not in msg or "<@180717337475809281>" not in msg) and "✉" not in msg:
 
                 await reaction.message.add_reaction("❔")
                 await penalize(user, cycle, points=10)
 
-            elif (valid_channel_id in msg or "<@!180717337475809281>" in msg) and "✉" in msg:
+            elif (valid_channel_id in msg or "<@180717337475809281>" in msg) and "✉" in msg:
 
                 cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
 

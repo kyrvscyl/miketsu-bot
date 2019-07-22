@@ -23,7 +23,7 @@ class Funfun(commands.Cog):
                 msg_formatted = message.content.lower().split(" ")
 
                 for word in msg_formatted:
-                    if re.match(r"^<@![0-9]+>$", word):
+                    if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
 
                         user_id = re.sub("[<>@!]", "", word)
                         random.seed(int(user_id))
