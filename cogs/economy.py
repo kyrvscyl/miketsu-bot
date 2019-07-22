@@ -90,7 +90,7 @@ async def profile_post(member, ctx):
         "encounter_ticket": 1, "friendship_pass": 1
     })
 
-    ships_count = friendship.find({"code": {"$regex": ".*180717337475809281.*"}}).count()
+    ships_count = friendship.find({"code": {"$regex": f".*{ctx.author.id}.*"}}).count()
     amulets = profile["amulets"]
     amulets_spent = profile["amulets_spent"]
     exp = profile["experience"]
