@@ -53,7 +53,7 @@ class Friendship(commands.Cog):
         rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, ship_profile["points"])) + 1
 
         if ship_profile['level'] > 1:
-            rewards = str(ship_profile["level"] * 25)
+            rewards = str(ship_profile["level"] * 25) + " jades/day"
         else:
             rewards = "Must be Level 2 and above"
 
@@ -62,7 +62,7 @@ class Friendship(commands.Cog):
                 f"• Level:        :: {ship_profile['level']}\n" \
                 f"• Total Points: :: {ship_profile['points']}\n" \
                 f"• Server Rank:  :: {rank}\n" \
-                f"• Rewards       :: {rewards} jades/day" \
+                f"• Rewards       :: {rewards}" \
                 f"```"
 
         embed = discord.Embed(
