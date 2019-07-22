@@ -196,7 +196,7 @@ class Friendship(commands.Cog):
                 description="changes your ship name with the mentioned member"
             )
             embed.add_field(name="Formats", value="*• `;fpc @member <fancy name>`*")
-            await ctx.channel.send(embe=embed)
+            await ctx.channel.send(embed=embed)
 
 
 def setup(client):

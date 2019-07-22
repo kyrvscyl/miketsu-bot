@@ -120,6 +120,14 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value="*`;suggest add new in-game stickers!`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "friendship_change_name":
+                embed = discord.Embed(
+                    title="fpchange, fpc", colour=discord.Colour(0xffe6a7),
+                    description="changes your ship name with the mentioned member"
+                )
+                embed.add_field(name="Formats", value="*• `;fpc @member <fancy name>`*")
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "leaderboard_show":
                 embed = discord.Embed(
                     title="leaderboard, lb", colour=discord.Colour(0xffe6a7),

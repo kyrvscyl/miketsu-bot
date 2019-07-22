@@ -86,7 +86,7 @@ class Economy(commands.Cog):
             name="Trading List",
             value="".join(trading_value_list)
         )
-        embed.add_field(name="Example", value="*`;buy amulet 11`*")
+        embed.add_field(name="Example", value="*`;buy amulets 11`*")
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["buy"])
