@@ -46,5 +46,53 @@
   "cost": {
    "coins": 150000
   }
+ },
+ "7": {
+  "offer": {
+   "medals": 320
+  },
+  "cost": {
+   "jades": 700
+  }
+ },
+ "8": {
+  "offer": {
+   "jades": 500
+  },
+  "cost": {
+   "coins": 350000
+  }
+ },
+ "9": {
+  "offer": {
+   "amulets": 20
+  },
+  "cost": {
+   "jades": 1500
+  }
+ },
+ "10": {
+  "offer": {
+   "amulets": 5
+  },
+  "cost": {
+   "jades": 200
+  }
+ },
+ "11": {
+  "offer": {
+   "medals": 300
+  },
+  "cost": {
+   "coins": 1500000
+  }
+ },
+ "12": {
+  "offer": {
+   "medals": 150
+  },
+  "cost": {
+   "coins": 850000
+  }
  }
 }
