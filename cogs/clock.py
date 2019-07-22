@@ -23,7 +23,6 @@ from cogs.mongo.db import books, weather, sendoff, quests, owls, daily
 
 file = os.path.basename(__file__)[:-3:]
 
-
 clock_channels = []
 for guild_clock in books.find({}, {"channels.clock": 1, "_id": 0}):
     clock_channels.append(guild_clock["channels"]["clock"])
@@ -260,8 +259,13 @@ class Clock(commands.Cog):
 
     async def send_off_report(self):
 
-        # add quest number in query
-        for entry in sendoff.find({"timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
+        query = sendoff.find({
+            "quest": 1,
+            "timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {
+            "_id": 0
+        })
+
+        for entry in query:
             user = self.client.get_user(int(entry["user_id"]))
 
             if entry["scenario"] == 1:
