@@ -429,7 +429,8 @@ class Encounter(commands.Cog):
 
                     embed = discord.Embed(
                         title="Encounter Boss", colour=discord.Colour(0xffe6a7),
-                        description=f"The rare boss {boss_select} has been triggered!\n\n⏰ {round(timer)} secs left!"
+                        description=f"<@&{roles['boss_busters']}>! The rare boss {boss_select} has been triggered!\n\n"
+                        f"⏰ {round(timer)} secs left!"
                     )
                     embed.add_field(
                         name="Current Stats",
