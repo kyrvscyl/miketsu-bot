@@ -31,7 +31,7 @@
  "laugh": {
   "1": "https://i.imgur.com/BhRwB6E.png"
  },
- "erm": {
+ "emm": {
   "1": "https://i.imgur.com/nOF3UCk.png"
  },
  "awkward": {
@@ -67,8 +67,10 @@
   "1": "https://i.imgur.com/tCgeITN.png"
  },
  "ignore": {
-  "1": "https://i.imgur.com/yCsOKwB.png",
-  "2": "https://i.imgur.com/P1q9Cdv.png"
+  "1": "https://i.imgur.com/yCsOKwB.png"
+ },
+ "donttalktome":{
+  "1": "https://i.imgur.com/P1q9Cdv.png"
  },
  "woah": {
   "1": "https://i.imgur.com/YKK2kWT.png"
@@ -105,8 +107,10 @@
   "1": "https://i.imgur.com/YDV54DL.png"
  },
  "bullied": {
-  "1": "https://i.imgur.com/vgyihfb.png",
-  "2": "https://i.imgur.com/VCcdXdr.png"
+  "1": "https://i.imgur.com/vgyihfb.png"
+ },
+ "leavemealone": {
+  "1": "https://i.imgur.com/VCcdXdr.png"
  },
  "awesome": {
   "1": "https://i.imgur.com/WEX3lcj.png",
@@ -191,27 +195,27 @@
   "1": "https://i.imgur.com/ES0veLg.png"
  },
  "snekilicious": {
-  "1": "https://media.discordapp.net/attachments/584391485240377364/601584830408425473/sneklicious.png"
+  "1": "https://media.discordapp.net/attachments/584391485240377364/601584830408425473/sneklicious.png?width=150&height=150"
  },
  "snekpower": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601954106201997322/bowbeforesnek.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601954106201997322/bowbeforesnek.png?width=150&height=150"
  },
  "sneksmug": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601966065307615242/sneksmug.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601966065307615242/sneksmug.png?width=150&height=150"
  },
  "snekoffense": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601971866235568128/snekrude.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601971866235568128/snekrude.png?width=150&height=150"
  },
  "sneksneks": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601978103614406656/snekno.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601978103614406656/snekno.png?width=150&height=150"
  },
  "snekblep": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601986786377465872/snekoops.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601986786377465872/snekoops.png?width=150&height=150"
  },
  "snekdrama": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601994223583232010/snekDRAMA.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601994223583232010/snekDRAMA.png?width=150&height=150"
  },
  "snekow": {
-  "1": "https://media.discordapp.net/attachments/511376944210640897/601999244857180160/snekbullied.png"
+  "1": "https://media.discordapp.net/attachments/511376944210640897/601999244857180160/snekbullied.png?width=150&height=150"
  }
 }
