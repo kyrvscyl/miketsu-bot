@@ -22,7 +22,7 @@ time_start = datetime.now()
 cogs_loaded = []
 
 for filename in os.listdir("./cogs"):
-    if filename.endswith(".py") and filename in ["funfun.py"]:
+    if filename.endswith(".py"):
         client.load_extension(f"cogs.{filename[:-3]}")
         cogs_loaded.append(filename[:-3])
         print(f"Loading {filename}..")
