@@ -62,7 +62,7 @@
     },
     "10": {
       "offer": [
-        "encounter_ticket", 10
+        "realm_ticket", 10
       ],
       "cost": [
         "coins", 500000
