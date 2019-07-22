@@ -5,8 +5,7 @@ kyrvscyl, 2019
 import asyncio
 import json
 import random
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import discord
 import pytz
@@ -71,7 +70,6 @@ def get_data(user_id):
         actions = profile["quest1"][0]["actions"]
         purchase = profile["quest1"][0]["purchase"]
         break
-
     return cycle, current_path, timestamp, hints, actions, purchase
 
 
