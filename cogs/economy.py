@@ -119,6 +119,8 @@ async def profile_post(member, ctx):
         })["shikigami"][0]["thumbnail"][get_evo_link(evo)]
 
         embed.set_thumbnail(url=thumbnail)
+    else:
+        embed.set_thumbnail(url=ctx.author.avatar_url)
 
     embed.set_author(
         name=f"{member.display_name}'s profile",
