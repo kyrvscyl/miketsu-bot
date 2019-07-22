@@ -2,6 +2,7 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
+import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users
@@ -30,7 +31,10 @@ async def level_up(user, ctx):
         users.update_one({"user_id": str(user.id)},
                          {"$inc": {"jades": 150, "amulets": 10, "coins": 100000}})
 
-        await ctx.add_reaction("⤴")
+        try:
+            await ctx.add_reaction("⤴")
+        except discord.errors.HTTPException:
+            return
 
 
 async def create_user(user):
@@ -50,13 +54,17 @@ async def create_user(user):
             "jades": 0,
             "coins": 0,
             "medals": 0,
-            "realm_ticket": 0,
+            "realm_ticket": 3,
             "honor": 0,
             "talisman": 0,
             "friendship": 0,
             "guild_medal": 0,
             "shikigami": [],
-            "display": "None"
+            "encounter_ticket": 0,
+            "daily": False,
+            "weekly": False,
+            "raided_count": 0,
+            "friendship_pass": 0
         }
         users.insert_one(profile)
 

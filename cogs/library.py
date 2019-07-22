@@ -18,7 +18,6 @@ for soul in library.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_i
 
 
 async def post_process_books(user, ctx, query):
-
     library.update_one(query, {"$inc": {"borrows": 1}})
     profile = daily.find_one({"key": "library", f"{user.id}": {"$type": "int"}}, {"_id": 0, f"{user.id}": 1})
 
@@ -42,7 +41,6 @@ def check_if_restricted_section(ctx):
 
 
 async def post_table_of_content_restricted(channel):
-
     webhooks = await channel.webhooks()
     bukkuman = webhooks[0]
     webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
@@ -52,7 +50,7 @@ async def post_table_of_content_restricted(channel):
         "• Example: `;open da 8`"
 
     embed = DiscordEmbed(
-        title=":bookmark: Table of Dark Contents",
+        title=":bookmark: Table of Contents",
         colour=discord.Colour(0xa0c29a),
         description=description
     )
@@ -85,7 +83,6 @@ async def post_table_of_content_restricted(channel):
 
 
 async def post_table_of_content_reference(channel):
-
     webhooks = await channel.webhooks()
     bukkuman = webhooks[0]
     webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
@@ -135,7 +132,6 @@ class Library(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-
 
     def create_webhook_post(self, webhooks, book):
 
@@ -201,7 +197,6 @@ class Library(commands.Cog):
 
         return webhook
 
-
     async def post_new_table_of_content(self):
 
         query = books.find({
@@ -218,7 +213,6 @@ class Library(commands.Cog):
                 reference_sections.append(document["channels"]["reference-section"])
             except KeyError:
                 continue
-
 
         for section in reference_sections:
             channel = self.client.get_channel(int(section))
@@ -247,8 +241,7 @@ class Library(commands.Cog):
                 if "table of" not in title.lower():
                     await post_table_of_content_restricted(channel)
 
-
-    @commands.command(aliases=["toc", "table", "tableofcontents"])
+    @commands.command(aliases=["guides", "guide"])
     @commands.guild_only()
     async def post_table_of_content(self, ctx):
 
@@ -262,6 +255,20 @@ class Library(commands.Cog):
             await post_table_of_content_restricted(ctx.channel)
             await ctx.message.delete()
 
+        else:
+            request = books.find_one({"server": str(ctx.guild.id)}, {
+                "channels.restricted-section": 1, "channels.reference-section": 1
+            })
+
+            reference_section = f"{request['channels']['reference-section']}"
+            restricted_section = f"{request['channels']['restricted-section']}"
+
+            embed = discord.Embed(
+                title="guides, guide", colour=discord.Colour(0xffe6a7),
+                description="show the guild's game guides collection, usable only at the library"
+            )
+            embed.add_field(name="Libraries", value=f"<#{reference_section}>, <#{restricted_section}>")
+            await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["open"])
     @commands.guild_only()

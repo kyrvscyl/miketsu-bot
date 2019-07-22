@@ -30,14 +30,12 @@ for shiki in shikigami.find({"rarity": "R"}, {"_id": 0, "shikigami.name": 1}):
     for entry in shiki["shikigami"]:
         pool_r.append(entry["name"])
 
-
 caption = open("lists/summon.lists")
 summon_caption = caption.read().splitlines()
 caption.close()
 
 
 async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
-
     users.update_one({
         "user_id": str(user.id)}, {
         "$inc": {
@@ -59,7 +57,6 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
         })
 
         if query is None:
-
             users.update_one({
                 "user_id": str(user.id)}, {
                 "$push": {
@@ -82,9 +79,7 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
 
 
 async def summon_streak(user, summon_pull):
-
     if streak.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-
         profile = {
             "user_id": str(user.id),
             "SSR_current": 0, "SSR_record": 0
@@ -173,24 +168,39 @@ class Summon(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-
-    @commands.command(aliases=["s"])
+    @commands.command(aliases=["summon", "s"])
     @commands.guild_only()
-    async def summon(self, ctx, arg):
+    async def summon_perform(self, ctx, args):
 
-        user = ctx.author
+        embed = discord.Embed(
+            title="summon, s", colour=discord.Colour(0xffe6a7),
+            description="simulate summon and collect shikigamis"
+        )
+        embed.add_field(name="Format", value="*`;summon <1 or 10>`*")
 
         try:
-            amulet_pull = int(arg)
+            user = ctx.author
+            amulet_pull = int(args)
             amulet_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, "amulets": 1})["amulets"]
 
             if amulet_have == 0:
-                await ctx.channel.send(f"{user.mention}, you have no {emoji_a} to summon")
+                embed = discord.Embed(
+                    title="Insufficient amulets", colour=discord.Colour(0xffe6a7),
+                    description="Exchange at the shop to obtain more"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif args not in ["1", "10"]:
+                await ctx.channel.send(embed=embed)
 
             elif amulet_have > 0:
 
                 if amulet_pull > amulet_have:
-                    await ctx.channel.send(f"{user.mention}, you only have {amulet_have}{emoji_a} to summon")
+                    embed = discord.Embed(
+                        title="Insufficient amulets", colour=discord.Colour(0xffe6a7),
+                        description=f"{user.mention}, you only have {amulet_have}{emoji_a} in your possession"
+                    )
+                    await ctx.channel.send(embed=embed)
 
                 elif amulet_pull == 10 and amulet_have >= 10:
                     await summon_perform(ctx, user, amulet_pull)
@@ -198,11 +208,8 @@ class Summon(commands.Cog):
                 elif amulet_pull == 1 and amulet_have >= 1:
                     await summon_perform(ctx, user, amulet_pull)
 
-                else:
-                    await ctx.channel.send("Use `;summon <1 or 10>`")
-
         except ValueError:
-            await ctx.channel.send("Use `;summon <1 or 10>`")
+            await ctx.channel.send(embed=embed)
 
 
 def setup(client):

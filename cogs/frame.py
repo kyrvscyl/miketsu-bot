@@ -8,13 +8,20 @@ import random
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users, streak
+from cogs.mongo.db import users, streak, books
 from cogs.startup import emoji_j, emoji_a
 
-adverb = ["deliberately", "deliberately", "forcefully", "unknowingly", "accidentally", "dishonestly"]
+adverb = ["deliberately", "forcefully", "unknowingly", "accidentally", "dishonestly"]
 verb = ["snatched", "stole", "took", "looted", "shoplifted", "embezzled"]
 noun = ["custody", "care", "control", "ownership"]
-comment = ["Sneaky!", "Gruesome!", "Madness!", "Unbelievable!"]
+comment = ["Sneaky!", "Gruesome!", "Madness!"]
+
+spell_spam_ids = []
+for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
+    try:
+        spell_spam_ids.append(document["channels"]["spell-spam"])
+    except KeyError:
+        continue
 
 
 async def frame_starlight(guild, channel):
@@ -130,19 +137,21 @@ class Frame(commands.Cog):
         self.client = client
 
 
-    @commands.command(aliases=["issue"])
+    @commands.command()
     @commands.is_owner()
     async def frame_issuance(self, ctx):
+
         await self.frame_automate()
         await ctx.message.delete()
 
 
     async def frame_automate(self):
-        guild = self.client.get_guild(412057028887052288)
-        channel = self.client.get_channel(417507997846339585)
-        await frame_starlight(guild, channel)
-        await asyncio.sleep(1)
-        await frame_blazing(guild, channel)
+
+        for channel in spell_spam_ids:
+            spell_spam_channel = self.client.get_channel(int(channel))
+            await frame_starlight(spell_spam_channel.guild, channel)
+            await asyncio.sleep(1)
+            await frame_blazing(spell_spam_channel.guild, channel)
 
 
 def setup(client):
