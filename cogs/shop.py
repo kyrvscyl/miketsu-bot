@@ -145,7 +145,7 @@ class Economy(commands.Cog):
         except asyncio.TimeoutError:
             embed = discord.Embed(
                 title="Timeout!", colour=discord.Colour(0xffe6a7),
-                description="{}, you did not confirm the purchase"
+                description=f"{ctx.author.mention}, you did not confirm the purchase"
             )
             await ctx.channel.send(embed=embed)
             return False
