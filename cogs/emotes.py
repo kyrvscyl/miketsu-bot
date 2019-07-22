@@ -33,7 +33,7 @@ class Emotes(commands.Cog):
     async def sticker_help(self, ctx):
         embed = discord.Embed(
             color=0xffe6a7, title="stickers",
-            description="posts an reaction image embed\n"
+            description="posts a reaction image embed\n"
                         "just add \"mike\" in your message + the `<alias>`"
         )
         embed.add_field(name="Aliases", value="*" + description + "*")
