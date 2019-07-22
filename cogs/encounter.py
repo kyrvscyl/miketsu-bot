@@ -9,11 +9,16 @@ import random
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users, daily, boss
-from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a
+from cogs.mongo.db import users, boss, books
+from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a, emoji_f
 
-demon = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
-
+demons = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
+boss_comment = [
+    "AHAHAHA!!! <:huehue:585442161093509120>",
+    "UFUFUFUFU!! <:19:585443879541538826>",
+    "KEKEKEKE!! <:huehue:585442161093509120>",
+    "NYAHAHA!! <:19:585443879541538826>"
+]
 attack_list = open("lists/attack.lists")
 attack_verb = attack_list.read().splitlines()
 attack_list.close()
@@ -25,16 +30,16 @@ def get_emoji(item):
         "coins": emoji_c,
         "realm_ticket": "🎟",
         "amulets": emoji_a,
-        "medals": emoji_m
+        "medals": emoji_m,
+        "friendship": emoji_f,
+        "encounter_ticket": "🎫"
     }
     return emoji_dict[item]
 
 
 async def boss_create(user, boss_select):
-
     discoverer = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})
     boss_lvl = discoverer["level"] + 60
-
     query = users.aggregate([{
         "$group": {
             "_id": "",
@@ -57,8 +62,8 @@ async def boss_create(user, boss_select):
             "total_hp": round(total_medals * (1 + (boss_lvl / 100)), 0),
             "current_hp": round(total_medals * (1 + (boss_lvl / 100)), 0),
             "damage_cap": round(total_medals * (1 + (boss_lvl / 100)) * 0.2, 0),
-            "rewards.medals": 100,
-            "rewards.jades": 500,
+            "rewards.medals": 200,
+            "rewards.jades": 1000,
             "rewards.experience": 250,
             "rewards.coins": 1000000
         }
@@ -66,7 +71,6 @@ async def boss_create(user, boss_select):
 
 
 async def boss_steal(assembly_players, boss_jadesteal, boss_coinsteal):
-
     for player_id in assembly_players:
 
         if users.find_one({"user_id": player_id}, {"_id": 0, "jades": 1})["jades"] <= boss_jadesteal:
@@ -87,39 +91,33 @@ class Encounter(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-
-    @commands.command(aliases=["enc"])
+    @commands.command(aliases=["encounter", "enc"])
     @commands.cooldown(1, 180, commands.BucketType.user)
     @commands.guild_only()
-    async def encounter(self, ctx):
+    async def encounter_search(self, ctx):
 
         user = ctx.author
-        profile = daily.find_one({
-            "key": "daily"}, {
-            "_id": 0, f"{user.id}.encounter_pass": 1
-        })
+        profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "encounter_ticket": 1})
 
-        if profile[str(user.id)]["encounter_pass"] > 0:
-
-            daily.update_one({
-                "key": "daily"}, {
-                "$inc": {
-                    f"{user.id}.encounter_pass": -1
-                }
-            })
-
+        if profile["encounter_ticket"] > 0:
+            users.update_one({"user_id": str(user.id)}, {"$inc": {"encounter_ticket": -1}})
             await self.encounter_roll(user, ctx)
 
         else:
-            await ctx.channel.send("You have used up all your 🎫")
+            embed = discord.Embed(
+                title="Insufficient encounter tickets", colour=discord.Colour(0xffe6a7),
+                description="Purchase at the shop to obtain more tickets"
+            )
+            await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
-
 
     async def encounter_roll(self, user, ctx):
 
+        embed = discord.Embed(title="🔍 Searching the depths of Netherworld...", color=user.colour)
+        await ctx.channel.send(embed=embed)
+
         async with ctx.channel.typing():
-            await ctx.channel.send("🔍Searching the depths of Netherworld...")
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
 
         survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
         discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
@@ -131,7 +129,7 @@ class Encounter(commands.Cog):
                 await self.boss_roll(user, ctx)
             else:
                 roll2 = random.randint(0, 100)
-                await asyncio.sleep(3)
+                await asyncio.sleep(1)
 
                 if roll2 > 40:
                     await self.treasure_roll(user, ctx)
@@ -139,13 +137,12 @@ class Encounter(commands.Cog):
                     await self.quiz_roll(user, ctx)
         else:
             roll2 = random.randint(0, 100)
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
 
             if roll2 > 40:
                 await self.treasure_roll(user, ctx)
             else:
                 await self.quiz_roll(user, ctx)
-
 
     async def quiz_roll(self, user, ctx):
 
@@ -161,57 +158,72 @@ class Encounter(commands.Cog):
 
         question = random.choice(questions)
         embed = discord.Embed(
-            color=user.colour,
-            description=f"❔Who is this shikigami: {question}"
+            title=f"Demon Quiz", color=user.colour,
+            description=f"{user.mention}, you have 15 secs & 3 guesses, earn 5 {emoji_a} if correct"
         )
-        embed.set_author(name="Demon Quiz")
-        embed.set_footer(
-            text=f"Quiz for {user.display_name}. 20 sec | 3 guesses",
-            icon_url=user.avatar_url
-        )
+        embed.add_field(name="Who is this shikigami?", value=f"||{question}||")
         msg = await ctx.channel.send(embed=embed)
 
         def check(guess):
             guess_formatted = ("".join(guess.content)).title()
             if guess.author != user:
                 return False
-            elif guess_formatted == answer:
+            elif guess_formatted == answer and guess.channel == ctx.channel:
                 return True
-            elif guess_formatted != answer:
+            elif guess_formatted != answer and guess.channel == ctx.channel:
                 raise KeyError
 
         guesses = 0
         while guesses < 3:
             try:
-                await self.client.wait_for("message", timeout=20, check=check)
+                await self.client.wait_for("message", timeout=15, check=check)
 
             except asyncio.TimeoutError:
-                await ctx.channel.send(f"{user.mention}, time is up! You failed the quiz")
+                embed = discord.Embed(
+                    title="Time is up!", color=user.colour,
+                    description=f"{user.mention}, you have failed the quiz!"
+                )
+                await ctx.channel.send(embed=embed)
                 await msg.delete()
                 break
 
             except KeyError:
                 if guesses == 0:
-                    await ctx.channel.send(f"{user.mention}, wrong answer! 2 more tries left")
+                    embed = discord.Embed(
+                        title="Wrong answer!", color=user.colour,
+                        description=f"{user.mention}, 2 more tries left!"
+                    )
+                    await ctx.channel.send(embed=embed)
                     guesses += 1
 
                 elif guesses == 1:
-                    await ctx.channel.send(f"{user.mention}, wrong answer! 1 more try left")
+                    embed = discord.Embed(
+                        title="Wrong answer again!", color=user.colour,
+                        description=f"{user.mention}, 1 more try left!"
+                    )
+                    await ctx.channel.send(embed=embed)
                     guesses += 1
 
                 elif guesses == 2:
-                    await ctx.channel.send(f"{user.mention}, wrong answer. You failed the quiz")
+                    embed = discord.Embed(
+                        title="Out of attempts!", color=user.colour,
+                        description=f"{user.mention}, you have failed the quiz!"
+                    )
+                    await ctx.channel.send(embed=embed)
                     await msg.delete()
                     break
 
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"amulets": 5}})
-                await ctx.channel.send(f"{user.mention}, correct! You have earned 5{emoji_a}")
+                embed = discord.Embed(
+                    title="Correct!", colour=discord.Colour(0xffe6a7),
+                    description=f"{user.mention}, you have earned 5 {emoji_a}"
+                )
+                await ctx.channel.send(embed=embed)
                 await msg.delete()
                 break
 
         self.client.get_command("encounter").reset_cooldown(ctx)
-
 
     async def treasure_roll(self, user, ctx):
 
@@ -229,10 +241,7 @@ class Encounter(commands.Cog):
             description=f"A treasure box containing {offer_amount:,d}{get_emoji(offer_item)}\n"
             f"It opens using {cost_amount:,d}{get_emoji(cost_item)}"
         )
-        embed.set_footer(
-            text=f"Found by {user.display_name}",
-            icon_url=user.avatar_url
-        )
+        embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
 
         msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("✅")
@@ -241,15 +250,16 @@ class Encounter(commands.Cog):
             return u == ctx.author and str(r.emoji) == "✅"
 
         try:
-            reaction, user = await self.client.wait_for("reaction_add", timeout=8.0, check=check)
-
+            reaction, user = await self.client.wait_for("reaction_add", timeout=6.0, check=check)
         except asyncio.TimeoutError:
-            await ctx.channel.send(f"{user.mention}, the treasure you found turned into ashes 🔥")
+            embed = discord.Embed(
+                color=user.colour,
+                description=f"{user.mention}, the treasure you found turned into ashes 🔥"
+            )
+            await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
-
         else:
             await self.treasure_claim(user, offer_item, offer_amount, cost_item, cost_amount, ctx)
-
 
     async def treasure_claim(self, user, offer_item, offer_amount, cost_item, cost_amount, ctx):
 
@@ -261,16 +271,21 @@ class Encounter(commands.Cog):
                     offer_item: offer_amount,
                     cost_item: -cost_amount}
             })
-
-            await ctx.channel.send(f"{user.mention}, you have successfully exchanged!")
-
+            embed = discord.Embed(
+                title="Encounter", colour=discord.Colour(0xffe6a7),
+                description=f"{user.mention}, you have successfully exchanged!"
+            )
+            await ctx.channel.send(embed=embed)
         else:
-            await ctx.channel.send(f"{user.mention}, you do not have sufficient {cost_item}")
+            embed = discord.Embed(
+                title="Encounter", colour=discord.Colour(0xffe6a7),
+                description=f"{user.mention}, you do not have sufficient {cost_item}"
+            )
+            await ctx.channel.send(embed=embed)
 
         self.client.get_command("encounter").reset_cooldown(ctx)
 
-
-    async def boss_roll(self, user, ctx):
+    async def boss_roll(self, discoverer, ctx):
 
         boss_alive = []
         query = boss.find({
@@ -288,7 +303,7 @@ class Encounter(commands.Cog):
         boss_select = random.choice(boss_alive)
 
         if boss.find_one({"boss": boss_select}, {"_id": 0, "discoverer": 1})["discoverer"] == 0:
-            await boss_create(user, boss_select)
+            await boss_create(discoverer, boss_select)
 
         boss_profile = boss.find_one({
             "boss": boss_select}, {
@@ -298,7 +313,11 @@ class Encounter(commands.Cog):
             "total_hp": 1,
             "current_hp": 1,
             "damage_cap": 1,
-            "boss_url": 1
+            "boss_url": 1,
+            "rewards.coins": 1,
+            "rewards.experience": 1,
+            "rewards.jades": 1,
+            "rewards.medals": 1,
         })
 
         boss_lvl = boss_profile["level"]
@@ -307,24 +326,35 @@ class Encounter(commands.Cog):
         boss_damagecap = boss_profile["damage_cap"]
         boss_basedmg = boss_profile["total_hp"] * 0.02
         boss_url = boss_profile["boss_url"]
+        boss_coins = boss_profile["rewards"]["coins"]
+        boss_exp = boss_profile["rewards"]["experience"]
+        boss_jades = boss_profile["rewards"]["jades"]
+        boss_medals = boss_profile["rewards"]["medals"]
 
         boss_hp_remaining = round(((boss_currenthp / boss_totalhp) * 100), 2)
 
-        description = \
-            f"The Rare Boss `{boss_select}` has been triggered!\n" \
-            f"Boss Level: `{boss_lvl}`\n" \
-            f"Remaining Hp: `{boss_hp_remaining}%`\n\n" \
-            f"Max players: 10\n" \
-            f"Click the 🏁 to participate in the assembly! "
+        roles = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "roles.boss_busters": 1})["roles"]
 
         embed = discord.Embed(
-            color=user.colour,
-            description=description
+            title="Encounter Boss", color=discoverer.colour,
+            description=f"The rare boss {boss_select} has been triggered!\n\n⏰ 3 minutes assembly time!"
         )
+        embed.add_field(
+            name="Stats",
+            value=f"```"
+            f"Level   :  {boss_lvl}\n"
+            f"HP      :  {boss_hp_remaining}%\n"
+            f"Jades   :  {boss_jades:,d}\n"
+            f"Coins   :  {boss_coins:,d}\n"
+            f"Medals  :  {boss_medals:,d}\n"
+            f"Exp     :  {boss_exp:,d}"
+            f"```"
+        )
+        embed.add_field(name="Assembly Players", value=f"<@&{roles['boss_busters']}>", inline=False)
         embed.set_thumbnail(url=boss_url)
         embed.set_footer(
-            text=f"Discovered by {user.display_name}",
-            icon_url=user.avatar_url
+            text=f"Discovered by {discoverer.display_name}",
+            icon_url=discoverer.avatar_url
         )
 
         await asyncio.sleep(2)
@@ -334,21 +364,44 @@ class Encounter(commands.Cog):
         timer = 180
         count_players = 0
         assembly_players = []
+        assembly_players_name = []
 
         def check(r, u):
             return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == msg_boss.id
 
+        def get_boss_profile_assembly(x):
+            boss_rewards = boss.find_one({
+                "boss": x}, {
+                "_id": 0,
+                "rewards.coins": 1,
+                "rewards.experience": 1,
+                "rewards.jades": 1,
+                "rewards.medals": 1,
+            })["rewards"]
+            return boss_rewards["coins"], boss_rewards["experience"], boss_rewards["jades"], boss_rewards["medals"]
+
         while count_players < 10:
 
             try:
+                await asyncio.sleep(1.2)
                 reaction, user = await self.client.wait_for("reaction_add", timeout=timer, check=check)
 
             except asyncio.TimeoutError:
-                await ctx.channel.send("🎌 Assembly ends!")
-                count_players += 15
+                embed = discord.Embed(title="🎌 Assembly ends!", colour=discord.Colour(0xffe6a7))
+                await msg_boss.clear_reactions()
+                await ctx.channel.send(embed=embed)
+                break
 
             else:
-                if not str(user.id) in assembly_players:
+                if str(user.id) in assembly_players:
+                    embed = discord.Embed(
+                        title="Encounter Boss", colour=discoverer.colour,
+                        description=f"{user.mention}, you have already joined the assembly"
+                    )
+                    msg = await ctx.channel.send(embed=embed)
+                    await msg.delete(delay=5)
+
+                elif str(user.id) not in assembly_players:
                     query = boss.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1})
 
                     if query is None:
@@ -368,41 +421,62 @@ class Encounter(commands.Cog):
                             }
                         })
 
-                    assembly_players.append(str(user.id))
                     timer /= 1.20
+                    assembly_players.append(str(user.id))
+                    assembly_players_name.append(user.display_name)
+                    boss_coins_, boss_exp_, boss_jades_, boss_medals_ = get_boss_profile_assembly(boss_select)
 
-                    msg = \
-                        f"{user.mention} joins the assembly! 🏁 {count_players + 1}/10 players; " \
-                        f"⏰{round(timer)} seconds before closing!"
-
-                    await ctx.channel.send(msg)
-
-                else:
-                    await ctx.channel.send(f"{user.mention}, you already joined the assembly.")
+                    embed = discord.Embed(
+                        title="Encounter Boss", colour=discord.Colour(0xffe6a7),
+                        description=f"The rare boss {boss_select} has been triggered!\n\n⏰ {round(timer)} secs left!"
+                    )
+                    embed.add_field(
+                        name="Current Stats",
+                        value=f"```"
+                        f"Level   :  {boss_lvl}\n"
+                        f"HP      :  {boss_hp_remaining}%\n"
+                        f"Jades   :  {boss_jades_:,d}\n"
+                        f"Coins   :  {boss_coins_:,d}\n"
+                        f"Medals  :  {boss_medals_:,d}\n"
+                        f"Exp     :  {boss_exp_:,d}"
+                        f"```"
+                    )
+                    embed.add_field(
+                        name="Assembly Players",
+                        value="{}".format(", ".join(assembly_players_name)),
+                        inline=False
+                    )
+                    embed.set_thumbnail(url=boss_url)
+                    embed.set_footer(
+                        text=f"Discovered by {discoverer.display_name}",
+                        icon_url=discoverer.avatar_url
+                    )
+                    await msg_boss.edit(embed=embed)
 
                 count_players += 1
 
         if len(assembly_players) == 0:
-
             await asyncio.sleep(3)
-            await ctx.channel.send(f"❌ No players joined the assembly! Rare Boss {boss_select} fled.")
+            embed = discord.Embed(
+                title="Encounter Boss", colour=discord.Colour(0xffe6a7),
+                description=f"No players have joined the assembly.\nThe rare boss {boss_select} has fled."
+            )
+            await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
 
         else:
-
             await asyncio.sleep(3)
-            await ctx.channel.send(f"🎮 Battle with {boss_select} starts!")
+            embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=discord.Colour(0xffe6a7))
+            await ctx.channel.send(embed=embed)
 
             async with ctx.channel.typing():
                 await asyncio.sleep(3)
                 await self.boss_assembly(boss_select, assembly_players, boss_damagecap, boss_basedmg, boss_url, ctx)
 
-
     async def boss_assembly(self, boss_select, assembly_players, boss_damagecap, boss_basedmg, boss_url, ctx):
 
         damage_players = []
         for player in assembly_players:
-
             player_medals = users.find_one({"user_id": player}, {"_id": 0, "medals": 1})["medals"]
             player_level = users.find_one({"user_id": player}, {"_id": 0, "level": 1})["level"]
             player_dmg = boss_basedmg + (player_medals * (1 + (player_level / 100)))
@@ -411,7 +485,6 @@ class Encounter(commands.Cog):
                 player_dmg = boss_damagecap
 
             damage_players.append(player_dmg)
-
             boss.update_one({
                 "boss": boss_select,
                 "challengers.user_id": player}, {
@@ -420,12 +493,13 @@ class Encounter(commands.Cog):
                     "current_hp": -round(player_dmg, 0)
                 }
             })
-
-            msg = \
-                f"{self.client.get_user(int(player)).mention} {random.choice(attack_verb)} {boss_select}, " \
-                    f"dealing {round(player_dmg)} damage!"
-
-            await ctx.channel.send(msg)
+            player_ = ctx.guild.get_member(int(player))
+            embed = discord.Embed(
+                color=player_.colour,
+                description=f"*{player_.mention} "
+                f"{random.choice(attack_verb)} {boss_select}, dealing {round(player_dmg)} damage!*"
+            )
+            await ctx.channel.send(embed=embed)
             await asyncio.sleep(3)
 
         boss_profile_new = boss.find_one({
@@ -441,27 +515,20 @@ class Encounter(commands.Cog):
 
         await self.boss_check(assembly_players, boss_select, boss_url, boss_profile_new, ctx)
 
-
     async def boss_check(self, assembly_players, boss_select, boss_url, boss_profile_new, ctx):
 
         boss_currenthp = boss.find_one({"boss": boss_select}, {"_id": 0, "current_hp": 1})["current_hp"]
 
         if boss_currenthp > 0:
 
-            boss_jadesteal = round(boss_profile_new["rewards"]["jades"] * 0.05)
-            boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.075)
+            boss_jadesteal = round(boss_profile_new["rewards"]["jades"] * 0.08)
+            boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.07)
 
-            description1 = \
-                f"💨 Rare Boss {boss_select} has fled with {round(boss_currenthp)} remaining Hp"
+            description = f"💨 Rare Boss {boss_select} has fled with {round(boss_currenthp):,d} remaining HP\n" \
+                f"💸 Stealing {boss_jadesteal:,d}{emoji_j} & {boss_coinsteal:,d}{emoji_c} each from its attackers!\n" \
+                f"\n{random.choice(boss_comment)}~"
 
-            description2 = \
-                f"💸 Stealing {boss_jadesteal:,d}{emoji_j} & " \
-                f"{boss_coinsteal}{emoji_c} each from its attackers!"
-
-            embed = discord.Embed(
-                color=0xffff80,
-                description=description1 + "\n" + description2
-            )
+            embed = discord.Embed(colour=discord.Colour(0xffe6a7), description=description)
             embed.set_thumbnail(url=boss_url)
 
             await boss_steal(assembly_players, boss_jadesteal, boss_coinsteal)
@@ -500,7 +567,6 @@ class Encounter(commands.Cog):
 
             challengers = []
             distribution = []
-
             query = boss.aggregate([{
                 "$match": {
                     "boss": boss_select}}, {
@@ -528,23 +594,18 @@ class Encounter(commands.Cog):
             rewards_zip = list(
                 zip(challengers, boss_coins_user, boss_jades_users, boss_medals_users, boss_exp_users, distribution))
 
-            await ctx.channel.send(f"🎯 Rare Boss {boss_select} has been defeated!")
+            embed = discord.Embed(title="The Rare Boss {} has been defeated!", colour=discord.Colour(0xffe6a7))
+            await ctx.channel.send(embed=embed)
             await self.boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
-
 
     async def boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
 
-        discoverer = boss_profile_new["discoverer"]
-        embed = discord.Embed(
-            color=0xffff80,
-            title="🎊 Boss Defeat Rewards!"
-        )
+        embed = discord.Embed(colour=discord.Colour(0xffe6a7), title="🎊 Boss Defeat Rewards!")
         embed.set_thumbnail(url=boss_url)
 
         for reward in rewards_zip:
-
             try:
-                name = ctx.guild.get_member(int([reward][0][0])).display_name
+                name = ctx.guild.get_member(int([reward][0][0]))
                 damage_contribution = round([reward][0][5] * 100, 2)
                 coins_r = round([reward][0][1])
                 jades_r = round([reward][0][2])
@@ -553,9 +614,9 @@ class Encounter(commands.Cog):
 
                 embed.add_field(
                     name=f"{name}, {damage_contribution}%",
-                    value=f"{coins_r:,d}{emoji_c}, {jades_r}{emoji_j}, {medal_r}{emoji_m}, {exp_r} ⤴"
+                    value=f"{coins_r:,d}{emoji_c}, {jades_r}{emoji_j}, {medal_r}{emoji_m}, {exp_r} ⤴",
+                    inline=False
                 )
-
                 users.update_one({
                     "user_id": [reward][0][0]}, {
                     "$inc": {
@@ -568,6 +629,7 @@ class Encounter(commands.Cog):
             except AttributeError:
                 continue
 
+        discoverer = boss_profile_new["discoverer"]
         users.update_one({
             "user_id": discoverer}, {
             "$inc": {
@@ -584,23 +646,21 @@ class Encounter(commands.Cog):
 
         try:
             user = ctx.guild.get_member(int(discoverer))
-            msg = f"{user.mention} earned an extra 100{emoji_j}, 50,000{emoji_c}, " \
+            description = f"{user.mention} earned an extra 100{emoji_j}, 50,000{emoji_c}, " \
                 f"15{emoji_m} and 100 ⤴ for initially discovering {boss_select}!"
-            await ctx.channel.send(msg)
-
+            embed = discord.Embed(colour=discord.Colour(0xffe6a7), description=description)
+            await ctx.channel.send(embed=embed)
         except AttributeError:
             pass
 
         self.client.get_command("encounter").reset_cooldown(ctx)
 
-
     @commands.command(aliases=["binfo", "bossinfo"])
     @commands.guild_only()
     async def boss_info(self, ctx, *args):
 
-        query = args[0].capitalize()
-
         try:
+            query = args[0].capitalize()
             boss_profile = boss.find_one({
                 "boss": query}, {
                 "_id": 0,
@@ -608,7 +668,8 @@ class Encounter(commands.Cog):
                 "total_hp": 1,
                 "current_hp": 1,
                 "rewards": 1,
-                "discoverer": 1
+                "discoverer": 1,
+                "boss_url": 1
             })
 
             try:
@@ -623,44 +684,39 @@ class Encounter(commands.Cog):
             experience = boss_profile["rewards"]["experience"]
             coins = boss_profile["rewards"]["coins"]
             jades = boss_profile["rewards"]["jades"]
+            boss_url = boss_profile["boss_url"]
 
-            msg = f"Rare Boss {query} Stats:\n```" \
-                f"Discoverer: {discoverer}\n" \
-                f"     Level: {level}\n" \
-                f"  Total Hp: {total_hp}\n" \
-                f"Current Hp: {current_hp}\n" \
-                f"    Medals: {medals}\n" \
-                f"     Jades: {jades}\n" \
-                f"     Coins: {coins}\n" \
-                f"Experience: {experience}```"
-            await ctx.channel.send(msg)
+            description = f"```" \
+                f"Discoverer  :: {discoverer}\n" \
+                f"     Level  :: {level}\n" \
+                f"  Total Hp  :: {total_hp}\n" \
+                f"Current Hp  :: {current_hp}\n" \
+                f"    Medals  :: {medals}\n" \
+                f"     Jades  :: {jades}\n" \
+                f"     Coins  :: {coins}\n" \
+                f"Experience  :: {experience}```"
+
+            embed = discord.Embed(
+                title=f"Rare Boss {query} stats", colour=discord.Colour(0xffe6a7),
+                description=description
+            )
+            embed.set_thumbnail(url=boss_url)
+            await ctx.channel.send(embed=embed)
 
         except IndexError:
 
-            description = \
-                "• Tsuchigumo\n" \
-                "• Oboroguruma\n" \
-                "• Odokuro\n:" \
-                "• Shinkirou\n" \
-                "• Namazu\n\n" \
-                "Use `;binfo <boss_name>`"
-
             embed = discord.Embed(
-                color=ctx.author.colour,
-                title="Show Rare Boss Stats",
-                description=description
-            )
+                title="bossinfo, binfo", colour=discord.Colour(0xffe6a7),
+                description="shows discovered boss statistics")
 
-            try:
-                embed.set_thumbnail(url=self.client.user.avatar_url)
+            demons_formatted = ", ".join(demons)
 
-            except AttributeError:
-                pass
-
+            embed.add_field(name="Bosses", value="*{}*".format(demons_formatted))
+            embed.add_field(name="Example", value="*`;binfo namazu`*", inline=False)
             await ctx.channel.send(embed=embed)
 
         except KeyError:
-            await ctx.channel.send(f"Boss {query} is undiscovered")
+            return
 
 
 def setup(client):
