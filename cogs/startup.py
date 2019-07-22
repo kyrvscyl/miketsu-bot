@@ -50,7 +50,6 @@ class Startup(commands.Cog):
         print("Hi! {}!".format(self.client.get_user(180717337475809281)))
         print("Time now: {}".format(datetime.now(tz=pytz.timezone("Asia/Manila")).strftime("%d.%b %Y %H:%M:%S")))
         print("-------")
-        print("Peasant Count: {}".format(len(self.client.users)))
         self.change_status.start()
         print("-------")
 
@@ -87,7 +86,7 @@ class Startup(commands.Cog):
         )
         embed.add_field(
             name="Others",
-            value="*bounty, suggest, stickers, wander, frame, announce*\\*, *manage*\\*",
+            value="*bounty, suggest, stickers, wander, frame, stats, announce*\\*, *manage*\\*",
             inline=False
         )
 
