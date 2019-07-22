@@ -14,7 +14,6 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 shikigami = os.path.basename(__file__)[:-3:]
 token = shikigamis.find_one({shikigami: {"$type": "string"}}, {"_id": 0, shikigami: 1})[shikigami]
 
-
 client = discord.Client()
 
 # noinspection PyRedeclaration
@@ -33,7 +32,9 @@ for filename in os.listdir("./cogs"):
 async def load(ctx, extension):
     client.load_extension(f"cogs.{extension}")
     print(f"Loading {extension}.py..")
-    await ctx.channel.send(f"Extension {extension}.py has been loaded")
+    msg = await ctx.channel.send(f"Extension {extension}.py has been loaded")
+    await msg.delete(delay=5)
+    await ctx.message.delete(delay=5)
 
 
 @client.command(aliases=["ul"])
@@ -41,7 +42,9 @@ async def load(ctx, extension):
 async def unload(ctx, extension):
     client.unload_extension(f"cogs.{extension}")
     print(f"Unloading {extension}.py..")
-    await ctx.channel.send(f"Extension {extension}.py has been unloaded")
+    msg = await ctx.channel.send(f"Extension {extension}.py has been unloaded")
+    await msg.delete(delay=5)
+    await ctx.message.delete(delay=5)
 
 
 @client.command(aliases=["rl"])
@@ -50,7 +53,9 @@ async def reload(ctx, extension):
     client.unload_extension(f"cogs.{extension}")
     client.load_extension(f"cogs.{extension}")
     print(f"Reloading {extension}.py..")
-    await ctx.channel.send(f"Extension {extension}.py has been reloaded")
+    msg = await ctx.channel.send(f"Extension {extension}.py has been reloaded")
+    await msg.delete(delay=5)
+    await ctx.message.delete(delay=5)
 
 
 @client.command()
