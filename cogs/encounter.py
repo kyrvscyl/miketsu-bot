@@ -272,14 +272,14 @@ class Encounter(commands.Cog):
                     cost_item: -cost_amount}
             })
             embed = discord.Embed(
-                title="Encounter", colour=discord.Colour(0xffe6a7),
+                color=user.colour,
                 description=f"{user.mention}, you have successfully exchanged!"
             )
             await ctx.channel.send(embed=embed)
         else:
             embed = discord.Embed(
-                title="Encounter", colour=discord.Colour(0xffe6a7),
-                description=f"{user.mention}, you do not have sufficient {cost_item}"
+                color=user.colour,
+                description=f"{user.mention}, you do not have sufficient {get_emoji(cost_item)}"
             )
             await ctx.channel.send(embed=embed)
 
@@ -594,7 +594,9 @@ class Encounter(commands.Cog):
             rewards_zip = list(
                 zip(challengers, boss_coins_user, boss_jades_users, boss_medals_users, boss_exp_users, distribution))
 
-            embed = discord.Embed(title="The Rare Boss {} has been defeated!", colour=discord.Colour(0xffe6a7))
+            embed = discord.Embed(
+                title=f"The Rare Boss {boss_select} has been defeated!", colour=discord.Colour(0xffe6a7)
+            )
             await ctx.channel.send(embed=embed)
             await self.boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
 
