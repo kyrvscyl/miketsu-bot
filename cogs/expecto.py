@@ -11,8 +11,8 @@ import discord
 import pytz
 from discord.ext import commands
 
+import cogs.quest as quest
 from cogs.mongo.db import books, quests, owls, weather, sendoff, patronus
-from cogs.quest import Quest, secret_response, generate_data, reaction_closed
 
 owls_list = []
 for owl in owls.find({}, {"_id": 0, "type": 1}):
@@ -471,7 +471,7 @@ class Expecto(commands.Cog):
                 }
             }
             )
-        await Quest(self.client).logging(f"Shifted {user} path to {path_new}")
+        await quest.Quest(self.client).logging(f"Shifted {user} path to {path_new}")
 
     @commands.command(aliases=["patronus"])
     @commands.has_role("Test")
@@ -723,7 +723,7 @@ class Expecto(commands.Cog):
                             )
                         }
                     })
-                    await Quest(self.client).logging(f"Started quest1: cycle#{cycle} for {user}")
+                    await quest.Quest(self.client).logging(f"Started quest1: cycle#{cycle} for {user}")
                     break
 
             await member.add_roles(role_dolphin)
@@ -855,7 +855,7 @@ class Expecto(commands.Cog):
                 topic = responses["knock"][1]
                 await ctx.channel.edit(topic=topic)
                 await ctx.message.delete()
-                await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
                 await penalize_quest1(user, cycle, points=15)
 
             elif ctx.message.content == ";inquire":
@@ -870,7 +870,7 @@ class Expecto(commands.Cog):
                 await ctx.message.delete()
                 await action_update_quest1(user, cycle, actions=1)
                 await penalize_quest1(user, cycle, points=15)
-                await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
 
     @commands.command(aliases=["purchase"])
     @commands.has_role("🐬")
@@ -902,7 +902,7 @@ class Expecto(commands.Cog):
             elif owl_buy not in owls_list:
                 msg = responses["purchasing"]["invalid_owl"]
                 await penalize_quest1(user, cycle, points=20)
-                await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
                 await ctx.message.delete()
 
             elif owl_buy in owls_list:
@@ -914,7 +914,7 @@ class Expecto(commands.Cog):
                     msg = responses["purchasing"]["buying_again"][0].format(user.mention)
                     topic = responses["purchasing"]["buying_again"][1]
                     await penalize_quest1(user, cycle, points=75)
-                    await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
 
@@ -923,7 +923,7 @@ class Expecto(commands.Cog):
                     topic = responses["purchasing"]["no_moneybag"][1]
                     await self.update_path_quest1(user, cycle, path_new="path7")
                     await penalize_quest1(user, cycle, points=10)
-                    await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
 
@@ -940,7 +940,7 @@ class Expecto(commands.Cog):
                     topic = responses["purchasing"]["out_of_stock"][1]
                     await self.update_path_quest1(user, cycle, path_new="path24")
                     await penalize_quest1(user, cycle, points=20)
-                    await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
 
@@ -985,7 +985,7 @@ class Expecto(commands.Cog):
                         await asyncio.sleep(1)
                         await ctx.channel.send(f"{user.mention} has acquired 🦉 role")
                         await asyncio.sleep(2)
-                        await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                        await quest.secret_response(ctx.guild.id, ctx.channel.name, msg)
                         await asyncio.sleep(3)
                         await ctx.channel.send(embed=embed)
                         await asyncio.sleep(2)
@@ -1012,7 +1012,7 @@ class Expecto(commands.Cog):
             }
 
             emporium = await guild.create_text_channel("eeylops-owl-emporium", category=category, overwrites=overwrites)
-            await generate_data(guild, msg, emporium)
+            await quest.generate_data(guild, msg, emporium)
             await message.add_reaction("✨")
 
             if user not in role_owl.members and user not in role_galleons.members:
@@ -1046,7 +1046,7 @@ class Expecto(commands.Cog):
             await message.delete()
 
         else:
-            await reaction_closed(message)
+            await quest.reaction_closed(message)
 
     async def create_ollivanders(self, category, guild, msg, message, user):
 
@@ -1066,7 +1066,7 @@ class Expecto(commands.Cog):
             }
 
             ollivanders = await guild.create_text_channel("ollivanders", category=category, overwrites=overwrites)
-            await generate_data(guild, msg, ollivanders)
+            await quest.generate_data(guild, msg, ollivanders)
             await message.add_reaction("✨")
             await asyncio.sleep(3)
             await message.delete()
@@ -1098,7 +1098,7 @@ class Expecto(commands.Cog):
             await self.transaction_ollivanders(guild, user, ollivanders_channel)
 
         else:
-            await reaction_closed(message)
+            await quest.reaction_closed(message)
 
     async def transaction_ollivanders(self, guild, user, channel):
 
@@ -1111,7 +1111,7 @@ class Expecto(commands.Cog):
             role_star = discord.utils.get(guild.roles, name="🌟")
             responses = get_responses_quest1("ollivanders")
             msg1 = responses["intro"].format(user.mention)
-            await secret_response(guild.id, channel.name, msg1)
+            await quest.secret_response(guild.id, channel.name, msg1)
             await asyncio.sleep(3)
 
             def check(guess):
@@ -1129,13 +1129,13 @@ class Expecto(commands.Cog):
                 msg = responses["timeout_intro"].format(user.mention)
                 await penalize_quest1(user, cycle, points=10)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
 
             except KeyError:
                 msg = responses["invalid"]
                 await penalize_quest1(user, cycle, points=10)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
 
             else:
                 if user not in role_star.members and path in ["path11", "path3", "path10", "path0", "path25", "path17"]:
@@ -1143,9 +1143,9 @@ class Expecto(commands.Cog):
                     msg2 = responses["valid"][1].format(user.mention)
                     topic = responses["valid"][2]
                     await action_update_quest1(user, cycle, actions=3)
-                    await secret_response(guild.id, channel.name, msg1)
+                    await quest.secret_response(guild.id, channel.name, msg1)
                     await asyncio.sleep(6)
-                    await secret_response(guild.id, channel.name, msg2)
+                    await quest.secret_response(guild.id, channel.name, msg2)
                     await channel.edit(topic=topic)
                     await asyncio.sleep(5)
                     await self.wand_personalise(user, guild, channel, cycle, role_star, responses)
@@ -1155,7 +1155,7 @@ class Expecto(commands.Cog):
                     topic = responses["valid_no_owl"][1]
                     await penalize_quest1(user, cycle, points=25)
                     await action_update_quest1(user, cycle, actions=3)
-                    await secret_response(guild.id, channel.name, msg)
+                    await quest.secret_response(guild.id, channel.name, msg)
                     await channel.edit(topic=topic)
 
     async def wand_personalise(self, user, guild, channel, cycle, role_star, responses):
@@ -1179,7 +1179,7 @@ class Expecto(commands.Cog):
         msg1 = responses["owl_analysis"][trait][0]
         topic = responses["owl_analysis"][trait][1]
 
-        await secret_response(guild.id, channel.name, msg1)
+        await quest.secret_response(guild.id, channel.name, msg1)
         await channel.edit(topic=topic)
         await asyncio.sleep(9)
 
@@ -1228,7 +1228,7 @@ class Expecto(commands.Cog):
 
                     if __patronus is None:
                         msg = responses["no_patronus"].format(user.mention)
-                        await secret_response(guild.id, channel.name, msg)
+                        await quest.secret_response(guild.id, channel.name, msg)
 
                     elif __patronus is not None:
                         description = f"Wood: `{wand_wood.title()}`\n" \
@@ -1257,7 +1257,7 @@ class Expecto(commands.Cog):
                             except asyncio.TimeoutError:
                                 msg = responses["timeout_response"].format(user.mention)
                                 await penalize_quest1(user, cycle, points=20)
-                                await secret_response(guild.id, channel.name, msg)
+                                await quest.secret_response(guild.id, channel.name, msg)
                                 break
 
                             else:
@@ -1275,7 +1275,7 @@ class Expecto(commands.Cog):
 
                                     await user.add_roles(role_star)
                                     await channel.send(msg1)
-                                    await secret_response(guild.id, channel.name, msg2)
+                                    await quest.secret_response(guild.id, channel.name, msg2)
                                     break
 
                                 elif answer.content.lower() == "n":
@@ -1286,7 +1286,7 @@ class Expecto(commands.Cog):
                                         await self.update_path_quest1(user, cycle, path_new="path17")
 
                                     await penalize_quest1(user, cycle, points=20)
-                                    await secret_response(guild.id, channel.name, msg)
+                                    await quest.secret_response(guild.id, channel.name, msg)
                                     break
 
     async def get_wand_core(self, user, guild, channel, responses):
@@ -1295,7 +1295,7 @@ class Expecto(commands.Cog):
         formatted_cores = "`, `".join(cores)
         msg = responses["core_selection"]["1"].format(user.mention, formatted_cores)
         await asyncio.sleep(1)
-        await secret_response(guild.id, channel.name, msg)
+        await quest.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -1320,7 +1320,7 @@ class Expecto(commands.Cog):
 
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
@@ -1342,7 +1342,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 i += 1
 
             else:
@@ -1353,7 +1353,7 @@ class Expecto(commands.Cog):
                 )
                 topic = responses["core_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
         return wand_core.lower()
@@ -1364,7 +1364,7 @@ class Expecto(commands.Cog):
         formatted_woods = "`, `".join(wood_selection)
         msg = responses["wood_selection"]["1"].format(user.mention, formatted_woods)
         await asyncio.sleep(1)
-        await secret_response(guild.id, channel.name, msg)
+        await quest.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -1389,7 +1389,7 @@ class Expecto(commands.Cog):
 
                 await penalize_quest1(user, cycle, points=15)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
@@ -1411,7 +1411,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 i += 1
 
             else:
@@ -1422,7 +1422,7 @@ class Expecto(commands.Cog):
                 )
                 topic = responses["wood_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
         return wand_wood.lower()
@@ -1432,7 +1432,7 @@ class Expecto(commands.Cog):
         wand_length = ""
         msg = responses["length_selection"]["1"].format(user.mention)
         await asyncio.sleep(1)
-        await secret_response(guild.id, channel.name, msg)
+        await quest.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -1458,7 +1458,7 @@ class Expecto(commands.Cog):
 
                 await penalize_quest1(user, cycle, points=15)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
@@ -1480,7 +1480,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 i += 1
 
             else:
@@ -1488,7 +1488,7 @@ class Expecto(commands.Cog):
                 msg = responses["length_selection"]["chose"][0].format(wand_length)
                 topic = responses["length_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
         return wand_length
@@ -1499,7 +1499,7 @@ class Expecto(commands.Cog):
         formatted_flexibility = "`, `".join(flexibility_types)
         msg = responses["flexibility_selection"]["1"].format(user.mention, formatted_flexibility)
         await asyncio.sleep(2)
-        await secret_response(guild.id, channel.name, msg)
+        await quest.secret_response(guild.id, channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -1524,7 +1524,7 @@ class Expecto(commands.Cog):
 
                 await penalize_quest1(user, cycle, points=15)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
@@ -1546,7 +1546,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 i += 1
 
             else:
@@ -1554,7 +1554,7 @@ class Expecto(commands.Cog):
                 msg = responses["flexibility_selection"]["chose"][0].format(wand_flexibility.title())
                 topic = responses["flexibility_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await quest.secret_response(guild.id, channel.name, msg)
                 break
 
         return wand_flexibility.lower()
