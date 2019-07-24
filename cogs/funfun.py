@@ -90,20 +90,24 @@ class Funfun(commands.Cog):
 
         elif message.content.lower()[:4] == "mike":
 
-            if len(message.content) == 4:
-                embed = discord.Embed(
-                    colour=discord.Colour(0xffe6a7),
-                    description="\"*"+random.choice(reaction_list)+"*\""
-                )
-                msg = await message.channel.send(embed=embed)
-                await msg.delete(delay=15)
-                await message.delete(delay=15)
+            try:
+                if len(message.content) == 4:
+                    embed = discord.Embed(
+                        colour=discord.Colour(0xffe6a7),
+                        description="\"*"+random.choice(reaction_list)+"*\""
+                    )
+                    msg = await message.channel.send(embed=embed)
+                    await msg.delete(delay=15)
+                    await message.delete(delay=15)
 
-            elif message.content.lower().split(" ", 2)[1] == "shoot":
-                await mike_shoot(message.author, message.guild, message.channel, message.content)
+                elif message.content.lower().split(" ", 2)[1] == "shoot":
+                    await mike_shoot(message.author, message.guild, message.channel, message.content)
 
-            elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
-                await mike_how_hot(message.guild, message.channel, message.content)
+                elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
+                    await mike_how_hot(message.guild, message.channel, message.content)
+
+            except IndexError:
+                return
 
 
 def setup(client):

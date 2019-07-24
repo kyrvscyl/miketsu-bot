@@ -10,34 +10,29 @@ from datetime import datetime, timedelta
 import discord
 import pytz
 from discord.ext import commands
-from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.db import books, quests, owls, weather, sendoff, thieves, patronus
+from cogs.mongo.db import books, quests, owls, weather, sendoff, patronus
+from cogs.quest import Quest, secret_response, generate_data, reaction_closed
 
 owls_list = []
 for owl in owls.find({}, {"_id": 0, "type": 1}):
     owls_list.append(owl["type"])
 
-
 diagon_alleys = []
 for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
     diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
-
 
 patronus_ = open("lists/patronuses.lists")
 patronuses = patronus_.read().splitlines()
 patronus_.close()
 
-
 woods_ = open("lists/woods.lists")
 woods = woods_.read().splitlines()
 woods_.close()
 
-
 flexibility_types_ = open("lists/flexibility_types.lists")
 flexibility_types = flexibility_types_.read().splitlines()
 flexibility_types_.close()
-
 
 traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-loving"]
 lengths = ["short", "long", "average"]
@@ -51,7 +46,7 @@ def get_time():
     return datetime.now(tz=tz_target)
 
 
-def get_data(user_id):
+def get_data_quest1(user_id):
     data = quests.aggregate([{
         "$match": {"user_id": str(user_id)}}, {
         "$project": {
@@ -73,7 +68,7 @@ def get_data(user_id):
     return cycle, current_path, timestamp, hints, actions, purchase
 
 
-def get_profile_finished(user):
+def get_profile_finished_quest1(user):
     data = quests.aggregate([{
         "$match": {
             "user_id": str(user.id)}}, {
@@ -99,7 +94,7 @@ def get_profile_finished(user):
     return score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths
 
 
-def get_profile_history(user, cycle):
+def get_profile_history_quest1(user, cycle):
     data = quests.aggregate([{
         '$match': {
             'user_id': str(user.id)}}, {
@@ -114,7 +109,7 @@ def get_profile_history(user, cycle):
         return result
 
 
-def get_profile_progress(user):
+def get_profile_progress_quest1(user):
     data = quests.aggregate([{
         "$match": {
             "user_id": str(user.id)}}, {
@@ -136,10 +131,6 @@ def get_profile_progress(user):
         break
 
     return score, timestamp_start, current_path, cycle, hints_unlocked, paths
-
-
-def check_quest(user):
-    return quests.find_one({"user_id": str(user.id)}, {"_id": 0, "user_id": 1}) != {}
 
 
 def spell_check(msg):
@@ -198,74 +189,25 @@ def get_flexibility_category(wand_flexibility):
     return flexibility[wand_flexibility]
 
 
-async def secret_banner(webhook_url, avatar, username, url):
-
-    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
-    embed = DiscordEmbed(color=0xffffff)
-    embed.set_image(url=url)
-    webhook.add_embed(embed)
-    webhook.execute()
+async def owls_restock():
+    owls.update_many({}, {"$set": {"purchaser": "None"}})
 
 
-def get_dictionary(key):
-    with open("data/responses.json") as f:
+def get_responses_quest1(key):
+    with open("data/responses1.json") as f:
         responses = json.load(f)
     return responses[key]
 
 
-async def generate_data(guild, secret_channel, channel):
-
-    channel_name = secret_channel.replace(" ", "-")
-    webhook = await channel.create_webhook(name="webhooker")
-
-    if channel_name == "eeylops-owl-emporium":
-        avatar_url = "https://i.imgur.com/8xR61b4.jpg"
-        username = "Manager Eeylops"
-        url = "https://i.imgur.com/wXSibYR.jpg"
-
-    elif channel_name == "gringotts-bank":
-        avatar_url = "https://i.imgur.com/IU882rV.jpg"
-        username = "Bank Manager Gringotts"
-        url = "https://i.imgur.com/whPMNPb.jpg"
-
-    else:
-        avatar_url = "https://i.imgur.com/DEuO4la.jpg"
-        username = "Ollivanders"
-        url = "https://i.imgur.com/5ibOfcp.jpg"
-
-    books.update_one({
-        "server": str(guild.id)}, {
-        "$set": {
-            f"{channel_name}.id": str(channel.id),
-            f"{channel_name}.webhook": webhook.url,
-            f"{channel_name}.avatar": avatar_url,
-            f"{channel_name}.username": username
-        }
-    })
-    await secret_banner(webhook.url, avatar_url, username, url)
-
-
-async def reaction_closed(message):
-    await message.add_reaction("🇨")
-    await message.add_reaction("🇱")
-    await message.add_reaction("🇴")
-    await message.add_reaction("🇸")
-    await message.add_reaction("🇪")
-    await message.add_reaction("🇩")
-    await asyncio.sleep(4)
-    await message.delete()
-
-
-async def penalize(user, cycle, points):
+async def penalize_quest1(user, cycle, points):
     quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle}, {"$inc": {"quest1.$.score": -points}})
 
 
-async def action_update(user, cycle, actions):
+async def action_update_quest1(user, cycle, actions):
     quests.update_one({"user_id": str(user.id), "quest1.cycle": cycle}, {"$inc": {"quest1.$.actions": actions}})
 
 
-async def update_hint(user, path, cycle, hint):
-
+async def update_hint_quest1(user, path, cycle, hint):
     quests.update_one({
         "user_id": str(user.id), "quest1.cycle": cycle}, {
         "$set": {
@@ -278,44 +220,121 @@ async def update_hint(user, path, cycle, hint):
     })
 
 
-async def secret_response(guild_id, channel_name, description):
-
-    secret = books.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
-    webhook_url = secret[str(channel_name)]["webhook"]
-    avatar = secret[str(channel_name)]["avatar"]
-    username = secret[str(channel_name)]["username"]
-    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
-    embed = DiscordEmbed(color=0xffffff, description="*\"" + description + "\"*")
-    webhook.add_embed(embed)
-    webhook.execute()
-
-
-class Magic(commands.Cog):
+class Expecto(commands.Cog):
 
     def __init__(self, client):
         self.client = client
 
+    async def send_off_complete_quest1(self):
+        for entry in sendoff.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
+            try:
+                user = self.client.get_user(int(entry["user_id"]))
+                cycle, path, timestamp, user_hint, actions, purchase = get_data_quest1(user.id)
+            except AttributeError:
+                continue
 
-    async def expecto(self, guild, user, channel, message):
+            if entry["scenario"] == 2:
+                async with user.typing():
+                    responses = get_responses_quest1("send_off")["complete"]
+
+                    if path != "path0":
+                        await self.update_path_quest1(user, cycle, path_new="path3")
+
+                    try:
+                        await user.send(responses[0])
+                        await asyncio.sleep(4)
+                        await user.send(responses[1])
+                        await asyncio.sleep(4)
+                        msg = await user.send(responses[2].format(entry['type'].capitalize()))
+                        await msg.add_reaction("✉")
+
+                        sendoff.update_one({
+                            "user_id": str(user.id), "cycle": cycle}, {
+                            "$set": {"status": "done"}
+                        })
+
+                    except discord.errors.Forbidden:
+                        continue
+                    except discord.errors.HTTPException:
+                        continue
+
+            elif entry["scenario"] == 1:
+                await self.update_path_quest1(user, cycle, path_new="path20")
+
+                try:
+                    await user.send(f"Your {entry['type']} has fully recovered")
+                    sendoff.update_one({
+                        "user_id": str(user.id), "cycle": cycle}, {
+                        "$unset": {
+                            "delay": "",
+                            "report": "",
+                            "scenario": "",
+                            "timestamp": "",
+                            "timestamp_complete": "",
+                            "timestamp_update": "",
+                            "weather1": "",
+                            "weather2": ""
+                        }
+                    })
+
+                except discord.errors.Forbidden:
+                    continue
+                except discord.errors.HTTPException:
+                    continue
+
+    async def send_off_report_quest1(self):
+        query = sendoff.find({
+            "quest": 1,
+            "timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {
+            "_id": 0
+        })
+
+        for entry in query:
+            user = self.client.get_user(int(entry["user_id"]))
+
+            if entry["scenario"] == 1:
+                try:
+                    cycle, path, timestamp, user_hint, actions, purchase = get_data_quest1(user.id)
+                    await penalize_quest1(user, cycle, points=20)
+                except AttributeError:
+                    continue
+
+            description = entry["report"]
+            embed = discord.Embed(
+                color=0xffffff,
+                title="Owl Report",
+                description=description
+            )
+            embed.set_footer(text=f"{entry['timestamp_update']}")
+
+            try:
+                await user.send(embed=embed)
+                await asyncio.sleep(1)
+            except discord.errors.Forbidden:
+                continue
+            except discord.errors.HTTPException:
+                continue
+
+    async def expecto_patronum(self, guild, user, channel, message):
 
         role_star = discord.utils.get(guild.roles, name="🌟")
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if path in ["path3", "path0", "path25"] and user not in role_star.members:
             await message.add_reaction("❎")
-            await self.update_path(user, cycle, path_new="path10")
-            await penalize(user, cycle, points=5)
+            await self.update_path_quest1(user, cycle, path_new="path10")
+            await penalize_quest1(user, cycle, points=5)
 
         elif path == "path10":
             await message.add_reaction("❔")
-            await penalize(user, cycle, points=15)
+            await penalize_quest1(user, cycle, points=15)
 
         elif user in role_star.members:
             async with channel.typing():
                 role_dolphin = discord.utils.get(guild.roles, name="🐬")
                 role_galleon = discord.utils.get(guild.roles, name="💰")
                 role_owl = discord.utils.get(guild.roles, name="🦉")
-                cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+                cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
                 uppers = len([char for char in message.content if char.isupper()])
                 lowers = len([char for char in message.content if char.islower()])
                 symbol = len([char for char in message.content if char == "!"])
@@ -328,7 +347,7 @@ class Magic(commands.Cog):
                 added_points = round(50 * (strength / 100))
 
                 score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths \
-                    = get_profile_finished(user)
+                    = get_profile_finished_quest1(user)
 
                 t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
                 t2 = datetime.strptime(get_time().strftime("%Y-%b-%d %HH"), "%Y-%b-%d %HH")
@@ -377,21 +396,14 @@ class Magic(commands.Cog):
                 await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
                 await channel.send(content=content, embed=embed)
 
-
-    async def logging(self, msg):
-        channel = self.client.get_channel(592270990894170112)
-        await channel.send(f"[{get_time().strftime('%Y-%b-%d %HH')}] " + msg)
-
-
-    async def sendoff_owl(self, user, cycle):
-        responses = get_dictionary("send_off")
+    async def sendoff_owl_quest1(self, user, cycle):
+        responses = get_responses_quest1("send_off")
         await user.send(responses["success1"])
         await asyncio.sleep(2)
         await user.send(responses["success2"])
-        await self.generate_owl_report(user, cycle, responses)
+        await self.generate_owl_report_quest1(user, cycle, responses)
 
-
-    async def generate_owl_report(self, user, cycle, responses):
+    async def generate_owl_report_quest1(self, user, cycle, responses):
 
         profile = sendoff.find_one({"user_id": str(user.id), "cycle": cycle}, {"_id": 0})
         weather1 = weather.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
@@ -404,7 +416,7 @@ class Magic(commands.Cog):
 
         if weather1 == "⛈":
             delay, scenario, content = get_specific_report("thunderstorms")
-            await self.update_path(user, cycle, path_new="path19")
+            await self.update_path_quest1(user, cycle, path_new="path19")
 
         elif weather1 == "🌨" and profile["type"] == "snowy":
             delay, scenario, content = get_specific_report("snowy_snowy_owl")
@@ -437,8 +449,7 @@ class Magic(commands.Cog):
             }
         })
 
-
-    async def update_path(self, user, cycle, path_new):
+    async def update_path_quest1(self, user, cycle, path_new):
 
         quests.update_one({
             "user_id": str(user.id), "quest1.cycle": cycle}, {
@@ -457,12 +468,10 @@ class Magic(commands.Cog):
                 "user_id": str(user.id), "quest1.cycle": cycle}, {
                 "$set": {
                     f"quest1.$.hints.{path_new}": ["locked", "locked", "locked", "locked", "locked"]
-                    }
                 }
+            }
             )
-
-        await self.logging(f"Shifted {user} path to {path_new}")
-
+        await Quest(self.client).logging(f"Shifted {user} path to {path_new}")
 
     @commands.command(aliases=["patronus"])
     @commands.has_role("Test")
@@ -536,10 +545,9 @@ class Magic(commands.Cog):
                     page -= 1
                 await msg.edit(embed=create_embed(page))
 
-
     @commands.command(aliases=["cycle"])
     @commands.guild_only()
-    async def show_cycle(self, ctx, cycle_query, *, user: discord.Member = None):
+    async def show_cycle_quest1(self, ctx, cycle_query, *, user: discord.Member = None):
 
         requestor = ctx.message.author
         requestor_profile = quests.find_one({"user_id": str(requestor)}, {"_id": 0}) is None
@@ -573,7 +581,7 @@ class Magic(commands.Cog):
                     if user is None:
                         user = ctx.message.author
 
-                    profile = get_profile_history(user, cycle_query)
+                    profile = get_profile_history_quest1(user, cycle_query)
                     patronus_summon = profile["quest1"]["patronus"]["patronus"]
                     score = profile["quest1"]["score"]
                     timestamp_start = profile["quest1"]["timestamp_start"]
@@ -623,10 +631,9 @@ class Magic(commands.Cog):
                 except TypeError:
                     await ctx.channel.send("Use `;cycle <cycle#> <@mention>.")
 
-
     @commands.command(aliases=["progress"])
     @commands.has_role("🐬")
-    async def show_progress(self, ctx):
+    async def show_progress_quest1(self, ctx):
 
         user = ctx.message.author
         requestor_profile = quests.find_one({"user_id": str(user.id)}, {"_id": 0})
@@ -637,7 +644,7 @@ class Magic(commands.Cog):
         elif requestor_profile is not None:
 
             score, timestamp_start, current_path, cycle, hints_unlocked, paths \
-                = get_profile_progress(ctx.message.author)
+                = get_profile_progress_quest1(ctx.message.author)
             t1 = datetime.strptime(timestamp_start, "%Y-%b-%d %HH")
             t2 = datetime.strptime(get_time().strftime("%Y-%b-%d %HH"), "%Y-%b-%d %HH")
             hours_passed = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
@@ -665,7 +672,6 @@ class Magic(commands.Cog):
             )
             await ctx.message.author.send(embed=embed)
             await ctx.message.add_reaction("✅")
-
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -717,11 +723,11 @@ class Magic(commands.Cog):
                             )
                         }
                     })
-                    await self.logging(f"Started quest1: cycle#{cycle} for {user}")
+                    await Quest(self.client).logging(f"Started quest1: cycle#{cycle} for {user}")
                     break
 
             await member.add_roles(role_dolphin)
-            responses = get_dictionary("start_quest")
+            responses = get_responses_quest1("start_quest")
 
             async with user.typing():
                 await asyncio.sleep(3)
@@ -737,7 +743,6 @@ class Magic(commands.Cog):
                 await asyncio.sleep(2)
                 await msg.add_reaction("✉")
 
-
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction, user):
 
@@ -752,14 +757,14 @@ class Magic(commands.Cog):
         elif str(reaction.emoji) == "✉" and user != self.client.user \
                 and "envelope" in msg and reaction.message.author == self.client.user:
 
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             request = books.find_one({
                 "server": server["server"]}, {
                 "_id": 0, "channels.welcome": 1, "channels.sorting-hat": 1
             })
 
-            description = get_dictionary("start_quest")["letter"].format(
+            description = get_responses_quest1("start_quest")["letter"].format(
                 user.name, request["channels"]["welcome"], request["channels"]["sorting-hat"]
             )
             embed = discord.Embed(
@@ -769,20 +774,20 @@ class Magic(commands.Cog):
             )
             embed.set_thumbnail(url=self.client.get_guild(int(server["server"])).icon_url)
             await user.send(embed=embed)
-            await self.update_path(user, cycle, path_new="path1")
-            await penalize(user, cycle, points=20)
+            await self.update_path_quest1(user, cycle, path_new="path1")
+            await penalize_quest1(user, cycle, points=20)
 
         elif str(reaction.emoji) == "✉" and "returned with" in msg and reaction.message.author == self.client.user:
 
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-            description = get_dictionary("send_off")["letter"].format(user.name)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
+            description = get_responses_quest1("send_off")["letter"].format(user.name)
             embed = discord.Embed(color=0xffff80, description=description)
             embed.set_thumbnail(url=self.client.get_guild(int(server["server"])).icon_url)
 
             if path != "path0":
-                await Magic(self.client).update_path(user, cycle, path_new="path25")
-                await penalize(user, cycle, points=25)
+                await Expecto(self.client).update_path_quest1(user, cycle, path_new="path25")
+                await penalize_quest1(user, cycle, points=25)
 
             await user.send(embed=embed)
 
@@ -791,92 +796,38 @@ class Magic(commands.Cog):
             role_owl = discord.utils.get(reaction.message.guild.roles, name="🦉")
             request = books.find_one({
                 "server": f"{reaction.message.guild.id}"}, {
-                "_id": 0,
-                "channels.absence-applications": 1
+                "_id": 0, "channels.absence-applications": 1
             })
             valid_channel_id = request["channels"]["absence-applications"]
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
             if user not in role_owl.members:
-                await penalize(user, cycle, points=30)
+                await penalize_quest1(user, cycle, points=30)
 
             elif (valid_channel_id not in msg or "<@180717337475809281>" not in msg) and "✉" not in msg:
 
                 await reaction.message.add_reaction("❔")
-                await penalize(user, cycle, points=10)
+                await penalize_quest1(user, cycle, points=10)
 
             elif (valid_channel_id in msg or "<@180717337475809281>" in msg) and "✉" in msg:
 
-                cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+                cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
                 if path in ["path0", "path2", "path20"]:
                     if path != "path0":
-                        await self.update_path(user, cycle, path_new="path4")
+                        await self.update_path_quest1(user, cycle, path_new="path4")
 
-                    await self.sendoff_owl(user, cycle)
+                    await self.sendoff_owl_quest1(user, cycle)
                     await reaction.message.add_reaction("✅")
                     await asyncio.sleep(2)
                     await reaction.message.delete()
 
                 elif path == "path19":
-                    msg = get_dictionary("send_off")["penalize"]
-                    await penalize(user, cycle, points=20)
+                    msg = get_responses_quest1("send_off")["penalize"]
+                    await penalize_quest1(user, cycle, points=20)
                     await user.send(msg)
                     await asyncio.sleep(2)
                     await reaction.message.delete()
-
-
-    @commands.command(aliases=["hint"])
-    @commands.has_role("🐬")
-    async def hint_request(self, ctx):
-
-        user = ctx.message.author
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-        t1 = datetime.strptime(timestamp, "%Y-%b-%d %HH")
-        t2 = datetime.strptime(get_time().strftime("%Y-%b-%d %HH"), "%Y-%b-%d %HH")
-        delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
-
-        if delta < 1:
-            await ctx.channel.send(f"{user.mention}, you must wait for 1 hr before you can unlock one")
-
-        elif delta >= 1:
-            with open("data/hints.json") as f:
-                hints = json.load(f)
-
-            try:
-                hint = ""
-                hint_num = 0
-                h = 0
-                while h <= 5:
-
-                    if user_hints[path][h] == "locked":
-                        hint_num = str(h + 1)
-                        hint = hints[path][hint_num]
-                        break
-                    h += 1
-
-                embed = discord.Embed(
-                    color=user.colour,
-                    description="*\"" + hint + "\"*"
-                )
-                embed.set_footer(
-                    icon_url=user.avatar_url,
-                    text=f"Quest# 1 | Path# {path[4::]} | Hint# {hint_num}"
-                )
-
-                await update_hint(user, path, cycle, h)
-                await penalize(user, cycle, points=10)
-                await ctx.message.add_reaction("✅")
-                await user.send(embed=embed)
-
-            except IndexError:
-                await user.send(f"You have used up all your hints for this path. "
-                                f"Your hint for this hour is not consumed yet.")
-
-            except KeyError:
-                await user.send(f"You have used up all your hints for this path. "
-                                f"Your hint for this hour is not consumed yet.")
-
 
     @commands.command(aliases=["knock", "inquire"])
     @commands.has_role("🐬")
@@ -887,7 +838,7 @@ class Magic(commands.Cog):
 
         elif str(ctx.channel.name) == "eeylops-owl-emporium":
             user = ctx.author
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+            cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
             if actions > 3:
                 if ctx.message.content in [";knock", ";inquire"]:
@@ -895,32 +846,31 @@ class Magic(commands.Cog):
 
             elif ctx.message.content == ";knock":
                 if path == "path6":
-                    await self.update_path(user, cycle, path_new="path9")
+                    await self.update_path_quest1(user, cycle, path_new="path9")
                 elif path == "path15":
-                    await self.update_path(user, cycle, path_new="path16")
+                    await self.update_path_quest1(user, cycle, path_new="path16")
 
-                responses = get_dictionary("eeylops_owl")
+                responses = get_responses_quest1("eeylops_owl")
                 msg = responses["knock"][0]
                 topic = responses["knock"][1]
                 await ctx.channel.edit(topic=topic)
                 await ctx.message.delete()
                 await secret_response(ctx.guild.id, ctx.channel.name, msg)
-                await penalize(user, cycle, points=15)
+                await penalize_quest1(user, cycle, points=15)
 
             elif ctx.message.content == ";inquire":
                 if path == "path9":
-                    await self.update_path(user, cycle, path_new="path14")
+                    await self.update_path_quest1(user, cycle, path_new="path14")
                 elif path == "path15":
-                    await self.update_path(user, cycle, path_new="path16")
+                    await self.update_path_quest1(user, cycle, path_new="path16")
 
-                responses = get_dictionary("eeylops_owl")["inquire"]
+                responses = get_responses_quest1("eeylops_owl")["inquire"]
                 msg, topic = responses[actions]
                 await ctx.channel.edit(topic=topic)
                 await ctx.message.delete()
-                await action_update(user, cycle, actions=1)
-                await penalize(user, cycle, points=15)
+                await action_update_quest1(user, cycle, actions=1)
+                await penalize_quest1(user, cycle, points=15)
                 await secret_response(ctx.guild.id, ctx.channel.name, msg)
-
 
     @commands.command(aliases=["purchase"])
     @commands.has_role("🐬")
@@ -940,18 +890,18 @@ class Magic(commands.Cog):
                 return
 
             user = ctx.author
-            cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-            responses = get_dictionary("eeylops_owl")
+            cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
+            responses = get_responses_quest1("eeylops_owl")
 
             if purchase is False:
                 msg = responses["purchasing"]["max_actions"]
-                await penalize(user, cycle, points=20)
+                await penalize_quest1(user, cycle, points=20)
                 await user.send(msg)
                 await ctx.message.delete()
 
             elif owl_buy not in owls_list:
                 msg = responses["purchasing"]["invalid_owl"]
-                await penalize(user, cycle, points=20)
+                await penalize_quest1(user, cycle, points=20)
                 await secret_response(ctx.guild.id, ctx.channel.name, msg)
                 await ctx.message.delete()
 
@@ -963,7 +913,7 @@ class Magic(commands.Cog):
                 if user in role_owl.members:
                     msg = responses["purchasing"]["buying_again"][0].format(user.mention)
                     topic = responses["purchasing"]["buying_again"][1]
-                    await penalize(user, cycle, points=75)
+                    await penalize_quest1(user, cycle, points=75)
                     await secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
@@ -971,8 +921,8 @@ class Magic(commands.Cog):
                 elif user not in role_galleons.members:
                     msg = responses["purchasing"]["no_moneybag"][0].format(user.mention)
                     topic = responses["purchasing"]["no_moneybag"][1]
-                    await self.update_path(user, cycle, path_new="path7")
-                    await penalize(user, cycle, points=10)
+                    await self.update_path_quest1(user, cycle, path_new="path7")
+                    await penalize_quest1(user, cycle, points=10)
                     await secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
@@ -988,8 +938,8 @@ class Magic(commands.Cog):
                     purchaser = ctx.guild.get_member(int(purchaser_id))
                     msg = responses["purchasing"]["out_of_stock"][0].format(user.mention, purchaser.display_name)
                     topic = responses["purchasing"]["out_of_stock"][1]
-                    await self.update_path(user, cycle, path_new="path24")
-                    await penalize(user, cycle, points=20)
+                    await self.update_path_quest1(user, cycle, path_new="path24")
+                    await penalize_quest1(user, cycle, points=20)
                     await secret_response(ctx.guild.id, ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
@@ -1028,7 +978,7 @@ class Magic(commands.Cog):
                         await ctx.channel.edit(topic=topic)
 
                         if path != "path0":
-                            await self.update_path(user, cycle, path_new="path2")
+                            await self.update_path_quest1(user, cycle, path_new="path2")
 
                         await ctx.message.add_reaction("🦉")
                         await user.add_roles(role_owl)
@@ -1041,63 +991,12 @@ class Magic(commands.Cog):
                         await asyncio.sleep(2)
                         await ctx.message.delete()
 
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-
-        if isinstance(message.channel, discord.DMChannel):
-            return
-
-        try:
-            category = message.channel.category
-        except AttributeError:
-            return
-
-        msg = message.content.lower()
-        channel = message.channel
-        user = message.author
-        role_dolphin = discord.utils.get(message.guild.roles, name="🐬")
-
-        if user == self.client.user:
-            return
-
-        elif user.bot:
-            return
-
-        elif not check_quest(user):
-            return
-
-        elif user not in role_dolphin.members:
-            return
-
-        elif msg == "eeylops owl emporium" and str(category.id) in diagon_alleys \
-                and str(channel) != "eeylops-owl-emporium":
-
-            await self.create_emporium(category, message.guild, msg, message, user)
-
-        elif msg in ["gringotts bank", "gringotts wizarding bank"] \
-                and str(category.id) in diagon_alleys and str(channel) != "gringotts-bank":
-
-            await self.create_gringotts(category, message.guild, message, user)
-
-        elif msg == "ollivanders" and str(category.id) in diagon_alleys \
-                and str(channel) != "ollivanders":
-
-            await self.create_ollivanders(category, message.guild, msg, message, user)
-
-        elif "gringotts-bank" == str(channel) and message.content.startswith(";") is False:
-            await self.transaction_gringotts(user, message.guild, message)
-
-        elif spell_check(message.content):
-            await self.expecto(message.guild, user, channel, message)
-
-
     async def create_emporium(self, category, guild, msg, message, user):
 
         role_owl = discord.utils.get(guild.roles, name="🦉")
         role_galleons = discord.utils.get(guild.roles, name="💰")
         channels = [channel.name for channel in category.text_channels]
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if "eeylops-owl-emporium" not in channels \
                 and int(get_time().strftime("%H")) in [8, 9, 10, 11, 12, 13, 20, 21, 22, 23, 0, 1]:
@@ -1118,7 +1017,7 @@ class Magic(commands.Cog):
 
             if user not in role_owl.members and user not in role_galleons.members:
                 if path not in ["path9"]:
-                    await self.update_path(user, cycle, path_new="path6")
+                    await self.update_path_quest1(user, cycle, path_new="path6")
 
             await asyncio.sleep(3)
             await message.delete()
@@ -1141,7 +1040,7 @@ class Magic(commands.Cog):
             await message.add_reaction("✨")
 
             if user not in role_owl.members and user not in role_galleons.members:
-                await self.update_path(user, cycle, path_new="path6")
+                await self.update_path_quest1(user, cycle, path_new="path6")
 
             await asyncio.sleep(3)
             await message.delete()
@@ -1149,86 +1048,10 @@ class Magic(commands.Cog):
         else:
             await reaction_closed(message)
 
-
-    async def create_gringotts(self, category, guild, message, user):
-
-        role_galleons = discord.utils.get(message.guild.roles, name="💰")
-        channels = [channel.name for channel in category.text_channels]
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-        list_thieves = thieves.find_one({}, {"_id": 0, "names": 1})["names"]
-
-        list_thieves_name = []
-        for thief in list_thieves:
-            try:
-                list_thieves_name.append(guild.get_member(int(thief)).display_name)
-            except AttributeError:
-                continue
-
-        formatted_thieves = "\n".join(list_thieves_name)
-        topic = f"List of Potential Thieves:\n{formatted_thieves}"
-
-        if "gringotts-bank" not in channels and int(get_time().strftime("%H")) in [9, 10, 11, 12, 21, 22, 23, 0]:
-
-            overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                guild.me: discord.PermissionOverwrite(read_messages=True),
-                guild.get_member(user.id): discord.PermissionOverwrite(
-                    read_messages=True,
-                    send_messages=True,
-                    read_message_history=False
-                )
-            }
-
-            gringotts = await guild.create_text_channel(
-                "gringotts-bank",
-                category=category,
-                overwrites=overwrites,
-                topic=topic
-            )
-            await generate_data(guild, "gringotts-bank", gringotts)
-            await message.add_reaction("✨")
-
-            if user not in role_galleons.members:
-                if path not in ["path8", "path18", "path12", "path13", "path0"]:
-                    await self.update_path(user, cycle, path_new="path8")
-                await asyncio.sleep(3)
-                await message.delete()
-            else:
-                await asyncio.sleep(3)
-                await message.delete()
-                await penalize(user, cycle, points=30)
-
-        elif "gringotts-bank" in channels and int(get_time().strftime("%H")) in [9, 10, 11, 12, 21, 22, 23, 0]:
-
-            gringotts_id = books.find_one({"server": str(guild.id)}, {"gringotts-bank": 1})["gringotts-bank"]["id"]
-            gringotts_channel = self.client.get_channel(int(gringotts_id))
-
-            await gringotts_channel.set_permissions(
-                user,
-                read_messages=True,
-                send_messages=True,
-                read_message_history=False
-            )
-            await message.add_reaction("✨")
-            await gringotts_channel.edit(topic=topic)
-
-            if user not in role_galleons.members:
-                if path not in ["path8", "path18", "path12", "path13", "path0"]:
-                    await self.update_path(user, cycle, path_new="path8")
-                await asyncio.sleep(3)
-                await message.delete()
-            else:
-                await asyncio.sleep(3)
-                await message.delete()
-                await penalize(user, cycle, points=30)
-        else:
-            await reaction_closed(message)
-
-
     async def create_ollivanders(self, category, guild, msg, message, user):
 
         channels = [channel.name for channel in category.text_channels]
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if "ollivanders" not in channels and int(get_time().strftime("%H")) in [13, 14, 15, 16, 17, 1, 2, 3, 4, 5]:
 
@@ -1249,7 +1072,7 @@ class Magic(commands.Cog):
             await message.delete()
 
             if path in ["path10", "path3", "path25"]:
-                await self.update_path(user, cycle, path_new="path11")
+                await self.update_path_quest1(user, cycle, path_new="path11")
 
             await self.transaction_ollivanders(guild, user, ollivanders)
 
@@ -1270,24 +1093,23 @@ class Magic(commands.Cog):
             await message.delete()
 
             if path in ["path10", "path3", "path25"]:
-                await self.update_path(user, cycle, path_new="path11")
+                await self.update_path_quest1(user, cycle, path_new="path11")
 
             await self.transaction_ollivanders(guild, user, ollivanders_channel)
 
         else:
             await reaction_closed(message)
 
-
     async def transaction_ollivanders(self, guild, user, channel):
 
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if actions >= 3:
             return
 
         elif actions < 3:
             role_star = discord.utils.get(guild.roles, name="🌟")
-            responses = get_dictionary("ollivanders")
+            responses = get_responses_quest1("ollivanders")
             msg1 = responses["intro"].format(user.mention)
             await secret_response(guild.id, channel.name, msg1)
             await asyncio.sleep(3)
@@ -1305,14 +1127,14 @@ class Magic(commands.Cog):
 
             except asyncio.TimeoutError:
                 msg = responses["timeout_intro"].format(user.mention)
-                await penalize(user, cycle, points=10)
-                await action_update(user, cycle, actions=3)
+                await penalize_quest1(user, cycle, points=10)
+                await action_update_quest1(user, cycle, actions=3)
                 await secret_response(guild.id, channel.name, msg)
 
             except KeyError:
                 msg = responses["invalid"]
-                await penalize(user, cycle, points=10)
-                await action_update(user, cycle, actions=3)
+                await penalize_quest1(user, cycle, points=10)
+                await action_update_quest1(user, cycle, actions=3)
                 await secret_response(guild.id, channel.name, msg)
 
             else:
@@ -1320,7 +1142,7 @@ class Magic(commands.Cog):
                     msg1 = responses["valid"][0].format(user.mention)
                     msg2 = responses["valid"][1].format(user.mention)
                     topic = responses["valid"][2]
-                    await action_update(user, cycle, actions=3)
+                    await action_update_quest1(user, cycle, actions=3)
                     await secret_response(guild.id, channel.name, msg1)
                     await asyncio.sleep(6)
                     await secret_response(guild.id, channel.name, msg2)
@@ -1331,11 +1153,10 @@ class Magic(commands.Cog):
                 else:
                     msg = responses["valid_no_owl"][0].format(user.mention)
                     topic = responses["valid_no_owl"][1]
-                    await penalize(user, cycle, points=25)
-                    await action_update(user, cycle, actions=3)
+                    await penalize_quest1(user, cycle, points=25)
+                    await action_update_quest1(user, cycle, actions=3)
                     await secret_response(guild.id, channel.name, msg)
                     await channel.edit(topic=topic)
-
 
     async def wand_personalise(self, user, guild, channel, cycle, role_star, responses):
 
@@ -1410,8 +1231,7 @@ class Magic(commands.Cog):
                         await secret_response(guild.id, channel.name, msg)
 
                     elif __patronus is not None:
-                        description = \
-                            f"Wood: `{wand_wood.title()}`\n" \
+                        description = f"Wood: `{wand_wood.title()}`\n" \
                             f"Length: `{wand_length} in`\n" \
                             f"Flexibility: `{wand_flexibility.title()}`\n" \
                             f"Core: `{wand_core.title()}`"
@@ -1436,7 +1256,7 @@ class Magic(commands.Cog):
 
                             except asyncio.TimeoutError:
                                 msg = responses["timeout_response"].format(user.mention)
-                                await penalize(user, cycle, points=20)
+                                await penalize_quest1(user, cycle, points=20)
                                 await secret_response(guild.id, channel.name, msg)
                                 break
 
@@ -1460,15 +1280,14 @@ class Magic(commands.Cog):
 
                                 elif answer.content.lower() == "n":
                                     msg = responses["timeout_response"].format(user.mention)
-                                    cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+                                    cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
                                     if path == "path0":
-                                        await self.update_path(user, cycle, path_new="path17")
+                                        await self.update_path_quest1(user, cycle, path_new="path17")
 
-                                    await penalize(user, cycle, points=20)
+                                    await penalize_quest1(user, cycle, points=20)
                                     await secret_response(guild.id, channel.name, msg)
                                     break
-
 
     async def get_wand_core(self, user, guild, channel, responses):
 
@@ -1477,7 +1296,7 @@ class Magic(commands.Cog):
         msg = responses["core_selection"]["1"].format(user.mention, formatted_cores)
         await asyncio.sleep(1)
         await secret_response(guild.id, channel.name, msg)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
             if guess.channel != channel or guess.author != user:
@@ -1497,30 +1316,30 @@ class Magic(commands.Cog):
                 wand_core = "Wrong"
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
-                await action_update(user, cycle, actions=3)
-                await penalize(user, cycle, points=10)
+                await action_update_quest1(user, cycle, actions=3)
+                await penalize_quest1(user, cycle, points=10)
                 await secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["core_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["core_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=5)
+                    await penalize_quest1(user, cycle, points=5)
 
                 elif i == 1:
                     wand_core = "Wrong"
                     msg = responses["core_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["core_selection"]["invalid2"][1]
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
+                    await action_update_quest1(user, cycle, actions=3)
+                    await penalize_quest1(user, cycle, points=10)
                     await channel.edit(topic=topic)
 
                 await secret_response(guild.id, channel.name, msg)
@@ -1539,7 +1358,6 @@ class Magic(commands.Cog):
 
         return wand_core.lower()
 
-
     async def get_wand_wood(self, user, guild, channel, wood_selection, responses):
 
         wand_wood = ""
@@ -1547,7 +1365,7 @@ class Magic(commands.Cog):
         msg = responses["wood_selection"]["1"].format(user.mention, formatted_woods)
         await asyncio.sleep(1)
         await secret_response(guild.id, channel.name, msg)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
             if guess.channel != channel or guess.author != user:
@@ -1567,30 +1385,30 @@ class Magic(commands.Cog):
                 msg = responses["wood_selection"]["timeout"].format(user.mention)
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
-                await penalize(user, cycle, points=15)
-                await action_update(user, cycle, actions=3)
+                await penalize_quest1(user, cycle, points=15)
+                await action_update_quest1(user, cycle, actions=3)
                 await secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["wood_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["wood_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=10)
+                    await penalize_quest1(user, cycle, points=10)
 
                 elif i == 1:
                     wand_wood = "Wrong"
                     msg = responses["wood_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["wood_selection"]["invalid2"][1]
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
+                    await action_update_quest1(user, cycle, actions=3)
+                    await penalize_quest1(user, cycle, points=10)
                     await channel.edit(topic=topic)
 
                 await secret_response(guild.id, channel.name, msg)
@@ -1609,14 +1427,13 @@ class Magic(commands.Cog):
 
         return wand_wood.lower()
 
-
     async def get_wand_length(self, user, guild, channel, responses):
 
         wand_length = ""
         msg = responses["length_selection"]["1"].format(user.mention)
         await asyncio.sleep(1)
         await secret_response(guild.id, channel.name, msg)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
             if guess.channel != channel or guess.author != user:
@@ -1637,30 +1454,30 @@ class Magic(commands.Cog):
                 msg = responses["length_selection"]["timeout"].format(user.mention)
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
-                await penalize(user, cycle, points=15)
-                await action_update(user, cycle, actions=3)
+                await penalize_quest1(user, cycle, points=15)
+                await action_update_quest1(user, cycle, actions=3)
                 await secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["length_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["length_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=10)
+                    await penalize_quest1(user, cycle, points=10)
 
                 elif i == 1:
                     wand_length = "Wrong"
                     msg = responses["length_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["length_selection"]["invalid2"][1]
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=15)
+                    await action_update_quest1(user, cycle, actions=3)
+                    await penalize_quest1(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
                 await secret_response(guild.id, channel.name, msg)
@@ -1676,7 +1493,6 @@ class Magic(commands.Cog):
 
         return wand_length
 
-
     async def get_wand_flexibility(self, user, guild, channel, responses):
 
         wand_flexibility = ""
@@ -1684,7 +1500,7 @@ class Magic(commands.Cog):
         msg = responses["flexibility_selection"]["1"].format(user.mention, formatted_flexibility)
         await asyncio.sleep(2)
         await secret_response(guild.id, channel.name, msg)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
+        cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
             if guess.channel != channel or guess.author != user:
@@ -1704,30 +1520,30 @@ class Magic(commands.Cog):
                 msg = responses["flexibility_selection"]["timeout"].format(user.mention)
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
-                await penalize(user, cycle, points=15)
-                await action_update(user, cycle, actions=3)
+                await penalize_quest1(user, cycle, points=15)
+                await action_update_quest1(user, cycle, actions=3)
                 await secret_response(guild.id, channel.name, msg)
                 break
 
             except KeyError:
 
                 if path == "path0":
-                    await self.update_path(user, cycle, path_new="path17")
+                    await self.update_path_quest1(user, cycle, path_new="path17")
 
                 if i == 0:
                     msg = responses["flexibility_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["flexibility_selection"]["invalid1"][1]
                     await channel.edit(topic=topic)
-                    await penalize(user, cycle, points=10)
+                    await penalize_quest1(user, cycle, points=10)
 
                 elif i == 1:
                     wand_flexibility = "Wrong"
                     msg = responses["flexibility_selection"]["invalid2"][0].format(user.mention)
                     topic = responses["flexibility_selection"]["invalid2"][1]
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=15)
+                    await action_update_quest1(user, cycle, actions=3)
+                    await penalize_quest1(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
                 await secret_response(guild.id, channel.name, msg)
@@ -1744,318 +1560,5 @@ class Magic(commands.Cog):
         return wand_flexibility.lower()
 
 
-    async def transaction_gringotts(self, user, guild, message):
-
-        role_galleons = discord.utils.get(message.guild.roles, name="💰")
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-
-        if user in role_galleons.members:
-
-            if actions >= 3:
-                return
-
-            else:
-                responses = get_dictionary("gringotts_bank")
-                msg = responses["has_moneybag"].format(user.mention)
-                await secret_response(guild.id, message.channel.name, msg)
-                await action_update(user, cycle, actions=3)
-                await penalize(user, cycle, points=20)
-
-        elif user not in role_galleons.members:
-
-            if actions >= 3:
-                return
-
-            elif actions < 3 and message.content.lower() in ["vault", "money", "galleon", "galleons"]:
-                responses = get_dictionary("gringotts_bank")
-                await action_update(user, cycle, actions=10)
-                await self.vault_access(user, guild, role_galleons, message, responses)
-
-            elif actions < 3:
-                responses = get_dictionary("gringotts_bank")
-                msg = responses["transaction"][actions].format(user.mention)
-                await secret_response(guild.id, message.channel.name, msg)
-                await action_update(user, cycle, actions=1)
-                await penalize(user, cycle, points=10)
-
-    async def vault_access(self, user, guild, role_galleons, message, responses):
-
-        identity = await self.obtain_identity(user, guild, message, responses)
-
-        if identity == "Correct":
-            vault_number = await self.obtain_vault_number(user, guild, message, responses)
-
-            if vault_number == "Correct":
-                vault_password = await self.obtain_vault_password(user, guild, message, responses)
-
-                if vault_password == "Correct":
-                    msg1 = f"{user.mention} has acquired 💰 role"
-                    msg2 = responses["success"].format(user.mention)
-                    vault = f"{str(user.id).replace('1', '@').replace('5', '%').replace('7', '&').replace('3', '#')}"
-
-                    secret = books.find_one({"server": str(guild.id)}, {"_id": 0, str(message.channel.name): 1})
-                    webhook_url = secret[str(message.channel.name)]["webhook"]
-                    avatar = secret[str(message.channel.name)]["avatar"]
-                    username = secret[str(message.channel.name)]["username"]
-
-                    cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-
-                    embed = DiscordEmbed(
-                        color=0xffffff,
-                        title=f"🔐 Opening Vault# {vault}"
-                    )
-                    embed.set_image(url="https://i.imgur.com/RIS1TLh.gif")
-
-                    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
-                    webhook.add_embed(embed)
-                    webhook.execute()
-
-                    if path != "path0":
-                        await self.update_path(user, cycle, path_new="path15")
-
-                    await user.add_roles(role_galleons)
-                    await asyncio.sleep(6)
-                    await message.channel.send(msg1)
-                    await secret_response(guild.id, message.channel.name, msg2)
-
-                    thieves.update_one({}, {"$pull": {"names": str(user.id)}})
-
-
-    async def obtain_identity(self, user, guild, message, responses):
-
-        answer, topic = "Wrong", ""
-        msg = responses["get_identity"]["1"].format(user.mention)
-        await secret_response(guild.id, message.channel.name, msg)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-
-        if path != "path0":
-            await self.update_path(user, cycle, path_new="path21")
-
-        def check(g):
-            key = (str(user.avatar_url).rsplit('/', 2)[1:])[1][:32:]
-            if g.channel != message.channel:
-                return
-            elif str(g.content) == key and g.author == user and g.channel == message.channel:
-                return True
-            elif g.author == user and ";" not in str(g.content):
-                raise KeyError
-
-        i = 0
-        while i < 3:
-            try:
-                guess = await self.client.wait_for("message", timeout=120, check=check)
-
-            except asyncio.TimeoutError:
-                answer = "Wrong"
-                msg = responses["get_identity"]["timeout"][0].format(user.mention)
-                topic = responses["get_identity"]["timeout"][1]
-
-                if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
-                    thieves.update_one({}, {"$push": {"names": str(user.id)}})
-
-                await self.update_path(user, cycle, path_new="path18")
-                await action_update(user, cycle, actions=3)
-                await penalize(user, cycle, points=10)
-                await secret_response(guild.id, message.channel.name, msg)
-                await message.channel.edit(topic=topic)
-                break
-
-            except KeyError:
-
-                if i == 0:
-                    msg = responses["get_identity"]["invalid1"][0].format(user.mention)
-                    topic = responses["get_identity"]["invalid1"][1]
-                    await penalize(user, cycle, points=10)
-
-                elif i == 1:
-                    msg = responses["get_identity"]["invalid2"][0].format(user.mention)
-                    topic = responses["get_identity"]["invalid2"][1]
-                    await penalize(user, cycle, points=10)
-
-                elif i == 2:
-                    msg = responses["get_identity"]["invalid3"][0].format(user.mention)
-                    topic = responses["get_identity"]["invalid3"][1]
-
-                    if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
-                        thieves.update_one({}, {"$push": {"names": str(user.id)}})
-
-                    await self.update_path(user, cycle, path_new="path18")
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
-
-                await message.channel.edit(topic=topic)
-                await secret_response(guild.id, message.channel.name, msg)
-                i += 1
-
-            else:
-                answer = "Correct"
-                await guess.add_reaction("✅")
-                await asyncio.sleep(3)
-                await guess.delete()
-                break
-
-        return answer
-
-
-    async def obtain_vault_number(self, user, guild, message, responses):
-
-        answer, topic = "Wrong", ""
-        msg = responses["get_vault"]["1"].format(user.mention)
-        await secret_response(guild.id, message.channel.name, msg)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-
-        if path != "path0":
-            await self.update_path(user, cycle, path_new="path22")
-
-        if path == "path18":
-            await self.update_path(user, cycle, path_new="path5")
-
-        def check(g):
-            if g.channel != message.channel:
-                return
-            elif str(g.content) == str(user.id) and g.author == user and g.channel == message.channel:
-                return True
-            elif g.author == user and ";" not in str(g.content):
-                raise KeyError
-
-        i = 0
-        while i < 3:
-            try:
-                guess = await self.client.wait_for("message", timeout=120, check=check)
-
-            except asyncio.TimeoutError:
-                answer = "Wrong"
-                msg = responses["get_vault"]["timeout"][0].format(user.mention)
-                topic = responses["get_vault"]["timeout"][1]
-
-                if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
-                    thieves.update_one({}, {"$push": {"names": str(user.id)}})
-
-                await self.update_path(user, cycle, path_new="path12")
-                await action_update(user, cycle, actions=3)
-                await penalize(user, cycle, points=10)
-                await secret_response(guild.id, message.channel.name, msg)
-                await message.channel.edit(topic=topic)
-                break
-
-            except KeyError:
-
-                if i == 0:
-                    msg = responses["get_vault"]["invalid1"][0].format(user.mention)
-                    topic = responses["get_vault"]["invalid1"][1]
-                    await penalize(user, cycle, points=10)
-
-                elif i == 1:
-                    msg = responses["get_vault"]["invalid2"][0].format(user.mention)
-                    topic = responses["get_vault"]["invalid2"][1]
-                    await penalize(user, cycle, points=10)
-
-                elif i == 2:
-                    answer = "Wrong"
-                    msg = responses["get_vault"]["invalid3"][0].format(user.mention)
-                    topic = responses["get_vault"]["invalid3"][1]
-
-                    if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
-                        thieves.update_one({}, {"$push": {"names": str(user.id)}})
-
-                    await self.update_path(user, cycle, path_new="path12")
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
-
-                await message.channel.edit(topic=topic)
-                await secret_response(guild.id, message.channel.name, msg)
-                i += 1
-
-            else:
-                answer = "Correct"
-                await guess.add_reaction("✅")
-                await asyncio.sleep(3)
-                await guess.delete()
-                break
-
-        return answer
-
-
-    async def obtain_vault_password(self, user, guild, message, responses):
-
-        answer, topic, msg = "Wrong", "", ""
-        msg1 = responses["get_password"]["1"].format(user.mention)
-        msg2 = responses["get_password"]["2"].format(user.mention)
-        await asyncio.sleep(1)
-        await secret_response(guild.id, message.channel.name, msg1)
-        await asyncio.sleep(3)
-        await secret_response(guild.id, message.channel.name, msg2)
-        cycle, path, timestamp, user_hints, actions, purchase = get_data(user.id)
-
-        if path != "path0":
-            await self.update_path(user, cycle, path_new="path23")
-
-        def check(g):
-            if g.channel != message.channel:
-                return
-            elif str(g.content) == (str(user.id))[::-1] and g.author == user \
-                    and g.channel == message.channel:
-                return True
-            elif g.author == user and ";" not in str(g.content):
-                raise KeyError
-
-        i = 0
-        while i < 3:
-            try:
-                guess = await self.client.wait_for("message", timeout=120, check=check)
-
-            except asyncio.TimeoutError:
-                answer = "Wrong"
-                msg = responses["get_password"]["timeout"][0].format(user.mention)
-                topic = responses["get_password"]["timeout"][1]
-
-                if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
-                    thieves.update_one({}, {"$push": {"names": str(user.id)}})
-
-                await self.update_path(user, cycle, path_new="path13")
-                await action_update(user, cycle, actions=3)
-                await penalize(user, cycle, points=10)
-                await secret_response(guild.id, message.channel.name, msg)
-                await message.channel.edit(topic=topic)
-                break
-
-            except KeyError:
-
-                if i == 0:
-                    msg = responses["get_password"]["invalid1"][0].format(user.mention)
-                    topic = responses["get_password"]["invalid1"][1]
-                    await penalize(user, cycle, points=10)
-
-                elif i == 1:
-                    msg = responses["get_password"]["invalid2"][0].format(user.mention)
-                    topic = responses["get_password"]["invalid2"][1]
-                    await penalize(user, cycle, points=10)
-
-                elif i == 2:
-                    answer = "Wrong"
-                    msg = responses["get_password"]["invalid3"][0].format(user.mention)
-                    topic = responses["get_password"]["invalid3"][1]
-
-                    if thieves.find_one({"names": str(user.id)}, {"_id": 0}) is None:
-                        thieves.update_one({}, {"$push": {"names": str(user.id)}})
-
-                    await self.update_path(user, cycle, path_new="path13")
-                    await action_update(user, cycle, actions=3)
-                    await penalize(user, cycle, points=10)
-
-                await message.channel.edit(topic=topic)
-                await secret_response(guild.id, message.channel.name, msg)
-                i += 1
-
-            else:
-                answer = "Correct"
-                await guess.add_reaction("✅")
-                await asyncio.sleep(3)
-                await guess.delete()
-                break
-
-        return answer
-
-
 def setup(client):
-    client.add_cog(Magic(client))
+    client.add_cog(Expecto(client))

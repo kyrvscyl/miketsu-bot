@@ -79,43 +79,23 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.UserInputError):
 
-            if str(ctx.command) == "friendship_give":
+            if str(ctx.command) in [
+                "raid_perform_attack",
+                "raid_perform_calculation",
+                "profile_show",
+                "friendship_give"
+            ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(0xffe6a7),
                     description="That member doesn't exist in this guild"
                 )
                 await ctx.channel.send(embed=embed)
-
-            else:
-                await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.BadArgument):
-
-            if str(ctx.command) in ["raid_perform_attack", "raid_perform_calculation", "profile_show"]:
-                embed = discord.Embed(
-                    title="Invalid member", colour=discord.Colour(0xffe6a7),
-                    description="That member doesn't exist in this guild"
-                )
-                await ctx.channel.send(embed=embed)
-
-            else:
-                await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.CommandInvokeError):
-
-            if str(ctx.command) == "announcement_post_message":
-                await ctx.channel.send("Please provide a valid channel")
 
             else:
                 await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
-
-            if str(ctx.command) == "encounter_search":
-                await ctx.channel.send(f"{ctx.author.mention}, there is an ongoing search, try again once it finishes")
-
-            else:
-                await self.submit_error(ctx, error)
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.MissingRequiredArgument):
 
@@ -231,8 +211,16 @@ class Error(commands.Cog):
         elif isinstance(error, commands.ExtensionError):
             logging(file_name, get_f(), f"commands.ExtensionError: {ctx.message.content}")
 
+        elif isinstance(error, commands.BadArgument):
+            await self.submit_error(ctx, error)
+
         elif isinstance(error, commands.CommandInvokeError):
-            return
+
+            if str(ctx.command) == "announcement_post_message":
+                await ctx.channel.send("Please provide a valid channel")
+
+            else:
+                await self.submit_error(ctx, error)
 
         else:
             await self.submit_error(ctx, error)

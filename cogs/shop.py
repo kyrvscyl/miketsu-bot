@@ -54,15 +54,15 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
         })
         embed = discord.Embed(
             title="Confirmation receipt", colour=discord.Colour(0xffe6a7),
-            description=f"{user.mention}, you exchanged {offer_amount:,d}{get_emoji(offer_item)} "
-            f"for your {cost_amount:,d}{get_emoji(cost_item)}"
+            description=f"{user.mention} acquired {offer_amount:,d}{get_emoji(offer_item)} "
+            f"in exchanged for {cost_amount:,d}{get_emoji(cost_item)}"
         )
         await ctx.channel.send(embed=embed)
 
     else:
         embed = discord.Embed(
             title="Purchase failure", colour=discord.Colour(0xffe6a7),
-            description=f"{user.mention}, You have insufficient {get_emoji(cost_item)}"
+            description=f"{user.mention}, you have insufficient {get_emoji(cost_item)}"
         )
         await ctx.channel.send(embed=embed)
         await ctx.channel.send(f"{user.mention}, You have insufficient {emoji_j}")

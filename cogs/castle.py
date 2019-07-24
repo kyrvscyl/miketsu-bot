@@ -235,6 +235,69 @@ class Castle(commands.Cog):
 
         return attachment_link
 
+    @commands.command(aliases=["transform"])
+    @commands.is_owner()
+    async def transformation_trigger(self, ctx, *, args):
+
+        if args.lower() == "start":
+            await self.transformation_start()
+            await ctx.message.delete()
+
+        elif args.lower() == "end":
+            await self.transformation_end()
+            await ctx.message.delete()
+
+    async def transformation_end(self):
+
+        for entry in books.find({}, {"_id": 0, "server": 1}):
+            try:
+                server = self.client.get_guild(int(entry["server"]))
+                reference_role = discord.utils.get(server.roles, name="Head")
+                roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
+
+                for role in roles:
+                    try:
+                        current_role = discord.utils.get(server.roles, name=role)
+                        await current_role.edit(position=reference_role.position - 1)
+                        await asyncio.sleep(1)
+                    except AttributeError:
+                        continue
+                    except discord.errors.Forbidden:
+                        continue
+                    except discord.errors.HTTPException:
+                        continue
+                    except discord.errors.InvalidArgument:
+                        continue
+
+            except AttributeError:
+                continue
+
+    async def transformation_start(self):
+
+        for entry in books.find({}, {"_id": 0, "server": 1}):
+
+            try:
+                server = self.client.get_guild(int(entry["server"]))
+                reference_role = discord.utils.get(server.roles, name="🏆")
+                roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
+
+                for role in roles:
+                    try:
+                        current_role = discord.utils.get(server.roles, name=role)
+                        await current_role.edit(position=reference_role.position - 1)
+                        await asyncio.sleep(1)
+                    except AttributeError:
+                        continue
+                    except discord.errors.Forbidden:
+                        continue
+                    except discord.errors.HTTPException:
+                        continue
+                    except discord.errors.InvalidArgument:
+                        continue
+
+            except AttributeError:
+                continue
+
 
 def setup(client):
     client.add_cog(Castle(client))
