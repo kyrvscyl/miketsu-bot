@@ -21,7 +21,7 @@ client.remove_command("help")
 time_start = datetime.now()
 cogs_loaded = []
 
-for filename in os.listdir("./cogs"):
+for filename in sorted(os.listdir("./cogs")):
     if filename.endswith(".py"):
         client.load_extension(f"cogs.{filename[:-3]}")
         cogs_loaded.append(filename[:-3])
