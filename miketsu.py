@@ -42,7 +42,7 @@ async def show_bot_statistics(ctx):
     timestamp = datetime.timestamp(datetime.now())
 
     embed = discord.Embed(
-        title=f"{client.user.name} Bot, The Goddess of Wishes", colour=discord.Colour(0xffe6a7),
+        title=f"{client.user.name} Bot, The Goddess of Hope & Prosperity", colour=discord.Colour(0xffe6a7),
         description="A fan made Onmyoji-themed exclusive Discord bot with a touch of wizarding magic!",
         timestamp=datetime.utcfromtimestamp(timestamp)
     )
