@@ -373,9 +373,8 @@ class Quest(commands.Cog):
         msg = m.content.lower()
         user = m.author
         role_dolphin = discord.utils.get(m.guild.roles, name="🐬")
-        role_tea = discord.utils.get(m.guild.roles, name="🍵")
 
-        if user not in role_dolphin.members or user not in role_tea.members:
+        if user not in role_dolphin.members:
             return
         
         elif str(m.channel.category.id) in diagon_alleys:
