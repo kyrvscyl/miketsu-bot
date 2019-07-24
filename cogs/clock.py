@@ -10,12 +10,12 @@ import discord
 import pytz
 from discord.ext import commands
 
-import cogs.expecto as expecto
 from cogs.admin import Admin
 from cogs.castle import Castle
 from cogs.frame import Frame
 from cogs.library import Library
 from cogs.mongo.db import books, weather, quests
+from cogs.quest import Expecto, owls_restock
 
 clock_channels = []
 for guild_clock in books.find({}, {"channels.clock": 1, "_id": 0}):
@@ -108,8 +108,8 @@ class Clock(commands.Cog):
     async def hourly_task(self, ctx):
         await actions_reset()
         await reset_purchase()
-        await expecto.Expecto(self.client).send_off_report_quest1()
-        await expecto.Expecto(self.client).send_off_complete_quest1()
+        await Expecto(self.client).send_off_report_quest1()
+        await Expecto(self.client).send_off_complete_quest1()
         await ctx.author.send("Actions reset, purchase reset, send-off reports performed")
 
     async def clear_secrets(self):
@@ -151,12 +151,12 @@ class Clock(commands.Cog):
             await penalty_hour()
             await actions_reset()
             await reset_purchase()
-            await expecto.Expecto(self.client).send_off_report_quest1()
-            await expecto.Expecto(self.client).send_off_complete_quest1()
+            await Expecto(self.client).send_off_report_quest1()
+            await Expecto(self.client).send_off_complete_quest1()
             await self.clear_secrets()
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
-            await expecto.owls_restock()
+            await owls_restock()
 
         if hour_minute == "00:00":
             await Admin(self.client).reset_daily()
