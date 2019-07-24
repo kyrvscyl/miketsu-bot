@@ -22,7 +22,7 @@ time_start = datetime.now()
 cogs_loaded = []
 
 for filename in sorted(os.listdir("./cogs")):
-    if filename.endswith(".py"):
+    if filename.endswith(".py") and filename not in ["clock_test.py", "expecto.py", "owl.py"]:
         client.load_extension(f"cogs.{filename[:-3]}")
         cogs_loaded.append(filename[:-3])
         print(f"Loading {filename}..")
