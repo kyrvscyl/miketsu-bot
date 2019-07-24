@@ -77,23 +77,6 @@ class Error(commands.Cog):
         elif isinstance(error, commands.NotOwner):
             logging(file_name, get_f(), "commands.NotOwner")
 
-        elif isinstance(error, commands.UserInputError):
-
-            if str(ctx.command) in [
-                "raid_perform_attack",
-                "raid_perform_calculation",
-                "profile_show",
-                "friendship_give"
-            ]:
-                embed = discord.Embed(
-                    title="Invalid member", colour=discord.Colour(0xffe6a7),
-                    description="That member doesn't exist in this guild"
-                )
-                await ctx.channel.send(embed=embed)
-
-            else:
-                await self.submit_error(ctx, error)
-
         elif isinstance(error, commands.CommandOnCooldown):
             await self.submit_error(ctx, error)
 
@@ -213,6 +196,23 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.BadArgument):
             await self.submit_error(ctx, error)
+
+        elif isinstance(error, commands.UserInputError):
+
+            if str(ctx.command) in [
+                "raid_perform_attack",
+                "raid_perform_calculation",
+                "profile_show",
+                "friendship_give"
+            ]:
+                embed = discord.Embed(
+                    title="Invalid member", colour=discord.Colour(0xffe6a7),
+                    description="That member doesn't exist in this guild"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandInvokeError):
 
