@@ -45,6 +45,7 @@ class Castle(commands.Cog):
     @commands.command(aliases=["wander"])
     @commands.guild_only()
     async def castle_wander(self, ctx):
+        await ctx.message.delete()
 
         if not str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels:
             embed = discord.Embed(
@@ -89,7 +90,6 @@ class Castle(commands.Cog):
             text=f"Floor {floor} | Frame {frame_number}"
         )
         msg = await ctx.channel.send(embed=embed)
-        await ctx.message.delete()
         await msg.delete(delay=10)
 
     @commands.command(aliases=["frame"])
@@ -131,7 +131,14 @@ class Castle(commands.Cog):
                 find_role = role.name
                 break
 
-        if floor not in [1, 2, 3, 4, 5, 6]:
+        if frames.find({"frame_id": str(ctx.author.id)}, {"_id": 0}) is not None:
+            embed = discord.Embed(
+                colour=discord.Colour(0xffe6a7),
+                description="Frame exists for this user, use `;frame edit <...>`"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif floor not in [1, 2, 3, 4, 5, 6]:
             embed = discord.Embed(
                 colour=discord.Colour(0xffe6a7),
                 title="Invalid floor number",
