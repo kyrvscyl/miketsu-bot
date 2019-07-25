@@ -13,7 +13,7 @@ from cogs.mongo.db import users, boss, books
 from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a, emoji_f
 
 demons = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
-
+boss_spawn = False
 boss_comment = [
     "AHAHAHA!!! <:huehue:585442161093509120>",
     "UFUFUFUFU!! <:19:585443879541538826>",
@@ -124,10 +124,12 @@ class Encounter(commands.Cog):
         survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
         discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
 
-        if survivability > 0 or discoverability > 0:
+        if (survivability > 0 or discoverability > 0) and boss_spawn is False:
             roll = random.randint(0, 100)
 
             if roll <= 20:
+                global boss_spawn
+                boss_spawn = True
                 await self.boss_roll(user, ctx)
             else:
                 roll2 = random.randint(0, 100)
@@ -430,7 +432,7 @@ class Encounter(commands.Cog):
                     boss_coins_, boss_exp_, boss_jades_, boss_medals_ = get_boss_profile_assembly(boss_select)
 
                     embed = discord.Embed(
-                        title="Encounter Boss", colour=discord.Colour(0xffe6a7),
+                        title="Encounter Boss", color=discoverer.colour,
                         description=f"<@&{roles['boss_busters']}>! The rare boss {boss_select} has been triggered!\n\n"
                         f"⏰ {round(timer)} secs left!"
                     )
@@ -467,6 +469,8 @@ class Encounter(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
+            global boss_spawn
+            boss_spawn = False
 
         else:
             await asyncio.sleep(3)
@@ -548,6 +552,8 @@ class Encounter(commands.Cog):
 
             await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
+            global boss_spawn
+            boss_spawn = False
 
         elif boss_currenthp == 0:
 
@@ -660,6 +666,8 @@ class Encounter(commands.Cog):
             pass
 
         self.client.get_command("encounter").reset_cooldown(ctx)
+        global boss_spawn
+        boss_spawn = False
 
     @commands.command(aliases=["binfo", "bossinfo"])
     @commands.guild_only()
