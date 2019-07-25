@@ -282,13 +282,13 @@ class Economy(commands.Cog):
                     description=description
                 )
                 embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-                await channel.send(embed=embed)
+                await spell_spam_channel.send(embed=embed)
 
             if starlight_current == starlight_new:
                 users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
                 msg = f"{starlight_current.mention} has earned 2,000{emoji_j} " \
                     f"for wielding the Starlight Sky frame for a day!"
-                await channel.send(msg)
+                await spell_spam_channel.send(msg)
 
             else:
                 await starlight_new.add_roles(starlight_role)
@@ -308,7 +308,7 @@ class Economy(commands.Cog):
                     description=description
                 )
                 embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-                await channel.send(embed=embed)
+                await spell_spam_channel.send(embed=embed)
 
     async def frame_blazing(self):
 
@@ -343,12 +343,12 @@ class Economy(commands.Cog):
                     description=description
                 )
                 embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
-                await channel.send(embed=embed)
+                await spell_spam_channel.send(embed=embed)
 
             if blazing_current == blazing_new:
                 users.update_one({"user_id": str(blazing_current.id)}, {"$inc": {"amulets": 10}})
                 msg = f"{blazing_current.mention} has earned 10{emoji_a} for wielding the Blazing Sun frame for a day!"
-                await channel.send(msg)
+                await spell_spam_channel.send(msg)
 
             else:
                 await blazing_new.add_roles(blazing_role)
@@ -366,7 +366,7 @@ class Economy(commands.Cog):
                     description=description
                 )
                 embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
-                await channel.send(embed=embed)
+                await spell_spam_channel.send(embed=embed)
 
     @commands.command(aliases=["add"])
     @commands.is_owner()
@@ -593,15 +593,10 @@ class Economy(commands.Cog):
 
             profile = {
                 "name": query,
-                "skills": {
-                    "normal": "",
-                    "special": ""
-                },
                 "thumbnail": {
                     "pre_evo": args[2],
                     "evo": args[3]
-                },
-                "specialty": "None"
+                }
             }
 
             shikigami.update_one({
