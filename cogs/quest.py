@@ -376,7 +376,10 @@ class Quest(commands.Cog):
 
         if user not in role_dolphin.members:
             return
-        
+
+        elif spell_check(m.content) and user in role_dolphin.members:
+            await Expecto(self.client).expecto_patronum(m.guild, user, m.channel, m)
+
         elif str(m.channel.category.id) in diagon_alleys:
         
             if msg == "eeylops owl emporium" and str(m.channel) != "eeylops-owl-emporium":
@@ -390,9 +393,6 @@ class Quest(commands.Cog):
     
             elif "gringotts-bank" == str(m.channel) and m.content.startswith(";") is False:
                 await self.transaction_gringotts(user, m.guild, m)
-            
-        elif spell_check(m.content) and user in role_dolphin.members:
-            await Expecto(self.client).expecto_patronum(m.guild, user, m.channel, m)
     
     async def create_gringotts(self, category, guild, message, user):
 
