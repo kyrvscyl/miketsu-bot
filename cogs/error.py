@@ -186,8 +186,8 @@ class Error(commands.Cog):
                     description="Patronus quest command participants only\nrequired to finish at least one quest cycle"
                 )
                 embed.add_field(name="Format", value="*`;cycle <cycle#1> <@member or leave blank if for yourself>`*")
+                embed.add_field(name="Example", value="*`Use `;cycle 1`*")
                 await ctx.channel.send(embed=embed)
-                await ctx.channel.send("Use `;cycle 1`")
 
             else:
                 await self.submit_error(ctx, error)
