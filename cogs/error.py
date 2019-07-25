@@ -179,8 +179,15 @@ class Error(commands.Cog):
                 embed.add_field(name="Format", value="*`;say <#channel or channel_id> <any message>`*")
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "show_cycle":
-                await ctx.channel.send("Use `;cycle <cycle#> <@mention or leave blank if for yourself>`")
+            elif str(ctx.command) == "show_cycle_quest1":
+                embed = discord.Embed(
+                    colour=discord.Colour(0xffe6a7),
+                    title="cycle",
+                    description="Patronus quest command participants only\nrequired to finish at least one quest cycle"
+                )
+                embed.add_field(name="Format", value="*`;cycle <cycle#1> <@member or leave blank if for yourself>`*")
+                await ctx.channel.send(embed=embed)
+                await ctx.channel.send("Use `;cycle 1`")
 
             else:
                 await self.submit_error(ctx, error)
