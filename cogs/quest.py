@@ -419,7 +419,7 @@ class Quest(commands.Cog):
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
                     send_messages=True,
-                    read_message_history=False
+                    read_message_history=True
                 )
             }
 
@@ -451,7 +451,7 @@ class Quest(commands.Cog):
                 user,
                 read_messages=True,
                 send_messages=True,
-                read_message_history=False
+                read_message_history=True
             )
             await message.add_reaction("✨")
             await gringotts_channel.edit(topic=topic)
@@ -1565,7 +1565,7 @@ class Expecto(commands.Cog):
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
                     send_messages=True,
-                    read_message_history=False
+                    read_message_history=True
                 )
             }
 
@@ -1593,7 +1593,7 @@ class Expecto(commands.Cog):
             await emporium_channel.set_permissions(
                 user, read_messages=True,
                 send_messages=True,
-                read_message_history=False
+                read_message_history=True
             )
             await message.add_reaction("✨")
 
@@ -1619,7 +1619,7 @@ class Expecto(commands.Cog):
                 guild.get_member(user.id): discord.PermissionOverwrite(
                     read_messages=True,
                     send_messages=True,
-                    read_message_history=False
+                    read_message_history=True
                 )
             }
 
@@ -1643,7 +1643,7 @@ class Expecto(commands.Cog):
                 user,
                 read_messages=True,
                 send_messages=True,
-                read_message_history=False
+                read_message_history=True
             )
             await message.add_reaction("✨")
             await asyncio.sleep(1)
