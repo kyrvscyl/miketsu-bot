@@ -26,6 +26,11 @@ attack_verb = attack_list.read().splitlines()
 attack_list.close()
 
 
+def status_set(x):
+    global boss_spawn
+    boss_spawn = x
+
+
 def get_emoji(item):
     emoji_dict = {
         "jades": emoji_j,
@@ -128,8 +133,7 @@ class Encounter(commands.Cog):
             roll = random.randint(0, 100)
 
             if roll <= 20:
-                global boss_spawn
-                boss_spawn = True
+                status_set(True)
                 await self.boss_roll(user, ctx)
             else:
                 roll2 = random.randint(0, 100)
@@ -469,8 +473,7 @@ class Encounter(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
-            global boss_spawn
-            boss_spawn = False
+            status_set(False)
 
         else:
             await asyncio.sleep(3)
@@ -552,8 +555,7 @@ class Encounter(commands.Cog):
 
             await ctx.channel.send(embed=embed)
             self.client.get_command("encounter").reset_cooldown(ctx)
-            global boss_spawn
-            boss_spawn = False
+            status_set(False)
 
         elif boss_currenthp == 0:
 
@@ -666,8 +668,7 @@ class Encounter(commands.Cog):
             pass
 
         self.client.get_command("encounter").reset_cooldown(ctx)
-        global boss_spawn
-        boss_spawn = False
+        status_set(False)
 
     @commands.command(aliases=["binfo", "bossinfo"])
     @commands.guild_only()
