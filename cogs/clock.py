@@ -12,7 +12,7 @@ from discord.ext import commands
 
 from cogs.admin import Admin
 from cogs.castle import Castle
-from cogs.frame import Frame
+from cogs.economy import Economy
 from cogs.library import Library
 from cogs.mongo.db import books, weather, quests
 from cogs.quest import Expecto, owls_restock
@@ -160,8 +160,8 @@ class Clock(commands.Cog):
 
         if hour_minute == "00:00":
             await Admin(self.client).reset_daily()
-            await Frame(self.client).frame_automate()
             await Library(self.client).post_new_table_of_content()
+            await Economy(self.client).frame_automate()
 
         if hour_minute == "19:00":
             await Castle(self.client).transformation_start()

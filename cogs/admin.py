@@ -20,10 +20,10 @@ fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
 
-spell_spams = []
+spell_spams_id = []
 for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
     try:
-        spell_spams.append(document["channels"]["spell-spam"])
+        spell_spams_id.append(document["channels"]["spell-spam"])
     except KeyError:
         continue
 
@@ -315,40 +315,37 @@ class Admin(commands.Cog):
         embed = discord.Embed(color=color, title=title, description=description)
         embed.set_footer(text="Page 1")
 
-        try:
-            for channel in spell_spams:
-                current_channel = self.client.get_channel(int(channel))
-                msg = await current_channel.send("🎊 Daily rewards have been reset.", embed=embed)
-                await msg.add_reaction("⬅")
-                await msg.add_reaction("➡")
+        for channel in spell_spams_id:
+            current_channel = self.client.get_channel(int(channel))
+            msg = await current_channel.send("🎊 Daily rewards have been reset.", embed=embed)
+            await msg.add_reaction("⬅")
+            await msg.add_reaction("➡")
 
-                def create_embed_ships(new_page):
-                    end = new_page * 10
-                    start = end - 10
-                    description_new = "".join(valid_ships[start:end])
-                    embed_new = discord.Embed(color=color, title=title, description=description_new)
-                    embed_new.set_footer(text=f"Page: {new_page}")
-                    return embed_new
+            def create_embed_ships(new_page):
+                end = new_page * 10
+                start = end - 10
+                description_new = "".join(valid_ships[start:end])
+                embed_new = discord.Embed(color=color, title=title, description=description_new)
+                embed_new.set_footer(text=f"Page: {new_page}")
+                return embed_new
 
-                def check(r, u):
-                    return u != self.client.user and r.message.id == msg.id
+            def check(r, u):
+                return u != self.client.user and r.message.id == msg.id
 
-                page = 1
-                while True:
-                    try:
-                        timeout = 360
-                        reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                        if str(reaction.emoji) == "➡":
-                            page += 1
-                        elif str(reaction.emoji) == "⬅":
-                            page -= 1
-                        if page == 0:
-                            page = 1
-                        await msg.edit(embed=create_embed_ships(page))
-                    except asyncio.TimeoutError:
-                        return False
-        except AttributeError:
-            return
+            page = 1
+            while True:
+                try:
+                    timeout = 30
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                    if str(reaction.emoji) == "➡":
+                        page += 1
+                    elif str(reaction.emoji) == "⬅":
+                        page -= 1
+                    if page == 0:
+                        page = 1
+                    await msg.edit(embed=create_embed_ships(page))
+                except asyncio.TimeoutError:
+                    return False
 
     async def reset_weekly(self):
 
@@ -358,7 +355,7 @@ class Admin(commands.Cog):
             title="💝 Weekly rewards have been reset", colour=discord.Colour(0xffe6a7),
             description=" Claim yours using `;weekly`"
         )
-        for channel in spell_spams:
+        for channel in spell_spams_id:
             current_channel = self.client.get_channel(int(channel))
             try:
                 await current_channel.send(embed=embed)
@@ -386,7 +383,7 @@ class Admin(commands.Cog):
             colour=discord.Colour(0xffe6a7),
             title="Assembly Boss encounter has been reset."
         )
-        for channel in spell_spams:
+        for channel in spell_spams_id:
             current_channel = self.client.get_channel(int(channel))
             try:
                 await current_channel.send(embed=embed)
