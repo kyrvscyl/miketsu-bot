@@ -91,8 +91,11 @@ async def secret_response(guild_id, channel_name, description):
 
 
 owls_list = []
-for owl in owls.find({}, {"_id": 0, "type": 1}):
-    owls_list.append(owl["type"])
+for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
+    try:
+        owls_list.append(owl["type"])
+    except KeyError:
+        continue
 
 diagon_alleys = []
 for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
@@ -1416,7 +1419,7 @@ class Expecto(commands.Cog):
                 await secret_response(ctx.guild.id, ctx.channel.name, msg)
                 await penalize_quest1(user, cycle, points=15)
 
-            elif ctx.message.content == ";inquire":
+            elif ctx.message.content == ";inquire" and actions < 3:
                 if path == "path9":
                     await self.update_path_quest1(user, cycle, path_new="path14")
                 elif path == "path15":
