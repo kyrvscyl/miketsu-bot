@@ -55,7 +55,10 @@ class Startup(commands.Cog):
 
     @tasks.loop(seconds=1200)
     async def change_status(self):
-        await self.client.change_presence(activity=discord.Game(next(status)))
+        try:
+            await self.client.change_presence(activity=discord.Game(next(status)))
+        except RuntimeError:
+            pass
 
     @commands.command(aliases=["info"])
     async def show_greeting_message(self, ctx):
