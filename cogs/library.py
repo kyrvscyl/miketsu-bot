@@ -152,11 +152,20 @@ class Library(commands.Cog):
 
         try:
             for entry in book["embeds"]:
-                embed = DiscordEmbed(
-                    title=generate_embed_value_1(entry, "title"),
-                    description=generate_embed_value_1(entry, "description").replace("\\n", "\n"),
-                    color=generate_embed_value_1(entry, "color"),
-                )
+                embed = DiscordEmbed(color=generate_embed_value_1(entry, "color"))
+                try:
+                    embed.title = generate_embed_value_1(entry, "title")
+                except AttributeError:
+                    pass
+                except TypeError:
+                    pass
+
+                try:
+                    embed.description = generate_embed_value_1(entry, "description").replace("\\n", "\n")
+                except AttributeError:
+                    pass
+                except TypeError:
+                    pass
 
                 try:
                     embed.set_thumbnail(url=generate_embed_value_1(entry, "thumbnail")["url"])
@@ -179,11 +188,29 @@ class Library(commands.Cog):
                     pass
 
                 try:
+                    user_id = generate_embed_value_1(entry, "author")["icon_url"]
+                    user = self.client.get_user(int(user_id))
+                    embed.set_author(
+                        name=generate_embed_value_1(entry, "author")["name"],
+                        icon_url=str(user.avatar_url_as(format="jpg", size=128))
+                    )
+                except ValueError:
+                    return
+                except TypeError:
+                    pass
+                except AttributeError:
+                    pass
+
+                try:
                     user_id = generate_embed_value_1(entry, "footer")["text"]
                     user = self.client.get_user(int(user_id))
                     embed.set_footer(
                         text=f"Guide by {user.name}",
                         icon_url=str(user.avatar_url_as(format="jpg", size=128))
+                    )
+                except ValueError:
+                    embed.set_footer(
+                        text=generate_embed_value_1(entry, "footer")["text"]
                     )
                 except TypeError:
                     pass
@@ -199,9 +226,9 @@ class Library(commands.Cog):
 
     async def post_new_table_of_content(self):
 
-        query = books.find({
-            "server": "412057028887052288"}, {
-            "_id": 0, "channels.restricted-section": 1,
+        query = books.find({}, {
+            "_id": 0,
+            "channels.restricted-section": 1,
             "channels.reference-section": 1
         })
         restricted_sections = []
@@ -218,25 +245,30 @@ class Library(commands.Cog):
             channel = self.client.get_channel(int(section))
 
             if channel is not None:
-
+                title = ""
                 try:
                     msg = await channel.fetch_message(channel.last_message_id)
                     title = msg.embeds[0].title
+                except IndexError:
+                    pass
                 except AttributeError:
-                    continue
+                    pass
 
                 if "table of" not in title.lower():
                     await post_table_of_content_reference(channel)
 
         for section in restricted_sections:
             channel = self.client.get_channel(int(section))
-            if channel is not None:
 
+            if channel is not None:
+                title = ""
                 try:
                     msg = await channel.fetch_message(channel.last_message_id)
                     title = msg.embeds[0].title
+                except IndexError:
+                    pass
                 except AttributeError:
-                    continue
+                    pass
 
                 if "table of" not in title.lower():
                     await post_table_of_content_restricted(channel)
@@ -272,13 +304,17 @@ class Library(commands.Cog):
 
     @commands.command(aliases=["open"])
     @commands.guild_only()
-    async def post_book_reference(self, ctx, arg1, *, args):
+    async def post_book_reference(self, ctx, arg1, *, args="None"):
 
         if check_if_reference_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
             user = ctx.message.author
             query = {"section": arg1.lower(), "index": args.lower()}
+
+            if arg1.lower() == "pb" and args.lower() == "bgt":
+                query = {"section": arg1.lower(), "index": "0"}
+
             book = library.find_one(query, {"_id": 0})
 
             if arg1.lower() in ["ab", "sbs"] and args.lower() in ["3"]:
