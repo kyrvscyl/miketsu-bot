@@ -13,12 +13,13 @@ emoji_m = "<:medal:573071121545560064>"
 emoji_j = "<:jade:555630314282811412>"
 emoji_c = "<:coin:573071121495097344>"
 emoji_f = "<:friendship:555630314056318979>"
-emoji_a = "<:amulet:573071120685596682>"
+emoji_a = "<:amulet:603989470328651787>"
 emoji_sp = "<:SP:602707718603538442>"
 emoji_ssr = "<:SSR:602707410515132456>"
 emoji_sr = "<:SR:602707410922242048>"
 emoji_r = "<:R_:602707410582241280>"
 emoji_n = "<:N_:602707410540560414>"
+emoji_t = "<:talisman:573071120685596682>"
 
 
 status = cycle([
@@ -80,7 +81,7 @@ class Startup(commands.Cog):
         embed.set_footer(text="*Head commands")
         embed.add_field(
             name="Economy",
-            value="*daily, weekly, profile, display, buy, summon, evolve, friendship, leaderboard, shikigamis*",
+            value="*daily, weekly, profile, display, buy, summon, evolve, friendship, leaderboard, shikigamis, shrine*",
             inline=False
         )
         embed.add_field(
