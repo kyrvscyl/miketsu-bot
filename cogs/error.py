@@ -92,6 +92,23 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value="*`;suggest add new in-game stickers!`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "shrine_shikigami":
+                embed = discord.Embed(
+                    title="shrine", colour=discord.Colour(0xffe6a7),
+                    description="exchange your shikigamis for talismans to acquire exclusive shikigamis"
+                )
+                embed.add_field(
+                    name="Arguments",
+                    value="*sacrifice, exchange*",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Example",
+                    value="*`;shrine exchange`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "leaderboard_show":
                 embed = discord.Embed(
                     title="leaderboard, lb", colour=discord.Colour(0xffe6a7),
