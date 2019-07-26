@@ -10,7 +10,7 @@ from discord.ext import commands
 
 from cogs.mongo.db import users, shikigami, bounty, friendship, books, streak
 from cogs.startup import \
-    emoji_m, emoji_j, emoji_c, emoji_f, emoji_a, pluralize, emoji_sp, emoji_ssr, emoji_sr, emoji_r
+    emoji_m, emoji_j, emoji_c, emoji_f, emoji_a, pluralize, emoji_sp, emoji_ssr, emoji_sr, emoji_r, emoji_t
 from cogs.summon import pool_r, pool_sp, pool_sr, pool_ssr
 
 pool_all = []
@@ -32,6 +32,20 @@ for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
         continue
 
 
+shrinable_shikigamis = []
+query_shrinable = [{
+    '$unwind': {
+        'path': '$shikigami'}}, {
+    '$match': {
+        'shikigami.shrine': True}}, {
+    '$project': {
+        '_id': 0, 'shikigami.thumbnail': 0
+    }
+}]
+for document in shikigami.aggregate(query_shrinable):
+    shrinable_shikigamis.append(document["shikigami"]["name"])
+
+
 def get_evo_link(evolution):
     key = {
         "True": "evo",
@@ -50,8 +64,17 @@ def get_requirement(r):
     return key[r]
 
 
-async def claim_rewards_daily_give(user, ctx):
+def get_talisman_acquire(x):
+    dictionary = {
+        "R": 50,
+        "SR": 250,
+        "SSR": 10000,
+        "SP": 15000
+    }
+    return dictionary[x]
 
+
+async def claim_rewards_daily_give(user, ctx):
     users.update_one({"user_id": str(user.id)}, {
         "$inc": {
             "friendship_pass": 5,
@@ -95,13 +118,12 @@ async def weekly_give_rewards(user, ctx):
 
 
 async def profile_post(member, ctx):
-
     profile = users.find_one({
         "user_id": str(member.id)}, {
         "_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
         "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
         "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
-        "encounter_ticket": 1, "friendship_pass": 1
+        "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1
     })
 
     ships_count = friendship.find({"code": {"$regex": f".*{ctx.author.id}.*"}}).count()
@@ -118,6 +140,7 @@ async def profile_post(member, ctx):
     friendship_points = profile["friendship"]
     encounter_ticket = profile["encounter_ticket"]
     friendship_pass = profile["friendship_pass"]
+    talismans = profile["talisman"]
 
     embed = discord.Embed(color=member.colour)
 
@@ -142,29 +165,28 @@ async def profile_post(member, ctx):
     )
     embed.add_field(
         name=":arrow_heading_up: Experience",
-        value=f"Level: {level} ({exp}/{level_exp_next})"
+        value=f"Level: {level} ({exp:,d}/{level_exp_next:,d})"
     )
     embed.add_field(
         name=f"{emoji_sp} | {emoji_ssr} | {emoji_sr} | {emoji_r}",
-        value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']}"
+        value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d}"
     )
     embed.add_field(
         name=f"{emoji_a} Amulets",
-        value=f"On Hand: {amulets} | Used: {amulets_spent}"
+        value=f"On Hand: {amulets} | Used: {amulets_spent:,d}"
     )
     embed.add_field(
         name=f"💗 | 🎟 | 🎫 | 🚢",
         value=f"{friendship_pass} | {realm_ticket:,d} | {encounter_ticket:,d} | {ships_count}",
     )
     embed.add_field(
-        name=f"{emoji_f} | {emoji_m} | {emoji_j} | {emoji_c}",
-        value=f"{friendship_points:,d} | {medals:,d} | {jades:,d} | {coins:,d}",
+        name=f"{emoji_f} | {emoji_t} | {emoji_m} | {emoji_j} | {emoji_c}",
+        value=f"{friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}",
     )
     await ctx.channel.send(embed=embed)
 
 
 async def evolve_shikigami(ctx, rarity, evo, user, query, count):
-
     if rarity == "SP":
         embed = discord.Embed(
             colour=discord.Colour(0xffe6a7),
@@ -185,17 +207,15 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
         if count >= rarity_count:
 
             users.update_one({
-                "user_id": str(user.id), "shikigami.name": query}, {
-                "$inc": {
-                    "shikigami.$.owned": -(rarity_count - 1)
-                }
-            })
-            users.update_one({
                 "user_id": str(user.id),
                 "shikigami.name": query}, {
-                "$set": {
-                    "shikigami.$.evolved": "True"
-                }
+                    "$inc": {
+                        "shikigami.$.owned": -(rarity_count - 1),
+                        f"{rarity}": -(rarity_count - 1)
+                    },
+                    "$set": {
+                        "shikigami.$.evolved": "True"
+                    }
             })
 
             shikigami_profile = shikigami.find_one({
@@ -235,7 +255,7 @@ class Economy(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(alises=["issue"])
+    @commands.command(aliases=["issue"])
     @commands.is_owner()
     async def issue_frame_rewards(self, ctx):
 
@@ -273,8 +293,8 @@ class Economy(commands.Cog):
 
                 description = \
                     f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
-                        f"earned themselves the Rare Starlight Sky Frame!\n\n" \
-                        f"🍀 No SSR streak as of posting: {streak_list_new[0][1]} summons!"
+                    f"earned themselves the Rare Starlight Sky Frame!\n\n" \
+                    f"🍀 No SSR streak as of posting: {streak_list_new[0][1]} summons!"
 
                 embed = discord.Embed(
                     color=0xac330f,
@@ -287,7 +307,7 @@ class Economy(commands.Cog):
             if starlight_current == starlight_new:
                 users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
                 msg = f"{starlight_current.mention} has earned 2,000{emoji_j} " \
-                    f"for wielding the Starlight Sky frame for a day!"
+                      f"for wielding the Starlight Sky frame for a day!"
                 await spell_spam_channel.send(msg)
 
             else:
@@ -298,9 +318,9 @@ class Economy(commands.Cog):
 
                 description = \
                     f"{starlight_new.mention} {random.choice(adverb)} {random.choice(verb)} " \
-                        f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
-                        f"{random.choice(noun)}!! {random.choice(comment)}\n\n" \
-                        f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons!"
+                    f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
+                    f"{random.choice(noun)}!! {random.choice(comment)}\n\n" \
+                    f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons!"
 
                 embed = discord.Embed(
                     color=0xac330f,
@@ -335,7 +355,7 @@ class Economy(commands.Cog):
 
                 description = \
                     f"{blazing_new.mention}\"s fortune luck earned themselves the Rare Blazing Sun Frame!\n\n" \
-                        f"🍀 Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis"
+                    f"🍀 Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis"
 
                 embed = discord.Embed(
                     color=0xac330f,
@@ -357,8 +377,9 @@ class Economy(commands.Cog):
                 await asyncio.sleep(3)
 
                 description = f"{blazing_new.mention} {random.choice(adverb)} {random.choice(verb)} " \
-                    f"the Rare Blazing Sun Frame from {blazing_current.mention}\"s {random.choice(noun)}!! " \
-                    f"{random.choice(comment)}\n\n: 🍀 Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis"
+                              f"the Rare Blazing Sun Frame from {blazing_current.mention}\"s {random.choice(noun)}!! " \
+                              f"{random.choice(comment)}\n\n" \
+                              f"🍀 Distinct SSRs under possession: {ssr_list_new[0][1]} shikigamis"
 
                 embed = discord.Embed(
                     color=0xffff80,
@@ -503,6 +524,7 @@ class Economy(commands.Cog):
     @commands.command(aliases=["shikigamis", "shikis"])
     @commands.guild_only()
     async def shikigami_list_show(self, ctx, arg1, user: discord.User = None):
+
         rarity = str(arg1.upper())
 
         if user is None:
@@ -575,7 +597,6 @@ class Economy(commands.Cog):
                     icon_url=icon_url
                 )
                 await msg.edit(embed=embed)
-                break
             except asyncio.TimeoutError:
                 break
 
@@ -583,28 +604,33 @@ class Economy(commands.Cog):
     @commands.is_owner()
     async def shikigami_add(self, ctx, *args):
 
-        if len(args) < 4:
+        if len(args) < 5:
             return
 
-        elif len(args) == 4:
+        #  ;addshiki SR tenjo_kudari link link 1
+        elif len(args) == 5:
 
             rarity = args[0].upper()
             query = (args[1].replace("_", " ")).title()
+            shrine = False
 
-            profile = {
-                "name": query,
-                "thumbnail": {
-                    "pre_evo": args[2],
-                    "evo": args[3]
-                }
-            }
+            if args[4] == "shrine":
+                shrine = True
 
             shikigami.update_one({
                 "rarity": rarity}, {
-                "$push": {"shikigami": profile}
+                "$push": {
+                    "shikigami": {
+                        "name": query,
+                        "thumbnail": {
+                            "pre_evo": args[2],
+                            "evo": args[3]
+                        },
+                        "shrine": shrine
+                    }
+                }
             })
             await ctx.message.add_reaction("✅")
-
         else:
             await ctx.message.add_reaction("❌")
 
@@ -691,6 +717,177 @@ class Economy(commands.Cog):
             count = profile_my_shikigami["shikigami"][0]["owned"]
             evo = profile_my_shikigami["shikigami"][0]["evolved"]
             await evolve_shikigami(ctx, rarity, evo, user, query, count)
+
+    @commands.command(aliases=["shrine"])
+    @commands.is_owner()
+    async def shrine_shikigami(self, ctx, arg1="", *, args=""):
+
+        user = ctx.author
+        name = args.lower().title()
+
+        def get_talisman_required(x):
+            dictionary = {
+                "SSR": 1500000,
+                "SR": 500000,
+                "R": 50000
+            }
+            return dictionary[x]
+
+        if arg1.lower() not in ["sacrifice", "exchange", "s", "exc"]:
+            raise commands.MissingRequiredArgument(ctx.author)
+
+        elif arg1.lower() in ["sacrifice", "s"] and len(args) == 0:
+            embed = discord.Embed(
+                title="shrine sacrifice, shrine s", colour=discord.Colour(0xffe6a7),
+                description="sacrifice your shikigamis to the shrine in exchange for talismans"
+            )
+            embed.add_field(
+                name="Rarity :: Talisman",
+                value="```"
+                      "SSR    ::  100,000\n"
+                      "SR     ::    5,000\n"
+                      "R      ::      750\n"
+                      "```",
+                inline=False
+            )
+            embed.add_field(
+                name="Format",
+                value="*`;shrine s <shikigami>`*"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif arg1.lower() in ["exchange", "exc"] and len(args) == 0:
+            embed = discord.Embed(
+                title="shrine exchange, shrine exc", colour=discord.Colour(0xffe6a7),
+                description="exchange your talismans for exclusive shikigamis"
+            )
+            embed.add_field(
+                name="Shikigami :: Talisman",
+                value="```"
+                      "Juzu          ::     50,000\n"
+                      "Usagi         ::     50,000\n"
+                      "Tenjo Kudari  ::     50,000\n"
+                      "Mannendake    ::    500,000\n"
+                      "Jinmenju      ::    500,000\n"
+                      "Kainin        ::    500,000\n"
+                      "Ryomen        ::  1,500,000"
+                      "```",
+                inline=False
+            )
+            embed.add_field(
+                name="Formats",
+                value="*`;shrine exc <shikigami>`*"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif arg1.lower() in ["sacrifice", "s"] and name not in pool_all:
+            embed = discord.Embed(
+                title="Invalid shikigami name", colour=discord.Colour(0xffe6a7),
+                description="use *`;shikis`* to get the list of your shikigamis"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif arg1.lower() in ["exchange", "exc"] and name not in shrinable_shikigamis:
+            embed = discord.Embed(
+                title="Invalid shikigami name", colour=discord.Colour(0xffe6a7),
+                description="use *`;shrine`* to check the list of valid shikigamis"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif arg1.lower() in ["sacrifice", "s"] and name in pool_all:
+
+            request = users.find_one({
+                "user_id": str(user.id), "shikigami.name": name}, {
+                "_id": 0, "shikigami.$.name": 1
+            })
+            count_shikigami = request["shikigami"][0]["owned"]
+            rarity = request["shikigami"][0]["rarity"]
+            talismans = get_talisman_acquire(rarity)
+
+            if count_shikigami > 0:
+                users.update_one({
+                    "user_id": str(user.id),
+                    "shikigami.name": name}, {
+                    "$inc": {
+                        "shikigami.$.owned": - 1,
+                        "talisman": talismans,
+                        f"{rarity}": -1
+                    }
+                })
+                embed = discord.Embed(
+                    title="Confirmation receipt", colour=user.colour,
+                    description=f"{user.mention}, you exchange your {name} for {talismans:,d}{emoji_t}"
+                )
+                await ctx.channel.send(embed=embed)
+
+        elif arg1.lower() in ["exchange", "exc"] and name in shrinable_shikigamis:
+
+            rarity = shikigami.find_one({"shikigami.name": name}, {"_id": 0, "rarity": 1})["rarity"]
+            talisman = users.find_one({"user_id": str(user.id)}, {"_id": 0, "talisman": 1})["talisman"]
+            required_talisman = get_talisman_required(rarity)
+
+            if talisman >= required_talisman:
+                embed = discord.Embed(
+                    title="Exchange confirmation", colour=discord.Colour(0xffe6a7),
+                    description=f"{user.mention}, confirm exchange of {required_talisman:,d}{emoji_t} for a {name}"
+                )
+                confirm_ = await ctx.channel.send(embed=embed)
+                await confirm_.add_reaction("✅")
+
+                def check(r, u):
+                    return u == ctx.author and str(r.emoji) == "✅"
+
+                try:
+                    await self.client.wait_for("reaction_add", timeout=10.0, check=check)
+                except asyncio.TimeoutError:
+                    embed = discord.Embed(
+                        title="Timeout!", colour=discord.Colour(0xffe6a7),
+                        description=f"{ctx.author.mention}, you did not confirm the {emoji_t} exchange"
+                    )
+                    await ctx.channel.send(embed=embed)
+                else:
+                    query = users.find_one({
+                        "user_id": str(user.id),
+                        "shikigami.name": name}, {
+                        "_id": 0, "shikigami.$": 1
+                    })
+
+                    if query is None:
+                        users.update_one({
+                            "user_id": str(user.id)}, {
+                            "$push": {
+                                "shikigami": {
+                                    "name": name,
+                                    "rarity": rarity,
+                                    "grade": 1,
+                                    "owned": 0,
+                                    "evolved": "False"
+                                }
+                            }
+                        })
+
+                    users.update_one({
+                        "user_id": str(user.id),
+                        "shikigami.name": name}, {
+                        "$inc": {
+                            "shikigami.$.owned": 1,
+                            "talisman": - required_talisman,
+                            f"{rarity}": 1
+                        }
+                    })
+                    embed = discord.Embed(
+                        title="Exchange success!", colour=discord.Colour(0xffe6a7),
+                        description=f"{ctx.author.mention}, acquired {name} for {required_talisman}{emoji_t}"
+                    )
+                    await ctx.channel.send(embed=embed)
+
+            elif talisman < required_talisman:
+                embed = discord.Embed(
+                    title="Insufficient talisman", colour=discord.Colour(0xffe6a7),
+                    description=f"{user.mention}, shrine shikigamis to obtain more. "
+                                f"Lacks {required_talisman - talisman:,d}{emoji_t}"
+                )
+                await ctx.channel.send(embed=embed)
 
 
 def setup(client):
