@@ -160,6 +160,7 @@ class Clock(commands.Cog):
 
         if hour_minute == "00:00":
             await Admin(self.client).reset_daily()
+            await Admin(self.client).reset_boss()
             await Library(self.client).post_new_table_of_content()
             await Economy(self.client).frame_automate()
 

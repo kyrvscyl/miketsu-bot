@@ -9,6 +9,7 @@ import random
 import discord
 from discord.ext import commands
 
+from cogs.admin import Admin
 from cogs.mongo.db import users, boss, books
 from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a, emoji_f
 
@@ -292,6 +293,13 @@ class Encounter(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         self.client.get_command("encounter").reset_cooldown(ctx)
+
+    async def boss_daily_reset_check(self):
+        survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
+        discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
+
+        if survivability == 0 and discoverability == 0:
+            await Admin(self.client).reset_boss()
 
     async def boss_roll(self, discoverer, ctx):
 
