@@ -523,20 +523,21 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["shikigamis", "shikis"])
     @commands.guild_only()
-    async def shikigami_list_show(self, ctx, arg1, user: discord.User = None):
+    async def shikigami_list_show(self, ctx, arg1, member: discord.Member = None):
 
         rarity = str(arg1.upper())
 
-        if user is None:
+        if member is None:
             await self.shikigami_list_post(ctx.author, rarity, ctx)
 
         else:
-            await self.shikigami_list_post(user, rarity, ctx)
+            await self.shikigami_list_post(member, rarity, ctx)
 
-    async def shikigami_list_post(self, user, rarity, ctx):
+    async def shikigami_list_post(self, member, rarity, ctx):
+
         entries = users.aggregate([{
             "$match": {
-                "user_id": str(user.id)}}, {
+                "user_id": str(member.id)}}, {
             "$unwind": {
                 "path": "$shikigami"}}, {
             "$match": {
@@ -544,11 +545,9 @@ class Economy(commands.Cog):
             "$project": {
                 "_id": 0,
                 "shikigami.name": 1,
-                "shikigami.owned": 1,
-                "shikigami.rarity": rarity
+                "shikigami.owned": 1
             }
-        }
-        ])
+        }])
 
         user_shikigamis = []
         for entry in entries:
@@ -562,8 +561,8 @@ class Economy(commands.Cog):
 
         icon_url = "https://i.imgur.com/CSMZAjb.png"
         user_shikigamis_page = 1
-        embed = discord.Embed(color=user.colour, description="".join(description[0:10]))
-        embed.set_author(icon_url=user.avatar_url, name=f"{user.display_name}'s shikigamis")
+        embed = discord.Embed(color=member.colour, description="".join(description[0:10]))
+        embed.set_author(icon_url=member.avatar_url, name=f"{member.display_name}'s shikigamis")
         embed.set_footer(
             text=f"Rarity: {rarity.upper()} - Page: {user_shikigamis_page}",
             icon_url=icon_url
@@ -590,8 +589,8 @@ class Economy(commands.Cog):
 
                 start = user_shikigamis_page * 10 - 10
                 end = user_shikigamis_page * 10
-                embed = discord.Embed(color=user.colour, description="".join(description[start:end]))
-                embed.set_author(icon_url=user.avatar_url, name=f"{user.display_name}'s Shikigamis")
+                embed = discord.Embed(color=member.colour, description="".join(description[start:end]))
+                embed.set_author(icon_url=member.avatar_url, name=f"{member.display_name}'s Shikigamis")
                 embed.set_footer(
                     text=f"Rarity: {rarity.upper()} - Page: {user_shikigamis_page}",
                     icon_url=icon_url
@@ -719,7 +718,7 @@ class Economy(commands.Cog):
             await evolve_shikigami(ctx, rarity, evo, user, query, count)
 
     @commands.command(aliases=["shrine"])
-    @commands.is_owner()
+    @commands.guild_only()
     async def shrine_shikigami(self, ctx, arg1="", *, args=""):
 
         user = ctx.author
@@ -744,9 +743,10 @@ class Economy(commands.Cog):
             embed.add_field(
                 name="Rarity :: Talisman",
                 value="```"
-                      "SSR    ::  100,000\n"
-                      "SR     ::    5,000\n"
-                      "R      ::      750\n"
+                      "SP     ::  15,000\n"
+                      "SSR    ::  10,000\n"
+                      "SR     ::    250\n"
+                      "R      ::     50\n"
                       "```",
                 inline=False
             )
