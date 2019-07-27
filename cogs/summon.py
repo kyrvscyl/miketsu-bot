@@ -10,25 +10,30 @@ from discord.ext import commands
 from cogs.mongo.db import users, streak, shikigami
 from cogs.startup import emoji_a, pluralize
 
+
+def get_not_shrine_rarity(rarity):
+    query_ssr_not_shrine = [{
+        '$match': {'rarity': rarity}}, {'$unwind': {'path': '$shikigami'}}, {
+        '$match': {'shikigami.shrine': False}}, {'$project': {'shikigami.name': 1}}
+    ]
+    return query_ssr_not_shrine
+
+
 pool_sp = []
-for shiki in shikigami.find({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1}):
-    for entry in shiki["shikigami"]:
-        pool_sp.append(entry["name"])
+for shiki in shikigami.aggregate(get_not_shrine_rarity("SP")):
+    pool_sp.append(shiki["shikigami"]["name"])
 
 pool_ssr = []
-for shiki in shikigami.find({"rarity": "SSR"}, {"_id": 0, "shikigami.name": 1}):
-    for entry in shiki["shikigami"]:
-        pool_ssr.append(entry["name"])
+for shiki in shikigami.aggregate(get_not_shrine_rarity("SSR")):
+    pool_ssr.append(shiki["shikigami"]["name"])
 
 pool_sr = []
-for shiki in shikigami.find({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1}):
-    for entry in shiki["shikigami"]:
-        pool_sr.append(entry["name"])
+for shiki in shikigami.aggregate(get_not_shrine_rarity("SR")):
+    pool_sr.append(shiki["shikigami"]["name"])
 
 pool_r = []
-for shiki in shikigami.find({"rarity": "R"}, {"_id": 0, "shikigami.name": 1}):
-    for entry in shiki["shikigami"]:
-        pool_r.append(entry["name"])
+for shiki in shikigami.aggregate(get_not_shrine_rarity("R")):
+    pool_r.append(shiki["shikigami"]["name"])
 
 caption = open("lists/summon.lists")
 summon_caption = caption.read().splitlines()
