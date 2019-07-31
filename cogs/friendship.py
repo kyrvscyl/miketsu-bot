@@ -80,7 +80,7 @@ class Friendship(commands.Cog):
     @commands.guild_only()
     async def friendship_check_sail(self, ctx):
 
-        ships = friendship.find({"level": {"$gt": 1}}, {"code": {"$regex": f".*{ctx.author.id}.*"}})
+        ships = friendship.find({"level": {"$gt": 1}, "code": {"$regex": f".*{ctx.author.id}.*"}})
         ships_count = ships.count()
         total_rewards = 0
 

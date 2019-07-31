@@ -64,19 +64,19 @@ class Error(commands.Cog):
         link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
         embed = discord.Embed(
             colour=discord.Colour(0xffe6a7),
-            title=f"Error Report",
+            title=f"Command Error Report",
             timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
         )
         embed.add_field(
-            name=f"Function: {ctx.command}",
+            name=f"function call: {ctx.command}",
             value=error
         )
         embed.add_field(
             name=f"Error Traceback",
             value=f"User: {ctx.author} | {ctx.author.id}\n"
-                  f"Guild: {ctx.message.guild} | {ctx.guild.id}"
+                  f"Guild: {ctx.message.guild} | {ctx.guild.id}\n"
                   f"Channel: {ctx.channel.name} | {ctx.channel.id}\n"
-                  f"Source: [link]({link})"
+                  f"Source: [message link]({link})"
         )
         await channel.send(embed=embed)
 
