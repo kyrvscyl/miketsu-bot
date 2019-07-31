@@ -25,7 +25,6 @@ noun = ["custody", "care", "control", "ownership"]
 comment = ["Sneaky!", "Gruesome!", "Madness!"]
 primary_guild = "412057028887052288"
 
-
 shrinable_shikigamis = []
 query_shrinable = [{
     '$unwind': {
@@ -38,6 +37,10 @@ query_shrinable = [{
 }]
 for document in shikigami.aggregate(query_shrinable):
     shrinable_shikigamis.append(document["shikigami"]["name"])
+
+
+def check_if_user_has_prayers(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "prayers": 1})["prayers"] > 0
 
 
 def get_evo_link(evolution):
@@ -117,7 +120,7 @@ async def profile_post(member, ctx):
         "_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
         "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
         "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
-        "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1
+        "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1
     })
 
     ships_count = friendship.find({"code": {"$regex": f".*{ctx.author.id}.*"}}).count()
@@ -135,6 +138,7 @@ async def profile_post(member, ctx):
     encounter_ticket = profile["encounter_ticket"]
     friendship_pass = profile["friendship_pass"]
     talismans = profile["talisman"]
+    prayers = profile["prayers"]
 
     embed = discord.Embed(color=member.colour)
 
@@ -170,8 +174,8 @@ async def profile_post(member, ctx):
         value=f"On Hand: {amulets} | Used: {amulets_spent:,d}"
     )
     embed.add_field(
-        name=f"💗 | 🎟 | 🎫 | 🚢",
-        value=f"{friendship_pass} | {realm_ticket:,d} | {encounter_ticket:,d} | {ships_count}",
+        name=f"💗 | 🎟 | 🎫 | 🚢 | 🙏",
+        value=f"{friendship_pass} | {realm_ticket:,d} | {encounter_ticket:,d} | {ships_count} | {prayers}",
     )
     embed.add_field(
         name=f"{emoji_f} | {emoji_t} | {emoji_m} | {emoji_j} | {emoji_c}",
@@ -203,13 +207,13 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
             users.update_one({
                 "user_id": str(user.id),
                 "shikigami.name": query}, {
-                    "$inc": {
-                        "shikigami.$.owned": -(rarity_count - 1),
-                        f"{rarity}": -(rarity_count - 1)
-                    },
-                    "$set": {
-                        "shikigami.$.evolved": "True"
-                    }
+                "$inc": {
+                    "shikigami.$.owned": -(rarity_count - 1),
+                    f"{rarity}": -(rarity_count - 1)
+                },
+                "$set": {
+                    "shikigami.$.evolved": "True"
+                }
             })
 
             shikigami_profile = shikigami.find_one({
@@ -245,7 +249,6 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
 
 
 async def frame_starlight(guild, spell_spam_channel):
-
     starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
 
     streak_list = []
@@ -301,7 +304,6 @@ async def frame_starlight(guild, spell_spam_channel):
 
 
 async def frame_blazing(guild, spell_spam_channel):
-
     blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
 
     ssr_list = []
@@ -357,6 +359,74 @@ class Economy(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    @commands.command(aliases=["pray"])
+    @commands.guild_only()
+    @commands.check(check_if_user_has_prayers)
+    async def pray_use(self, ctx):
+
+        embed = discord.Embed(
+            title="Pray to the Goddess of Hope and Prosperity!",
+            color=ctx.author.colour,
+            description="45% chance to obtain rich rewards"
+        )
+        msg = await ctx.channel.send(embed=embed)
+        rewards_emoji = [emoji_j, emoji_f, emoji_a, emoji_c, emoji_t, emoji_m]
+
+        rewards_selection = []
+        for x in range(0, 3):
+            emoji = random.choice(rewards_emoji)
+            await msg.add_reaction(emoji.replace("<", "").replace(">", ""))
+            rewards_emoji.remove(emoji)
+            rewards_selection.append(emoji)
+
+        def check(r, u):
+            return str(r.emoji) in rewards_selection and u == ctx.author
+
+        def get_rewards(y):
+            dictionary1 = {
+                emoji_j: 250,
+                emoji_f: 50,
+                emoji_a: 3,
+                emoji_c: 450000,
+                emoji_t: 1500,
+                emoji_m: 150
+            }
+            dictionary2 = {
+                emoji_j: "jades",
+                emoji_f: "friendship",
+                emoji_a: "amulets",
+                emoji_c: "coins",
+                emoji_t: "talisman",
+                emoji_m: "medals"
+            }
+            return dictionary1[y], dictionary2[y]
+
+        try:
+            roll = random.randint(1, 100)
+            reaction, user = await self.client.wait_for("reaction_add", timeout=150, check=check)
+        except asyncio.TimeoutError:
+            return
+
+        else:
+            users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"prayers": -1}})
+
+            if roll >= 55:
+                embed = discord.Embed(
+                    title=f"Results", colour=discord.Colour(0x3ac87f),
+                    description=f"||Sometimes, you have to pray harder to be heard||"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                amount, rewards = get_rewards(str(reaction.emoji))
+                embed = discord.Embed(
+                    title=f"Results", colour=discord.Colour(0x3ac87f),
+                    description=f"||Your prayer has been heard, you obtained {amount}{str(reaction.emoji)}||"
+                )
+                users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {rewards: amount}})
+                await ctx.channel.send(embed=embed)
+                return
 
     @commands.command(aliases=["issue"])
     @commands.is_owner()

@@ -86,14 +86,26 @@ class Error(commands.Cog):
     async def on_command_error(self, ctx, error):
 
         if isinstance(error, commands.CheckFailure):
-            await self.submit_error(ctx, error)
+
+            if str(ctx.command) == "pray_use":
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    description=f"{ctx.author.mention}, no more prayers today 🙏"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.NotOwner):
             await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
 
-            if str(ctx.command) == "encounter_search":
+            if str(ctx.command) in [
+                "encounter_search",
+                "summon_perform"
+            ]:
                 return
 
             else:

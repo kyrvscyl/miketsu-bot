@@ -47,8 +47,10 @@ def generate_weather(hour):
 
 
 def get_emoji(hours, minutes):
-    list_clock = ["", "", "", "🕐", "🕜", "🕑", "🕝", "🕒", "🕞", "🕓", "🕟", "🕔", "🕠", "🕕",
-                  "🕡", "🕖", "🕢", "🕗", "🕣", "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"]
+    list_clock = [
+        "", "", "", "🕐", "🕜", "🕑", "🕝", "🕒", "🕞", "🕓", "🕟", "🕔", "🕠", "🕕",
+        "🕡", "🕖", "🕢", "🕗", "🕣", "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"
+    ]
 
     if int(minutes) >= 30:
         emoji_clock_index = (int(hours) * 2) + 2
@@ -157,9 +159,9 @@ class Clock(commands.Cog):
 
         if hour_minute == "00:00":
             await Economy(self.client).frame_automate()
-            await Library(self.client).post_new_table_of_content()
             await Admin(self.client).reset_daily()
             await reset_boss()
+            await Library(self.client).post_new_table_of_content()
 
         if hour_minute == "19:00":
             await Castle(self.client).transformation_start()
