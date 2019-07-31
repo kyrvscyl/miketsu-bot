@@ -31,7 +31,6 @@ def get_raid_count(victim):
     return request["raided_count"]
 
 
-
 async def raid_giverewards_victim_as_winner(victim, raider):
     users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": 50000, "jades": 100, "medals": 50}})
     users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})

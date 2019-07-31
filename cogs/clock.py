@@ -10,7 +10,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.admin import Admin
+from cogs.admin import Admin, reset_boss
 from cogs.castle import Castle
 from cogs.economy import Economy
 from cogs.library import Library
@@ -114,10 +114,7 @@ class Clock(commands.Cog):
 
     async def clear_secrets(self):
         query = books.find({}, {
-            "_id": 0,
-            "eeylops-owl-emporium": 1,
-            "ollivanders": 1,
-            "gringotts-bank": 1
+            "_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1
         })
 
         for entry in query:
@@ -159,10 +156,10 @@ class Clock(commands.Cog):
             await owls_restock()
 
         if hour_minute == "00:00":
-            await Admin(self.client).reset_daily()
-            await Admin(self.client).reset_boss()
-            await Library(self.client).post_new_table_of_content()
             await Economy(self.client).frame_automate()
+            await Library(self.client).post_new_table_of_content()
+            await Admin(self.client).reset_daily()
+            await reset_boss()
 
         if hour_minute == "19:00":
             await Castle(self.client).transformation_start()

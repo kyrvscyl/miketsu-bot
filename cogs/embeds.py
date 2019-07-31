@@ -325,17 +325,17 @@ class Embeds(commands.Cog):
 
         request = books.find_one({
             "server": f"{ctx.guild.id}"}, {
-            "_id": 0, "messages.special_roles": 1, "channels.sorting-hat": 1
+            "_id": 0, "messages.special_roles": 1, "channels.sorting-hat": 1, "co-op-team": 1
         })
         sorting_id = request["channels"]["sorting-hat"]
+        coop_channel_id = request["channels"]["co-op-team"]
         special_roles_id = request["channels"]["special_roles"]
         sorting_channel = self.client.get_channel(int(sorting_id))
 
         embed = discord.Embed(
             colour=discord.Colour(0x50e3c2),
             title="Special Roles",
-            description="Members can react to multiple roles below\n"
-                        "Clearing your reaction removes the role"
+            description="Members can react to multiple roles below\nClearing your reaction removes the role"
         )
         embed.add_field(
             name="📚 Apprentice",
@@ -349,12 +349,12 @@ class Embeds(commands.Cog):
         )
         embed.add_field(
             name="🔍 Co-op Find",
-            value="Mentionable role if you're looking for cooperative teams",
+            value=f"Mentionable role if you're looking for cooperative teams, use this at <#{coop_channel_id}>",
             inline=False
         )
         embed.add_field(
             name="🏁 Boss Busters",
-            value="Mentionable role for fake rare boss assembly spawns",
+            value="Mentionable role for fake rare boss assembly spawns, this is a dangerous role to acquire",
             inline=False
         )
         embed.add_field(
@@ -364,7 +364,8 @@ class Embeds(commands.Cog):
         )
         embed.add_field(
             name="🎰 Big Spenders",
-            value="Auto-pinged whenever a new round of showdown bidding has started",
+            value="Auto-pinged whenever a new round of showdown bidding has started or during Fortune Temple, Shrine, "
+                  "& Coin Chaos resets, and a couple of other event ending reminders",
             inline=False
         )
         special_select_msg = await sorting_channel.fetch_message(int(special_roles_id))

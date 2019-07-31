@@ -22,7 +22,6 @@ failed_lists_.close()
 
 
 async def mike_shoot(user, guild, channel, args):
-
     msg_formatted = args.lower().split(" ")
 
     for word in msg_formatted:
@@ -68,7 +67,7 @@ async def mike_how_hot(guild, channel, msg):
 
             embed = discord.Embed(
                 color=member.colour,
-                title=f"**{member.display_name}** is **{hot:.2f}%** hot {emoji} today"
+                title=f"**{member.display_name}** is **{hot:.2f}%** hot {emoji}"
             )
             await channel.send(embed=embed)
             break

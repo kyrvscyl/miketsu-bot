@@ -81,7 +81,8 @@ class Startup(commands.Cog):
         embed.set_footer(text="*Head commands")
         embed.add_field(
             name="Economy",
-            value="*daily, weekly, profile, display, buy, summon, evolve, friendship, leaderboard, shikigamis, shrine*",
+            value="*daily, weekly, profile, display, buy, summon, "
+                  "evolve, friendship, leaderboard, shikigamis, shrine, sail*",
             inline=False
         )
         embed.add_field(

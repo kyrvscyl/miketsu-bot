@@ -59,26 +59,43 @@ class Error(commands.Cog):
         self.client = client
 
     async def submit_error(self, ctx, error):
+
         channel = self.client.get_channel(584631677804871682)
-        embed = discord.Embed(color=ctx.author.colour, title=f"{ctx.author} triggered an error")
+        link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
+        embed = discord.Embed(
+            colour=discord.Colour(0xffe6a7),
+            title=f"Error Report",
+            timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+        )
         embed.add_field(
-            name=f"Command: {ctx.command}",
+            name=f"Function: {ctx.command}",
             value=error
         )
-        embed.set_footer(text="{}".format(get_time().strftime("%d.%b %Y %H:%M EST")))
+        embed.add_field(
+            name=f"Error Traceback",
+            value=f"User: {ctx.author} | {ctx.author.id}\n"
+                  f"Guild: {ctx.message.guild} | {ctx.guild.id}"
+                  f"Channel: {ctx.channel.name} | {ctx.channel.id}\n"
+                  f"Source: [link]({link})"
+        )
         await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
 
         if isinstance(error, commands.CheckFailure):
-            logging(file_name, get_f(), f"commands.CheckFailure for {ctx.command} from {ctx.author.name}")
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.NotOwner):
-            logging(file_name, get_f(), "commands.NotOwner")
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
-            await self.submit_error(ctx, error)
+
+            if str(ctx.command) == "encounter_search":
+                return
+
+            else:
+                await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.MissingRequiredArgument):
 
@@ -213,10 +230,10 @@ class Error(commands.Cog):
             await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandNotFound):
-            logging(file_name, get_f(), f"commands.CommandNotFound: {ctx.command}")
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.ExtensionError):
-            logging(file_name, get_f(), f"commands.ExtensionError: {ctx.message.content}")
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.BadArgument):
             await self.submit_error(ctx, error)
@@ -231,7 +248,7 @@ class Error(commands.Cog):
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(0xffe6a7),
-                    description="That member doesn't exist in this guild"
+                    description="That member doesn't exist nor has a profile in this guild"
                 )
                 await ctx.channel.send(embed=embed)
 

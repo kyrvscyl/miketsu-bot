@@ -20,8 +20,6 @@ list_stickers = []
 for sticker in actions:
     list_stickers.append("`{}`, ".format(sticker))
 
-description = "".join(list_stickers)[:-2:]
-
 
 class Emotes(commands.Cog):
 
@@ -31,6 +29,7 @@ class Emotes(commands.Cog):
     @commands.command(aliases=["sticker", "stickers"])
     @commands.guild_only()
     async def sticker_help(self, ctx):
+        description = "".join(list_stickers)[:-2:]
         embed = discord.Embed(
             color=0xffe6a7, title="stickers",
             description="posts a reaction image embed\n"

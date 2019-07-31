@@ -9,7 +9,7 @@ import random
 import discord
 from discord.ext import commands
 
-from cogs.admin import Admin
+from cogs.admin import reset_boss
 from cogs.mongo.db import users, boss, books
 from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a, emoji_f
 
@@ -299,7 +299,7 @@ class Encounter(commands.Cog):
         discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
 
         if survivability == 0 and discoverability == 0:
-            await Admin(self.client).reset_boss()
+            await reset_boss()
 
     async def boss_roll(self, discoverer, ctx):
 
@@ -516,7 +516,7 @@ class Encounter(commands.Cog):
             embed = discord.Embed(
                 color=player_.colour,
                 description=f"*{player_.mention} "
-                f"{random.choice(attack_verb)} {boss_select}, dealing {round(player_dmg)} damage!*"
+                f"{random.choice(attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
             )
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(3)

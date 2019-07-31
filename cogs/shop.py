@@ -81,6 +81,7 @@ class Economy(commands.Cog):
             title="Mystic Trader", colour=discord.Colour(0xffe6a7),
             description="exchange various economy items"
         )
+        embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/8/86/246a.jpg")
         embed.add_field(
             inline=False,
             name="Trading List",

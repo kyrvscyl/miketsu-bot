@@ -18,6 +18,10 @@ for document in books.find({}, {"_id": 0, "channels.shard-trading": 1}):
         continue
 
 
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+
+
 def get_time_est():
     tz_target = pytz.timezone("America/Atikokan")
     return datetime.now(tz=tz_target)
@@ -62,14 +66,13 @@ class Events(commands.Cog):
             shard_seeker_role = guild.get_role(int(shard_seeker_id))
 
             content = f"{shard_seeker_role.mention}"
-            embed = discord.Embed(color=user.colour, description=description)
+            embed = discord.Embed(color=user.colour, description=description, timestamp=get_timestamp())
             embed.set_author(
                 name=f"{user.display_name} is looking for shards!",
                 icon_url=user.avatar_url
             )
-            embed.set_footer(
-                text=f"#{shard_trading_channel.name} | {get_time_est().strftime('%b %d, %Y %H:%M EST')}"
-            )
+            embed.set_footer(text=f"#{shard_trading_channel.name}")
+
             if len(attachments) > 0:
                 embed.set_image(url=attachments[0]["url"])
 
@@ -78,40 +81,22 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
 
-        request = books.find_one({
-            "server": f"{member.guild.id}"}, {
-            "_id": 0,
-            "channels": 1,
-            "roles": 1,
-            "letters": 1
+        request = books.find_one({"server": f"{member.guild.id}"}, {
+            "_id": 0, "channels": 1, "roles": 1, "letters": 1
         })
-
-        common_room_id = request["channels"]["the-common-room"]
-        record_scroll_id = request["channels"]["scroll-of-everything"]
-        sorting_hat_id = request["channels"]["sorting-hat"]
-        welcome_id = request["channels"]["welcome"]
-        no_maj_role_id = request["roles"]["no-maj"]
-        acceptance_letter = request["letters"]["acceptance"].replace("\\n", "\n")
-        welcome_message = request["letters"]["welcome"]
-
-        embed1 = discord.Embed(
-            color=0xffff80,
-            title="✉ Acceptance Letter",
-            description=acceptance_letter.format(member.display_name, welcome_id, sorting_hat_id)
-        )
-
-        embed2 = discord.Embed(color=0xffffff)
-        embed2.set_author(
-            name=f"{member} has joined the house!"
-        )
-        embed2.set_footer(
-            text=f"{member.guild.member_count} members | {get_time_est().strftime('%b %d, %Y %H:%M EST')}",
-            icon_url=member.avatar_url
-        )
-
-        embed3 = discord.Embed(color=0xffffff, description=welcome_message.format(member.mention))
+        try:
+            common_room_id = request["channels"]["the-common-room"]
+            record_scroll_id = request["channels"]["scroll-of-everything"]
+            sorting_hat_id = request["channels"]["sorting-hat"]
+            welcome_id = request["channels"]["welcome"]
+            no_maj_role_id = request["roles"]["no-maj"]
+            acceptance_letter = request["letters"]["acceptance"].replace("\\n", "\n")
+            welcome_message = request["letters"]["welcome"]
+        except KeyError:
+            return
 
         try:
+            embed3 = discord.Embed(color=0xffffff, description=welcome_message.format(member.mention))
             common_room_channel = self.client.get_channel(int(common_room_id))
             await common_room_channel.send(embed=embed3)
         except AttributeError:
@@ -122,6 +107,11 @@ class Events(commands.Cog):
             pass
 
         try:
+            embed1 = discord.Embed(
+                color=0xffff80,
+                title="✉ Acceptance Letter",
+                description=acceptance_letter.format(member.display_name, welcome_id, sorting_hat_id)
+            )
             await member.send(embed=embed1)
         except discord.errors.Forbidden:
             pass
@@ -129,6 +119,15 @@ class Events(commands.Cog):
             pass
 
         try:
+            embed2 = discord.Embed(color=0xffffff, timestamp=get_timestamp())
+            embed2.set_author(
+                name=f"{member} has joined the house!"
+            )
+            embed2.set_footer(
+                text=f"{member.guild.member_count} members",
+                icon_url=member.avatar_url
+            )
+
             record_scroll_channel = self.client.get_channel(int(record_scroll_id))
             await record_scroll_channel.send(embed=embed2)
         except AttributeError:
@@ -149,18 +148,16 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        request = books.find_one({
-            "server": str(member.guild.id)}, {
-            "_id": 0,
-            "channels.scroll-of-everything": 1
+        request = books.find_one({"server": str(member.guild.id)}, {
+            "_id": 0, "channels.scroll-of-everything": 1
         })
         record_scroll_id = request["channels"]["scroll-of-everything"]
         record_scroll_channel = self.client.get_channel(int(record_scroll_id))
 
-        embed = discord.Embed(color=0xffffff)
+        embed = discord.Embed(color=0xffffff, timestamp=get_timestamp())
         embed.set_author(name=f"{member} [{member.display_name}] has left the house!")
         embed.set_footer(
-            text=f"{member.guild.member_count} members | {get_time_est().strftime('%b %d, %Y %H:%M EST')}",
+            text=f"{member.guild.member_count} members",
             icon_url=member.avatar_url
         )
 
@@ -190,15 +187,13 @@ class Events(commands.Cog):
             changed_role2 = list(set(before.roles) - set(after.roles))
 
             if not changed_role1:
-                embed = discord.Embed(
-                    color=0x50e3c2,
-                    title=f"Removed {changed_role2[0].name} role for {before.display_name}"
-                )
-                embed.set_footer(
-                    text=f"{get_time_est().strftime('%b %d, %Y %H:%M EST')}",
-                    icon_url=before.avatar_url
-                )
                 try:
+                    embed = discord.Embed(
+                        color=0x50e3c2,
+                        title=f"Removed {changed_role2[0].name} role for {before.display_name}",
+                        timestamp=get_timestamp()
+                    )
+                    embed.set_footer(icon_url=before.avatar_url)
                     await record_scroll_channel.send(embed=embed)
                 except AttributeError:
                     pass
@@ -208,15 +203,13 @@ class Events(commands.Cog):
                     pass
 
             elif not changed_role2:
-                embed = discord.Embed(
-                    color=0x50e3c2,
-                    title=f"Added {changed_role1[0].name} role for {before.display_name}"
-                )
-                embed.set_footer(
-                    text=f"{get_time_est().strftime('%b %d, %Y %H:%M EST')}",
-                    icon_url=before.avatar_url
-                )
                 try:
+                    embed = discord.Embed(
+                        color=0x50e3c2,
+                        title=f"Added {changed_role1[0].name} role for {before.display_name}",
+                        timestamp=get_timestamp()
+                    )
+                    embed.set_footer(icon_url=before.avatar_url)
                     await record_scroll_channel.send(embed=embed)
                 except AttributeError:
                     pass
@@ -229,15 +222,13 @@ class Events(commands.Cog):
                     auror_department_id = request["channels"]["auror-department"]
                     auror_department_channel = self.client.get_channel(int(auror_department_id))
 
-                    embed = discord.Embed(
-                        color=0x50e3c2,
-                        title=f"{before.display_name} has been promoted to ⚜ Auror"
-                    )
-                    embed.set_footer(
-                        text=f"{get_time_est().strftime('%b %d, %Y %H:%M EST')}",
-                        icon_url=before.avatar_url
-                    )
                     try:
+                        embed = discord.Embed(
+                            color=0x50e3c2,
+                            title=f"{before.display_name} has been promoted to ⚜ Auror",
+                            timestamp=get_timestamp()
+                        )
+                        embed.set_footer(icon_url=before.avatar_url)
                         await auror_department_channel.send(embed=embed)
                     except AttributeError:
                         pass
@@ -246,29 +237,39 @@ class Events(commands.Cog):
                     except discord.errors.HTTPException:
                         pass
 
-        elif before.nick != after.nick:
-            embed = discord.Embed(
-                color=0x7ed321,
-                title="Before | New nickname:",
-                description=f"{before.display_name} | {after.display_name}"
-            )
-            embed.set_footer(
-                text=f"{get_time_est().strftime('%b %d, %Y %H:%M EST')}",
-                icon_url=before.avatar_url
-            )
-            await record_scroll_channel.send(embed=embed)
-
         elif before.name != after.name:
-            embed = discord.Embed(
-                color=0x7ed321,
-                title="Before | New username:",
-                value=f"{before.name} | {after.name}"
-            )
-            embed.set_footer(
-                text=f"{get_time_est().strftime('%b %d, %Y %H:%M EST')}",
-                icon_url=before.avatar_url
-            )
-            await record_scroll_channel.send(embed=embed)
+            try:
+                embed = discord.Embed(
+                    color=0x7ed321,
+                    title="Before | New username:",
+                    value=f"{before.name} | {after.name}",
+                    timestamp=get_timestamp()
+                )
+                embed.set_footer(icon_url=before.avatar_url)
+                await record_scroll_channel.send(embed=embed)
+            except AttributeError:
+                pass
+            except discord.errors.Forbidden:
+                pass
+            except discord.errors.HTTPException:
+                pass
+
+        elif before.nick != after.nick:
+            try:
+                embed = discord.Embed(
+                    color=0x7ed321,
+                    title="Before | New nickname:",
+                    description=f"{before.display_name} | {after.display_name}",
+                    timestamp=get_timestamp()
+                )
+                embed.set_footer(icon_url=before.avatar_url)
+                await record_scroll_channel.send(embed=embed)
+            except AttributeError:
+                pass
+            except discord.errors.Forbidden:
+                pass
+            except discord.errors.HTTPException:
+                pass
 
 
 def setup(client):

@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users, friendship
-from cogs.startup import emoji_f
+from cogs.startup import emoji_f, emoji_j, pluralize
 
 
 def get_bond(x, y):
@@ -74,6 +74,28 @@ class Friendship(commands.Cog):
             icon_url=self.client.get_user(int(ship_profile["shipper1"])).avatar_url
         )
         embed.set_thumbnail(url=self.client.get_user(int(ship_profile['shipper2'])).avatar_url)
+        await ctx.channel.send(embed=embed)
+
+    @commands.command(aliases=["sail"])
+    @commands.guild_only()
+    async def friendship_check_sail(self, ctx):
+
+        ships = friendship.find({"level": {"$gt": 1}}, {"code": {"$regex": f".*{ctx.author.id}.*"}})
+        ships_count = ships.count()
+        total_rewards = 0
+
+        for ship in ships:
+            total_rewards += ship["level"] * 25
+
+        noun = pluralize("ship", ships_count)
+        embed = discord.Embed(
+            color=ctx.author.colour,
+            description=f"Total daily ship sail rewards: {total_rewards:,d}{emoji_j}"
+        )
+        embed.set_footer(
+            text=f"{ships_count} {noun}",
+            icon_url=ctx.author.avatar_url
+        )
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["ship"])

@@ -17,6 +17,7 @@ async def add_experience(user, exp):
 
 
 async def level_up(user, ctx):
+
     profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
     exp = profile["experience"]
     level = profile["level"]
@@ -27,9 +28,16 @@ async def level_up(user, ctx):
 
     if level < level_end:
         level_next = 5 * (round(((level + 2) ** 2.811909279) / 5))
-        users.update_one({"user_id": str(user.id)}, {"$set": {"level_exp_next": level_next, "level": level_end}})
-        users.update_one({"user_id": str(user.id)},
-                         {"$inc": {"jades": 150, "amulets": 10, "coins": 100000}})
+        users.update_one({
+            "user_id": str(user.id)}, {
+            "$set": {
+                "level_exp_next": level_next,
+                "level": level_end
+            },
+            "$inc": {
+                "jades": 150, "amulets": 10, "coins": 100000
+            }
+        })
 
         try:
             await ctx.add_reaction("⤴")
@@ -64,7 +72,8 @@ async def create_user(user):
             "daily": False,
             "weekly": False,
             "raided_count": 0,
-            "friendship_pass": 0
+            "friendship_pass": 0,
+            "display": "None"
         }
         users.insert_one(profile)
 
@@ -74,24 +83,22 @@ class Level(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-
     @commands.Cog.listener()
     async def on_member_join(self, member):
         await create_user(member)
 
-
     @commands.Cog.listener()
-    async def on_message(self, ctx):
+    async def on_message(self, message):
 
-        if ctx.author == self.client.user:
+        if message.author == self.client.user:
             return
 
-        elif ctx.author.bot is True:
+        elif message.author.bot is True:
             return
 
-        await create_user(ctx.author)
-        await add_experience(ctx.author, 5)
-        await level_up(ctx.author, ctx)
+        await create_user(message.author)
+        await add_experience(message.author, 5)
+        await level_up(message.author, message)
 
 
 def setup(client):

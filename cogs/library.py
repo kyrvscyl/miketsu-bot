@@ -8,7 +8,7 @@ import discord
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.db import library, users, daily, books
+from cogs.mongo.db import library, books
 
 lists_souls = []
 lists_souls_raw = []
@@ -17,18 +17,8 @@ for soul in library.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_i
     lists_souls_raw.append(soul["index"].lower())
 
 
-async def post_process_books(user, ctx, query):
+async def post_process_books(ctx, query):
     library.update_one(query, {"$inc": {"borrows": 1}})
-    profile = daily.find_one({"key": "library", f"{user.id}": {"$type": "int"}}, {"_id": 0, f"{user.id}": 1})
-
-    if profile[f"{user.id}"] <= 3:
-        users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": 50}})
-        daily.update_one({
-            "key": "library"}, {
-            "$inc": {
-                f"{user.id}": 1
-            }
-        })
     await ctx.message.delete()
 
 
@@ -41,9 +31,12 @@ def check_if_restricted_section(ctx):
 
 
 async def post_table_of_content_restricted(channel):
-    webhooks = await channel.webhooks()
-    bukkuman = webhooks[0]
-    webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+    try:
+        webhooks = await channel.webhooks()
+        bukkuman = webhooks[0]
+        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+    except AttributeError:
+        return False
 
     description = \
         "• To open a book use `;open [section] [index]`\n" \
@@ -75,17 +68,18 @@ async def post_table_of_content_restricted(channel):
         name=":notebook: The Dark Arts Outsmarted `[DAO]`",
         value="• `[1]` True Orochi Co-op Carry"
     )
-    embed.set_footer(
-        text="grants 50 exp per book opened (max of 150/day)"
-    )
     webhook.add_embed(embed)
     webhook.execute()
+    return True
 
 
 async def post_table_of_content_reference(channel):
-    webhooks = await channel.webhooks()
-    bukkuman = webhooks[0]
-    webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+    try:
+        webhooks = await channel.webhooks()
+        bukkuman = webhooks[0]
+        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+    except AttributeError:
+        return False
 
     lists_souls_formatted = ", ".join(lists_souls)
     description = \
@@ -121,11 +115,9 @@ async def post_table_of_content_reference(channel):
               "• `[3]` Predicting the Unpredictable: Summon Odds\n"
               "• `[4]` Spellman's Syllabary: Contractions"
     )
-    embed.set_footer(
-        text="grants 50 exp per book opened (max of 150/day)"
-    )
     webhook.add_embed(embed)
     webhook.execute()
+    return True
 
 
 class Library(commands.Cog):
@@ -255,7 +247,9 @@ class Library(commands.Cog):
                     pass
 
                 if "table of" not in title.lower():
-                    await post_table_of_content_reference(channel)
+                    check = await post_table_of_content_reference(channel)
+                    if check is False:
+                        continue
 
         for section in restricted_sections:
             channel = self.client.get_channel(int(section))
@@ -271,7 +265,9 @@ class Library(commands.Cog):
                     pass
 
                 if "table of" not in title.lower():
-                    await post_table_of_content_restricted(channel)
+                    check = await post_table_of_content_restricted(channel)
+                    if check is False:
+                        continue
 
     @commands.command(aliases=["guides", "guide"])
     @commands.guild_only()
@@ -309,7 +305,6 @@ class Library(commands.Cog):
         if check_if_reference_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
-            user = ctx.message.author
             query = {"section": arg1.lower(), "index": args.lower()}
 
             if arg1.lower() == "pb" and args.lower() == "bgt":
@@ -330,18 +325,17 @@ class Library(commands.Cog):
                     content=f"{book['content']} {contributor}",
                     file=file
                 )
-                await post_process_books(user, ctx, query)
+                await post_process_books(ctx, query)
 
             elif book is not None:
 
                 webhook = self.create_webhook_post(webhooks, book)
                 webhook.execute()
-                await post_process_books(user, ctx, query)
+                await post_process_books(ctx, query)
 
         elif check_if_restricted_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
-            user = ctx.message.author
             query = {"section": arg1.lower(), "index": args.lower()}
             book = library.find_one(query, {"_id": 0})
 
@@ -357,13 +351,13 @@ class Library(commands.Cog):
                     content=f"{book['content']}",
                     file=file
                 )
-                await post_process_books(user, ctx, query)
+                await post_process_books(ctx, query)
 
             elif book is not None:
 
                 webhook = self.create_webhook_post(webhooks, book)
                 webhook.execute()
-                await post_process_books(user, ctx, query)
+                await post_process_books(ctx, query)
 
 
 def setup(client):
