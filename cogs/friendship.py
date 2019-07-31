@@ -43,7 +43,7 @@ class Friendship(commands.Cog):
 
         ship_profile = friendship.find_one({
             "code": code}, {
-            "_id": 0, "shipper1": 1, "shipper2": 1, "points": 1, "level": 1, "ship_name": 1
+            "_id": 0, "shipper1": 1, "shipper2": 1, "points": 1, "level": 1, "ship_name": 1, "points_required": 1
         })
 
         list_rank = []
@@ -55,20 +55,16 @@ class Friendship(commands.Cog):
         if ship_profile['level'] > 1:
             rewards = str(ship_profile["level"] * 25) + " jades/day"
         else:
-            rewards = "Must be Level 2 and above"
+            rewards = "Must be Level 2 & above"
 
-        description = \
-            f"```" \
-                f"• Level:        :: {ship_profile['level']}\n" \
-                f"• Total Points: :: {ship_profile['points']}\n" \
-                f"• Server Rank:  :: {rank}\n" \
-                f"• Rewards       :: {rewards}" \
-                f"```"
+        description = f"```" \
+            f"• Level:        :: {ship_profile['level']}/5\n" \
+            f"• Total Points: :: {ship_profile['points']}/{ship_profile['points_required']}\n" \
+            f"• Server Rank:  :: {rank}\n" \
+            f"• Rewards       :: {rewards}" \
+            f"```"
 
-        embed = discord.Embed(
-            color=query1.colour,
-            description=description
-        )
+        embed = discord.Embed(color=query1.colour, description=description)
         embed.set_author(
             name=f"{ship_profile['ship_name']}",
             icon_url=self.client.get_user(int(ship_profile["shipper1"])).avatar_url

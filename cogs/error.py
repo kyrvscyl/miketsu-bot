@@ -69,14 +69,16 @@ class Error(commands.Cog):
         )
         embed.add_field(
             name=f"function call: {ctx.command}",
-            value=error
+            value=error,
+            inline=False
         )
         embed.add_field(
             name=f"Error Traceback",
             value=f"User: {ctx.author} | {ctx.author.id}\n"
                   f"Guild: {ctx.message.guild} | {ctx.guild.id}\n"
-                  f"Channel: {ctx.channel.name} | {ctx.channel.id}\n"
-                  f"Source: [message link]({link})"
+                  f"Channel: #{ctx.channel.name} | {ctx.channel.id}\n"
+                  f"Source: [message link]({link})",
+            inline=False
         )
         await channel.send(embed=embed)
 
@@ -230,15 +232,12 @@ class Error(commands.Cog):
             await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandNotFound):
-            await self.submit_error(ctx, error)
+            return
 
         elif isinstance(error, commands.ExtensionError):
             await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.BadArgument):
-            await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.UserInputError):
 
             if str(ctx.command) in [
                 "raid_perform_attack",
@@ -254,6 +253,9 @@ class Error(commands.Cog):
 
             else:
                 await self.submit_error(ctx, error)
+
+        elif isinstance(error, commands.UserInputError):
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandInvokeError):
 

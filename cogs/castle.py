@@ -60,7 +60,10 @@ class Castle(commands.Cog):
                 listings.update(entry)
 
         def generate_value_floors(floor):
-            value = ", ".join(listings[str(floor)])
+            try:
+                value = ", ".join(listings[str(floor)])
+            except KeyError:
+                value = "None"
             return value
 
         embed = discord.Embed(

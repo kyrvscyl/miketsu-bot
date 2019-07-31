@@ -2,6 +2,8 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
+import urllib.request
+
 import discord
 from discord.ext import commands
 
@@ -12,6 +14,30 @@ class Embeds(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    @commands.command(aliases=["pnotes"])
+    @commands.has_any_role("Head")
+    async def post_patch_notes(self, ctx):
+
+        link = "https://pastebin.com/raw/TYGAXGLN"
+        f = urllib.request.urlopen(link)
+        text = f.read().decode('utf-8')
+        split_text = text.replace("\r", "\\n").split("\n")
+        print(split_text)
+        max_embeds = round(len(text) / 1700)
+        description = ""
+
+        for x in range(1, max_embeds + 1):
+            for line in split_text:
+                description += line
+                if len(description) >= 1500:
+                    break
+                else:
+                    split_text.pop(0)
+
+            embed = discord.Embed(color=ctx.author.colour, description=description.replace("\\n", "\n"))
+            await ctx.channel.send(embed=embed)
+            description = ""
 
     @commands.command(aliases=["welcome"])
     @commands.is_owner()
