@@ -68,12 +68,12 @@ class Castle(commands.Cog):
             description=f"There is a total of {count} frames hanging in the castle."
         )
         embed.add_field(name="Floor 7", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 6", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 5", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 4", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 3", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 2", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 1", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 6", value="*{}*".format(generate_value_floors(6)), inline=False)
+        embed.add_field(name="Floor 5", value="*{}*".format(generate_value_floors(5)), inline=False)
+        embed.add_field(name="Floor 4", value="*{}*".format(generate_value_floors(4)), inline=False)
+        embed.add_field(name="Floor 3", value="*{}*".format(generate_value_floors(3)), inline=False)
+        embed.add_field(name="Floor 2", value="*{}*".format(generate_value_floors(2)), inline=False)
+        embed.add_field(name="Floor 1", value="*{}*".format(generate_value_floors(1)), inline=False)
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["wander"])
