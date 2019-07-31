@@ -94,6 +94,14 @@ async def boss_steal(assembly_players, boss_jadesteal, boss_coinsteal):
             users.update_one({"user_id": player_id}, {"$inc": {"coins": -boss_coinsteal}})
 
 
+async def boss_daily_reset_check():
+    survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
+    discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
+
+    if survivability == 0 and discoverability == 0:
+        await reset_boss()
+
+
 class Encounter(commands.Cog):
 
     def __init__(self, client):
@@ -117,7 +125,7 @@ class Encounter(commands.Cog):
                 description="Purchase at the shop to obtain more tickets"
             )
             await ctx.channel.send(embed=embed)
-            self.client.get_command("encounter").reset_cooldown(ctx)
+            self.client.get_command("encounter_search").reset_cooldown(ctx)
 
     async def encounter_roll(self, user, ctx):
 
@@ -232,7 +240,7 @@ class Encounter(commands.Cog):
                 await msg.delete()
                 break
 
-        self.client.get_command("encounter").reset_cooldown(ctx)
+        self.client.get_command("encounter_search").reset_cooldown(ctx)
 
     async def treasure_roll(self, user, ctx):
 
@@ -266,7 +274,7 @@ class Encounter(commands.Cog):
                 description=f"{user.mention}, the treasure you found turned into ashes 🔥"
             )
             await ctx.channel.send(embed=embed)
-            self.client.get_command("encounter").reset_cooldown(ctx)
+            self.client.get_command("encounter_search").reset_cooldown(ctx)
         else:
             await self.treasure_claim(user, offer_item, offer_amount, cost_item, cost_amount, ctx)
 
@@ -292,14 +300,7 @@ class Encounter(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        self.client.get_command("encounter").reset_cooldown(ctx)
-
-    async def boss_daily_reset_check(self):
-        survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
-        discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
-
-        if survivability == 0 and discoverability == 0:
-            await reset_boss()
+        self.client.get_command("encounter_search").reset_cooldown(ctx)
 
     async def boss_roll(self, discoverer, ctx):
 
@@ -346,14 +347,13 @@ class Encounter(commands.Cog):
         boss_exp = boss_profile["rewards"]["experience"]
         boss_jades = boss_profile["rewards"]["jades"]
         boss_medals = boss_profile["rewards"]["medals"]
-
         boss_hp_remaining = round(((boss_currenthp / boss_totalhp) * 100), 2)
-
         roles = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "roles.boss_busters": 1})["roles"]
+        content = f"<@&{roles['boss_busters']}>!"
 
         embed = discord.Embed(
             title="Encounter Boss", color=discoverer.colour,
-            description=f"<@&{roles['boss_busters']}>! The rare boss {boss_select} has been triggered!\n\n"
+            description=f"The rare boss {boss_select} has been triggered!\n\n"
             f"⏰ 3 minutes assembly time!"
         )
         embed.add_field(
@@ -375,7 +375,7 @@ class Encounter(commands.Cog):
         )
 
         await asyncio.sleep(2)
-        msg_boss = await ctx.channel.send(embed=embed)
+        msg_boss = await ctx.channel.send(content=content, embed=embed)
         await msg_boss.add_reaction("🏁")
 
         timer = 180
@@ -469,7 +469,7 @@ class Encounter(commands.Cog):
                         text=f"Discovered by {discoverer.display_name}",
                         icon_url=discoverer.avatar_url
                     )
-                    await msg_boss.edit(embed=embed)
+                    await msg_boss.edit(content=content, embed=embed)
 
                 count_players += 1
 
@@ -480,7 +480,7 @@ class Encounter(commands.Cog):
                 description=f"No players have joined the assembly.\nThe rare boss {boss_select} has fled."
             )
             await ctx.channel.send(embed=embed)
-            self.client.get_command("encounter").reset_cooldown(ctx)
+            self.client.get_command("encounter_search").reset_cooldown(ctx)
             status_set(False)
 
         else:
@@ -562,7 +562,7 @@ class Encounter(commands.Cog):
             })
 
             await ctx.channel.send(embed=embed)
-            self.client.get_command("encounter").reset_cooldown(ctx)
+            self.client.get_command("encounter_search").reset_cooldown(ctx)
             status_set(False)
 
         elif boss_currenthp == 0:
@@ -675,7 +675,7 @@ class Encounter(commands.Cog):
         except AttributeError:
             pass
 
-        self.client.get_command("encounter").reset_cooldown(ctx)
+        self.client.get_command("encounter_search").reset_cooldown(ctx)
         status_set(False)
 
     @commands.command(aliases=["binfo", "bossinfo"])
