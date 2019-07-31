@@ -9,28 +9,28 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import shikigamis
+from cogs.mongo.db import tokens
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-shikigami = os.path.basename(__file__)[:-3:]
-token = shikigamis.find_one({shikigami: {"$type": "string"}}, {"_id": 0, shikigami: 1})[shikigami]
+bot = os.path.basename(__file__)[:-3:]
+token = tokens.find_one({bot: {"$type": "string"}}, {"_id": 0, bot: 1})[bot]
 
-client = commands.Bot(command_prefix=";")
+prefix = ";"
+client = commands.Bot(command_prefix=prefix)
 client.remove_command("help")
 
 time_start = datetime.now()
 cogs_loaded = []
 
 for filename in sorted(os.listdir("./cogs")):
-    if filename.endswith(".py") and filename not in ["clock_test.py", "expecto.py", "owl.py"]:
+    if filename.endswith(".py"):
         client.load_extension(f"cogs.{filename[:-3]}")
         cogs_loaded.append(filename[:-3])
         print(f"Loading {filename}..")
 
 
-@client.command(aliases=["stats"])
+@client.command(aliases=["stats", "statistics"])
 async def show_bot_statistics(ctx):
-
     guilds_list = []
     for guild in client.guilds:
         guilds_list.append(guild.name)
@@ -42,8 +42,8 @@ async def show_bot_statistics(ctx):
     timestamp = datetime.timestamp(datetime.now())
 
     embed = discord.Embed(
-        title=f"{client.user.name} Bot, The Goddess of Hope & Prosperity", colour=discord.Colour(0xffe6a7),
-        description="A fan made Onmyoji-themed exclusive Discord bot with a touch of wizarding magic!",
+        title=f"{client.user.name} Bot", colour=discord.Colour(0xffe6a7),
+        description="A fan made Onmyoji-themed exclusive Discord bot with a touch of wizarding magic ✨",
         timestamp=datetime.utcfromtimestamp(timestamp)
     )
     embed.set_thumbnail(url=client.user.avatar_url)
@@ -54,12 +54,13 @@ async def show_bot_statistics(ctx):
     )
     embed.add_field(
         name="Statistics",
-        value=f"Version: 1.4.5\n"
-        f"Servers Count: {len(guilds_list)}\n"
-        f"Servers: {' ,'.join(guilds_list)}\n"
-        f"Users: {len(client.users)}\n"
-        f"Running Time: {days}d, {hours}h, {minutes}m\n"
-        f"Ping: {round(client.latency, 5)} seconds"
+        value=f"• Version: 1.4.9\n"
+              f"• Servers Count: {len(guilds_list)}\n"
+              f"• Servers: {' ,'.join(guilds_list)}\n"
+              f"• Users: {len(client.users)}\n"
+              f"• Running Time: {days}d, {hours}h, {minutes}m\n"
+              f"• Ping: {round(client.latency, 5)} seconds",
+        inline=False
     )
     embed.add_field(name="Modules", value="{}".format(", ".join(sorted(cogs_loaded))))
     await ctx.channel.send(embed=embed)
@@ -68,56 +69,73 @@ async def show_bot_statistics(ctx):
 @client.command(aliases=["load", "l"])
 @commands.is_owner()
 async def cogs_extension_load(ctx, extension):
-    client.load_extension(f"cogs.{extension}")
-    cogs_loaded.append(f"{extension}")
-    print(f"Loading {extension}.py..")
-    msg = await ctx.channel.send(f"Extension {extension}.py has been loaded")
-    await msg.delete(delay=5)
-    await ctx.message.delete(delay=5)
+    try:
+        client.load_extension(f"cogs.{extension}")
+        cogs_loaded.append(f"{extension}")
+        print(f"Loading {extension}.py..")
+    except commands.ExtensionNotLoaded:
+        await ctx.message.add_reaction("❌")
+    else:
+        await ctx.message.add_reaction("✅")
 
 
 @client.command(aliases=["unload", "ul"])
 @commands.is_owner()
 async def cogs_extension_unload(ctx, extension):
-    client.unload_extension(f"cogs.{extension}")
-    cogs_loaded.remove(f"{extension}")
-    print(f"Unloading {extension}.py..")
-    msg = await ctx.channel.send(f"Extension {extension}.py has been unloaded")
-    await msg.delete(delay=5)
-    await ctx.message.delete(delay=5)
+    try:
+        client.unload_extension(f"cogs.{extension}")
+        cogs_loaded.remove(f"{extension}")
+        print(f"Unloading {extension}.py..")
+    except commands.ExtensionNotLoaded:
+        await ctx.message.add_reaction("❌")
+    else:
+        await ctx.message.add_reaction("✅")
 
 
 @client.command(aliases=["reload", "rl"])
 @commands.is_owner()
 async def cogs_extension_reload(ctx, extension):
-    client.unload_extension(f"cogs.{extension}")
-    client.load_extension(f"cogs.{extension}")
-    print(f"Reloading {extension}.py..")
-    msg = await ctx.channel.send(f"Extension {extension}.py has been reloaded")
-    await msg.delete(delay=5)
-    await ctx.message.delete(delay=5)
+    try:
+        client.reload_extension(f"cogs.{extension}")
+        print(f"Reloading {extension}.py..")
+    except commands.ExtensionNotLoaded:
+        await ctx.message.add_reaction("❌")
+    except commands.ExtensionNotFound:
+        await ctx.message.add_reaction("❌")
+    else:
+        await ctx.message.add_reaction("✅")
 
 
 @client.command(aliases=["shutdown"])
 @commands.is_owner()
 async def cogs_extension_shutdown(ctx):
     for file_name in os.listdir("./cogs"):
-        if file_name.endswith(".py") and file_name != "error.py":
-            client.unload_extension(f"cogs.{file_name[:-3]}")
-            cogs_loaded.remove(f"{file_name[:-3]}")
-            print(f"Unloading {file_name}..")
-    await ctx.channel.send("Shutting down all modules...")
+        try:
+            if file_name.endswith(".py"):
+                client.unload_extension(f"cogs.{file_name[:-3]}")
+                cogs_loaded.remove(f"{file_name[:-3]}")
+                print(f"Unloading {file_name}..")
+        except commands.ExtensionNotLoaded:
+            continue
+        else:
+            await ctx.message.add_reaction("✅")
 
 
 @client.command(aliases=["initialize"])
 @commands.is_owner()
 async def cogs_extension_initialize(ctx):
     for file_name in os.listdir("./cogs"):
-        if file_name.endswith(".py"):
-            client.load_extension(f"cogs.{file_name[:-3]}")
-            cogs_loaded.append(f"{file_name[:-3]}")
-            print(f"Loading {file_name}..")
-    await ctx.channel.send("All modules have been loaded...")
+        try:
+            if file_name.endswith(".py"):
+                client.load_extension(f"cogs.{file_name[:-3]}")
+                cogs_loaded.append(f"{file_name[:-3]}")
+                print(f"Loading {file_name}..")
+        except commands.ExtensionAlreadyLoaded:
+            continue
+        except commands.ExtensionFailed:
+            continue
+        else:
+            await ctx.channel.send("All modules have been loaded...")
 
 
 print("-------")
