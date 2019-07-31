@@ -15,29 +15,42 @@ class Embeds(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(aliases=["pnotes"])
-    @commands.has_any_role("Head")
-    async def post_patch_notes(self, ctx):
+    @commands.command(aliases=["patch"])
+    @commands.is_owner()
+    async def post_patch_notes(self, ctx, arg1, *, args):
 
-        link = "https://pastebin.com/raw/TYGAXGLN"
+        request = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "channels": 1})
+        headlines_id = request["channels"]["headlines"]
+        headlines_channel = self.client.get_channel(int(headlines_id))
+
+        link = f"https://pastebin.com/raw/{arg1}"
         f = urllib.request.urlopen(link)
         text = f.read().decode('utf-8')
         split_text = text.replace("\r", "\\n").split("\n")
-        print(split_text)
-        max_embeds = round(len(text) / 1700)
-        description = ""
+        cap = 1500
+        max_embeds = round(len(text) / cap)
 
-        for x in range(1, max_embeds + 1):
-            for line in split_text:
-                description += line
-                if len(description) >= 1500:
+        lines = 0
+        lines_start = 0
+        description_length = 0
+        lines_end = len(split_text)
+
+        for x in range(0, max_embeds):
+            for entry in split_text[lines_start:lines_end]:
+                description_length += len(entry)
+                if description_length > cap:
                     break
-                else:
-                    split_text.pop(0)
+                lines += 1
 
-            embed = discord.Embed(color=ctx.author.colour, description=description.replace("\\n", "\n"))
-            await ctx.channel.send(embed=embed)
-            description = ""
+            description = "".join(split_text[lines_start:lines]).replace("\\n", "\n")
+            lines_start = lines
+            description_length = 0
+
+            embed = discord.Embed(color=ctx.author.colour, description=description)
+            if max_embeds - 1 == x:
+                embed.set_image(url=args)
+
+            await headlines_channel.send(embed=embed)
 
     @commands.command(aliases=["welcome"])
     @commands.is_owner()
