@@ -175,6 +175,7 @@ class Summon(commands.Cog):
 
     @commands.command(aliases=["summon", "s"])
     @commands.guild_only()
+    @commands.cooldown(1, 180, commands.BucketType.user)
     async def summon_perform(self, ctx, args):
 
         embed = discord.Embed(
@@ -215,6 +216,8 @@ class Summon(commands.Cog):
 
         except ValueError:
             await ctx.channel.send(embed=embed)
+
+        self.client.get_command("summon_perform").reset_cooldown(ctx)
 
 
 def setup(client):
