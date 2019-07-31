@@ -325,7 +325,7 @@ class Embeds(commands.Cog):
 
         request = books.find_one({
             "server": f"{ctx.guild.id}"}, {
-            "_id": 0, "messages.special_roles": 1, "channels.sorting-hat": 1, "co-op-team": 1
+            "_id": 0, "messages.special_roles": 1, "channels.sorting-hat": 1, "channels.co-op-team": 1
         })
         sorting_id = request["channels"]["sorting-hat"]
         coop_channel_id = request["channels"]["co-op-team"]
