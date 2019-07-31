@@ -82,7 +82,7 @@ class Startup(commands.Cog):
         embed.add_field(
             name="Economy",
             value="*daily, weekly, profile, display, buy, summon, "
-                  "evolve, friendship, leaderboard, shikigamis, shrine, sail*",
+                  "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray*",
             inline=False
         )
         embed.add_field(
