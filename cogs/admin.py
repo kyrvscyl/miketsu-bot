@@ -16,7 +16,7 @@ from cogs.startup import pluralize
 
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
-status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left"]
+status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
 
 spell_spams_id = []
 for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
@@ -56,7 +56,8 @@ def shorten(key):
         "Semi-active": "SMAC",
         "Away": "AWAY",
         "Left": "LEFT",
-        "Kicked": "KCKD"
+        "Kicked": "KCKD",
+        "Trade": "TRDE"
     }
     return keyword[key]
 
