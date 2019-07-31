@@ -8,8 +8,6 @@ address = "mongodb+srv://headmaster:headmaster@memory-scrolls-uhsu0.mongodb.net/
 memory = MongoClient(address)
 
 boss = memory["miketsu"]["boss"]
-compensation = memory["miketsu"]["compensation"]
-daily = memory["miketsu"]["daily"]
 friendship = memory["miketsu"]["friendship"]
 shikigami = memory["miketsu"]["shikigami"]
 streak = memory["miketsu"]["streak"]
@@ -21,7 +19,7 @@ thieves = memory["miketsu"]["thieves"]
 
 books = memory["bukkuman"]["books"]
 bounty = memory["bukkuman"]["bounty"]
-shikigamis = memory["bukkuman"]["shikigamis"]
+tokens = memory["bukkuman"]["tokens"]
 members = memory["bukkuman"]["members"]
 weather = memory["bukkuman"]["weather"]
 patronus = memory["bukkuman"]["patronus"]
