@@ -329,7 +329,7 @@ class Embeds(commands.Cog):
         })
         sorting_id = request["channels"]["sorting-hat"]
         coop_channel_id = request["channels"]["co-op-team"]
-        special_roles_id = request["channels"]["special_roles"]
+        special_roles_id = request["messages"]["special_roles"]
         sorting_channel = self.client.get_channel(int(sorting_id))
 
         embed = discord.Embed(
