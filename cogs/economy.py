@@ -732,8 +732,8 @@ class Economy(commands.Cog):
                 value="```"
                       "SP     ::  15,000\n"
                       "SSR    ::  10,000\n"
-                      "SR     ::    250\n"
-                      "R      ::     50\n"
+                      "SR     ::     250\n"
+                      "R      ::      50\n"
                       "```",
                 inline=False
             )
@@ -791,21 +791,56 @@ class Economy(commands.Cog):
             rarity = request["shikigami"][0]["rarity"]
             talismans = get_talisman_acquire(rarity)
 
-            if count_shikigami > 0:
-                users.update_one({
-                    "user_id": str(user.id),
-                    "shikigami.name": name}, {
-                    "$inc": {
-                        "shikigami.$.owned": - 1,
-                        "talisman": talismans,
-                        f"{rarity}": -1
-                    }
-                })
+            def check(m):
+                try:
+                    int(m.content)
+                    return m.author == ctx.author and m.channel == ctx.channel
+                except TypeError:
+                    return
+                except ValueError:
+                    return
+
+            try:
                 embed = discord.Embed(
-                    title="Confirmation receipt", colour=user.colour,
-                    description=f"{user.mention}, you sacrificed your {name} for {talismans:,d}{emoji_t}"
+                    colour=user.colour,
+                    title=f"Specify amount of {name} to sacrifice",
+                    description=f"{user.mention}, you currently have {count_shikigami:,d} of that shikigami"
                 )
                 await ctx.channel.send(embed=embed)
+                answer = await self.client.wait_for("message", timeout=15, check=check)
+
+            except asyncio.TimeoutError:
+                embed = discord.Embed(
+                    title="Invalid amount", colour=user.colour,
+                    description=f"{user.mention}, that is not a valid number"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                request_shrine = int(answer.content)
+                if count_shikigami >= request_shrine:
+                    final_talismans = talismans * request_shrine
+                    users.update_one({
+                        "user_id": str(user.id),
+                        "shikigami.name": name}, {
+                        "$inc": {
+                            "shikigami.$.owned": - request_shrine,
+                            "talisman": final_talismans,
+                            f"{rarity}": - request_shrine
+                        }
+                    })
+                    embed = discord.Embed(
+                        title="Confirmation sacrifice", colour=user.colour,
+                        description=f"{user.mention}, you sacrificed your {name} for {final_talismans:,d}{emoji_t}"
+                    )
+                    await ctx.channel.send(embed=embed)
+
+                else:
+                    embed = discord.Embed(
+                        title="Insufficient shikigamis", colour=user.colour,
+                        description=f"{user.mention}, you do not have that amount of shikigamis"
+                    )
+                    await ctx.channel.send(embed=embed)
 
         elif arg1.lower() in ["exchange", "exc"] and name in shrinable_shikigamis:
 
