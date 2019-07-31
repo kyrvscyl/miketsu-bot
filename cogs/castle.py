@@ -27,6 +27,10 @@ def check_if_valid_and_castle(ctx):
     return str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels
 
 
+def check_if_guild_is_patronus(ctx):
+    return ctx.guild.id == 412057028887052288
+
+
 def get_primary_role(x):
     dictionary = {
         "Auror": "⚜",
@@ -41,6 +45,36 @@ class Castle(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    @commands.command(aliases=["frames"])
+    @commands.guild_only()
+    async def castle_frame_show_all(self, ctx):
+
+        count = frames.count({})
+        listings = {}
+        for x in range(1, 8):
+            floor_frames = []
+            for frame in frames.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
+                floor_frames.append(frame["in_game_name"])
+                entry = {str(x): floor_frames}
+                listings.update(entry)
+
+        def generate_value_floors(floor):
+            value = ", ".join(listings[str(floor)])
+            return value
+
+        embed = discord.Embed(
+            title="Grand Staircase Frames", color=ctx.author.colour,
+            description=f"There is a total of {count} frames hanging in the castle."
+        )
+        embed.add_field(name="Floor 7", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 6", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 5", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 4", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 3", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 2", value="*{}*".format(generate_value_floors(7)), inline=False)
+        embed.add_field(name="Floor 1", value="*{}*".format(generate_value_floors(7)), inline=False)
+        await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["wander"])
     @commands.guild_only()
