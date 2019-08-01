@@ -62,6 +62,11 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
         })
 
         if query is None:
+
+            evolve = "False"
+            if summon[0] == "SP":
+                evolve = "True"
+
             users.update_one({
                 "user_id": str(user.id)}, {
                 "$push": {
@@ -70,7 +75,7 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
                         "rarity": summon[0],
                         "grade": 1,
                         "owned": 0,
-                        "evolved": "False"}
+                        "evolved": evolve}
                 }
             })
 
