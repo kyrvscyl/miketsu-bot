@@ -13,7 +13,11 @@ from cogs.admin import reset_boss
 from cogs.mongo.db import users, boss, books
 from cogs.startup import emoji_m, emoji_j, emoji_c, emoji_a, emoji_f
 
-demons = ["Tsuchigumo", "Odokuro", "Shinkirou", "Oboroguruma", "Namazu"]
+demons = []
+for document in boss.find({}, {"_id": 0, "boss": 1}):
+    demons.append(document["boss"])
+
+
 boss_spawn = False
 boss_comment = [
     "AHAHAHA!!! <:huehue:585442161093509120>",
@@ -59,8 +63,8 @@ async def boss_create(user, boss_select):
     }])
 
     total_medals = 10000
-    for document in query:
-        total_medals = document["medals"]
+    for x in query:
+        total_medals = x["medals"]
 
     boss.update_one({
         "boss": boss_select}, {
@@ -445,7 +449,7 @@ class Encounter(commands.Cog):
 
                     embed = discord.Embed(
                         title="Encounter Boss", color=discoverer.colour,
-                        description=f"<@&{roles['boss_busters']}>! The rare boss {boss_select} has been triggered!\n\n"
+                        description=f"The rare boss {boss_select} has been triggered!\n\n"
                         f"⏰ {round(timer)} secs left!"
                     )
                     embed.add_field(
