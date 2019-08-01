@@ -65,7 +65,6 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
             description=f"{user.mention}, you have insufficient {get_emoji(cost_item)}"
         )
         await ctx.channel.send(embed=embed)
-        await ctx.channel.send(f"{user.mention}, You have insufficient {emoji_j}")
 
 
 class Economy(commands.Cog):
