@@ -123,6 +123,24 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value="*`;suggest add new in-game stickers!`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "sticker_add_new":
+                embed = discord.Embed(
+                    title="newsticker, ns",
+                    colour=discord.Colour(0xffe6a7),
+                    description="add new stickers in the database"
+                )
+                embed.add_field(
+                    name="Format",
+                    value="*`;ns <alias> <imgur link and png images only>`*",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Example",
+                    value="*`;ns feelinhurt https://i.imgur.com/371bCEa.png`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "shrine_shikigami":
                 embed = discord.Embed(
                     title="shrine", colour=discord.Colour(0xffe6a7),

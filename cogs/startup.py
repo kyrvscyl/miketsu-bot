@@ -91,7 +91,7 @@ class Startup(commands.Cog):
         )
         embed.add_field(
             name="Others",
-            value="*bounty, suggest, stickers, wander, frame, frames, stats, announce*\\*, *manage*\\*",
+            value="*bounty, suggest, stickers, newsticker, wander, frame, frames, stats, announce*\\*, *manage*\\*",
             inline=False
         )
 

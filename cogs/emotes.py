@@ -2,23 +2,27 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-import json
-import random
 
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users
+from cogs.mongo.db import users, stickers
 
-with open("data/emotes.json") as f:
-    stickers = json.load(f)
+stickers_list = []
+actions = []
 
-actions = list(stickers.keys())
-emotes = stickers
 
-list_stickers = []
-for sticker in actions:
-    list_stickers.append("`{}`, ".format(sticker))
+def generate_new_stickers():
+
+    global stickers_list
+    global actions
+
+    for sticker in stickers.find({}, {"_id": 0}):
+        stickers_list.append("`{}`, ".format(sticker["alias"]))
+        actions.append(sticker["alias"])
+
+
+generate_new_stickers()
 
 
 class Emotes(commands.Cog):
@@ -29,7 +33,7 @@ class Emotes(commands.Cog):
     @commands.command(aliases=["sticker", "stickers"])
     @commands.guild_only()
     async def sticker_help(self, ctx):
-        description = "".join(list_stickers)[:-2:]
+        description = "".join(sorted(stickers_list))[:-2:]
         embed = discord.Embed(
             color=0xffe6a7, title="stickers",
             description="posts a reaction image embed\n"
@@ -37,6 +41,36 @@ class Emotes(commands.Cog):
         )
         embed.add_field(name="Aliases", value="*" + description + "*")
         await ctx.channel.send(embed=embed)
+
+    @commands.command(aliases=["newsticker", "ns"])
+    @commands.guild_only()
+    async def sticker_add_new(self, ctx, arg1, *, args):
+
+        alias = arg1.lower()
+        link = args
+
+        if alias in actions:
+            embed = discord.Embed(
+                color=ctx.author.colour,
+                title=f"Alias `{alias}` is already taken",
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif link[:20] == "https://i.imgur.com/" and link[-4:] == ".png":
+
+            document = {"alias": alias, "link": link}
+            stickers.insert_one(document)
+
+            embed = discord.Embed(
+                color=ctx.author.colour,
+                title=f"New sticker added with alias: `{alias}`",
+            )
+            embed.set_image(url=link)
+            await ctx.channel.send(embed=embed)
+            generate_new_stickers()
+
+        else:
+            await ctx.message.add_reaction("❌")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -68,8 +102,7 @@ class Emotes(commands.Cog):
 
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": 20}})
-                selection = [v for v in emotes[sticker_recognized].values()]
-                sticker_url = random.choice(selection)
+                sticker_url = stickers.find_one({"alias": sticker_recognized}, {"_id": 0, "link": 1})["link"]
                 embed = discord.Embed(color=user.colour)
                 embed.set_footer(text=f"{user.display_name}, +20exp", icon_url=user.avatar_url)
                 embed.set_image(url=sticker_url)
