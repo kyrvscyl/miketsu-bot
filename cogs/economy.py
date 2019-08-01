@@ -4,20 +4,14 @@ kyrvscyl, 2019
 """
 import asyncio
 import random
+from datetime import datetime
 
 import discord
 from discord.ext import commands
 
 from cogs.mongo.db import users, shikigami, bounty, friendship, books, streak
 from cogs.startup import \
-    emoji_m, emoji_j, emoji_c, emoji_f, emoji_a, pluralize, emoji_sp, emoji_ssr, emoji_sr, emoji_r, emoji_t
-from cogs.summon import pool_r, pool_sp, pool_sr, pool_ssr
-
-pool_all = []
-pool_all.extend(pool_r)
-pool_all.extend(pool_sp)
-pool_all.extend(pool_sr)
-pool_all.extend(pool_ssr)
+    emoji_m, emoji_j, emoji_c, emoji_f, emoji_a, emoji_sp, emoji_ssr, emoji_sr, emoji_r, emoji_t, pluralize
 
 adverb = ["deliberately", "forcefully", "unknowingly", "accidentally", "dishonestly"]
 verb = ["snatched", "stole", "took", "looted", "shoplifted", "embezzled"]
@@ -25,8 +19,26 @@ noun = ["custody", "care", "control", "ownership"]
 comment = ["Sneaky!", "Gruesome!", "Madness!"]
 primary_guild = "412057028887052288"
 
+pool_all = []
+for document in shikigami.aggregate([
+    {
+        "$project": {
+            "shikigami.name": 1
+        }
+    }, {
+        "$unwind": {
+            "path": "$shikigami"
+        }
+    }, {
+        "$project": {
+            "_id": 0
+        }
+    }
+]):
+    pool_all.append(document["shikigami"]["name"])
+
 shrinable_shikigamis = []
-query_shrinable = [{
+for document in shikigami.aggregate([{
     '$unwind': {
         'path': '$shikigami'}}, {
     '$match': {
@@ -34,9 +46,12 @@ query_shrinable = [{
     '$project': {
         '_id': 0, 'shikigami.thumbnail': 0
     }
-}]
-for document in shikigami.aggregate(query_shrinable):
+}]):
     shrinable_shikigamis.append(document["shikigami"]["name"])
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 def check_if_user_has_prayers(ctx):
@@ -359,6 +374,216 @@ class Economy(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    @commands.command(aliases=["stat"])
+    @commands.guild_only()
+    async def stat_shikigami(self, ctx, *, name):
+
+        if name.lower() == "all":
+            rarities = ["SP", "SSR", "SR", "R"]
+            rarity_evolved = [0]
+            count_all = []
+
+            for rarity in rarities:
+                query = [
+                    {
+                        '$match': {
+                            'shikigami.evolved': 'True'
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$shikigami'
+                        }
+                    }, {
+                        '$project': {
+                            'shikigami': 1
+                        }
+                    }, {
+                        '$match': {
+                            'shikigami.evolved': 'True',
+                            'shikigami.rarity': rarity
+                        }
+                    }, {
+                        '$count': 'count'
+                    }
+                ]
+                for result in users.aggregate(query):
+                    rarity_evolved.append(result["count"])
+
+            for rarity in rarities:
+                query = [
+                    {
+                        '$project': {
+                            '_id': 0,
+                            'user_id': 1,
+                            'shikigami': 1
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$shikigami'
+                        }
+                    }, {
+                        '$match': {
+                            'shikigami.rarity': rarity
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '',
+                            'evolved': {
+                                '$sum': '$shikigami.owned'
+                            }
+                        }
+                    }
+                ]
+                for result in users.aggregate(query):
+                    count_all.append(result["evolved"])
+
+            count_1 = count_all[0] + rarity_evolved[0]
+            count_2 = count_all[1] + rarity_evolved[1] * 1
+            count_3 = count_all[2] + rarity_evolved[2] * 10
+            count_4 = count_all[3] + rarity_evolved[3] * 20
+            count_total = count_1 + count_2 + count_3 + count_4
+            distribution_1 = round(count_1/count_total*100, 3)
+            distribution_2 = round(count_2/count_total*100, 3)
+            distribution_3 = round(count_3/count_total*100, 3)
+            distribution_4 = round(count_4/count_total*100, 3)
+
+            embed = discord.Embed(
+                title="Rarity | Distribution | Count", color=ctx.author.colour,
+                description=f"```"
+                            f"Rarity\n"
+                            f"SP    ::    {distribution_1}%  ::   {count_1:,d}\n"
+                            f"SSR   ::    {distribution_2}%  ::   {count_2:,d}\n"
+                            f"SR    ::   {distribution_3}%  ::   {count_3:,d}\n"
+                            f"R     ::   {distribution_4}%  ::   {count_4:,d}"
+                            f"```",
+                timestamp=get_timestamp()
+            )
+
+            embed.set_author(name="Summon Pull Statistics")
+            embed.add_field(name="Total Amulets Spent", value=f"{count_total:,d}")
+            await ctx.channel.send(embed=embed)
+
+        elif name.title() not in pool_all:
+            embed = discord.Embed(
+                title="Invalid shikigami name",
+                colour=discord.Colour(0xffe6a7),
+                description="Try again"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif name.title() in pool_all:
+
+            listings = []
+            query = [
+                {
+                    '$match': {
+                        'shikigami.name': name.title()
+                    }
+                }, {
+                    '$project': {
+                        '_id': 0,
+                        'user_id': 1,
+                        'shikigami.name': 1
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$shikigami'
+                    }
+                }, {
+                    '$match': {
+                        'shikigami.name': name.title()
+                    }
+                }
+            ]
+            for entry in users.aggregate(query):
+                try:
+                    listings.append(self.client.get_user(int(entry["user_id"])).display_name)
+                except AttributeError:
+                    continue
+
+            thumbnail_url = ""
+            for entry in shikigami.find({}, {"_id": 0, "shikigami": {"$elemMatch": {"name": name.title()}}}):
+                try:
+                    thumbnail_url = entry["shikigami"][0]["thumbnail"]["pre_evo"]
+                except KeyError:
+                    continue
+
+            count_pre_evo = 0
+            count_evolved = 0
+
+            query_pre_evo = [
+                {
+                    '$match': {
+                        'shikigami.name': name.title()
+                    }
+                }, {
+                    '$project': {
+                        '_id': 0,
+                        'user_id': 1,
+                        'shikigami': 1
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$shikigami'
+                    }
+                }, {
+                    '$match': {
+                        'shikigami.name': name.title(),
+                        'shikigami.evolved': 'False'
+                    }
+                }, {
+                    '$count': 'pre_evo'
+                }]
+            for result_pre_evo in users.aggregate(query_pre_evo):
+                count_pre_evo = result_pre_evo["pre_evo"]
+
+            query_evolved = [
+                {
+                    '$match': {
+                        'shikigami.name': name.title()
+                    }
+                }, {
+                    '$project': {
+                        '_id': 0,
+                        'user_id': 1,
+                        'shikigami': 1
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$shikigami'
+                    }
+                }, {
+                    '$match': {
+                        'shikigami.name': name.title(),
+                        'shikigami.evolved': 'True'
+                    }
+                }, {
+                    '$count': 'evolved'
+                }]
+            for result_evolved in users.aggregate(query_evolved):
+                count_evolved = result_evolved["evolved"]
+
+            embed = discord.Embed(
+                title=f"Stats for {name.title()}", colour=ctx.author.colour,
+                description=f"```"
+                            f"Pre-evolved   ::   {count_pre_evo}\n"
+                            f"Evolved       ::   {count_evolved}"
+                            f"```",
+                timestamp=get_timestamp()
+            )
+
+            listings_formatted = ", ".join(listings)
+
+            if len(listings) == 0:
+                listings_formatted = "None"
+
+            embed.set_thumbnail(url=thumbnail_url)
+            embed.add_field(
+                name=f"Owned by {len(listings)} members",
+                value=f"{listings_formatted}"
+            )
+            await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["pray"])
     @commands.guild_only()

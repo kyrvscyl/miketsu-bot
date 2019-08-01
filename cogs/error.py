@@ -134,6 +134,15 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value="*`;suggest add new in-game stickers!`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "stat_shikigami":
+                embed = discord.Embed(
+                    title="stats",
+                    colour=discord.Colour(0xffe6a7),
+                    description="shows shikigami pulls statistics"
+                )
+                embed.add_field(name="Example", value="*`;stat tamamonomae`*", inline=False)
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "sticker_add_new":
                 embed = discord.Embed(
                     title="newsticker, ns",
