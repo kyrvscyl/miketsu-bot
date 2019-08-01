@@ -33,7 +33,7 @@ def get_raid_count(victim):
 
 async def raid_giverewards_victim_as_winner(victim, raider):
     users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": 50000, "jades": 100, "medals": 50}})
-    users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
+    users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1, "experience": 20}})
 
     if users.find_one({"user_id": str(raider.id)}, {"_id": 0})["medals"] < 10:
         users.update_one({"user_id": str(raider.id)}, {"$set": {"medals": 0}})
@@ -46,7 +46,7 @@ async def raid_giverewards_raider_as_winner(victim, raider):
     users.update_one({
         "user_id": str(raider.id)}, {
         "$inc": {
-            "coins": 25000, "jades": 50, "medals": 25, "realm_ticket": -1
+            "coins": 25000, "jades": 50, "medals": 25, "realm_ticket": -1, "experience": 40
         }
     })
 
