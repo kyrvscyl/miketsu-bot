@@ -201,7 +201,16 @@ class Friendship(commands.Cog):
 
     @commands.command(aliases=["fpchange", "fpc"])
     @commands.guild_only()
-    async def friendship_change_name(self, ctx, receiver: discord.Member = None, *, new_name):
+    async def friendship_change_name(self, ctx, receiver: discord.Member = None, *, new_name=None):
+
+        embed = discord.Embed(
+            title="fpchange, fpc", colour=discord.Colour(0xffe6a7),
+            description="changes your ship name with the mentioned member"
+        )
+        embed.add_field(name="Formats", value="*• `;fpc @member <fancy name>`*")
+
+        if new_name is None:
+            await ctx.channel.send(embed=embed)
 
         try:
             code = get_bond(ctx.author, receiver)
@@ -209,11 +218,6 @@ class Friendship(commands.Cog):
             await self.friendship_post_ship(code, ctx.author, ctx)
 
         except AttributeError:
-            embed = discord.Embed(
-                title="fpchange, fpc", colour=discord.Colour(0xffe6a7),
-                description="changes your ship name with the mentioned member"
-            )
-            embed.add_field(name="Formats", value="*• `;fpc @member <fancy name>`*")
             await ctx.channel.send(embed=embed)
 
 
