@@ -413,7 +413,7 @@ class Economy(commands.Cog):
 
             if roll >= 55:
                 embed = discord.Embed(
-                    title=f"Results", colour=discord.Colour(0x3ac87f),
+                    title=f"Results", color=ctx.author.colour,
                     description=f"||Sometimes, you have to pray harder to be heard||"
                 )
                 await ctx.channel.send(embed=embed)
@@ -421,7 +421,7 @@ class Economy(commands.Cog):
             else:
                 amount, rewards = get_rewards(str(reaction.emoji))
                 embed = discord.Embed(
-                    title=f"Results", colour=discord.Colour(0x3ac87f),
+                    title=f"Results", color=ctx.author.colour,
                     description=f"||Your prayer has been heard, you obtained {amount}{str(reaction.emoji)}||"
                 )
                 users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {rewards: amount}})
