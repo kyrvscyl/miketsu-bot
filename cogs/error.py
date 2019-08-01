@@ -10,7 +10,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import errors
+from cogs.mongo.db import errors, books
 
 file_name = os.path.basename(__file__)[:-3:]
 
@@ -59,9 +59,7 @@ class Error(commands.Cog):
         self.client = client
 
     async def submit_error(self, ctx, error):
-
         channel = self.client.get_channel(584631677804871682)
-        link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
         embed = discord.Embed(
             colour=discord.Colour(0xffe6a7),
             title=f"Command Error Report",
@@ -72,15 +70,27 @@ class Error(commands.Cog):
             value=error,
             inline=False
         )
-        embed.add_field(
-            name=f"Error Traceback",
-            value=f"User: {ctx.author} | {ctx.author.id}\n"
-                  f"Guild: {ctx.message.guild} | {ctx.guild.id}\n"
-                  f"Channel: #{ctx.channel.name} | {ctx.channel.id}\n"
-                  f"Source: [message link]({link})",
-            inline=False
-        )
-        await channel.send(embed=embed)
+
+        try:
+            link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
+            embed.add_field(
+                name=f"Error Traceback",
+                value=f"User: {ctx.author} | {ctx.author.id}\n"
+                      f"Guild: {ctx.message.guild} | {ctx.guild.id}\n"
+                      f"Channel: #{ctx.channel.name} | {ctx.channel.id}\n"
+                      f"Source: [message link]({link})",
+                inline=False
+            )
+            await channel.send(embed=embed)
+
+        except AttributeError:
+            embed.add_field(
+                name=f"Error Traceback",
+                value=f"User: {ctx.author} | {ctx.author.id}\n"
+                      f"DMchannel: #{ctx.channel.name} | {ctx.channel.id}\n",
+                inline=False
+            )
+            await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -98,6 +108,7 @@ class Error(commands.Cog):
                 await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.NotOwner):
+
             await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
@@ -259,10 +270,22 @@ class Error(commands.Cog):
                 await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.NoPrivateMessage):
-            await self.submit_error(ctx, error)
+            return
 
         elif isinstance(error, commands.CommandNotFound):
-            return
+
+            spell_spam_id = books.find_one({
+                "server": "412057028887052288"}, {
+                "_id": 0, "channels": 1
+            })["channels"]["spell-spam"]
+
+            embed = discord.Embed(
+                title="Invalid channel",
+                colour=discord.Colour(0xffe6a7),
+                description=f"Certain commands are not available through direct message channels.\n"
+                            f"Use them at the <#{spell_spam_id}>"
+            )
+            await ctx.author.send(embed=embed)
 
         elif isinstance(error, commands.ExtensionError):
             await self.submit_error(ctx, error)

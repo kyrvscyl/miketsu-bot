@@ -112,7 +112,9 @@ class Events(commands.Cog):
                 title="✉ Acceptance Letter",
                 description=acceptance_letter.format(member.display_name, welcome_id, sorting_hat_id)
             )
+            content = "I'm Miketsu bot by the way, Patronus' exclusive Discord bot. Let me know if you need my `;help`"
             await member.send(embed=embed1)
+            await member.send(content=content)
         except discord.errors.Forbidden:
             pass
         except discord.errors.HTTPException:
