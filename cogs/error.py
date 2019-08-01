@@ -283,18 +283,19 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CommandNotFound):
 
-            spell_spam_id = books.find_one({
-                "server": "412057028887052288"}, {
-                "_id": 0, "channels": 1
-            })["channels"]["spell-spam"]
+            if isinstance(ctx.channel, discord.DMChannel):
+                spell_spam_id = books.find_one({
+                    "server": "412057028887052288"}, {
+                    "_id": 0, "channels": 1
+                })["channels"]["spell-spam"]
 
-            embed = discord.Embed(
-                title="Invalid channel",
-                colour=discord.Colour(0xffe6a7),
-                description=f"Certain commands are not available through direct message channels.\n"
-                            f"Use them at the <#{spell_spam_id}>"
-            )
-            await ctx.author.send(embed=embed)
+                embed = discord.Embed(
+                    title="Invalid channel",
+                    colour=discord.Colour(0xffe6a7),
+                    description=f"Certain commands are not available through direct message channels.\n"
+                                f"Use them at the <#{spell_spam_id}>"
+                )
+                await ctx.author.send(embed=embed)
 
         elif isinstance(error, commands.ExtensionError):
             await self.submit_error(ctx, error)
