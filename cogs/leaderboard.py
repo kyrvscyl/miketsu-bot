@@ -143,7 +143,7 @@ class Leaderboard(commands.Cog):
 
         formatted_list = []
         for user in medal_board2:
-            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
+            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]:,d}\n"))
 
         title = f"{emoji_m} Medal LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
