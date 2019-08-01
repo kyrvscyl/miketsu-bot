@@ -308,9 +308,10 @@ class Admin(commands.Cog):
     async def reset_daily(self):
 
         users.update_many({}, {"$set": {"daily": False, "raided_count": 0, "prayers": 3}})
-        query = {"level": {"$gt": 1}}, {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}
+        query = {"level": {"$gt": 1}}
+        project = {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}
 
-        for ship in friendship.find(query):
+        for ship in friendship.find(query, project):
             rewards = ship["level"] * 25
             users.update_one({"user_id": ship["shipper1"]}, {"$inc": {"jades": rewards}})
             users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})

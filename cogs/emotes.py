@@ -40,7 +40,7 @@ class Emotes(commands.Cog):
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
 
-        def generate_stickers_embed(x, y):
+        def generate_stickers_embed(y):
 
             end = y * quotient
             start = end - quotient
@@ -55,7 +55,7 @@ class Emotes(commands.Cog):
             embed.set_footer(text=f"Page {y}")
             return embed
 
-        msg = await ctx.channel.send(embed=generate_stickers_embed(stickers_list, 1))
+        msg = await ctx.channel.send(embed=generate_stickers_embed(1))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
@@ -77,7 +77,7 @@ class Emotes(commands.Cog):
                 elif page > page_total:
                     page = 1
 
-                await msg.edit(embed=generate_stickers_embed(stickers_list, page))
+                await msg.edit(embed=generate_stickers_embed(page))
 
     @commands.command(aliases=["newsticker", "ns"])
     @commands.guild_only()

@@ -190,7 +190,7 @@ class Events(commands.Cog):
                 try:
                     embed = discord.Embed(
                         color=0x50e3c2,
-                        title=f"Removed {changed_role2[0].name} role for {before.display_name}",
+                        title=f"Removed {changed_role2[0].name} role from {before.display_name}",
                         timestamp=get_timestamp()
                     )
                     embed.set_footer(icon_url=before.avatar_url)
@@ -206,7 +206,7 @@ class Events(commands.Cog):
                 try:
                     embed = discord.Embed(
                         color=0x50e3c2,
-                        title=f"Added {changed_role1[0].name} role for {before.display_name}",
+                        title=f"Added {changed_role1[0].name} role to {before.display_name}",
                         timestamp=get_timestamp()
                     )
                     embed.set_footer(icon_url=before.avatar_url)
