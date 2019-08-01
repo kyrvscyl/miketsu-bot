@@ -380,6 +380,7 @@ class Economy(commands.Cog):
     async def stat_shikigami(self, ctx, *, name):
 
         if name.lower() == "all":
+
             rarities = ["SP", "SSR", "SR", "R"]
             rarity_evolved = [0]
             count_all = []
@@ -580,7 +581,7 @@ class Economy(commands.Cog):
 
             embed.set_thumbnail(url=thumbnail_url)
             embed.add_field(
-                name=f"Owned by {len(listings)} members",
+                name=f"Owned by {len(listings)} {pluralize('member', len(listings))}",
                 value=f"{listings_formatted}"
             )
             await ctx.channel.send(embed=embed)
