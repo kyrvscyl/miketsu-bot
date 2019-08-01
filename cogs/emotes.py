@@ -2,6 +2,7 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
+import asyncio
 
 import discord
 from discord.ext import commands
@@ -33,14 +34,50 @@ class Emotes(commands.Cog):
     @commands.command(aliases=["sticker", "stickers"])
     @commands.guild_only()
     async def sticker_help(self, ctx):
-        description = "".join(sorted(stickers_list))[:-2:]
-        embed = discord.Embed(
-            color=0xffe6a7, title="stickers",
-            description="posts a reaction image embed\n"
-                        "just add \"mike\" in your message + the `<alias>`"
-        )
-        embed.add_field(name="Aliases", value="*" + description + "*")
-        await ctx.channel.send(embed=embed)
+
+        quotient = int(len(stickers_list) / 2)
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        def generate_stickers_embed(x, y):
+
+            end = y * quotient
+            start = end - quotient
+            description = "".join(sorted(stickers_list[start:end]))[:-2:]
+
+            embed = discord.Embed(
+                color=0xffe6a7, title="stickers",
+                description="posts a reaction image embed\n"
+                            "just add \"mike\" in your message + the `<alias>`"
+            )
+            embed.add_field(name="Aliases", value="*" + description + "*")
+            embed.set_footer(text=f"Page {y}")
+            return embed
+
+        msg = await ctx.channel.send(embed=generate_stickers_embed(stickers_list, 1))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        page = 1
+        page_total = 2
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=30, check=check)
+            except asyncio.TimeoutError:
+                return False
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+
+                await msg.edit(embed=generate_stickers_embed(stickers_list, page))
 
     @commands.command(aliases=["newsticker", "ns"])
     @commands.guild_only()
