@@ -10,7 +10,8 @@ import discord
 from PIL import Image
 from discord.ext import commands
 
-from cogs.mongo.db import frames, books
+from cogs.mongo.db import portraits, books
+from cogs.startup import primary_id
 
 primary_roles = ["Head", "Auror", "Patronus", "No-Maj"]
 invalid_channels = ["auror-department", "gift-game", "pvp-fair", "duelling-room"]
@@ -46,15 +47,15 @@ class Castle(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(aliases=["frames"])
+    @commands.command(aliases=["portraits"])
     @commands.guild_only()
-    async def castle_frame_show_all(self, ctx):
+    async def castle_portrait_show_all(self, ctx):
 
-        count = frames.count({})
+        count = portraits.count({})
         listings = {}
         for x in range(1, 8):
             floor_frames = []
-            for frame in frames.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
+            for frame in portraits.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
                 floor_frames.append(frame["in_game_name"])
                 entry = {str(x): floor_frames}
                 listings.update(entry)
@@ -101,7 +102,7 @@ class Castle(commands.Cog):
             return
 
         floor_frames = []
-        for frame in frames.find({"floor": floor_num}):
+        for frame in portraits.find({"floor": floor_num}):
             floor_frames.append(frame["frame"])
 
         try:
@@ -109,7 +110,7 @@ class Castle(commands.Cog):
         except IndexError:
             return
 
-        frame_profile = frames.find_one({"frame": random_frame}, {"_id": 0})
+        frame_profile = portraits.find_one({"frame": random_frame}, {"_id": 0})
         find_role = frame_profile["role"]
         in_game_name = frame_profile["in_game_name"]
         image_link = frame_profile["image_link"] + "?width=200&height=200"
@@ -129,22 +130,22 @@ class Castle(commands.Cog):
         msg = await ctx.channel.send(embed=embed)
         await msg.delete(delay=10)
 
-    @commands.command(aliases=["frame"])
+    @commands.command(aliases=["portrait"])
     @commands.guild_only()
-    async def castle_customize_frame(self, ctx, arg1, *, args):
+    async def castle_customize_portrait(self, ctx, arg1, *, args):
 
         argument = args.split(" ", 3)
         frame_id = str(ctx.author.id)
         member = ctx.guild.get_member(ctx.author.id)
         user_roles = member.roles
-        frame_profile = frames.find_one({"frame_id": str(frame_id)}, {"_id": 0})
+        frame_profile = portraits.find_one({"frame_id": str(frame_id)}, {"_id": 0})
 
         try:
             in_game_name = argument[0]
             floor = int(argument[1])
             image_link = argument[2]
             description = argument[3].replace("\\n", "\n")
-            frame_num = frames.count() + 1
+            frame_num = portraits.count() + 1
 
             if image_link.lower() == "default":
                 image_link = ctx.author.avatar_url
@@ -159,7 +160,7 @@ class Castle(commands.Cog):
             return
 
         frames_current = []
-        for frame in frames.find({"frame": {"$exists": True}}):
+        for frame in portraits.find({"frame": {"$exists": True}}):
             frames_current.append(frame["frame"])
 
         find_role = ""
@@ -168,7 +169,7 @@ class Castle(commands.Cog):
                 find_role = role.name
                 break
 
-        if frames.find({"frame_id": str(ctx.author.id)}, {"_id": 0}) is not None:
+        if portraits.find({"frame_id": str(ctx.author.id)}, {"_id": 0}) is not None:
             embed = discord.Embed(
                 colour=discord.Colour(0xffe6a7),
                 description="Frame exists for this user, use `;frame edit <...>`"
@@ -206,14 +207,14 @@ class Castle(commands.Cog):
                 "image_link": attachment_link,
                 "description": description
             }
-            frames.insert_one(profile)
+            portraits.insert_one(profile)
 
         elif arg1.lower() == "edit" and frame_profile is not None:
 
             attachment_link = await self.post_process_frame(
                 str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
             )
-            frames.update_one({"frame_id": str(ctx.author.id)}, {
+            portraits.update_one({"frame_id": str(ctx.author.id)}, {
                 "$set": {
                     "floor": floor,
                     "frame": frame_num,
@@ -293,53 +294,52 @@ class Castle(commands.Cog):
 
     async def transformation_end(self):
 
-        for entry in books.find({}, {"_id": 0, "server": 1}):
+        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "server": 1})
+        roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
+        server = self.client.get_guild(int(request["server"]))
+
+        try:
+            reference_role = discord.utils.get(server.roles, name="Head")
+        except AttributeError:
+            return
+
+        for role in roles:
             try:
-                server = self.client.get_guild(int(entry["server"]))
-                reference_role = discord.utils.get(server.roles, name="Head")
-                roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
-
-                for role in roles:
-                    try:
-                        current_role = discord.utils.get(server.roles, name=role)
-                        await current_role.edit(position=reference_role.position - 1)
-                        await asyncio.sleep(1)
-                    except AttributeError:
-                        continue
-                    except discord.errors.Forbidden:
-                        continue
-                    except discord.errors.HTTPException:
-                        continue
-                    except discord.errors.InvalidArgument:
-                        continue
-
+                current_role = discord.utils.get(server.roles, name=role)
+                await current_role.edit(position=reference_role.position - 1)
+                await asyncio.sleep(1)
             except AttributeError:
+                continue
+            except discord.errors.Forbidden:
+                continue
+            except discord.errors.HTTPException:
+                continue
+            except discord.errors.InvalidArgument:
                 continue
 
     async def transformation_start(self):
 
-        for entry in books.find({}, {"_id": 0, "server": 1}):
+        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "server": 1})
+        roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
+        server = self.client.get_guild(int(request["server"]))
 
+        try:
+            reference_role = discord.utils.get(server.roles, name="🏆")
+        except AttributeError:
+            return
+
+        for role in roles:
             try:
-                server = self.client.get_guild(int(entry["server"]))
-                reference_role = discord.utils.get(server.roles, name="🏆")
-                roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
-
-                for role in roles:
-                    try:
-                        current_role = discord.utils.get(server.roles, name=role)
-                        await current_role.edit(position=reference_role.position - 1)
-                        await asyncio.sleep(1)
-                    except AttributeError:
-                        continue
-                    except discord.errors.Forbidden:
-                        continue
-                    except discord.errors.HTTPException:
-                        continue
-                    except discord.errors.InvalidArgument:
-                        continue
-
+                current_role = discord.utils.get(server.roles, name=role)
+                await current_role.edit(position=reference_role.position - 1)
+                await asyncio.sleep(1)
             except AttributeError:
+                continue
+            except discord.errors.Forbidden:
+                continue
+            except discord.errors.HTTPException:
+                continue
+            except discord.errors.InvalidArgument:
                 continue
 
 
