@@ -54,7 +54,7 @@ async def show_bot_statistics(ctx):
     )
     embed.add_field(
         name="Statistics",
-        value=f"• Version: 1.4.9\n"
+        value=f"• Version: 1.5.0\n"
               f"• Servers Count: {len(guilds_list)}\n"
               f"• Servers: {' ,'.join(guilds_list)}\n"
               f"• Users: {len(client.users)}\n"

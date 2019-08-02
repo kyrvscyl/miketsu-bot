@@ -1,0 +1,135 @@
+{
+  "send_off": {
+    "report": "REPORT",
+    "success1": "qwe",
+    "success2": "*rty",
+    "complete": [
+      "123",
+      "456",
+      "789",
+      "invisibility cloak"
+
+    ]
+  },
+  "start_quest": {
+    "1": "*msg1*",
+    "2": "*msg1*",
+    "3": "*msg1*",
+    "4": "*msg1*",
+    "5": "*msg1*"
+  },
+  "forest": {
+    "intro": "introductory message",
+    "search": {
+      "unicorn":  {
+        "r": "storytelling time",
+        "spider": {
+          "r": "storytelling time",
+          "wolf": {
+            "r": "storytelling time",
+            "unicorn": {
+              "r": "storytelling time"
+            },
+            "spider": {
+              "r": "storytelling time"
+            }
+          }
+        },
+        "wolf": {
+          "r": "storytelling time",
+          "spider": {
+            "r": "storytelling time",
+            "unicorn": {
+              "r": "storytelling time"
+            },
+            "wolf": {
+              "r": "storytelling time"
+            }
+          }
+        }
+      },
+      "wolf":  {
+        "r": "storytelling time",
+        "unicorn": {
+          "r": "storytelling time",
+          "spider": {
+            "r": "storytelling time",
+            "wolf": {
+              "r": "storytelling time"
+            },
+            "unicorn": {
+              "r": "storytelling time"
+            }
+          }
+        },
+        "spider": {
+          "r": "storytelling time",
+          "unicorn": {
+            "r": "storytelling time",
+            "wolf": {
+              "r": "storytelling time"
+            },
+            "spider": {
+              "r": "storytelling time"
+            }
+          }
+        }
+      },
+      "spider":  {
+        "r": "storytelling time",
+        "unicorn": {
+          "r": "storytelling time",
+          "wolf": {
+            "r": "storytelling time",
+            "spider": {
+              "r": "storytelling time"
+            },
+            "unicorn": {
+              "r": "storytelling time"
+            }
+          }
+        },
+        "wolf": {
+          "r": "storytelling time",
+          "unicorn": {
+            "r": "storytelling time",
+            "spider": {
+              "r": "storytelling time"
+            },
+            "wolf": {
+              "r": "storytelling time"
+            }
+          }
+        }
+      },
+      "south_west": {
+        "not_morphed": "story1",
+        "morphed": "story2",
+        "retrieval": "story3"
+      }
+    }
+  },
+  "apothecary": {
+    "knock": [
+      "msg",
+      "topic"
+    ],
+    "inquire": [
+      [
+        "msg",
+        "topic"
+      ],
+      [
+        "msg",
+        "topic"
+      ],
+      [
+        "msg",
+        "topic"
+      ]
+    ],
+    "purchasing": {
+      "max_actions": "purchase again"
+    }
+  }
+}
