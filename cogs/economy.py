@@ -3,21 +3,35 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import asyncio
+import os
 import random
 from datetime import datetime
+from math import ceil
 
 import discord
+import pytz
+from PIL import Image
 from discord.ext import commands
 
-from cogs.mongo.db import users, shikigami, bounty, friendship, books, streak
+from cogs.mongo.db import users, shikigami, bounty, friendship, books, streak, frames
 from cogs.startup import \
-    emoji_m, emoji_j, emoji_c, emoji_f, emoji_a, emoji_sp, emoji_ssr, emoji_sr, emoji_r, emoji_t, pluralize
+    emoji_m, emoji_j, emoji_c, emoji_f, emoji_a, emoji_sp, emoji_ssr, emoji_sr, emoji_r, emoji_t, pluralize, primary_id
 
 adverb = ["deliberately", "forcefully", "unknowingly", "accidentally", "dishonestly"]
 verb = ["snatched", "stole", "took", "looted", "shoplifted", "embezzled"]
 noun = ["custody", "care", "control", "ownership"]
 comment = ["Sneaky!", "Gruesome!", "Madness!"]
-primary_guild = "412057028887052288"
+
+
+def get_time():
+    tz_target = pytz.timezone("America/Atikokan")
+    return datetime.now(tz=tz_target)
+
+
+def get_frame_thumbnail(frame):
+    request = frames.find_one({"name": frame}, {"_id": 0, "link": 1})
+    return request["link"]
+
 
 pool_all = []
 for document in shikigami.aggregate([
@@ -86,6 +100,53 @@ def get_talisman_acquire(x):
     return dictionary[x]
 
 
+async def acquisition_frame(user, frame_name, channel, jades):
+    query = [
+        {
+            '$match': {
+                'user_id': str(user.id)
+            }
+        }, {
+            '$unwind': {
+                'path': '$achievements'
+            }
+        }, {
+            '$project': {
+                'achievements': 1
+            }
+        }, {
+            '$match': {
+                'achievements.name': frame_name
+            }
+        }, {
+            '$count': 'count'
+        }
+    ]
+    for entry in users.aggregate(query):
+        if entry["count"] != 0:
+            return
+
+    users.update_one({
+        "user_id": str(user.id)}, {
+        "$push": {
+            "achievements": {
+                "name": frame_name,
+                "date_acquired": get_time()
+            }
+        },
+        "$inc": {
+            "jades": jades
+        }
+    })
+    embed = discord.Embed(
+        color=user.colour,
+        title="Frame Acquisition",
+        description=f"{user.mention}, you acquired the {frame_name} frame and {jades:,d}{emoji_j}"
+    )
+    embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
+    await channel.send(embed=embed)
+
+
 async def claim_rewards_daily_give(user, ctx):
     users.update_one({"user_id": str(user.id)}, {
         "$inc": {
@@ -126,76 +187,6 @@ async def weekly_give_rewards(user, ctx):
         description=f"A mythical box containing 750{emoji_j}, 150k{emoji_c}, and 10{emoji_a}"
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
-    await ctx.channel.send(embed=embed)
-
-
-async def profile_post(member, ctx):
-    profile = users.find_one({
-        "user_id": str(member.id)}, {
-        "_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
-        "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
-        "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
-        "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1
-    })
-
-    ships_count = friendship.find({"code": {"$regex": f".*{ctx.author.id}.*"}}).count()
-    amulets = profile["amulets"]
-    amulets_spent = profile["amulets_spent"]
-    exp = profile["experience"]
-    level = profile["level"]
-    level_exp_next = profile["level_exp_next"]
-    jades = profile["jades"]
-    coins = profile["coins"]
-    medals = profile["medals"]
-    realm_ticket = profile["realm_ticket"]
-    display = profile["display"]
-    friendship_points = profile["friendship"]
-    encounter_ticket = profile["encounter_ticket"]
-    friendship_pass = profile["friendship_pass"]
-    talismans = profile["talisman"]
-    prayers = profile["prayers"]
-
-    embed = discord.Embed(color=member.colour)
-
-    if display != "None":
-        evo = users.find_one({
-            "user_id": str(member.id), "shikigami.name": display}, {
-            "shikigami.$.name": 1
-        })["shikigami"][0]["evolved"]
-
-        thumbnail = shikigami.find_one({
-            "shikigami.name": display}, {
-            "shikigami.$.name": 1
-        })["shikigami"][0]["thumbnail"][get_evo_link(evo)]
-
-        embed.set_thumbnail(url=thumbnail)
-    else:
-        embed.set_thumbnail(url=ctx.author.avatar_url)
-
-    embed.set_author(
-        name=f"{member.display_name}'s profile",
-        icon_url=member.avatar_url
-    )
-    embed.add_field(
-        name=":arrow_heading_up: Experience",
-        value=f"Level: {level} ({exp:,d}/{level_exp_next:,d})"
-    )
-    embed.add_field(
-        name=f"{emoji_sp} | {emoji_ssr} | {emoji_sr} | {emoji_r}",
-        value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d}"
-    )
-    embed.add_field(
-        name=f"{emoji_a} Amulets",
-        value=f"On Hand: {amulets} | Used: {amulets_spent:,d}"
-    )
-    embed.add_field(
-        name=f"💗 | 🎟 | 🎫 | 🚢 | 🙏",
-        value=f"{friendship_pass} | {realm_ticket:,d} | {encounter_ticket:,d} | {ships_count} | {prayers}",
-    )
-    embed.add_field(
-        name=f"{emoji_f} | {emoji_t} | {emoji_m} | {emoji_j} | {emoji_c}",
-        value=f"{friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}",
-    )
     await ctx.channel.send(embed=embed)
 
 
@@ -245,6 +236,9 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
             embed.set_thumbnail(url=image_url)
             await ctx.channel.send(embed=embed)
 
+            if query == "Orochi":
+                await acquisition_frame(user, "Sword Swallowing-Snake", ctx.channel, jades=2500)
+
         elif count == 0:
             embed = discord.Embed(
                 colour=discord.Colour(0xffe6a7),
@@ -290,6 +284,7 @@ async def frame_starlight(guild, spell_spam_channel):
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
         await spell_spam_channel.send(embed=embed)
+        await acquisition_frame(starlight_new, "Starlight Sky", spell_spam_channel, jades=2500)
 
     if starlight_current == starlight_new:
         users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
@@ -316,6 +311,7 @@ async def frame_starlight(guild, spell_spam_channel):
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
         await spell_spam_channel.send(embed=embed)
+        await acquisition_frame(starlight_new, "Starlight Sky", spell_spam_channel, jades=2500)
 
 
 async def frame_blazing(guild, spell_spam_channel):
@@ -344,6 +340,7 @@ async def frame_blazing(guild, spell_spam_channel):
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
         await spell_spam_channel.send(embed=embed)
+        await acquisition_frame(blazing_new, "Blazing Sun", spell_spam_channel, jades=2500)
 
     if blazing_current == blazing_new:
         users.update_one({"user_id": str(blazing_current.id)}, {"$inc": {"amulets": 10}})
@@ -368,6 +365,7 @@ async def frame_blazing(guild, spell_spam_channel):
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/7/72/Frame62.png")
         await spell_spam_channel.send(embed=embed)
+        await acquisition_frame(blazing_new, "Blazing Sun", spell_spam_channel, jades=2500)
 
 
 class Economy(commands.Cog):
@@ -663,7 +661,7 @@ class Economy(commands.Cog):
 
     async def frame_automate(self):
 
-        request = books.find_one({"server": primary_guild}, {"_id": 0, "channels": 1})
+        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels": 1})
         spell_spam_id = request["channels"]["spell-spam"]
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         guild = spell_spam_channel.guild
@@ -768,9 +766,151 @@ class Economy(commands.Cog):
     async def profile_show(self, ctx, *, member: discord.Member = None):
 
         if member is None:
-            await profile_post(ctx.author, ctx)
+            await self.profile_post(ctx.author, ctx)
+
         else:
-            await profile_post(member, ctx)
+            await self.profile_post(member, ctx)
+
+    async def profile_generate_frame_image(self, member, achievements):
+
+        achievements_names = []
+        for entry in achievements:
+            try:
+                achievements_names.append(f"{entry['name']}.png")
+            except KeyError:
+                continue
+
+        list_images = []
+        for filename in sorted(os.listdir("./data/achievements")):
+            if filename.endswith(".png") and filename in achievements_names:
+                list_images.append(f"data/achievements/{filename}")
+
+        images = list(map(Image.open, list_images))
+
+        def get_image_variables(x):
+            total_frames = len(x)
+            w = 1000
+            h = ceil(total_frames / 5) * 200
+            return w, h
+
+        width, height = get_image_variables(list_images)
+        new_im = Image.new('RGBA', (width, height))
+
+        def get_coordinates(c):
+            x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
+            y = (ceil(c / 5) * 200) - 200
+            return x, y
+
+        for index, item in enumerate(images):
+            new_im.paste(images[index], (get_coordinates(index + 1)))
+
+        address = f"temp/{member.id}.png"
+        new_im.save(address)
+        new_photo = discord.File(address, filename=f"{member.id}.png")
+        hosting_channel = self.client.get_channel(556032841897607178)
+        msg = await hosting_channel.send(file=new_photo)
+        attachment_link = msg.attachments[0].url
+        return attachment_link
+
+    async def profile_post(self, member, ctx):
+
+        profile = users.find_one({
+            "user_id": str(member.id)}, {
+            "_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
+            "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
+            "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
+            "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1, "achievements": 1, "frame": 1,
+            "achievements_count": 1
+        })
+
+        ships_count = friendship.find({"code": {"$regex": f".*{ctx.author.id}.*"}}).count()
+        amulets = profile["amulets"]
+        amulets_spent = profile["amulets_spent"]
+        exp = profile["experience"]
+        level = profile["level"]
+        level_exp_next = profile["level_exp_next"]
+        jades = profile["jades"]
+        coins = profile["coins"]
+        medals = profile["medals"]
+        realm_ticket = profile["realm_ticket"]
+        display = profile["display"]
+        friendship_points = profile["friendship"]
+        encounter_ticket = profile["encounter_ticket"]
+        friendship_pass = profile["friendship_pass"]
+        talismans = profile["talisman"]
+        prayers = profile["prayers"]
+        frame = profile["frame"]
+        achievements_count = profile["achievements_count"]
+        achievements = profile["achievements"]
+
+        if len(achievements) > achievements_count:
+            frame = await self.profile_generate_frame_image(member, achievements)
+            users.update_one({"user_id": str(member.id)}, {
+                "$set": {
+                    "frame": frame, "achievements_count": len(achievements)
+                }
+            })
+
+        embed = discord.Embed(color=member.colour)
+
+        if display != "None":
+            evo = users.find_one({
+                "user_id": str(member.id), "shikigami.name": display}, {
+                "shikigami.$.name": 1
+            })["shikigami"][0]["evolved"]
+
+            thumbnail = shikigami.find_one({
+                "shikigami.name": display}, {
+                "shikigami.$.name": 1
+            })["shikigami"][0]["thumbnail"][get_evo_link(evo)]
+
+            embed.set_thumbnail(url=thumbnail)
+        else:
+            embed.set_thumbnail(url=ctx.author.avatar_url)
+
+        embed.set_author(
+            name=f"{member.display_name}'s profile",
+            icon_url=member.avatar_url
+        )
+        embed.add_field(
+            name=":arrow_heading_up: Experience",
+            value=f"Level: {level} ({exp:,d}/{level_exp_next:,d})"
+        )
+        embed.add_field(
+            name=f"{emoji_sp} | {emoji_ssr} | {emoji_sr} | {emoji_r}",
+            value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d}"
+        )
+        embed.add_field(
+            name=f"{emoji_a} Amulets",
+            value=f"On Hand: {amulets} | Used: {amulets_spent:,d}"
+        )
+        embed.add_field(
+            name=f"💗 | 🎟 | 🎫 | 🚢 | 🙏",
+            value=f"{friendship_pass} | {realm_ticket:,d} | {encounter_ticket:,d} | {ships_count} | {prayers}"
+        )
+        embed.add_field(
+            name=f"{emoji_f} | {emoji_t} | {emoji_m} | {emoji_j} | {emoji_c}",
+            value=f"{friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}"
+        )
+        msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("🖼")
+
+        def check(r, u):
+            return str(r.emoji) == "🖼" and r.message.id == msg.id and u.bot is False
+
+        try:
+            await self.client.wait_for("reaction_add", timeout=30, check=check)
+        except asyncio.TimeoutError:
+            return
+        else:
+            embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
+            embed.set_author(
+                name=f"{member.display_name}'s achievements",
+                icon_url=member.avatar_url
+            )
+            embed.set_image(url=frame)
+            embed.set_footer(text="Hall of Frames")
+            await msg.edit(embed=embed)
 
     @commands.command(aliases=["display"])
     @commands.guild_only()

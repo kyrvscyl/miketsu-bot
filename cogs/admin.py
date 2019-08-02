@@ -11,6 +11,7 @@ import discord
 import pytz
 from discord.ext import commands
 
+from cogs.achievements import Achievements
 from cogs.mongo.db import boss, members, users, friendship, books
 from cogs.startup import pluralize
 
@@ -24,6 +25,14 @@ for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
         spell_spams_id.append(document["channels"]["spell-spam"])
     except KeyError:
         continue
+
+
+def check_if_has_any_role(ctx):
+    valid_roles = ["Head", "Alpha"]
+    for role in reversed(ctx.author.roles):
+        if role.name in valid_roles:
+            return True
+    return False
 
 
 def get_time_est():
@@ -291,6 +300,7 @@ class Admin(commands.Cog):
 
         elif args == "weekly":
             await self.reset_weekly()
+            await Achievements(self.client).process_achievements_weekly()
             await ctx.message.add_reaction("✅")
 
         elif args == "boss":
@@ -343,7 +353,7 @@ class Admin(commands.Cog):
             await current_channel.send(embed=embed)
 
     @commands.command(aliases=["announce"])
-    @commands.has_role("Head")
+    @commands.check(check_if_has_any_role)
     async def announcement_post_embed(self, ctx, channel: discord.TextChannel = None, *, args):
 
         list_msg = args.split("|", 2)
@@ -376,7 +386,7 @@ class Admin(commands.Cog):
             return
 
     @commands.command(aliases=["c", "clear", "purge", "cl", "prune"])
-    @commands.has_role("Head")
+    @commands.check(check_if_has_any_role)
     async def purge_messages(self, ctx, amount=2):
         try:
             await ctx.channel.purge(limit=amount + 1)
@@ -386,7 +396,7 @@ class Admin(commands.Cog):
             pass
 
     @commands.command(aliases=["say"])
-    @commands.has_role("Head")
+    @commands.check(check_if_has_any_role)
     async def announcement_post_message(self, ctx, arg1, *, args):
 
         try:
@@ -407,7 +417,7 @@ class Admin(commands.Cog):
             return
 
     @commands.command(aliases=["m", "manage"])
-    @commands.has_role("Head")
+    @commands.check(check_if_has_any_role)
     @commands.check(check_if_guild_is_patronus)
     async def management_guild(self, ctx, *args):
 

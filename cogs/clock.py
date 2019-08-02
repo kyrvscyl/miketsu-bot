@@ -10,6 +10,7 @@ import discord
 import pytz
 from discord.ext import commands
 
+from cogs.achievements import Achievements
 from cogs.admin import Admin, reset_boss
 from cogs.castle import Castle
 from cogs.economy import Economy
@@ -153,6 +154,7 @@ class Clock(commands.Cog):
             await Expecto(self.client).send_off_report_quest1()
             await Expecto(self.client).send_off_complete_quest1()
             await self.clear_secrets()
+            await Achievements(self.client).process_achievements_hourly()
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
             await owls_restock()
@@ -161,6 +163,7 @@ class Clock(commands.Cog):
             await Economy(self.client).frame_automate()
             await Admin(self.client).reset_daily()
             await reset_boss()
+            await Achievements(self.client).process_achievements_daily()
             await Library(self.client).post_new_table_of_content()
 
         if hour_minute == "19:00":

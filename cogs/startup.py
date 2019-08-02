@@ -21,6 +21,8 @@ emoji_r = "<:R_:602707410582241280>"
 emoji_n = "<:N_:602707410540560414>"
 emoji_t = "<:talisman:573071120685596682>"
 
+primary_id = 412057028887052288
+
 
 status = cycle([
     "with the peasants via ;info",
@@ -82,7 +84,7 @@ class Startup(commands.Cog):
         embed.add_field(
             name="Economy",
             value="*daily, weekly, profile, display, buy, summon, "
-                  "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray, stat*",
+                  "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray, stat, frames*",
             inline=False
         )
         embed.add_field(
@@ -91,8 +93,8 @@ class Startup(commands.Cog):
         )
         embed.add_field(
             name="Others",
-            value="*bounty, suggest, stickers, newsticker, wander, frame, "
-                  "frames, statistics, announce*\\*, *manage*\\*",
+            value="*bounty, suggest, stickers, newsticker, wander, portrait, "
+                  "statistics, announce*\\*, *manage*\\*",
             inline=False
         )
 

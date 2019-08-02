@@ -77,7 +77,7 @@ class Error(commands.Cog):
                 name=f"Error Traceback",
                 value=f"User: {ctx.author} | {ctx.author.id}\n"
                       f"Guild: {ctx.message.guild} | {ctx.guild.id}\n"
-                      f"Channel: #{ctx.channel.name} | {ctx.channel.id}\n"
+                      f"Channel: #{ctx.channel} | {ctx.channel.id}\n"
                       f"Source: [message link]({link})",
                 inline=False
             )
@@ -227,10 +227,10 @@ class Error(commands.Cog):
             elif str(ctx.command) == "post_book_reference":
                 await ctx.message.add_reaction("❌")
 
-            elif str(ctx.command) == "castle_customize_frame":
+            elif str(ctx.command) == "castle_customize_portrait":
                 embed = discord.Embed(
                     title="frame add, frame edit", colour=discord.Colour(0xffe6a7),
-                    description="customize your own photo frame\n"
+                    description="customize your own portrait\n"
                                 "appears in the castle's floors via `;wander`\n"
                                 "use `add` first before using `edit` argument\n"
                                 "use square photos for best results"
