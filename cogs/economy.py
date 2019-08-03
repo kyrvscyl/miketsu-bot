@@ -866,7 +866,7 @@ class Economy(commands.Cog):
 
             embed.set_thumbnail(url=thumbnail)
         else:
-            embed.set_thumbnail(url=ctx.author.avatar_url)
+            embed.set_thumbnail(url=member.avatar_url)
 
         embed.set_author(
             name=f"{member.display_name}'s profile",
@@ -944,7 +944,7 @@ class Economy(commands.Cog):
                 users.update_one({"user_id": str(user.id)}, {"$set": {"display": select_formatted}})
                 await ctx.message.add_reaction("✅")
 
-    @commands.command(aliases=["shikigamis", "shikis"])
+    @commands.command(aliases=["shikigamis", "shikis", "shiki"])
     @commands.guild_only()
     async def shikigami_list_show(self, ctx, arg1, member: discord.Member = None):
 
@@ -1001,7 +1001,7 @@ class Economy(commands.Cog):
         while True:
             try:
                 timeout = 30
-                reaction, member = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
 
                 if str(reaction.emoji) == "➡":
                     user_shikigamis_page += 1
