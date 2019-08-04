@@ -99,7 +99,7 @@ async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, e
         users.update_one({
             "user_id": str(user.id)}, {
             "$inc": {
-                currency: amount
+                currency: -amount
             },
             "$push": {
                 "achievements": {
