@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Clock Module
+Miketsu, 2019
 """
+
 import asyncio
 import random
 from datetime import datetime
@@ -10,15 +11,26 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.achievements import Achievements
-from cogs.admin import Admin, reset_boss
 from cogs.castle import Castle
-from cogs.economy import Economy
+from cogs.economy import Economy, reset_boss
+from cogs.frames import Frames
 from cogs.library import Library
-from cogs.mongo.db import books, weather, quests
+from cogs.mongo.db import get_collections
 from cogs.quest import Expecto, owls_restock
+from cogs.startup import embed_color
 
+# Collections
+books = get_collections("bukkuman", "books")
+weather = get_collections("bukkuman", "weather")
+quests = get_collections("miketsu", "quests")
+
+# Listings
 clock_channels = []
+list_clock = [
+    "", "", "", "🕐", "🕜", "🕑", "🕝", "🕒", "🕞", "🕓", "🕟", "🕔", "🕠", "🕕",
+    "🕡", "🕖", "🕢", "🕗", "🕣", "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"
+]
+
 for guild_clock in books.find({}, {"channels.clock": 1, "_id": 0}):
     clock_channels.append(guild_clock["channels"]["clock"])
 
@@ -48,11 +60,6 @@ def generate_weather(hour):
 
 
 def get_emoji(hours, minutes):
-    list_clock = [
-        "", "", "", "🕐", "🕜", "🕑", "🕝", "🕒", "🕞", "🕓", "🕟", "🕔", "🕠", "🕕",
-        "🕡", "🕖", "🕢", "🕗", "🕣", "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"
-    ]
-
     if int(minutes) >= 30:
         emoji_clock_index = (int(hours) * 2) + 2
     else:
@@ -89,7 +96,7 @@ class Clock(commands.Cog):
 
         await self.clock_start()
         embed = discord.Embed(
-            colour=discord.Colour(0xffe6a7),
+            colour=discord.Colour(embed_color),
             description="Successfully started the clock manually"
         )
         await ctx.channel.send(embed=embed)
@@ -154,16 +161,16 @@ class Clock(commands.Cog):
             await Expecto(self.client).send_off_report_quest1()
             await Expecto(self.client).send_off_complete_quest1()
             await self.clear_secrets()
-            await Achievements(self.client).process_achievements_hourly()
+            await Frames(self.client).achievements_process_hourly()
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
             await owls_restock()
 
         if hour_minute == "00:00":
             await Economy(self.client).frame_automate()
-            await Admin(self.client).reset_daily()
+            await Economy(self.client).reset_rewards_daily()
             await reset_boss()
-            await Achievements(self.client).process_achievements_daily()
+            await Frames(self.client).achievements_process_daily()
             await Library(self.client).post_new_table_of_content()
 
         if hour_minute == "19:00":

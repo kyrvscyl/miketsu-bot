@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Frames Module
+Miketsu, 2019
 """
+
 import asyncio
 from datetime import datetime
 from math import ceil
@@ -10,12 +11,31 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import frames, users, books, shikigami
-from cogs.startup import primary_id, emoji_j
+from cogs.mongo.db import get_collections
+from cogs.startup import primary_id, e_j
+
+# Collections
+books = get_collections("bukkuman", "books")
+frames = get_collections("miketsu", "frames")
+users = get_collections("miketsu", "users")
+shikigamis = get_collections("miketsu", "shikigamis")
+
+
+total_sp = 0
+for entry in shikigamis.find_one({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1}):
+    total_sp += 1
+
+total_ssr = 0
+for entry in shikigamis.find_one({"rarity": "SSR"}, {"_id": 0, "shikigami.name": 1}):
+    total_ssr += 1
 
 total_sr = 0
-for entry in shikigami.find_one({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1}):
+for entry in shikigamis.find_one({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1}):
     total_sr += 1
+
+total_r = 0
+for entry in shikigamis.find_one({"rarity": "R"}, {"_id": 0, "shikigami.name": 1}):
+    total_r += 1
 
 
 def get_timestamp():
@@ -32,29 +52,29 @@ def get_frame_thumbnail(frame):
     return request["link"]
 
 
-async def acquisition_frame(user, frame_name, channel, jades):
-    query = [
+async def frame_acquisition(user, frame_name, channel, jades):
+
+    for result in users.aggregate([
         {
-            '$match': {
-                'user_id': str(user.id)
+            "$match": {
+                "user_id": str(user.id)
             }
         }, {
-            '$unwind': {
-                'path': '$achievements'
+            "$unwind": {
+                "path": "$achievements"
             }
         }, {
-            '$project': {
-                'achievements': 1
+            "$project": {
+                "achievements": 1
             }
         }, {
-            '$match': {
-                'achievements.name': frame_name
+            "$match": {
+                "achievements.name": frame_name
             }
         }, {
-            '$count': 'count'
+            "$count": "count"
         }
-    ]
-    for result in users.aggregate(query):
+    ]):
         if result["count"] != 0:
             return
 
@@ -73,31 +93,34 @@ async def acquisition_frame(user, frame_name, channel, jades):
     embed = discord.Embed(
         color=user.colour,
         title="Frame Acquisition",
-        description=f"{user.mention}, you acquired the {frame_name.title()} frame and {jades:,d}{emoji_j}"
+        description=f"{user.mention}, you acquired the {frame_name.title()} frame and {jades:,d}{e_j}"
     )
     embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
     await channel.send(embed=embed)
 
 
-class Achievements(commands.Cog):
+class Frames(commands.Cog):
 
     def __init__(self, client):
         self.client = client
 
     @commands.command(aliases=["af"])
     @commands.is_owner()
-    async def achievement_add(self, ctx, arg1, link, *, requirement):
+    @commands.guild_only()
+    async def achievements_add_new(self, ctx, arg1, arg2, link, *, requirement):
 
         profile = {
             "name": arg1.replace("_", " "),
             "requirement": requirement,
-            "link": link
+            "link": link,
+            "emoji": arg2
         }
         frames.insert_one(profile)
         await ctx.message.add_reaction("✅")
 
     @commands.command(aliases=["frames"])
-    async def achievement_show_info(self, ctx):
+    @commands.guild_only()
+    async def achievements_show_info(self, ctx):
 
         frames_listings = []
         for document in frames.find({}, {"_id": 0}):
@@ -106,19 +129,21 @@ class Achievements(commands.Cog):
             except KeyError:
                 continue
 
-        def check_pagination(r, u):
+        page = 1
+        page_total = ceil(len(frames_listings) / 5)
+
+        def check(r, u):
             return u != self.client.user and r.message.id == msg.id
 
         def create_new_embed_page(page_new):
             end = page_new * 5
             start = end - 5
-
             embed = discord.Embed(
                 title="frames", colour=ctx.author.colour,
                 description="collect frames based on their stated requirements\n"
                             "certain achievements are calculated every hour movement"
             )
-            embed.set_footer(text=f"Page: {page_new}")
+            embed.set_footer(text=f"Page: {page_new} of {page_total}")
 
             while start < end:
                 try:
@@ -136,12 +161,9 @@ class Achievements(commands.Cog):
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
-        page = 1
-        page_total = ceil(len(frames_listings) / 5)
         while True:
             try:
-                timeout = 180
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check_pagination)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
 
                 if str(reaction.emoji) == "➡":
                     page += 1
@@ -157,7 +179,7 @@ class Achievements(commands.Cog):
             except asyncio.TimeoutError:
                 return False
 
-    async def process_achievements_hourly(self):
+    async def achievements_process_hourly(self):
 
         guild = self.client.get_guild(int(primary_id))
         query = users.find({}, {
@@ -176,53 +198,51 @@ class Achievements(commands.Cog):
                 except KeyError:
                     continue
 
-            query_sr = [
-                {
-                    '$match': {
-                        'user_id': str(member.id)
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$shikigami'
-                    }
-                }, {
-                    '$match': {
-                        'shikigami.rarity': 'SR'
-                    }
-                }, {
-                    '$count': 'count'
-                }
-            ]
             count_sr = 0
-            for result in users.aggregate(query_sr):
+            for result in users.aggregate([
+                {
+                    "$match": {
+                        "user_id": str(member.id)
+                    }
+                }, {
+                    "$unwind": {
+                        "path": "$shikigami"
+                    }
+                }, {
+                    "$match": {
+                        "shikigami.rarity": "SR"
+                    }
+                }, {
+                    "$count": "count"
+                }
+            ]):
                 count_sr = result["count"]
 
-            query_maple = [
+            maple_evolve = []
+            for result in users.aggregate([
                 {
-                    '$match': {
-                        'user_id': '437941992748482562'
+                    "$match": {
+                        "user_id": "437941992748482562"
                     }
                 }, {
-                    '$unwind': {
-                        'path': '$shikigami'
+                    "$unwind": {
+                        "path": "$shikigami"
                     }
                 }, {
-                    '$match': {
-                        'shikigami.name': {
-                            '$in': [
-                                'Shuten Doji', 'Momiji'
+                    "$match": {
+                        "shikigami.name": {
+                            "$in": [
+                                "Shuten Doji", "Momiji"
                             ]
                         }
                     }
                 }, {
-                    '$project': {
-                        'shikigami.name': 1,
-                        'shikigami.evolved': 1
+                    "$project": {
+                        "shikigami.name": 1,
+                        "shikigami.evolved": 1
                     }
                 }
-            ]
-            maple_evolve = []
-            for result in users.aggregate(query_maple):
+            ]):
                 maple_evolve.append(result["shikigami"]["evolved"])
 
             if document["amulets_spent"] >= 2000 and "Red Carp" not in user_frames:
@@ -238,7 +258,7 @@ class Achievements(commands.Cog):
                         "jades": 4500
                     }
                 })
-                await self.record_achievement(member, "Red Carp")
+                await self.achievements_process_record_user(member, "Red Carp")
 
             if document["level"] >= 30 and "Ubumomma" not in user_frames:
                 users.update_one({
@@ -253,7 +273,7 @@ class Achievements(commands.Cog):
                         "jades": 1500
                     }
                 })
-                await self.record_achievement(member, "Ubumomma")
+                await self.achievements_process_record_user(member, "Ubumomma")
 
             if document["level"] >= 50 and "Pine of Kisaragi" not in user_frames:
                 users.update_one({
@@ -268,7 +288,7 @@ class Achievements(commands.Cog):
                         "jades": 2500
                     }
                 })
-                await self.record_achievement(member, "Pine of Kisaragi")
+                await self.achievements_process_record_user(member, "Pine of Kisaragi")
 
             if document["level"] == 60 and "Cold of Mutsuki" not in user_frames:
                 users.update_one({
@@ -283,7 +303,7 @@ class Achievements(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.record_achievement(member, "Cold of Mutsuki")
+                await self.achievements_process_record_user(member, "Cold of Mutsuki")
 
             if count_sr == total_sr and "Kitsune" not in user_frames:
                 users.update_one({
@@ -298,7 +318,7 @@ class Achievements(commands.Cog):
                         "jades": 2500
                     }
                 })
-                await self.record_achievement(member, "Kitsune")
+                await self.achievements_process_record_user(member, "Kitsune")
 
             if document["coins"] >= 100000000 and "Limited Gold" not in user_frames:
                 users.update_one({
@@ -313,7 +333,7 @@ class Achievements(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.record_achievement(member, "Limited Gold")
+                await self.achievements_process_record_user(member, "Limited Gold")
 
             if len(maple_evolve) == 2 and "Red Maple Frost" not in user_frames:
 
@@ -330,7 +350,7 @@ class Achievements(commands.Cog):
                             "jades": 2500
                         }
                     })
-                    await self.record_achievement(member, "Red Maple Frost")
+                    await self.achievements_process_record_user(member, "Red Maple Frost")
 
             if document["medals"] >= 500:
 
@@ -358,9 +378,9 @@ class Achievements(commands.Cog):
                                 "jades": 750
                             }
                         })
-                        await self.record_achievement(member, reward[0])
+                        await self.achievements_process_record_user(member, reward[0])
 
-    async def process_achievements_weekly(self):
+    async def achievements_process_weekly(self):
 
         request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels": 1})
         spell_spam_id = request["channels"]["spell-spam"]
@@ -383,10 +403,10 @@ class Achievements(commands.Cog):
             user = self.client.get_user(int(medal_board2[i][0]))
             if user is None:
                 continue
-            await acquisition_frame(user, "Eboshi", spell_spam_channel, jades=750)
+            await frame_acquisition(user, "Eboshi", spell_spam_channel, jades=750)
             i += 1
 
-    async def process_achievements_daily(self):
+    async def achievements_process_daily(self):
 
         guild = self.client.get_guild(int(primary_id))
         guild_1st_anniversary = datetime.strptime("2019-Feb-01", "%Y-%b-%d")
@@ -423,7 +443,7 @@ class Achievements(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.record_achievement(member, "Recalling the Past")
+                await self.achievements_process_record_user(member, "Recalling the Past")
 
             if delta_days >= 365 and "Loyal Company" not in user_frames:
                 users.update_one({
@@ -438,7 +458,7 @@ class Achievements(commands.Cog):
                         "jades": 10000
                     }
                 })
-                await self.record_achievement(member, "Loyal Company")
+                await self.achievements_process_record_user(member, "Loyal Company")
 
             if guild_1st_anniversary > date_joined and "One Year Anniversary" not in user_frames:
                 users.update_one({
@@ -453,7 +473,7 @@ class Achievements(commands.Cog):
                         "jades": 3500
                     }
                 })
-                await self.record_achievement(member, "One Year Anniversary")
+                await self.achievements_process_record_user(member, "One Year Anniversary")
 
             if "Starlight Sky" in user_frames and "Blazing Sun" in user_frames and "The Sun & Moon" not in user_frames:
                 users.update_one({
@@ -468,18 +488,15 @@ class Achievements(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.record_achievement(member, "The Sun & Moon")
+                await self.achievements_process_record_user(member, "The Sun & Moon")
 
-    async def record_achievement(self, member, frame_name):
+    async def achievements_process_record_user(self, member, frame_name):
 
         request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels.scroll-of-everything": 1})
         record_scroll_id = request["channels"]["scroll-of-everything"]
         record_scroll_channel = self.client.get_channel(int(record_scroll_id))
 
-        embed = discord.Embed(
-            color=0xe99ac9,
-            timestamp=get_timestamp()
-        )
+        embed = discord.Embed(color=0xe99ac9, timestamp=get_timestamp())
         embed.set_author(
             name=f"Added {frame_name} achievement for {member}",
             icon_url=member.avatar_url
@@ -489,4 +506,4 @@ class Achievements(commands.Cog):
 
 
 def setup(client):
-    client.add_cog(Achievements(client))
+    client.add_cog(Frames(client))

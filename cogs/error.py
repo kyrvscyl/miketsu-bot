@@ -1,56 +1,18 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Error Module
+Miketsu, 2019
 """
-import inspect
-import os
+
 from datetime import datetime
 
 import discord
-import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import errors, books
+from cogs.mongo.db import get_collections
+from cogs.startup import embed_color
 
-file_name = os.path.basename(__file__)[:-3:]
-
-
-def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
-
-
-def get_date_local():
-    tz_target = pytz.timezone("Asia/Manila")
-    return datetime.now(tz=tz_target).strftime("%Y-%m-%d")
-
-
-def get_timestamp_local():
-    tz_target = pytz.timezone("Asia/Manila")
-    return datetime.now(tz=tz_target).strftime("%Y-%m-%d %H:%M:%S")
-
-
-def get_f():
-    return str(inspect.stack()[1][3])
-
-
-def logging(file, function_name, error):
-    error_report = {
-        "time": get_timestamp_local(),
-        "file": file,
-        "function": function_name,
-        "error": error
-    }
-
-    if errors.find_one({"date": get_date_local()}, {"_id": 0}) is None:
-        errors.insert_one({"date": get_date_local(), "report": []})
-
-    errors.update_one({
-        "date": get_date_local()}, {
-        "$push": {
-            "report": error_report
-        }
-    })
+# Collections
+books = get_collections("bukkuman", "books")
 
 
 class Error(commands.Cog):
@@ -61,7 +23,7 @@ class Error(commands.Cog):
     async def submit_error(self, ctx, error):
         channel = self.client.get_channel(584631677804871682)
         embed = discord.Embed(
-            colour=discord.Colour(0xffe6a7),
+            colour=discord.Colour(embed_color),
             title=f"Command Error Report",
             timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
         )
@@ -127,7 +89,7 @@ class Error(commands.Cog):
             if str(ctx.command) == "collect_suggestion":
                 embed = discord.Embed(
                     title="suggest",
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     description="submit suggestions for the bot or server\n"
                                 "available to use through direct message"
                 )
@@ -137,7 +99,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "stat_shikigami":
                 embed = discord.Embed(
                     title="stats",
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     description="shows shikigami pulls statistics"
                 )
                 embed.add_field(name="Example", value="*`;stat tamamonomae`*", inline=False)
@@ -146,7 +108,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "sticker_add_new":
                 embed = discord.Embed(
                     title="newsticker, ns",
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     description="add new stickers in the database"
                 )
                 embed.add_field(
@@ -163,7 +125,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "shrine_shikigami":
                 embed = discord.Embed(
-                    title="shrine", colour=discord.Colour(0xffe6a7),
+                    title="shrine", colour=discord.Colour(embed_color),
                     description="exchange your shikigamis for talismans to acquire exclusive shikigamis"
                 )
                 embed.add_field(
@@ -180,7 +142,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "leaderboard_show":
                 embed = discord.Embed(
-                    title="leaderboard, lb", colour=discord.Colour(0xffe6a7),
+                    title="leaderboard, lb", colour=discord.Colour(embed_color),
                     description="shows various leaderboards"
                 )
                 embed.add_field(
@@ -193,7 +155,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "shikigami_list_show":
                 embed = discord.Embed(
-                    title="shikigamis, shikis", colour=discord.Colour(0xffe6a7),
+                    title="shikigamis, shikis", colour=discord.Colour(embed_color),
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
                 embed.add_field(name="Arguments", value="*SP, SSR, SR, R*", inline=False)
@@ -202,14 +164,14 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "profile_change_display":
                 embed = discord.Embed(
-                    title="display", colour=discord.Colour(0xffe6a7),
+                    title="display", colour=discord.Colour(embed_color),
                     description="changes your profile display thumbnail")
                 embed.add_field(name="Example", value="*`;display inferno ibaraki`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "summon_perform":
                 embed = discord.Embed(
-                    title="summon, s", colour=discord.Colour(0xffe6a7),
+                    title="summon, s", colour=discord.Colour(embed_color),
                     description="simulate summon and collect shikigamis"
                 )
                 embed.add_field(name="Format", value="*`;summon <1 or 10>`*", inline=False)
@@ -218,7 +180,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "bounty_query":
                 embed = discord.Embed(
                     title="bounty, b",
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     description="search shikigami bounty locations"
                 )
                 embed.add_field(name="Format", value="*`;bounty <shikigami or its first 2 letters>`*", inline=False)
@@ -229,7 +191,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "castle_customize_portrait":
                 embed = discord.Embed(
-                    title="frame add, frame edit", colour=discord.Colour(0xffe6a7),
+                    title="frame add, frame edit", colour=discord.Colour(embed_color),
                     description="customize your own portrait\n"
                                 "appears in the castle's floors via `;wander`\n"
                                 "use `add` first before using `edit` argument\n"
@@ -247,7 +209,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "announcement_post_embed":
                 embed = discord.Embed(
-                    title="announce", colour=discord.Colour(0xffe6a7),
+                    title="announce", colour=discord.Colour(embed_color),
                     description="sends an embed message\n"
                                 "prioritization: description > title > img_link\n"
                                 "where title and img_link are optional"
@@ -258,7 +220,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "announcement_post_message":
                 embed = discord.Embed(
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     title="say",
                     description="allows me to repeat a text message"
                 )
@@ -267,7 +229,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "show_cycle_quest1":
                 embed = discord.Embed(
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     title="cycle",
                     description="Patronus quest command participants only\nrequired to finish at least one quest cycle"
                 )
@@ -291,7 +253,7 @@ class Error(commands.Cog):
 
                 embed = discord.Embed(
                     title="Invalid channel",
-                    colour=discord.Colour(0xffe6a7),
+                    colour=discord.Colour(embed_color),
                     description=f"Certain commands are not available through direct message channels.\n"
                                 f"Use them at the <#{spell_spam_id}>"
                 )
@@ -309,7 +271,7 @@ class Error(commands.Cog):
                 "friendship_give"
             ]:
                 embed = discord.Embed(
-                    title="Invalid member", colour=discord.Colour(0xffe6a7),
+                    title="Invalid member", colour=discord.Colour(embed_color),
                     description="That member doesn't exist nor has a profile in this guild"
                 )
                 await ctx.channel.send(embed=embed)

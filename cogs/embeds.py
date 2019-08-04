@@ -1,13 +1,17 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Embeds Module
+Miketsu, 2019
 """
+
 import urllib.request
 
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import books
+from cogs.mongo.db import get_collections
+
+# Collections
+books = get_collections("bukkuman", "books")
 
 
 class Embeds(commands.Cog):
@@ -444,10 +448,10 @@ class Embeds(commands.Cog):
         embed.add_field(
             name="🗒 Game Mechanics",
             value=f"• Allow direct messages from our bot Miketsu to join. Try `;help dm`\n"
-            f"• Interested players can start by reacting at the <#{sorting.id}>\n"
-            f"• Hints will be available to use via `;hint`\n"
-            f"• When the clock ticks a new hour, various events can happen\n"
-            f"• Use <#{gift_game.id}> for any discussion, visible once accepted\n​ "
+                  f"• Interested players can start by reacting at the <#{sorting.id}>\n"
+                  f"• Hints will be available to use via `;hint`\n"
+                  f"• When the clock ticks a new hour, various events can happen\n"
+                  f"• Use <#{gift_game.id}> for any discussion, visible once accepted\n​ "
         )
         embed.add_field(
             name="🥅 Scoring System",

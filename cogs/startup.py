@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Startup Module
+Miketsu, 2019
 """
+
 from datetime import datetime
 from itertools import cycle
 
@@ -9,21 +10,22 @@ import discord
 import pytz
 from discord.ext import tasks, commands
 
-emoji_m = "<:medal:573071121545560064>"
-emoji_j = "<:jade:555630314282811412>"
-emoji_c = "<:coin:573071121495097344>"
-emoji_f = "<:friendship:555630314056318979>"
-emoji_a = "<:amulet:603989470328651787>"
-emoji_sp = "<:SP:602707718603538442>"
-emoji_ssr = "<:SSR:602707410515132456>"
-emoji_sr = "<:SR:602707410922242048>"
-emoji_r = "<:R_:602707410582241280>"
-emoji_n = "<:N_:602707410540560414>"
-emoji_t = "<:talisman:573071120685596682>"
-
+# Global Variables
+e_m = "<:medal:573071121545560064>"
+e_j = "<:jade:555630314282811412>"
+e_c = "<:coin:573071121495097344>"
+e_f = "<:friendship:555630314056318979>"
+e_a = "<:amulet:603989470328651787>"
+e_sp = "<:SP:602707718603538442>"
+e_ssr = "<:SSR:602707410515132456>"
+e_sr = "<:SR:602707410922242048>"
+e_r = "<:R_:602707410582241280>"
+e_n = "<:N_:602707410540560414>"
+e_t = "<:talisman:573071120685596682>"
 primary_id = 412057028887052288
+embed_color = 0xffe6a7
 
-
+# Listings
 status = cycle([
     "with the peasants via ;info",
     "with their feelings via ;info",

@@ -1,19 +1,13 @@
-            if survivability > 0 or discoverability > 0 and roll <= 20:
+if survivability > 0 or discoverability > 0 and roll <= 20:
 
-                await self.boss_roll(user, ctx)
+await self.boss_roll(user, ctx)
 
-            elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 > 40:
+elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 > 40: await asyncio.sleep(3)
+await self.treasure_roll(user, ctx)
 
-                await asyncio.sleep(3)
-                await self.treasure_roll(user, ctx)
+elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 <= 40: await self.quiz_roll(user, ctx)
 
-            elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 <= 40:
-                await self.quiz_roll(user, ctx)
+elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 > 40: await asyncio.sleep(3)
+await self.treasure_roll(user, ctx)
 
-            elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 > 40:
-
-                await asyncio.sleep(3)
-                await self.treasure_roll(user, ctx)
-
-            elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 <= 40:
-                await self.quiz_roll(user, ctx)
+elif survivability > 0 or discoverability > 0 and roll > 20 and roll2 <= 40: await self.quiz_roll(user, ctx)

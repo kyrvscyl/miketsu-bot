@@ -2,88 +2,108 @@
   "amulets": {
     "11": {
       "offer": [
-        "amulets", 11
+        "amulets",
+        11
       ],
       "cost": [
-        "jades", 1000
+        "jades",
+        1000
       ]
     },
     "60": {
       "offer": [
-        "amulets", 60
+        "amulets",
+        60
       ],
       "cost": [
-        "jades", 5000
+        "jades",
+        5000
       ]
     },
     "5": {
       "offer": [
-        "amulets", 5
+        "amulets",
+        5
       ],
       "cost": [
-        "friendship", 40
+        "friendship",
+        40
       ]
     },
     "10": {
       "offer": [
-        "amulets",10
+        "amulets",
+        10
       ],
       "cost": [
-        "friendship", 70
+        "friendship",
+        70
       ]
     }
   },
   "enc": {
     "3": {
       "offer": [
-        "encounter_ticket", 3
+        "encounter_ticket",
+        3
       ],
       "cost": [
-        "coins", 250000
+        "coins",
+        250000
       ]
     },
     "8": {
       "offer": [
-        "encounter_ticket", 8
+        "encounter_ticket",
+        8
       ],
       "cost": [
-        "coins", 550000
+        "coins",
+        550000
       ]
     }
   },
   "raid": {
     "3": {
       "offer": [
-        "realm_ticket", 3
+        "realm_ticket",
+        3
       ],
       "cost": [
-        "coins", 200000
+        "coins",
+        200000
       ]
     },
     "10": {
       "offer": [
-        "realm_ticket", 10
+        "realm_ticket",
+        10
       ],
       "cost": [
-        "coins", 500000
+        "coins",
+        500000
       ]
     }
   },
   "medals": {
     "250": {
       "offer": [
-        "medals", 250
+        "medals",
+        250
       ],
       "cost": [
-        "jades", 1000
+        "jades",
+        1000
       ]
     },
     "500": {
       "offer": [
-        "medals", 500
+        "medals",
+        500
       ],
       "cost": [
-        "jades", 2000
+        "jades",
+        2000
       ]
     }
   }

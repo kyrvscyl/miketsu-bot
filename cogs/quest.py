@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Quests Module
+Miketsu, 2019
 """
+
 import asyncio
 import json
 import random
@@ -12,94 +13,26 @@ import pytz
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.db import owls, weather, sendoff, patronus
-from cogs.mongo.db import quests, books, thieves
+from cogs.mongo.db import get_collections
 
+# Collections
+books = get_collections("bukkuman", "books")
+weather = get_collections("bukkuman", "weather")
+owls = get_collections("miketsu", "owls")
+sendoff = get_collections("miketsu", "sendoff")
+patronus = get_collections("bukkuman", "patronus")
+quests = get_collections("miketsu", "quests")
+thieves = get_collections("miketsu", "thieves")
+hints = get_collections("miketsu", "hints")
+
+# Listings
 diagon_alleys = []
-for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
-    diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
-
-
-def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
-
-
-def check_quest(user):
-    return quests.find_one({"user_id": str(user.id)}, {"_id": 0, "user_id": 1}) != {}
-
-
-async def generate_data(guild, secret_channel, channel):
-    channel_name = secret_channel.replace(" ", "-")
-    webhook = await channel.create_webhook(name="webhooker")
-
-    if channel_name == "eeylops-owl-emporium":
-        avatar_url = "https://i.imgur.com/8xR61b4.jpg"
-        username = "Manager Eeylops"
-        url = "https://i.imgur.com/wXSibYR.jpg"
-
-    elif channel_name == "gringotts-bank":
-        avatar_url = "https://i.imgur.com/IU882rV.jpg"
-        username = "Bank Manager Gringotts"
-        url = "https://i.imgur.com/whPMNPb.jpg"
-
-    else:
-        avatar_url = "https://i.imgur.com/DEuO4la.jpg"
-        username = "Ollivanders"
-        url = "https://i.imgur.com/5ibOfcp.jpg"
-
-    books.update_one({
-        "server": str(guild.id)}, {
-        "$set": {
-            f"{channel_name}.id": str(channel.id),
-            f"{channel_name}.webhook": webhook.url,
-            f"{channel_name}.avatar": avatar_url,
-            f"{channel_name}.username": username
-        }
-    })
-    await secret_banner(webhook.url, avatar_url, username, url)
-
-
-async def secret_banner(webhook_url, avatar, username, url):
-    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
-    embed = DiscordEmbed(color=0xffffff)
-    embed.set_image(url=url)
-    webhook.add_embed(embed)
-    webhook.execute()
-
-
-async def reaction_closed(message):
-    await message.add_reaction("🇨")
-    await message.add_reaction("🇱")
-    await message.add_reaction("🇴")
-    await message.add_reaction("🇸")
-    await message.add_reaction("🇪")
-    await message.add_reaction("🇩")
-    await asyncio.sleep(4)
-    await message.delete()
-
-
-async def secret_response(guild_id, channel_name, description):
-    secret = books.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
-    webhook_url = secret[str(channel_name)]["webhook"]
-    avatar = secret[str(channel_name)]["avatar"]
-    username = secret[str(channel_name)]["username"]
-    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
-    embed = DiscordEmbed(color=0xffffff, description="*\"" + description + "\"*")
-    webhook.add_embed(embed)
-    webhook.execute()
-
-
 owls_list = []
-for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
-    try:
-        owls_list.append(owl["type"])
-    except KeyError:
-        continue
-
-diagon_alleys = []
-for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
-    diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
+traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-loving"]
+lengths = ["short", "long", "average"]
+flexibilities = ["high", "low", "medium"]
+cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
+wand_lengths = ["8", "9", "10", "11", "12", "13", "14"]
 
 patronus_ = open("lists/patronuses.lists")
 patronuses = patronus_.read().splitlines()
@@ -113,11 +46,15 @@ flexibility_types_ = open("lists/flexibility_types.lists")
 flexibility_types = flexibility_types_.read().splitlines()
 flexibility_types_.close()
 
-traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-loving"]
-lengths = ["short", "long", "average"]
-flexibilities = ["high", "low", "medium"]
-cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
-wand_lengths = ["8", "9", "10", "11", "12", "13", "14"]
+
+for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
+    diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
+
+for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
+    try:
+        owls_list.append(owl["type"])
+    except KeyError:
+        continue
 
 
 def get_time():
@@ -125,30 +62,34 @@ def get_time():
     return datetime.now(tz=tz_target)
 
 
+def check_quest(user):
+    return quests.find_one({"user_id": str(user.id)}, {"_id": 0, "user_id": 1}) != {}
+
+
 def get_data_quest1(user_id):
-    data = quests.aggregate([{
+    cycle, current_path, timestamp, hints_user, actions, purchase = "", "", "", "", "", ""
+
+    for profile in quests.aggregate([{
         "$match": {"user_id": str(user_id)}}, {
         "$project": {
             "_id": 0, "quest1": {
                 "$slice": ["$quest1", -1]}
         }}
-    ])
-
-    cycle, current_path, timestamp, hints, actions, purchase = "", "", "", "", "", ""
-
-    for profile in data:
+    ]):
         cycle = profile["quest1"][0]["cycle"]
         current_path = profile["quest1"][0]["current_path"]
         timestamp = profile["quest1"][0]["timestamp"]
-        hints = profile["quest1"][0]["hints"]
+        hints_user = profile["quest1"][0]["hints"]
         actions = profile["quest1"][0]["actions"]
         purchase = profile["quest1"][0]["purchase"]
         break
-    return cycle, current_path, timestamp, hints, actions, purchase
+    return cycle, current_path, timestamp, hints_user, actions, purchase
 
 
 def get_profile_finished_quest1(user):
-    data = quests.aggregate([{
+    score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths = "", "", "", "", "", "", ""
+
+    for profile in quests.aggregate([{
         "$match": {
             "user_id": str(user.id)}}, {
         "$project": {
@@ -156,11 +97,7 @@ def get_profile_finished_quest1(user):
             "quest1": {
                 "$slice": ["$quest1", -1]
             }}
-    }])
-
-    score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths = "", "", "", "", "", "", ""
-
-    for profile in data:
+    }]):
         patronus_summon = profile["quest1"][0]["patronus"]
         score = profile["quest1"][0]["score"]
         timestamp_start = profile["quest1"][0]["timestamp_start"]
@@ -174,7 +111,7 @@ def get_profile_finished_quest1(user):
 
 
 def get_profile_history_quest1(user, cycle):
-    data = quests.aggregate([{
+    for result in quests.aggregate([{
         '$match': {
             'user_id': str(user.id)}}, {
         '$unwind': {
@@ -182,25 +119,21 @@ def get_profile_history_quest1(user, cycle):
         '$match': {
             'quest1.cycle': cycle
         }
-    }
-    ])
-    for result in data:
+    }]):
         return result
 
 
 def get_profile_progress_quest1(user):
-    data = quests.aggregate([{
+    score, timestamp_start, current_path, cycle, hints_unlocked, paths = "", "", "", "", "", ""
+
+    for profile in quests.aggregate([{
         "$match": {
             "user_id": str(user.id)}}, {
         "$project": {
             "_id": 0,
             "quest1": {"$slice": ["$quest1", -1]}
         }
-    }])
-
-    score, timestamp_start, current_path, cycle, hints_unlocked, paths = "", "", "", "", "", ""
-
-    for profile in data:
+    }]):
         cycle = profile["quest1"][0]["cycle"]
         current_path = profile["quest1"][0]["current_path"]
         score = profile["quest1"][0]["score"]
@@ -268,14 +201,75 @@ def get_flexibility_category(wand_flexibility):
     return flexibility[wand_flexibility]
 
 
-async def owls_restock():
-    owls.update_many({}, {"$set": {"purchaser": "None"}})
-
-
 def get_responses_quest1(key):
     with open("data/responses1.json") as f:
         responses = json.load(f)
     return responses[key]
+
+
+async def generate_data(guild, secret_channel, channel):
+    channel_name = secret_channel.replace(" ", "-")
+    webhook = await channel.create_webhook(name="webhooker")
+
+    if channel_name == "eeylops-owl-emporium":
+        avatar_url = "https://i.imgur.com/8xR61b4.jpg"
+        username = "Manager Eeylops"
+        url = "https://i.imgur.com/wXSibYR.jpg"
+
+    elif channel_name == "gringotts-bank":
+        avatar_url = "https://i.imgur.com/IU882rV.jpg"
+        username = "Bank Manager Gringotts"
+        url = "https://i.imgur.com/whPMNPb.jpg"
+
+    else:
+        avatar_url = "https://i.imgur.com/DEuO4la.jpg"
+        username = "Ollivanders"
+        url = "https://i.imgur.com/5ibOfcp.jpg"
+
+    books.update_one({
+        "server": str(guild.id)}, {
+        "$set": {
+            f"{channel_name}.id": str(channel.id),
+            f"{channel_name}.webhook": webhook.url,
+            f"{channel_name}.avatar": avatar_url,
+            f"{channel_name}.username": username
+        }
+    })
+    await secret_banner(webhook.url, avatar_url, username, url)
+
+
+async def secret_banner(webhook_url, avatar, username, url):
+    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
+    embed = DiscordEmbed(color=0xffffff)
+    embed.set_image(url=url)
+    webhook.add_embed(embed)
+    webhook.execute()
+
+
+async def reaction_closed(message):
+    await message.add_reaction("🇨")
+    await message.add_reaction("🇱")
+    await message.add_reaction("🇴")
+    await message.add_reaction("🇸")
+    await message.add_reaction("🇪")
+    await message.add_reaction("🇩")
+    await asyncio.sleep(4)
+    await message.delete()
+
+
+async def secret_response(guild_id, channel_name, description):
+    secret = books.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
+    webhook_url = secret[str(channel_name)]["webhook"]
+    avatar = secret[str(channel_name)]["avatar"]
+    username = secret[str(channel_name)]["username"]
+    webhook = DiscordWebhook(url=webhook_url, avatar_url=avatar, username=username)
+    embed = DiscordEmbed(color=0xffffff, description="*\"" + description + "\"*")
+    webhook.add_embed(embed)
+    webhook.execute()
+
+
+async def owls_restock():
+    owls.update_many({}, {"$set": {"purchaser": "None"}})
 
 
 async def penalize_quest1(user, cycle, points):
@@ -322,18 +316,18 @@ class Quest(commands.Cog):
             await ctx.channel.send(f"{user.mention}, you must wait for 1 hr before you can unlock one")
 
         elif delta >= 1:
-            with open("data/hints.json") as f:
-                hints = json.load(f)
-
             try:
                 hint = ""
                 hint_num = 0
                 h = 0
                 while h <= 5:
-
                     if user_hints[path][h] == "locked":
                         hint_num = str(h + 1)
-                        hint = hints[path][hint_num]
+                        request = hints.find_one({
+                            "quest": 1, f"{path}.{hint_num}": {"$type": 2}}, {
+                            "_id": 0, f"{path}.{hint_num}": 1
+                        })
+                        hint = request[path][hint_num]
                         break
                     h += 1
 
@@ -351,12 +345,13 @@ class Quest(commands.Cog):
                 await user.send(embed=embed)
 
             except IndexError:
-                await user.send(f"You have used up all your hints for this path. "
-                                f"Your hint for this hour is not consumed yet.")
-
+                await user.send(
+                    f"You have used up all your hints for this path. Your hint for this hour is not consumed yet."
+                )
             except KeyError:
-                await user.send(f"You have used up all your hints for this path. "
-                                f"Your hint for this hour is not consumed yet.")
+                await user.send(
+                    f"You have used up all your hints for this path. Your hint for this hour is not consumed yet."
+                )
 
     @commands.Cog.listener()
     async def on_message(self, m):
@@ -369,10 +364,10 @@ class Quest(commands.Cog):
 
         elif m.author.bot:
             return
-        
+
         elif not check_quest(m.author):
             return
-        
+
         msg = m.content.lower()
         user = m.author
         role_dolphin = discord.utils.get(m.guild.roles, name="🐬")
@@ -384,19 +379,19 @@ class Quest(commands.Cog):
             await Expecto(self.client).expecto_patronum(m.guild, user, m.channel, m)
 
         elif str(m.channel.category.id) in diagon_alleys:
-        
+
             if msg == "eeylops owl emporium" and str(m.channel) != "eeylops-owl-emporium":
                 await Expecto(self.client).create_emporium(m.channel.category, m.guild, msg, m, user)
-    
+
             elif msg in ["gringotts bank", "gringotts wizarding bank"] and str(m.channel) != "gringotts-bank":
                 await self.create_gringotts(m.channel.category, m.guild, m, user)
-    
+
             elif msg == "ollivanders" and str(m.channel) != "ollivanders":
                 await Expecto(self.client).create_ollivanders(m.channel.category, m.guild, msg, m, user)
-    
+
             elif "gringotts-bank" == str(m.channel) and m.content.startswith(";") is False:
                 await self.transaction_gringotts(user, m.guild, m)
-    
+
     async def create_gringotts(self, category, guild, message, user):
 
         role_galleons = discord.utils.get(message.guild.roles, name="💰")
@@ -920,10 +915,10 @@ class Expecto(commands.Cog):
 
                 description = \
                     f"• Cycle Score: {score + added_points} points, (+{added_points} bonus points)\n" \
-                        f"• Hints unlocked: {hints_unlocked}\n" \
-                        f"• No. of Paths unlocked: {len(paths)}\n" \
-                        f"• Paths unlocked: [{paths_unlocked[:-2]}]\n" \
-                        f"• Owl: {owl_final.title()} [{patronus_summon['trait'].title()}]"
+                    f"• Hints unlocked: {hints_unlocked}\n" \
+                    f"• No. of Paths unlocked: {len(paths)}\n" \
+                    f"• Paths unlocked: [{paths_unlocked[:-2]}]\n" \
+                    f"• Owl: {owl_final.title()} [{patronus_summon['trait'].title()}]"
 
                 quests.update_one({
                     "user_id": str(user.id), "quest1.cycle": cycle}, {
@@ -951,7 +946,7 @@ class Expecto(commands.Cog):
                 embed.add_field(
                     name="Wand Properties",
                     value=f"{wand['length']} inches, {wand['flexibility']}, {wand['core'].replace(' ', '-')}-cored, "
-                    f"{wand['wood']} wand"
+                          f"{wand['wood']} wand"
                 )
                 content = f"{user.mention}, 🎊 **Congratulations!** You have finished the quest!"
                 await user.remove_roles(role_dolphin, role_galleon, role_owl, role_star)
@@ -1035,7 +1030,7 @@ class Expecto(commands.Cog):
         await Quest(self.client).logging(f"Shifted {user} path to {path_new}")
 
     @commands.command(aliases=["patronus"])
-    @commands.has_role("Test")
+    @commands.has_any_role("Alpha", "Beta")
     @commands.guild_only()
     async def show_patronus(self, ctx, *, _patronus):
 
@@ -1054,13 +1049,13 @@ class Expecto(commands.Cog):
 
             description = \
                 f"Owl Requirements: \n" \
-                    f"• Type: {get_owl_type(trait)} owl\n" \
-                    f"•Trait: {trait.title()}\n\n" \
-                    f"Wand Requirements:\n" \
-                    f"• Flexibility: {flexibility.title()}\n" \
-                    f"• Length: {length.title()}\n" \
-                    f"• Core: {core.title()}\n" \
-                    f"• Wood: {wood.title()}\n"
+                f"• Type: {get_owl_type(trait)} owl\n" \
+                f"•Trait: {trait.title()}\n\n" \
+                f"Wand Requirements:\n" \
+                f"• Flexibility: {flexibility.title()}\n" \
+                f"• Length: {length.title()}\n" \
+                f"• Core: {core.title()}\n" \
+                f"• Wood: {wood.title()}\n"
 
             patronus_descriptions.append(description)
 
@@ -1117,17 +1112,16 @@ class Expecto(commands.Cog):
             await ctx.channel.send("You have to finish your own first cycle first.")
 
         elif requestor_profile is not None:
-            query = quests.aggregate([{"$match": {"user_id": str(requestor.id)}}, {
+            profile = {}
+
+            for result in quests.aggregate([{"$match": {"user_id": str(requestor.id)}}, {
                 "$project": {
                     "_id": 0,
                     "status": {
                         "$slice": ["$quest1.status", 1]
                     }
                 }
-            }])
-
-            profile = {}
-            for result in query:
+            }]):
                 profile = result
                 break
 
@@ -1164,10 +1158,10 @@ class Expecto(commands.Cog):
 
                     description = \
                         f"• Cycle Score: {score} points\n" \
-                            f"• Hints unlocked: {hints_unlocked}\n" \
-                            f"• No. of paths unlocked: {len(paths)}\n" \
-                            f"• Paths unlocked: [{paths_unlocked[:-2]}]\n" \
-                            f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
+                        f"• Hints unlocked: {hints_unlocked}\n" \
+                        f"• No. of paths unlocked: {len(paths)}\n" \
+                        f"• Paths unlocked: [{paths_unlocked[:-2]}]\n" \
+                        f"• Owl: {owl_final.title()} [{patronus_profile['trait'].title()}]"
 
                     embed = discord.Embed(
                         color=0x50e3c2,
@@ -1183,7 +1177,7 @@ class Expecto(commands.Cog):
                     embed.add_field(
                         name="Wand Properties",
                         value=f"{wand['length']} inches, {wand['flexibility']}, {wand['core'].replace(' ', '-')}-cored,"
-                        f" {wand['wood']} wand"
+                              f" {wand['wood']} wand"
                     )
                     await ctx.channel.send(embed=embed)
 
@@ -1216,12 +1210,12 @@ class Expecto(commands.Cog):
 
             description = \
                 f"• Current Score: {score}\n" \
-                    f"• Hours passed: {hours_passed}\n" \
-                    f"• Penalties: {1000 - score}\n" \
-                    f"• Current path: {current_path.replace('path', 'Path ').capitalize()}\n" \
-                    f"• No. of paths unlocked: {len(paths)}\n" \
-                    f"• Paths unlocked: {paths_unlocked[:-2]}\n" \
-                    f"• Hints unlocked: {hints_unlocked}"
+                f"• Hours passed: {hours_passed}\n" \
+                f"• Penalties: {1000 - score}\n" \
+                f"• Current path: {current_path.replace('path', 'Path ').capitalize()}\n" \
+                f"• No. of paths unlocked: {len(paths)}\n" \
+                f"• Paths unlocked: {paths_unlocked[:-2]}\n" \
+                f"• Hints unlocked: {hints_unlocked}"
 
             embed = discord.Embed(
                 color=ctx.message.author.colour,
@@ -1720,8 +1714,9 @@ class Expecto(commands.Cog):
                     await channel.edit(topic=topic)
 
     async def wand_personalise(self, user, guild, channel, cycle, role_star, responses):
+        owl_type = ""
 
-        data = quests.aggregate([{
+        for profile in quests.aggregate([{
             "$match": {"user_id": str(user.id)}}, {
             "$project": {
                 "_id": 0,
@@ -1729,10 +1724,7 @@ class Expecto(commands.Cog):
                     "$slice": ["$quest1", -1]
                 }
             }
-        }])
-
-        owl_type = ""
-        for profile in data:
+        }]):
             owl_type = profile["quest1"][0]["owl"]
             break
 
@@ -1793,9 +1785,9 @@ class Expecto(commands.Cog):
 
                     elif __patronus is not None:
                         description = f"Wood: `{wand_wood.title()}`\n" \
-                            f"Length: `{wand_length} in`\n" \
-                            f"Flexibility: `{wand_flexibility.title()}`\n" \
-                            f"Core: `{wand_core.title()}`"
+                                      f"Length: `{wand_length} in`\n" \
+                                      f"Flexibility: `{wand_flexibility.title()}`\n" \
+                                      f"Core: `{wand_core.title()}`"
 
                         embed = discord.Embed(color=user.colour, description=description)
                         embed.set_author(
@@ -2119,8 +2111,8 @@ class Expecto(commands.Cog):
                 break
 
         return wand_flexibility.lower()
-    
-      
+
+
 def setup(client):
     client.add_cog(Quest(client))
     client.add_cog(Expecto(client))

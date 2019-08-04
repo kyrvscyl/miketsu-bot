@@ -1,14 +1,30 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Summon Module
+Miketsu, 2019
 """
+
 import random
 
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users, streak, shikigami
-from cogs.startup import emoji_a, pluralize
+from cogs.mongo.db import get_collections
+from cogs.startup import e_a, pluralize
+
+# Collections
+streak = get_collections("miketsu", "streak")
+users = get_collections("miketsu", "users")
+shikigamis = get_collections("miketsu", "shikigamis")
+
+# Listings
+pool_sp = []
+pool_ssr = []
+pool_sr = []
+pool_r = []
+
+caption = open("lists/summon.lists")
+summon_caption = caption.read().splitlines()
+caption.close()
 
 
 def get_not_shrine_rarity(rarity):
@@ -19,25 +35,17 @@ def get_not_shrine_rarity(rarity):
     return query_ssr_not_shrine
 
 
-pool_sp = []
-for shiki in shikigami.aggregate(get_not_shrine_rarity("SP")):
+for shiki in shikigamis.aggregate(get_not_shrine_rarity("SP")):
     pool_sp.append(shiki["shikigami"]["name"])
 
-pool_ssr = []
-for shiki in shikigami.aggregate(get_not_shrine_rarity("SSR")):
+for shiki in shikigamis.aggregate(get_not_shrine_rarity("SSR")):
     pool_ssr.append(shiki["shikigami"]["name"])
 
-pool_sr = []
-for shiki in shikigami.aggregate(get_not_shrine_rarity("SR")):
+for shiki in shikigamis.aggregate(get_not_shrine_rarity("SR")):
     pool_sr.append(shiki["shikigami"]["name"])
 
-pool_r = []
-for shiki in shikigami.aggregate(get_not_shrine_rarity("R")):
+for shiki in shikigamis.aggregate(get_not_shrine_rarity("R")):
     pool_r.append(shiki["shikigami"]["name"])
-
-caption = open("lists/summon.lists")
-summon_caption = caption.read().splitlines()
-caption.close()
 
 
 async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
@@ -157,7 +165,7 @@ async def summon_perform(ctx, user, amulet_pull):
         rarity = summon_pull[0][0]
         shikigami_pulled = summon_pull[0][1].replace("||", "")
 
-        thumbnail = shikigami.find_one({
+        thumbnail = shikigamis.find_one({
             "rarity": rarity}, {
             "_id": 0, "shikigami": {
                 "$elemMatch": {
@@ -209,7 +217,7 @@ class Summon(commands.Cog):
                 if amulet_pull > amulet_have:
                     embed = discord.Embed(
                         title="Insufficient amulets", colour=discord.Colour(0xffe6a7),
-                        description=f"{user.mention}, you only have {amulet_have}{emoji_a} in your possession"
+                        description=f"{user.mention}, you only have {amulet_have}{e_a} in your possession"
                     )
                     await ctx.channel.send(embed=embed)
 

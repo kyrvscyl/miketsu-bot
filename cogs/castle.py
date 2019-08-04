@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Castle Module
+Miketsu, 2019
 """
+
 import asyncio
 import random
 import urllib.request
@@ -10,13 +11,18 @@ import discord
 from PIL import Image
 from discord.ext import commands
 
-from cogs.mongo.db import portraits, books
-from cogs.startup import primary_id
+from cogs.mongo.db import get_collections
+from cogs.startup import primary_id, embed_color
 
+# Collections
+portraits = get_collections("bukkuman", "portraits")
+books = get_collections("bukkuman", "books")
+
+# Listings
 primary_roles = ["Head", "Auror", "Patronus", "No-Maj"]
 invalid_channels = ["auror-department", "gift-game", "pvp-fair", "duelling-room"]
-
 castles_id = []
+
 for document in books.find({}, {"_id": 0, "categories.castle": 1}):
     try:
         castles_id.append(document["categories"]["castle"])
@@ -32,14 +38,9 @@ def check_if_guild_is_patronus(ctx):
     return ctx.guild.id == 412057028887052288
 
 
-def get_primary_role(x):
-    dictionary = {
-        "Auror": "⚜",
-        "Head": "🔱",
-        "Patronus": "🔮",
-        "No-Maj": "🔥",
-    }
-    return dictionary[x]
+def get_emoji_primary_role(role):
+    dictionary = {"Auror": "⚜", "Head": "🔱", "Patronus": "🔮", "No-Maj": "🔥"}
+    return dictionary[role]
 
 
 class Castle(commands.Cog):
@@ -52,32 +53,30 @@ class Castle(commands.Cog):
     async def castle_portrait_show_all(self, ctx):
 
         count = portraits.count({})
-        listings = {}
-        for x in range(1, 8):
-            floor_frames = []
-            for frame in portraits.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
-                floor_frames.append(frame["in_game_name"])
-                entry = {str(x): floor_frames}
-                listings.update(entry)
+        portraits_listings = {}
 
         def generate_value_floors(floor):
             try:
-                value = ", ".join(listings[str(floor)])
+                value = ", ".join(portraits_listings[str(floor)])
             except KeyError:
                 value = "None"
             return value
 
         embed = discord.Embed(
-            title="Grand Staircase Frames", color=ctx.author.colour,
-            description=f"There is a total of {count} frames hanging in the castle."
+            title="Patronus Portraits", color=ctx.author.colour,
+            description=f"There are {count} frames hanging in the castle."
         )
-        embed.add_field(name="Floor 7", value="*{}*".format(generate_value_floors(7)), inline=False)
-        embed.add_field(name="Floor 6", value="*{}*".format(generate_value_floors(6)), inline=False)
-        embed.add_field(name="Floor 5", value="*{}*".format(generate_value_floors(5)), inline=False)
-        embed.add_field(name="Floor 4", value="*{}*".format(generate_value_floors(4)), inline=False)
-        embed.add_field(name="Floor 3", value="*{}*".format(generate_value_floors(3)), inline=False)
-        embed.add_field(name="Floor 2", value="*{}*".format(generate_value_floors(2)), inline=False)
-        embed.add_field(name="Floor 1", value="*{}*".format(generate_value_floors(1)), inline=False)
+
+        for x in reversed(range(1, 8)):
+            floor_frames = []
+
+            for frame in portraits.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
+                floor_frames.append(frame["in_game_name"])
+                entry = {str(x): floor_frames}
+                portraits_listings.update(entry)
+
+            embed.add_field(name=f"Floor {x}", value="*{}*".format(generate_value_floors(x)), inline=False)
+
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["wander"])
@@ -88,7 +87,7 @@ class Castle(commands.Cog):
         if not str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels:
             embed = discord.Embed(
                 title="wander",
-                colour=discord.Colour(0xffe6a7),
+                colour=discord.Colour(embed_color),
                 description="usable only at the castle's channels with valid floors\n"
                             "check the channel topics for the floor number\n"
                             "automatically deletes the command & frame after a few secs"
@@ -120,7 +119,7 @@ class Castle(commands.Cog):
 
         embed = discord.Embed(
             color=ctx.author.colour,
-            title=f"{get_primary_role(find_role)} {in_game_name}",
+            title=f"{get_emoji_primary_role(find_role)} {in_game_name}",
             description=description
         )
         embed.set_image(url=image_link)
@@ -152,7 +151,7 @@ class Castle(commands.Cog):
 
         except ValueError:
             embed = discord.Embed(
-                colour=discord.Colour(0xffe6a7),
+                colour=discord.Colour(embed_color),
                 title="Invalid floor number",
                 description="Available floors: 1-6 only"
             )
@@ -171,14 +170,14 @@ class Castle(commands.Cog):
 
         if portraits.find({"frame_id": str(ctx.author.id)}, {"_id": 0}) is not None:
             embed = discord.Embed(
-                colour=discord.Colour(0xffe6a7),
+                colour=discord.Colour(embed_color),
                 description="Frame exists for this user, use `;frame edit <...>`"
             )
             await ctx.channel.send(embed=embed)
 
         elif floor not in [1, 2, 3, 4, 5, 6]:
             embed = discord.Embed(
-                colour=discord.Colour(0xffe6a7),
+                colour=discord.Colour(embed_color),
                 title="Invalid floor number",
                 description="Available floors: 1-6 only"
             )
@@ -214,7 +213,8 @@ class Castle(commands.Cog):
             attachment_link = await self.post_process_frame(
                 str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
             )
-            portraits.update_one({"frame_id": str(ctx.author.id)}, {
+            portraits.update_one({
+                "frame_id": str(ctx.author.id)}, {
                 "$set": {
                     "floor": floor,
                     "frame": frame_num,
@@ -229,15 +229,12 @@ class Castle(commands.Cog):
     async def post_process_frame(self, image_link, in_game_name, find_role, ctx, description, floor, frame_num):
 
         async with ctx.channel.typing():
-            embed = discord.Embed(
-                colour=discord.Colour(0xffe6a7),
-                title="Processing the image.. "
-            )
+            embed = discord.Embed(colour=discord.Colour(embed_color), title="Processing the image.. ")
             msg1 = await ctx.channel.send(embed=embed)
             await asyncio.sleep(2)
             embed = discord.Embed(
-                colour=discord.Colour(0xffe6a7),
-                title="Adding fancy frame based on your highest primary server role.."
+                colour=discord.Colour(embed_color),
+                title="Adding a fancy frame based on your highest primary server role.."
             )
             await msg1.edit(embed=embed)
 
@@ -267,7 +264,7 @@ class Castle(commands.Cog):
 
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"{get_primary_role(find_role)} {in_game_name}",
+                title=f"{get_emoji_primary_role(find_role)} {in_game_name}",
                 description=description
             )
             embed.set_image(url=attachment_link)

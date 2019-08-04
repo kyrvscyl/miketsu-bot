@@ -1,14 +1,20 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Leaderboard Module
+Miketsu, 2019
 """
+
 import asyncio
 
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users, friendship, streak
-from cogs.startup import emoji_f, emoji_a, emoji_m
+from cogs.mongo.db import get_collections
+from cogs.startup import e_f, e_a, e_m, e_ssr, e_sr
+
+# Collections
+users = get_collections("miketsu", "users")
+ships = get_collections("miketsu", "ships")
+streak = get_collections("miketsu", "streak")
 
 
 class Leaderboard(commands.Cog):
@@ -32,10 +38,10 @@ class Leaderboard(commands.Cog):
             await self.leaderboard_post_amulet(ctx)
 
         elif args.lower() in ["friendship", "fp"]:
-            await self.leaderboard_friendship(ctx)
+            await self.leaderboard_post_friendship(ctx)
 
         elif args.lower() in ["ship", "ships"]:
-            await self.leaderboard_post_ship(ctx)
+            await self.leaderboard_post_ships(ctx)
 
         elif args.lower() in ["streak", "ssrstreak"]:
             await self.leaderboard_post_streak(ctx)
@@ -61,7 +67,7 @@ class Leaderboard(commands.Cog):
         for user in ssr_board2:
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
-        title = "🏆 SSR LeaderBoard"
+        title = f"{e_ssr} LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
     async def leaderboard_post_sr(self, ctx):
@@ -82,49 +88,8 @@ class Leaderboard(commands.Cog):
         for user in sr_board2:
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
-        title = "🏆 SR LeaderBoard"
+        title = f"{e_sr} LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
-
-    async def leaderboard_paginate(self, title, ctx, formatted_list):
-
-        embed = discord.Embed(
-            color=ctx.author.colour, title=title,
-            description="".join(formatted_list[0:15])
-        )
-        embed.set_footer(text="Page: 1")
-        msg = await ctx.channel.send(embed=embed)
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
-
-        def create_embed(page_new, query_list, color):
-            end = page * 15
-            start = end - 15
-            description = "".join(query_list[start:end])
-            embed_new = discord.Embed(
-                color=color,
-                title=title,
-                description=f"{description}"
-            )
-            embed_new.set_footer(text=f"Page: {page_new}")
-            return embed_new
-
-        page = 1
-        while True:
-            try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                elif str(reaction.emoji) == "⬅":
-                    page -= 1
-                if page < 1:
-                    page = 1
-                await msg.edit(embed=create_embed(page, formatted_list, ctx.author.colour))
-            except asyncio.TimeoutError:
-                return False
 
     async def leaderboard_post_medals(self, ctx):
 
@@ -145,7 +110,7 @@ class Leaderboard(commands.Cog):
         for user in medal_board2:
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]:,d}\n"))
 
-        title = f"{emoji_m} Medal LeaderBoard"
+        title = f"{e_m} Medal LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
     async def leaderboard_post_level(self, ctx):
@@ -188,10 +153,10 @@ class Leaderboard(commands.Cog):
         for user in amulet_board2:
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
-        title = f"{emoji_a} Spender LeaderBoard"
+        title = f"{e_a} Spender LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
-    async def leaderboard_friendship(self, ctx):
+    async def leaderboard_post_friendship(self, ctx):
 
         fp_board1 = []
         query = users.find({}, {"_id": 0, "user_id": 1, "friendship": 1})
@@ -210,19 +175,14 @@ class Leaderboard(commands.Cog):
         for user in fp_board2:
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
-        title = f"{emoji_f} Friendship LeaderBoard"
+        title = f"{e_f} Friendship LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
-    async def leaderboard_post_ship(self, ctx):
+    async def leaderboard_post_ships(self, ctx):
 
         ship_board1 = []
-        query = friendship.find({}, {
-            "_id": 0,
-            "points": 1,
-            "shipper1": 1,
-            "shipper2": 1,
-            "ship_name": 1,
-            "level": 1
+        query = ships.find({}, {
+            "_id": 0, "points": 1, "shipper1": 1, "shipper2": 1, "ship_name": 1, "level": 1
         })
 
         for ship in query:
@@ -232,7 +192,7 @@ class Leaderboard(commands.Cog):
         formatted_list = []
 
         for ship in ship_board2:
-            formatted_list.append("{}".format(f"🔸{ship[0]}, x{ship[4]}{emoji_f}\n"))
+            formatted_list.append("{}".format(f"🔸{ship[0]}, x{ship[4]}{e_f}\n"))
 
         title = "🚢 Ships LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
@@ -254,10 +214,51 @@ class Leaderboard(commands.Cog):
         formatted_list = []
 
         for user in streakboard2:
-            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}{emoji_a}\n"))
+            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}{e_a}\n"))
 
-        title = "NO SSR Streak LeaderBoard"
+        title = f"No {e_ssr} Summon Streak LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
+
+    async def leaderboard_paginate(self, title, ctx, formatted_list):
+
+        embed = discord.Embed(
+            color=ctx.author.colour, title=title,
+            description="".join(formatted_list[0:15])
+        )
+        embed.set_footer(text="Page: 1")
+        msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        def create_embed(page_new, query_list, color):
+            end = page * 15
+            start = end - 15
+            description = "".join(query_list[start:end])
+            embed_new = discord.Embed(
+                color=color,
+                title=title,
+                description=f"{description}"
+            )
+            embed_new.set_footer(text=f"Page: {page_new}")
+            return embed_new
+
+        page = 1
+        while True:
+            try:
+                timeout = 60
+                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page < 1:
+                    page = 1
+                await msg.edit(embed=create_embed(page, formatted_list, ctx.author.colour))
+            except asyncio.TimeoutError:
+                return False
 
 
 def setup(client):

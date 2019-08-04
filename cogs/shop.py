@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Shop Module
+Miketsu, 2019
 """
+
 import asyncio
 import json
 from datetime import datetime
@@ -10,30 +11,40 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import users, frames
-from cogs.startup import emoji_a, emoji_j, emoji_c, emoji_m, emoji_f
+from cogs.mongo.db import get_collections
+from cogs.startup import e_a, e_j, e_c, e_m, e_f, embed_color
 
+# Collections
+users = get_collections("miketsu", "users")
+frames = get_collections("miketsu", "frames")
+
+with open("data/shop.json") as f:
+    shop_dict = json.load(f)
+
+# Listings
 purchasable_frames = []
+trading_value_list = []
+
 for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
     purchasable_frames.append(document["name"].lower())
+
+
+def get_emoji(item):
+    emoji_dict = {
+        "jades": e_j,
+        "coins": e_c,
+        "realm_ticket": "🎟",
+        "amulets": e_a,
+        "medals": e_m,
+        "friendship": e_f,
+        "encounter_ticket": "🎫"
+    }
+    return emoji_dict[item]
 
 
 def get_time():
     tz_target = pytz.timezone("America/Atikokan")
     return datetime.now(tz=tz_target)
-
-
-def get_emoji(item):
-    emoji_dict = {
-        "jades": emoji_j,
-        "coins": emoji_c,
-        "realm_ticket": "🎟",
-        "amulets": emoji_a,
-        "medals": emoji_m,
-        "friendship": emoji_f,
-        "encounter_ticket": "🎫"
-    }
-    return emoji_dict[item]
 
 
 def get_offer_and_cost(x):
@@ -49,12 +60,7 @@ def get_offer_and_cost(x):
     return offer_item_, offer_amount_, cost_item_, cost_amount_
 
 
-with open("data/shop.json") as f:
-    shop_dict = json.load(f)
-
-trading_value_list = []
 for key in shop_dict:
-
     for key2 in shop_dict[key]:
         _offer_item = shop_dict[key][key2]["offer"][0]
         _offer_amount = shop_dict[key][key2]["offer"][1]
@@ -78,7 +84,7 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
             }
         })
         embed = discord.Embed(
-            title="Confirmation receipt", colour=discord.Colour(0xffe6a7),
+            title="Confirmation receipt", colour=discord.Colour(embed_color),
             description=f"{user.mention} acquired {offer_amount:,d}{get_emoji(offer_item)} "
                         f"in exchanged for {cost_amount:,d}{get_emoji(cost_item)}"
         )
@@ -86,14 +92,13 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
 
     else:
         embed = discord.Embed(
-            title="Purchase failure", colour=discord.Colour(0xffe6a7),
+            title="Purchase failure", colour=discord.Colour(embed_color),
             description=f"{user.mention}, you have insufficient {get_emoji(cost_item)}"
         )
         await ctx.channel.send(embed=embed)
 
 
 async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, emoji):
-
     if users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency] >= amount:
 
         users.update_one({
@@ -109,7 +114,7 @@ async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, e
             }
         })
         embed = discord.Embed(
-            title="Confirmation receipt", colour=discord.Colour(0xffe6a7),
+            title="Confirmation receipt", colour=discord.Colour(embed_color),
             description=f"{user.mention} acquired {emoji} {frame_name} "
                         f"in exchanged for {amount:,d}{get_emoji(currency)}"
         )
@@ -117,7 +122,7 @@ async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, e
 
     else:
         embed = discord.Embed(
-            title="Purchase failure", colour=discord.Colour(0xffe6a7),
+            title="Purchase failure", colour=discord.Colour(embed_color),
             description=f"{user.mention}, you have insufficient {get_emoji(currency)}"
         )
         await ctx.channel.send(embed=embed)
@@ -133,7 +138,7 @@ class Economy(commands.Cog):
     async def shop_show_items(self, ctx):
 
         embed = discord.Embed(
-            title="Mystic Trader", colour=discord.Colour(0xffe6a7),
+            title="Mystic Trader", colour=discord.Colour(embed_color),
             description="exchange various economy items"
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/8/86/246a.jpg")
@@ -154,7 +159,7 @@ class Economy(commands.Cog):
 
         if len(args) == 0:
             embed = discord.Embed(
-                title="buy", colour=discord.Colour(0xffe6a7),
+                title="buy", colour=discord.Colour(embed_color),
                 description="purchase from the list of items from the *`;shop`*\nreact to confirm purchase")
             embed.add_field(name="Format", value="*`;buy <item> <amount>`*")
             await ctx.channel.send(embed=embed)
@@ -162,7 +167,7 @@ class Economy(commands.Cog):
         elif args[0].lower() in ["frame", "frames"] and len(args) == 1:
 
             embed = discord.Embed(
-                title="AkiraKL's Frame Shop", colour=discord.Colour(0xffe6a7),
+                title="AkiraKL's Frame Shop", colour=discord.Colour(embed_color),
                 description="purchase premium frames for premium prices"
             )
 
@@ -203,7 +208,7 @@ class Economy(commands.Cog):
 
         elif len(args) == 1:
             embed = discord.Embed(
-                title="buy", colour=discord.Colour(0xffe6a7),
+                title="buy", colour=discord.Colour(embed_color),
                 description="buy items from the mystic trader"
             )
             embed.add_field(
@@ -233,7 +238,7 @@ class Economy(commands.Cog):
 
             except KeyError:
                 embed = discord.Embed(
-                    title="Invalid purchase code", colour=discord.Colour(0xffe6a7),
+                    title="Invalid purchase code", colour=discord.Colour(embed_color),
                     description=f"{user.mention}, you entered an invalid purchase code"
                 )
                 await ctx.channel.send(embed=embed)
@@ -247,7 +252,7 @@ class Economy(commands.Cog):
             await self.client.wait_for("reaction_add", timeout=10.0, check=check)
         except asyncio.TimeoutError:
             embed = discord.Embed(
-                title="Timeout!", colour=discord.Colour(0xffe6a7),
+                title="Timeout!", colour=discord.Colour(embed_color),
                 description=f"{ctx.author.mention}, you did not confirm the purchase"
             )
             await ctx.channel.send(embed=embed)

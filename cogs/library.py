@@ -1,25 +1,27 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Library Module
+Miketsu, 2019
 """
+
 import urllib.request
 
 import discord
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.db import library, books
+from cogs.mongo.db import get_collections
 
+# Collections
+books = get_collections("bukkuman", "books")
+library = get_collections("bukkuman", "library")
+
+# Listings
 lists_souls = []
 lists_souls_raw = []
+
 for soul in library.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_id": 0, "index": 1}):
     lists_souls.append("`{}`".format(soul["index"].lower()))
     lists_souls_raw.append(soul["index"].lower())
-
-
-async def post_process_books(ctx, query):
-    library.update_one(query, {"$inc": {"borrows": 1}})
-    await ctx.message.delete()
 
 
 def check_if_reference_section(ctx):
@@ -28,6 +30,11 @@ def check_if_reference_section(ctx):
 
 def check_if_restricted_section(ctx):
     return ctx.channel.name == "restricted-section"
+
+
+async def post_process_books(ctx, query):
+    library.update_one(query, {"$inc": {"borrows": 1}})
+    await ctx.message.delete()
 
 
 async def post_table_of_content_restricted(channel):

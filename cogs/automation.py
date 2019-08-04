@@ -1,19 +1,25 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Automation Module
+Miketsu, 2019
 """
+
 from datetime import datetime
 
 import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import books
+from cogs.mongo.db import get_collections
 
+# Collections
+books = get_collections("bukkuman", "books")
+
+# Listings
 shard_trading_ids = []
+
 for document in books.find({}, {"_id": 0, "channels.shard-trading": 1}):
     try:
-        shard_trading_ids.append(document["channels"]["shard-trading"])
+        shard_trading_ids.append(int(document["channels"]["shard-trading"]))
     except KeyError:
         continue
 
@@ -27,7 +33,7 @@ def get_time_est():
     return datetime.now(tz=tz_target)
 
 
-class Events(commands.Cog):
+class Automation(commands.Cog):
 
     def __init__(self, client):
         self.client = client
@@ -35,20 +41,16 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
 
-        if str(payload.data["channel_id"]) not in shard_trading_ids:
+        if payload.data["channel_id"] not in shard_trading_ids:
             return
 
         if "pinned" not in payload.data:
             return
 
         elif payload.data["pinned"] is True:
-
             request = books.find_one({
                 "server": f"{payload.data['guild_id']}"}, {
-                "_id": 0,
-                "channels.shard-trading": 1,
-                "channels.headlines": 1,
-                "roles.shard_seekers": 1
+                "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1
             })
 
             guild_id = payload.data['guild_id']
@@ -63,14 +65,10 @@ class Events(commands.Cog):
             user = guild.get_member(int(user_id))
             headlines_channel = self.client.get_channel(int(headlines_id))
             shard_trading_channel = self.client.get_channel(int(shard_trading_id))
-            shard_seeker_role = guild.get_role(int(shard_seeker_id))
 
-            content = f"{shard_seeker_role.mention}"
+            content = f"<@&{shard_seeker_id}>!"
             embed = discord.Embed(color=user.colour, description=description, timestamp=get_timestamp())
-            embed.set_author(
-                name=f"{user.display_name} is looking for shards!",
-                icon_url=user.avatar_url
-            )
+            embed.set_author(name=f"{user.display_name} is looking for shards!", icon_url=user.avatar_url)
             embed.set_footer(text=f"#{shard_trading_channel.name}")
 
             if len(attachments) > 0:
@@ -81,9 +79,8 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
 
-        request = books.find_one({"server": f"{member.guild.id}"}, {
-            "_id": 0, "channels": 1, "roles": 1, "letters": 1
-        })
+        request = books.find_one({"server": f"{member.guild.id}"}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1})
+
         try:
             common_room_id = request["channels"]["the-common-room"]
             record_scroll_id = request["channels"]["scroll-of-everything"]
@@ -122,14 +119,11 @@ class Events(commands.Cog):
 
         try:
             embed2 = discord.Embed(color=0xffffff, timestamp=get_timestamp())
-            embed2.set_author(
-                name=f"{member} has joined the house!"
-            )
+            embed2.set_author(name=f"{member} has joined the house!")
             embed2.set_footer(
                 text=f"{member.guild.member_count} members",
                 icon_url=member.avatar_url
             )
-
             record_scroll_channel = self.client.get_channel(int(record_scroll_id))
             await record_scroll_channel.send(embed=embed2)
         except AttributeError:
@@ -150,9 +144,7 @@ class Events(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        request = books.find_one({"server": str(member.guild.id)}, {
-            "_id": 0, "channels.scroll-of-everything": 1
-        })
+        request = books.find_one({"server": str(member.guild.id)}, {"_id": 0, "channels.scroll-of-everything": 1})
         record_scroll_id = request["channels"]["scroll-of-everything"]
         record_scroll_channel = self.client.get_channel(int(record_scroll_id))
 
@@ -177,10 +169,8 @@ class Events(commands.Cog):
 
         request = books.find_one({
             "server": str(before.guild.id)}, {
-            "_id": 0,
-            "channels.scroll-of-everything": 1,
-            "channels.auror-department": 1}
-        )
+            "_id": 0, "channels.scroll-of-everything": 1, "channels.auror-department": 1
+        })
         record_scroll_id = request["channels"]["scroll-of-everything"]
         record_scroll_channel = self.client.get_channel(int(record_scroll_id))
 
@@ -275,4 +265,4 @@ class Events(commands.Cog):
 
 
 def setup(client):
-    client.add_cog(Events(client))
+    client.add_cog(Automation(client))

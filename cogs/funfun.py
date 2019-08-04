@@ -1,7 +1,8 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Funfun Module
+Miketsu, 2019
 """
+
 import random
 import re
 
@@ -38,7 +39,7 @@ async def mike_shoot(user, guild, channel, args):
 
             embed = discord.Embed(
                 color=member.colour,
-                description="\"*"+response+"*\""
+                description="\"*" + response + "*\""
             )
             await channel.send(embed=embed)
             break
@@ -93,7 +94,7 @@ class Funfun(commands.Cog):
                 if len(message.content) == 4:
                     embed = discord.Embed(
                         colour=discord.Colour(0xffe6a7),
-                        description="\"*"+random.choice(reaction_list)+"*\""
+                        description="*" + random.choice(reaction_list) + "*"
                     )
                     msg = await message.channel.send(embed=embed)
                     await msg.delete(delay=15)

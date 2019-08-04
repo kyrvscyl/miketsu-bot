@@ -1,20 +1,27 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Stickers Module
+Miketsu, 2019
 """
+
 import asyncio
 
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users, stickers
+from cogs.mongo.db import get_collections
 
+# Collections
+books = get_collections("bukkuman", "books")
+stickers = get_collections("bukkuman", "stickers")
+users = get_collections("miketsu", "users")
+
+
+# Listings
 stickers_list = []
 actions = []
 
 
 def generate_new_stickers():
-
     global stickers_list
     global actions
 

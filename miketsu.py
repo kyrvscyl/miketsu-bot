@@ -9,7 +9,10 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import tokens
+from cogs.mongo.db import get_collections
+
+# Collections
+tokens = get_collections("bukkuman", "tokens")
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 bot = os.path.basename(__file__)[:-3:]

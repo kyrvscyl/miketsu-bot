@@ -1,14 +1,18 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Raid Module
+Miketsu, 2019
 """
+
 import random
 
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users
-from cogs.startup import emoji_m, emoji_j, emoji_c
+from cogs.mongo.db import get_collections
+from cogs.startup import e_m, e_j, e_c, embed_color
+
+# Collections
+users = get_collections("miketsu", "users")
 
 
 def calculate(x, y, z):
@@ -84,7 +88,7 @@ async def raid_perform_calculation(victim, raider, ctx):
 
     except KeyError:
         embed = discord.Embed(
-            title="Invalid member", colour=discord.Colour(0xffe6a7),
+            title="Invalid member", colour=discord.Colour(embed_color),
             description=f"{victim} doesnt have a realm yet in this server"
         )
         await ctx.channel.send(embed=embed)
@@ -121,9 +125,9 @@ async def raid_perform_attack(victim, raider, ctx):
             embed.add_field(
                 name=f"Results, `{total_chance}%`",
                 value=f"||"
-                f"{raider.display_name} won!\n"
-                f"25,000{emoji_c}, 50{emoji_j}, 25{emoji_m}"
-                f"||"
+                      f"{raider.display_name} won!\n"
+                      f"25,000{e_c}, 50{e_j}, 25{e_m}"
+                      f"||"
             )
             await raid_giverewards_raider_as_winner(victim, raider)
             await ctx.channel.send(embed=embed)
@@ -136,16 +140,16 @@ async def raid_perform_attack(victim, raider, ctx):
             embed.add_field(
                 name=f"Results, `{total_chance}%`",
                 value=f"||"
-                f"{victim.display_name} won!\n"
-                f"50,000{emoji_c}, 100{emoji_j}, 50{emoji_m}"
-                f"||"
+                      f"{victim.display_name} won!\n"
+                      f"50,000{e_c}, 100{e_j}, 50{e_m}"
+                      f"||"
             )
             await raid_giverewards_raider_as_winner(victim, raider)
             await ctx.channel.send(embed=embed)
 
     except KeyError:
         embed = discord.Embed(
-            title="Invalid member", colour=discord.Colour(0xffe6a7),
+            title="Invalid member", colour=discord.Colour(embed_color),
             description=f"{victim} doesnt have a realm yet in this server"
         )
         await ctx.channel.send(embed=embed)
@@ -168,7 +172,7 @@ class Startup(commands.Cog):
 
         if victim is None:
             embed = discord.Embed(
-                title="raid, r", colour=discord.Colour(0xffe6a7),
+                title="raid, r", colour=discord.Colour(embed_color),
                 description="raids the tagged member, requires 1 ticket"
             )
             embed.add_field(name="Formats", value="*`;raid @member`*, *`;r <name#discriminator>`*")
@@ -179,7 +183,7 @@ class Startup(commands.Cog):
 
         elif raider_tickets < 1:
             embed = discord.Embed(
-                title=f"{raider.display_name}, you have insufficient tickets", colour=discord.Colour(0xffe6a7),
+                title=f"{raider.display_name}, you have insufficient tickets", colour=discord.Colour(embed_color),
                 description="Purchase at the shop or get your daily rewards"
             )
             await ctx.channel.send(embed=embed)
@@ -190,7 +194,7 @@ class Startup(commands.Cog):
 
             if raid_count == 3:
                 embed = discord.Embed(
-                    title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(0xffe6a7),
+                    title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(embed_color),
                     description="Raids are capped at 3 times per day and per realm"
                 )
                 await ctx.channel.send(embed=embed)
@@ -200,12 +204,7 @@ class Startup(commands.Cog):
                 await raid_perform_attack(victim, raider, ctx)
 
         except TypeError:
-            embed = discord.Embed(
-                title="Invalid member", colour=discord.Colour(0xffe6a7),
-                description="That member doesn't exist in this guild"
-            )
-            await ctx.channel.send(embed=embed)
-
+            raise discord.ext.commands.BadArgument
 
     @commands.command(aliases=["raidcalc", "raidc", "rc"])
     @commands.guild_only()
@@ -213,7 +212,7 @@ class Startup(commands.Cog):
 
         if victim is None:
             embed = discord.Embed(
-                title="raidcalc, raidc, rc", colour=discord.Colour(0xffe6a7),
+                title="raidcalc, raidc, rc", colour=discord.Colour(embed_color),
                 description="calculates your odds of winning"
             )
             embed.add_field(

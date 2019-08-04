@@ -1,15 +1,18 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Level Module
+Miketsu, 2019
 """
+
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import users
+from cogs.mongo.db import get_collections
+
+# Collections
+users = get_collections("miketsu", "users")
 
 
 async def add_experience(user, exp):
-
     if users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"] == 60:
         return
     else:
@@ -17,7 +20,6 @@ async def add_experience(user, exp):
 
 
 async def level_up(user, ctx):
-
     profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
     exp = profile["experience"]
     level = profile["level"]
@@ -57,7 +59,6 @@ async def level_up(user, ctx):
 
 
 async def create_user(user):
-
     if users.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
         profile = {
             "user_id": str(user.id),
