@@ -150,7 +150,7 @@ class Economy(commands.Cog):
     async def shop_buy_items(self, ctx, *args):
 
         user = ctx.author
-        embed = discord.Embed(title="confirm purchase?", colour=discord.Colour(0xffe6a7))
+        embed = discord.Embed(title="confirm purchase?", color=ctx.author.colour)
 
         if len(args) == 0:
             embed = discord.Embed(
@@ -181,7 +181,9 @@ class Economy(commands.Cog):
             await ctx.channel.send(embed=embed)
             return
 
-        elif args[0].lower() == "frame" and len(args) > 1 and " ".join(args[-2:]).lower() in purchasable_frames:
+        elif args[0].lower() in ["frame", "frames"] \
+                and len(args) > 1 and " ".join(args[-2:]).lower() in \
+                purchasable_frames:
 
             frame = " ".join(args[-2:]).lower()
             request = frames.find_one({"name": frame.title()}, {"_id": 0})
@@ -198,6 +200,23 @@ class Economy(commands.Cog):
 
             if answer is True:
                 await shop_process_purchase_frame(ctx, user, currency, amount, frame.title(), emoji)
+
+        elif len(args) == 1:
+            embed = discord.Embed(
+                title="buy", colour=discord.Colour(0xffe6a7),
+                description="buy items from the mystic trader"
+            )
+            embed.add_field(
+                name=f"Arguments",
+                value="*amulets, frames, enc, raid, medals*",
+                inline=False
+            )
+            embed.add_field(
+                name=f"Example",
+                value="*`;buy frames`*",
+                inline=False
+            )
+            await ctx.channel.send(embed=embed)
 
         else:
             try:

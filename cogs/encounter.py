@@ -684,10 +684,13 @@ class Encounter(commands.Cog):
 
     @commands.command(aliases=["binfo", "bossinfo"])
     @commands.guild_only()
-    async def boss_info(self, ctx, *args):
+    async def boss_info(self, ctx, *, args=None):
 
         try:
-            query = args[0].capitalize()
+            query = args.capitalize()
+            if query not in demons:
+                raise AttributeError
+
             boss_profile = boss.find_one({
                 "boss": query}, {
                 "_id": 0,
@@ -730,20 +733,17 @@ class Encounter(commands.Cog):
             embed.set_thumbnail(url=boss_url)
             await ctx.channel.send(embed=embed)
 
-        except IndexError:
-
+        except AttributeError:
             embed = discord.Embed(
                 title="bossinfo, binfo", colour=discord.Colour(0xffe6a7),
-                description="shows discovered boss statistics")
-
+                description="shows discovered boss statistics"
+            )
             demons_formatted = ", ".join(demons)
-
             embed.add_field(name="Bosses", value="*{}*".format(demons_formatted))
             embed.add_field(name="Example", value="*`;binfo namazu`*", inline=False)
             await ctx.channel.send(embed=embed)
 
-        except KeyError:
-            return
+
 
 
 def setup(client):
