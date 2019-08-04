@@ -145,14 +145,14 @@ class Encounter(commands.Cog):
         if (survivability > 0 or discoverability > 0) and boss_spawn is False:
             roll = random.randint(0, 100)
 
-            if roll <= 20:
+            if roll <= 15:
                 status_set(True)
                 await self.boss_roll(user, ctx)
             else:
                 roll2 = random.randint(0, 100)
                 await asyncio.sleep(1)
 
-                if roll2 > 40:
+                if roll2 > 25:
                     await self.treasure_roll(user, ctx)
                 else:
                     await self.quiz_roll(user, ctx)
@@ -160,7 +160,7 @@ class Encounter(commands.Cog):
             roll2 = random.randint(0, 100)
             await asyncio.sleep(1)
 
-            if roll2 > 40:
+            if roll2 > 25:
                 await self.treasure_roll(user, ctx)
             else:
                 await self.quiz_roll(user, ctx)
