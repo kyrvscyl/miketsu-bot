@@ -3,6 +3,8 @@ Discord Miketsu Bot.
 kyrvscyl, 2019
 """
 import asyncio
+from datetime import datetime
+from math import ceil
 
 import discord
 from discord.ext import commands
@@ -14,6 +16,10 @@ from cogs.startup import emoji_f, emoji_j, pluralize
 def get_bond(x, y):
     bond_list = sorted([x.id, y.id], reverse=True)
     return f"{bond_list[0]}x{bond_list[1]}"
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 class Friendship(commands.Cog):
@@ -94,6 +100,80 @@ class Friendship(commands.Cog):
         )
         await ctx.channel.send(embed=embed)
 
+    @commands.command(aliases=["ships"])
+    @commands.guild_only()
+    async def friendship_ship_show_all(self, ctx, *, member: discord.Member = None):
+
+        if member is None:
+            await self.friendship_ship_show_all_post(ctx.author, ctx)
+
+        else:
+            await self.friendship_ship_show_all_post(member, ctx)
+
+    async def friendship_ship_show_all_post(self, member, ctx):
+
+        ships_listings = []
+        for ship in friendship.find({"level": {"$gt": 1}, "code": {"$regex": f".*{member.id}.*"}}):
+            ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"]]
+            ships_listings.append(ship_entry)
+
+        def check_pagination(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        def create_new_embed_page(page_new):
+            end = page_new * 5
+            start = end - 5
+
+            description = f"```" \
+                          f"Total ships: {len(ships_listings)}" \
+                          f"```"
+
+            embed = discord.Embed(
+                color=member.colour,
+                title=f"🚢 My Ships",
+                description=description,
+                timestamp=get_timestamp()
+            )
+            embed.set_footer(text=f"Page {page_new} of {page_total}")
+
+            while start < end:
+                try:
+                    embed.add_field(
+                        name=f"{ships_listings[start][2]}, level {ships_listings[start][3]}",
+                        value=f"<@{ships_listings[start][0]}> & <@{ships_listings[start][1]}>",
+                        inline=False
+                    )
+                    start += 1
+                except IndexError:
+                    break
+            return embed
+
+        page = 1
+        page_total = ceil(len(ships_listings) / 5)
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(1))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        while True:
+            try:
+                timeout = 180
+                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check_pagination)
+
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+
+                await msg.edit(embed=create_new_embed_page(page))
+            except asyncio.TimeoutError:
+                return False
+
     @commands.command(aliases=["ship"])
     @commands.guild_only()
     async def friendship_ship(self, ctx, query1: discord.Member = None, query2: discord.Member = None):
@@ -101,10 +181,15 @@ class Friendship(commands.Cog):
         try:
             if query1 is None and query2 is None:
                 embed = discord.Embed(
-                    title="ship", colour=discord.Colour(0xffe6a7),
-                    description="shows a ship profile\nto change your ship's name use *`;fpchange`*"
+                    title="ship, ships", colour=discord.Colour(0xffe6a7),
+                    description="shows a ship profile or your own ships\nto change your ship's name use *`;fpchange`*"
                 )
-                embed.add_field(name="Formats", value="*• `;ship @member`*\n*• `;ship @member @member`*\n")
+                embed.add_field(
+                    name="Formats",
+                    value="*• `;ship @member`*\n"
+                          "*• `;ship @member @member`*\n"
+                          "*• `;ships`*"
+                )
                 await ctx.channel.send(embed=embed)
 
             elif query1 is not None and query2 is None:
