@@ -633,10 +633,11 @@ class Encounter(commands.Cog):
             try:
                 name = ctx.guild.get_member(int([reward][0][0]))
                 damage_contribution = round([reward][0][5] * 100, 2)
-                coins_r = round([reward][0][1])
-                jades_r = round([reward][0][2])
-                medal_r = round([reward][0][3])
-                exp_r = round([reward][0][4])
+                player_level = users.find_one({"user_id": [reward][0][0]}, {"_id": 0, "level": 1})["level"]
+                coins_r = round([reward][0][1] * (1 + player_level/100))
+                jades_r = round([reward][0][2] * (1 + player_level/100))
+                medal_r = round([reward][0][3] * (1 + player_level/100))
+                exp_r = round([reward][0][4] * (1 + player_level/100))
 
                 embed.add_field(
                     name=f"{name}, {damage_contribution}%",
