@@ -38,6 +38,17 @@ async def level_up(user, ctx):
                 "jades": 150, "amulets": 10, "coins": 100000
             }
         })
+        if level_end == 60:
+            users.update_one({
+                "user_id": str(user.id)}, {
+                "$set": {
+                    "level_exp_next": 60,
+                    "level": 60
+                },
+                "$inc": {
+                    "jades": 4000, "amulets": 50, "coins": 1000000
+                }
+            })
 
         try:
             await ctx.add_reaction("⤴")
