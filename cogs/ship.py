@@ -118,7 +118,7 @@ class Friendship(commands.Cog):
     async def friendship_ship_show_all_post(self, member, ctx):
 
         ships_listings = []
-        for ship in ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{member.id}.*"}}):
+        for ship in ships.find({"code": {"$regex": f".*{member.id}.*"}}):
             ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"]]
             ships_listings.append(ship_entry)
 
@@ -135,7 +135,7 @@ class Friendship(commands.Cog):
 
             embed = discord.Embed(
                 color=member.colour,
-                title=f"🚢 My Ships",
+                title=f"🚢 {member.display_name}'s ships",
                 description=description,
                 timestamp=get_timestamp()
             )
