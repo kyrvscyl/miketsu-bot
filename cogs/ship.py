@@ -48,6 +48,10 @@ class Friendship(commands.Cog):
                     round(-1.875 * (level_next ** 4) + 38.75 * (level_next ** 3) - 170.63 * (level_next ** 2)
                           + 313.75 * level_next - 175)
                 ships.update_one({"code": code}, {"$inc": {"points_required": points_required}})
+
+                if level_next == 5:
+                    ships.update_one({"code": code}, {"$set": {"points": 575, "points_required": 575}})
+
                 await self.friendship_post_ship(code, giver, ctx)
 
     async def friendship_post_ship(self, code, query1, ctx):
@@ -283,7 +287,7 @@ class Friendship(commands.Cog):
                 await self.friendship_check_levelup(ctx, code, giver)
                 await ctx.message.clear_reactions()
             else:
-                ships.update_one({"code": code}, {"$inc": {"points": 3}})
+                ships.update_one({"code": code, "level": {"$lt": 5}}, {"$inc": {"points": 3}})
                 await self.friendship_check_levelup(ctx, code, giver)
                 users.update_one({"user_id": str(receiver.id)}, {"$inc": {"friendship": 3}})
                 await ctx.message.clear_reactions()
