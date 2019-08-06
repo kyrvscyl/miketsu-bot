@@ -17,11 +17,13 @@ from cogs.frames import Frames
 from cogs.library import Library
 from cogs.mongo.db import get_collections
 from cogs.quest import Expecto, owls_restock
+from cogs.reminder import Reminder
 from cogs.startup import embed_color
 
 # Collections
 books = get_collections("bukkuman", "books")
 weather = get_collections("bukkuman", "weather")
+reminders = get_collections("bukkuman", "reminders")
 quests = get_collections("miketsu", "quests")
 
 # Listings
@@ -147,6 +149,7 @@ class Clock(commands.Cog):
 
         time = get_time().strftime("%H:%M EST | %a")
         hour_minute = get_time().strftime("%H:%M")
+        date_time = get_time().strftime("%b %d, %Y %H:%M")
         minute = get_time().strftime("%M")
         hour_24 = get_time().strftime("%H")
         hour_12 = get_time().strftime("%I")
@@ -162,6 +165,12 @@ class Clock(commands.Cog):
             await Expecto(self.client).send_off_complete_quest1()
             await self.clear_secrets()
             await Frames(self.client).achievements_process_hourly()
+
+        if date_time in reminders.find_one({"key": "bidding"}, {"_id": 0, "dates": 1})["dates"]:
+            await Reminder(self.client).reminders_bidding_process(date_time)
+
+        if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
+            await owls_restock()
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
             await owls_restock()
