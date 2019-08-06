@@ -152,13 +152,13 @@ class Encounter(commands.Cog):
         async with ctx.channel.typing():
             await asyncio.sleep(1)
 
-        survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
-        discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
+        survivability = boss.count({"current_hp": {"$gt": 0}})
+        discoverability = boss.count({"discoverer": {"$eq": 0}})
 
         if (survivability > 0 or discoverability > 0) and boss_spawn is False:
             roll = random.randint(0, 100)
 
-            if roll <= 15:
+            if roll <= 27:
                 status_set(True)
                 await self.boss_roll(user, ctx)
             else:
