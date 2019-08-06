@@ -19,7 +19,7 @@ shard_trading_ids = []
 
 for document in books.find({}, {"_id": 0, "channels.shard-trading": 1}):
     try:
-        shard_trading_ids.append(int(document["channels"]["shard-trading"]))
+        shard_trading_ids.append(str(document["channels"]["shard-trading"]))
     except KeyError:
         continue
 
@@ -41,13 +41,11 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
 
-        if payload.data["channel_id"] not in shard_trading_ids:
-            return
-
-        if "pinned" not in payload.data:
+        if str(payload.data["channel_id"]) not in shard_trading_ids:
             return
 
         elif payload.data["pinned"] is True:
+            print(payload.data)
             request = books.find_one({
                 "server": f"{payload.data['guild_id']}"}, {
                 "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1
