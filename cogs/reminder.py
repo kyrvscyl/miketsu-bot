@@ -29,7 +29,7 @@ class Reminder(commands.Cog):
     @commands.command(aliases=["test"])
     @commands.is_owner()
     async def manual_reminder(self, ctx):
-        date_time = "Aug 08, 2019 01:00"
+        date_time = "Aug 07, 2019 11:00"
         await self.reminders_bidding_process(date_time)
 
     async def reminders_bidding_process(self, date_time):
