@@ -696,7 +696,7 @@ class Encounter(commands.Cog):
     async def boss_info(self, ctx, *, args=None):
 
         try:
-            query = args.capitalize()
+            query = args.title()
             if query not in demons:
                 raise AttributeError
 
