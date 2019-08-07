@@ -5,6 +5,7 @@ Miketsu, 2019
 
 import asyncio
 import random
+import sys
 from datetime import datetime
 
 import discord
@@ -105,14 +106,15 @@ class Clock(commands.Cog):
 
     async def clock_start(self):
         while True:
-            # noinspection PyBroadException
             try:
                 if get_time().strftime("%S") == "00":
                     await self.clock_update()
                     await asyncio.sleep(1)
                 else:
                     await asyncio.sleep(1)
-            except:
+            except not discord.errors.Forbidden:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                print(exc_type, "clock.py", exc_tb.tb_lineno)
                 continue
 
     @commands.command(aliases=["fastforward"])
@@ -166,7 +168,7 @@ class Clock(commands.Cog):
             await self.clear_secrets()
             await Frames(self.client).achievements_process_hourly()
 
-        if date_time in reminders.find_one({"key": "bidding"}, {"_id": 0, "dates": 1})["dates"]:
+        if date_time in reminders.find_one({"event": "bidding"}, {"_id": 0, "dates": 1})["dates"]:
             await Reminder(self.client).reminders_bidding_process(date_time)
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:

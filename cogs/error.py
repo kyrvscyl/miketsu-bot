@@ -66,6 +66,13 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "announcement_post_message":
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    description=f"Missing required roles"
+                )
+                await ctx.channel.send(embed=embed)
+
             else:
                 await self.submit_error(ctx, error)
 
