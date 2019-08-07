@@ -120,8 +120,8 @@ async def cogs_extension_shutdown(ctx):
                 print(f"Unloading {file_name}..")
         except commands.ExtensionNotLoaded:
             continue
-        else:
-            await ctx.message.add_reaction("✅")
+
+    await ctx.message.add_reaction("✅")
 
 
 @client.command(aliases=["initialize"])
@@ -137,8 +137,8 @@ async def cogs_extension_initialize(ctx):
             continue
         except commands.ExtensionFailed:
             continue
-        else:
-            await ctx.channel.send("All modules have been loaded...")
+
+    await ctx.channel.send("All modules have been loaded...")
 
 
 print("-------")
