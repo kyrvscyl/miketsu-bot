@@ -160,6 +160,21 @@ class Clock(commands.Cog):
 
         if minute == "00":
             weather1, weather2 = generate_weather(int(hour_24))
+
+        for clock_channel in clock_channels:
+            try:
+                clock = self.client.get_channel(int(clock_channel))
+                await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
+            except AttributeError:
+                continue
+            except discord.errors.InvalidArgument:
+                continue
+            except discord.errors.Forbidden:
+                continue
+            except discord.errors.HTTPException:
+                continue
+
+        if minute == "00":
             await penalty_hour()
             await actions_reset()
             await reset_purchase()
@@ -186,19 +201,6 @@ class Clock(commands.Cog):
 
         elif hour_minute == "06:00":
             await Castle(self.client).transformation_start()
-
-        for clock_channel in clock_channels:
-            try:
-                clock = self.client.get_channel(int(clock_channel))
-                await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
-            except AttributeError:
-                continue
-            except discord.errors.InvalidArgument:
-                continue
-            except discord.errors.Forbidden:
-                continue
-            except discord.errors.HTTPException:
-                continue
 
 
 def setup(client):
