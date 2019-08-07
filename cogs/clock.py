@@ -112,7 +112,7 @@ class Clock(commands.Cog):
                     await asyncio.sleep(1)
                 else:
                     await asyncio.sleep(1)
-            except not discord.errors.Forbidden:
+            except not ZeroDivisionError:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 print(exc_type, "clock.py", exc_tb.tb_lineno)
                 continue
@@ -170,9 +170,6 @@ class Clock(commands.Cog):
 
         if date_time in reminders.find_one({"event": "bidding"}, {"_id": 0, "dates": 1})["dates"]:
             await Reminder(self.client).reminders_bidding_process(date_time)
-
-        if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
-            await owls_restock()
 
         if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
             await owls_restock()

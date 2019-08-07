@@ -86,7 +86,10 @@ async def create_user(user):
             "raided_count": 0,
             "friendship_pass": 0,
             "display": "None",
-            "prayers": 3
+            "prayers": 3,
+            "achievements": [],
+            "frame": "",
+            "achievements_count": 0
         }
         users.insert_one(profile)
 
