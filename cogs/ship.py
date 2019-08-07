@@ -219,7 +219,7 @@ class Friendship(commands.Cog):
 
     @commands.command(aliases=["friendship", "fp"])
     @commands.guild_only()
-    async def friendship_give(self, ctx, receiver: discord.Member = None):
+    async def friendship_give(self, ctx, *, receiver: discord.Member = None):
 
         giver = ctx.author
         profile = users.find_one({"user_id": str(giver.id)}, {"_id": 0, "friendship_pass": 1})
@@ -237,9 +237,10 @@ class Friendship(commands.Cog):
                       " * added ship exp  ::  + 5\n\n"
                       "• Confirm receipt < 2 min"
                       "\n * Receiver        ::  + 3"
-                      "\n * added ship exp  ::  + 3```"
+                      "\n * added ship exp  ::  + 3```",
+                inline=False
             )
-            embed.add_field(name="Format", value="*`;friendship @member`*")
+            embed.add_field(name="Format", value="*`;friendship @member`*", inline=False)
             await ctx.channel.send(embed=embed)
 
         elif receiver.bot is True or receiver == ctx.author:
