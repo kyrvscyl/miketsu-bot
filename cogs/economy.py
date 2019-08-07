@@ -237,7 +237,8 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
                     f"{rarity}": -(rarity_count - 1)
                 },
                 "$set": {
-                    "shikigami.$.evolved": "True"
+                    "shikigami.$.evolved": "True",
+                    "shikigami.$.shards": 5
                 }
             })
 
@@ -937,6 +938,7 @@ class Economy(commands.Cog):
             })["shikigami"][0]["thumbnail"][get_evo_link(evo)]
 
             embed.set_thumbnail(url=thumbnail)
+
         else:
             embed.set_thumbnail(url=member.avatar_url)
 
@@ -1022,7 +1024,10 @@ class Economy(commands.Cog):
 
         rarity = str(arg1.upper())
 
-        if member is None:
+        if rarity not in rarities:
+            return
+
+        elif member is None:
             await self.shikigami_list_post(ctx.author, rarity, ctx)
 
         else:
@@ -1030,7 +1035,8 @@ class Economy(commands.Cog):
 
     async def shikigami_list_post(self, member, rarity, ctx):
 
-        entries = users.aggregate([{
+        user_shikigamis = []
+        for entry in users.aggregate([{
             "$match": {
                 "user_id": str(member.id)}}, {
             "$unwind": {
@@ -1040,19 +1046,21 @@ class Economy(commands.Cog):
             "$project": {
                 "_id": 0,
                 "shikigami.name": 1,
-                "shikigami.owned": 1
+                "shikigami.owned": 1,
+                "shikigami.shards": 1
             }
-        }])
-
-        user_shikigamis = []
-        for entry in entries:
-            user_shikigamis.append((entry["shikigami"]["name"], entry["shikigami"]["owned"]))
+        }]):
+            user_shikigamis.append((
+                entry["shikigami"]["name"],
+                entry["shikigami"]["owned"],
+                entry["shikigami"]["shards"]
+            ))
 
         user_shikigamis_sorted = sorted(user_shikigamis, key=lambda x: x[1], reverse=True)
 
         description = []
         for shiki in user_shikigamis_sorted:
-            description.append(f":white_small_square:{shiki[0]}, x{shiki[1]}\n")
+            description.append(f"▫{shiki[0]}, x{shiki[1]}, x{shiki[2]} shards\n")
 
         icon_url = "https://i.imgur.com/CSMZAjb.png"
         user_shikigamis_page = 1

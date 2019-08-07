@@ -72,8 +72,10 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
         if query is None:
 
             evolve = "False"
+            shards = 0
             if summon[0] == "SP":
                 evolve = "True"
+                shards = 5
 
             users.update_one({
                 "user_id": str(user.id)}, {
@@ -83,7 +85,9 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
                         "rarity": summon[0],
                         "grade": 1,
                         "owned": 0,
-                        "evolved": evolve}
+                        "evolved": evolve,
+                        "shards": shards
+                    }
                 }
             })
 
