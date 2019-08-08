@@ -215,7 +215,6 @@ async def summon_perform(ctx, user, amulet_pull):
 
 
 async def summon_perform_shards(ctx, shikigami, user):
-
     try:
         profile = users.find_one({
             "user_id": str(user.id), "shikigami.name": shikigami}, {
@@ -307,6 +306,16 @@ class Summon(commands.Cog):
         embed = discord.Embed(
             title="summon, s", colour=discord.Colour(embed_color),
             description="simulate summon and collect shikigamis"
+        )
+        embed.add_field(
+            name="Shard Requirement",
+            value="```"
+                  "SP    ::   25\n"
+                  "SSR   ::   20\n"
+                  "SR    ::   15\n"
+                  "R     ::   10\n"
+                  "```",
+            inline=False
         )
         embed.add_field(name="Formats", value="*`;summon <1, 10, shikigami_name>`*", inline=False)
 
