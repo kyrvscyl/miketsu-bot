@@ -400,7 +400,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["wish", "w"])
     @commands.guild_only()
-    async def wish_perform(self, ctx, shikigami=None):
+    async def wish_perform(self, ctx, *, shikigami=None):
 
         user = ctx.author
         profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "wish": 1})
