@@ -89,7 +89,8 @@ async def create_user(user):
             "prayers": 3,
             "achievements": [],
             "frame": "",
-            "achievements_count": 0
+            "achievements_count": 0,
+            "trade": True
         }
         users.insert_one(profile)
 

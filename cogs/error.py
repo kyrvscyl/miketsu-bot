@@ -181,7 +181,7 @@ class Error(commands.Cog):
                     title="summon, s", colour=discord.Colour(embed_color),
                     description="simulate summon and collect shikigamis"
                 )
-                embed.add_field(name="Format", value="*`;summon <1 or 10>`*", inline=False)
+                embed.add_field(name="Formats", value="*`;summon <1, 10, shikigami_name>`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "bounty_query":
