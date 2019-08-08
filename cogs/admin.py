@@ -26,7 +26,7 @@ shikigamis = get_collections("miketsu", "shikigamis")
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
-valid_roles = ["Head", "Alpha"]
+valid_roles = ["Head", "Alpha", "📝"]
 
 
 def check_if_has_any_role(ctx):
