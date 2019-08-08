@@ -112,7 +112,7 @@ class Clock(commands.Cog):
                     await asyncio.sleep(1)
                 else:
                     await asyncio.sleep(1)
-            except not ZeroDivisionError:
+            except:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 print(exc_type, "clock.py", exc_tb.tb_lineno)
                 continue
