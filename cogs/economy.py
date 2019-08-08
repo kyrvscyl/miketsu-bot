@@ -543,9 +543,11 @@ class Economy(commands.Cog):
             )
             embed.add_field(name="Format", value="*`;ff <@member>`*")
             await ctx.channel.send(embed=embed)
+            return
 
         try:
-            shikigami_wished_for = users.find_one({"user_id ": str(member.id)}, {"_id": 0, "wish": 1})["wish"]
+
+            shikigami_wished_for = users.find_one({"user_id": str(member.id)}, {"_id": 0, "wish": 1})["wish"]
 
         except KeyError:
             embed = discord.Embed(
@@ -557,7 +559,7 @@ class Economy(commands.Cog):
 
         if shikigami_wished_for is True:
             embed = discord.Embed(
-                color=ctx.author.colour,
+                color=user.colour,
                 title=f"Invalid member",
                 description=f"{user.mention}, that user has not placed their daily wish yet",
             )
@@ -565,7 +567,7 @@ class Economy(commands.Cog):
 
         elif shikigami_wished_for is False:
             embed = discord.Embed(
-                color=ctx.author.colour,
+                color=user.colour,
                 title=f"Wish fulfillment failed",
                 description=f"{user.mention}, that user has their wish fulfilled already"
             )
@@ -579,7 +581,7 @@ class Economy(commands.Cog):
 
             if profile is None:
                 embed = discord.Embed(
-                    color=ctx.author.colour,
+                    color=user.colour,
                     title=f"Insufficient shards",
                     description=f"{user.mention}, you do not have any shards of that shikigami",
                 )
@@ -587,7 +589,7 @@ class Economy(commands.Cog):
 
             elif profile["shikigami"][0]["shards"] == 0:
                 embed = discord.Embed(
-                    color=ctx.author.colour,
+                    color=user.colour,
                     title=f"Insufficient shards",
                     description=f"{user.mention}, you do not have any shards of that shikigami",
                 )
@@ -612,7 +614,7 @@ class Economy(commands.Cog):
                 })
 
                 embed = discord.Embed(
-                    color=ctx.author.colour,
+                    color=user.colour,
                     title=f"Wish fulfilled",
                     description=f"{user.mention}, you donated 1 {shikigami_wished_for} shard to {member.mention}.\n"
                                 f"Acquired 10{e_f} and 3 💗",
