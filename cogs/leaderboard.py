@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
+from datetime import datetime
 
 import discord
 from discord.ext import commands
@@ -15,6 +16,10 @@ from cogs.startup import e_f, e_a, e_m, e_ssr, e_sr
 users = get_collections("miketsu", "users")
 ships = get_collections("miketsu", "ships")
 streak = get_collections("miketsu", "streak")
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 class Leaderboard(commands.Cog):
@@ -221,44 +226,46 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_paginate(self, title, ctx, formatted_list):
 
-        embed = discord.Embed(
-            color=ctx.author.colour, title=title,
-            description="".join(formatted_list[0:15])
-        )
-        embed.set_footer(text="Page: 1")
-        msg = await ctx.channel.send(embed=embed)
+        page = 1
+        max_lines = 15
+        page_total = int(len(formatted_list) / max_lines)
+
+        def create_new_embed_page(page_new):
+            end = page * max_lines
+            start = end - max_lines
+            description = "".join(formatted_list[start:end])
+
+            embed_new = discord.Embed(
+                color=ctx.author.colour,
+                title=title,
+                description=f"{description}",
+                timestamp=get_timestamp()
+            )
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            return embed_new
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(page))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
 
-        def create_embed(page_new, query_list, color):
-            end = page * 15
-            start = end - 15
-            description = "".join(query_list[start:end])
-            embed_new = discord.Embed(
-                color=color,
-                title=title,
-                description=f"{description}"
-            )
-            embed_new.set_footer(text=f"Page: {page_new}")
-            return embed_new
-
-        page = 1
         while True:
             try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                break
+            else:
                 if str(reaction.emoji) == "➡":
                     page += 1
                 elif str(reaction.emoji) == "⬅":
                     page -= 1
-                if page < 1:
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
                     page = 1
-                await msg.edit(embed=create_embed(page, formatted_list, ctx.author.colour))
-            except asyncio.TimeoutError:
-                return False
+                await msg.edit(embed=create_new_embed_page(page))
 
 
 def setup(client):

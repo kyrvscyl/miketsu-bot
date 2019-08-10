@@ -26,7 +26,7 @@ shikigamis = get_collections("miketsu", "shikigamis")
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
-valid_roles = ["Head", "Alpha"]
+valid_roles = ["Head", "Alpha", "📝"]
 
 
 def check_if_has_any_role(ctx):
@@ -56,18 +56,8 @@ def get_status(key):
 
 def shorten(key):
     dictionary = {
-        "Leader": "LDR",
-        "Member": "MEM",
-        "Officer": "OFR",
-        "Ex-member": "EXM",
-        "Active": "ACTV",
-        "Inactive": "INAC",
-        "On-leave": "ONLV",
-        "Semi-active": "SMAC",
-        "Away": "AWAY",
-        "Left": "LEFT",
-        "Kicked": "KCKD",
-        "Trade": "TRDE"
+        "Leader": "LDR", "Member": "MEM", "Officer": "OFR", "Ex-member": "EXM", "Active": "ACTV", "Inactive": "INAC",
+        "On-leave": "ONLV", "Semi-active": "SMAC", "Away": "AWAY", "Left": "LEFT", "Kicked": "KCKD", "Trade": "TRDE"
     }
     return dictionary[key]
 
@@ -140,6 +130,7 @@ async def management_show_profile(ctx, args):
             color=ctx.author.colour,
             title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}", timestamp=get_timestamp()
         )
+        embed.set_thumbnail(url=ctx.guild.icon_url)
         embed.add_field(
             name="⛳ Status",
             value=f"{member['status']} [{member['status_update1']}]"
@@ -150,14 +141,11 @@ async def management_show_profile(ctx, args):
 
         elif len(member["notes"]) != 0:
             notes = ""
-
             for note in member["notes"]:
                 entry = f"[{note['time']} | {note['officer']}]: {note['note']}\n"
                 notes += entry
 
             embed.add_field(name="🗒 Notes", value=notes)
-
-        embed.set_thumbnail(url=ctx.guild.icon_url)
         await ctx.channel.send(embed=embed)
 
     except TypeError:
@@ -194,13 +182,12 @@ async def management_update_field(ctx, args):
         await ctx.message.add_reaction("✅")
 
     elif args[2].lower() in ("notes", "note"):
-        new_note = " ".join(args[3::])
         members.update_one(find_query, {
             "$push": {
                 "notes": {
                     "officer": ctx.author.name,
                     "time": get_time_est().strftime('%d.%b %y'),
-                    "note": new_note
+                    "note": " ".join(args[3::])
                 }
             }
         })
@@ -220,7 +207,7 @@ async def management_update_field(ctx, args):
         await ctx.message.add_reaction("✅")
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title="Changing the a member role may require to change the status also"
+            title="Changing the member's role may require to change the status also"
         )
         msg = await ctx.channel.send(embed=embed)
         await msg.delete(delay=5)
@@ -266,9 +253,7 @@ class Admin(commands.Cog):
     async def announcement_post_embed(self, ctx, channel: discord.TextChannel = None, *, args):
 
         list_msg = args.split("|", 2)
-        embed = discord.Embed(
-            color=ctx.author.colour
-        )
+        embed = discord.Embed(color=ctx.author.colour)
 
         if len(list_msg) == 1:
             embed.description = list_msg[0]
@@ -351,7 +336,6 @@ class Admin(commands.Cog):
         elif args[0].lower() in ["add", "a"] and len(args) == 3 and args[1] in roles:
             if members.find_one({"name_lower": args[2].lower()}) is None:
                 count = members.count() + 1
-
                 profile = {
                     "#": count,
                     "name": args[2],
@@ -783,25 +767,14 @@ class Admin(commands.Cog):
 
     async def management_guild_paginate_embeds(self, ctx, listings, content):
 
-        description = "".join(listings[0:20])
-        page_total = int(len(listings) / 20)
-        embed = discord.Embed(
-            color=ctx.author.colour, title=f"🔱 Guild Registry", description=description, timestamp=get_timestamp()
-        )
-        embed.set_footer(text=f"Page: 1 of page {page_total}")
-        embed.set_thumbnail(url=ctx.guild.icon_url)
+        page = 1
+        max_lines = 20
+        page_total = int(len(listings) / max_lines)
 
-        msg = await ctx.channel.send(content=content, embed=embed)
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
-
-        def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
-
-        def create_new_embed_page(page_new, listings_new):
-            end = page_new * 20
-            start = end - 20
-            description_new = "".join(listings_new[start:end])
+        def create_new_embed_page(page_new):
+            end = page_new * max_lines
+            start = end - max_lines
+            description_new = "".join(listings[start:end])
 
             embed_new = discord.Embed(
                 color=ctx.author.colour,
@@ -813,26 +786,28 @@ class Admin(commands.Cog):
             embed_new.set_thumbnail(url=ctx.guild.icon_url)
             return embed_new
 
-        page = 1
+        msg = await ctx.channel.send(content=content, embed=create_new_embed_page(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
         while True:
             try:
-                timeout = 180
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-
+                reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
+            except asyncio.TimeoutError:
+                break
+            else:
                 if str(reaction.emoji) == "➡":
                     page += 1
                 elif str(reaction.emoji) == "⬅":
                     page -= 1
-
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
-
-                await msg.edit(embed=create_new_embed_page(page, listings))
-
-            except asyncio.TimeoutError:
-                break
+                await msg.edit(embed=create_new_embed_page(page))
 
 
 def setup(client):

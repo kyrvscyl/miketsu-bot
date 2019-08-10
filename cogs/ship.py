@@ -114,33 +114,34 @@ class Friendship(commands.Cog):
     async def friendship_ship_show_all(self, ctx, *, member: discord.Member = None):
 
         if member is None:
-            await self.friendship_ship_show_all_post(ctx.author, ctx)
+            await self.friendship_ship_show_generate(ctx.author, ctx)
 
         else:
-            await self.friendship_ship_show_all_post(member, ctx)
+            await self.friendship_ship_show_generate(member, ctx)
 
-    async def friendship_ship_show_all_post(self, member, ctx):
+    async def friendship_ship_show_generate(self, member, ctx):
 
         ships_listings = []
         for ship in ships.find({"code": {"$regex": f".*{member.id}.*"}}):
             ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"]]
             ships_listings.append(ship_entry)
 
-        def check_pagination(r, u):
-            return u != self.client.user and r.message.id == msg.id
+        await self.friendship_ship_show_paginate(ships_listings, member, ctx)
+
+    async def friendship_ship_show_paginate(self, formatted_list, member, ctx):
+
+        page = 1
+        max_lines = 5
+        page_total = ceil(len(formatted_list) / max_lines)
 
         def create_new_embed_page(page_new):
             end = page_new * 5
             start = end - 5
-
-            description = f"```" \
-                          f"Total ships: {len(ships_listings)}" \
-                          f"```"
+            total_ships = len(formatted_list)
 
             embed = discord.Embed(
                 color=member.colour,
-                title=f"🚢 {member.display_name}'s ships",
-                description=description,
+                title=f"🚢 {member.display_name}'s ships [{total_ships} {pluralize('ship', total_ships)}]",
                 timestamp=get_timestamp()
             )
             embed.set_footer(text=f"Page {page_new} of {page_total}")
@@ -148,8 +149,8 @@ class Friendship(commands.Cog):
             while start < end:
                 try:
                     embed.add_field(
-                        name=f"{ships_listings[start][2]}, level {ships_listings[start][3]}",
-                        value=f"<@{ships_listings[start][0]}> & <@{ships_listings[start][1]}>",
+                        name=f"{formatted_list[start][2]}, level {formatted_list[start][3]}",
+                        value=f"<@{formatted_list[start][0]}> & <@{formatted_list[start][1]}>",
                         inline=False
                     )
                     start += 1
@@ -157,31 +158,28 @@ class Friendship(commands.Cog):
                     break
             return embed
 
-        page = 1
-        page_total = ceil(len(ships_listings) / 5)
+        def check_pagination(r, u):
+            return u != self.client.user and r.message.id == msg.id
 
-        msg = await ctx.channel.send(embed=create_new_embed_page(1))
+        msg = await ctx.channel.send(embed=create_new_embed_page(page))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
         while True:
             try:
-                timeout = 180
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check_pagination)
-
+                reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check_pagination)
+            except asyncio.TimeoutError:
+                break
+            else:
                 if str(reaction.emoji) == "➡":
                     page += 1
                 elif str(reaction.emoji) == "⬅":
                     page -= 1
-
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
-
                 await msg.edit(embed=create_new_embed_page(page))
-            except asyncio.TimeoutError:
-                return False
 
     @commands.command(aliases=["ship"])
     @commands.guild_only()
@@ -212,7 +210,7 @@ class Friendship(commands.Cog):
         except TypeError:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
-                title="Insufficient friendship points",
+                title="Invalid ship",
                 description=f"{ctx.author.mention}, I'm sorry, but that ship has sunk before it was built."
             )
             await ctx.channel.send(embed=embed)
@@ -227,7 +225,7 @@ class Friendship(commands.Cog):
         if receiver is None:
             embed = discord.Embed(
                 title="friendship, fp", colour=discord.Colour(embed_color),
-                description="sends and receives friendship points & builds ship that earns daily reward\n"
+                description="sends and receives friendship & builds ship that earns daily reward\n"
                             "built ships are shown using *`;ship`*"
             )
             embed.add_field(
@@ -249,8 +247,8 @@ class Friendship(commands.Cog):
         elif profile["friendship_pass"] < 1:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
-                title="Insufficient friendship points",
-                description=f"{giver.mention}, you have used up all your friendship points"
+                title="Insufficient friendship passes",
+                description=f"{giver.mention}, you have used up all your friendship passes"
             )
             await ctx.channel.send(embed=embed)
 
@@ -302,7 +300,7 @@ class Friendship(commands.Cog):
             title="fpchange, fpc", colour=discord.Colour(embed_color),
             description="changes your ship name with the mentioned member"
         )
-        embed.add_field(name="Formats", value="*• `;fpc @member <fancy name>`*")
+        embed.add_field(name="Format", value="*• `;fpc <@member> <ship name>`*")
 
         if new_name is None:
             await ctx.channel.send(embed=embed)

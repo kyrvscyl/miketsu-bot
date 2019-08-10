@@ -190,11 +190,11 @@ class Clock(commands.Cog):
             await owls_restock()
 
         if hour_minute == "00:00":
-            await Economy(self.client).frame_automate()
             await Economy(self.client).reset_rewards_daily()
+            await Economy(self.client).frame_automate()
             await reset_boss()
-            await Frames(self.client).achievements_process_daily()
             await Library(self.client).post_new_table_of_content()
+            await Frames(self.client).achievements_process_daily()
 
         if hour_minute == "19:00":
             await Castle(self.client).transformation_start()

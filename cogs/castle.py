@@ -79,14 +79,14 @@ class Castle(commands.Cog):
 
         await ctx.channel.send(embed=embed)
 
-    @commands.command(aliases=["wander"])
+    @commands.command(aliases=["wander", "w"])
     @commands.guild_only()
     async def castle_wander(self, ctx):
         await ctx.message.delete()
 
         if not str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels:
             embed = discord.Embed(
-                title="wander",
+                title="wander, w",
                 colour=discord.Colour(embed_color),
                 description="usable only at the castle's channels with valid floors\n"
                             "check the channel topics for the floor number\n"
@@ -269,7 +269,7 @@ class Castle(commands.Cog):
             )
             embed.set_image(url=attachment_link)
             embed.set_footer(
-                text=f"Floor {floor} | Frame {frame_num}"
+                text=f"Floor {floor} | Frame# {frame_num}"
             )
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(2)

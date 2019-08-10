@@ -43,6 +43,8 @@ class Emotes(commands.Cog):
     async def sticker_help(self, ctx):
 
         quotient = int(len(stickers_list) / 2)
+        page = 1
+        page_total = 2
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -66,24 +68,20 @@ class Emotes(commands.Cog):
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
-        page = 1
-        page_total = 2
         while True:
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=30, check=check)
             except asyncio.TimeoutError:
-                return False
+                break
             else:
                 if str(reaction.emoji) == "➡":
                     page += 1
                 elif str(reaction.emoji) == "⬅":
                     page -= 1
-
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
-
                 await msg.edit(embed=generate_stickers_embed(page))
 
     @commands.command(aliases=["newsticker", "ns"])
