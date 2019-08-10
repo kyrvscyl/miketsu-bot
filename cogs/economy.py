@@ -97,6 +97,16 @@ def get_evo_link(evolution):
     return key[evolution]
 
 
+def get_rarity_emoji(rarity):
+    dictionary = {
+        "SP": e_sp,
+        "SSR": e_ssr,
+        "SR": e_sr,
+        "R": e_r
+    }
+    return dictionary[rarity]
+
+
 def get_rarity(shiki):
     profile = shikigamis.find_one({"shikigami.name": shiki}, {"_id": 0, "rarity": 1})
     return profile["rarity"]
@@ -505,7 +515,6 @@ class Economy(commands.Cog):
                 timestamp=get_timestamp()
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
-            embed_new.set_thumbnail(url=ctx.guild.icon_url)
             return embed_new
 
         def check(r, u):
@@ -1298,7 +1307,7 @@ class Economy(commands.Cog):
 
         formatted_list = []
         for shiki in user_shikigamis_sorted:
-            formatted_list.append(f"▫{shiki[0]}, x{shiki[1]}, x{shiki[2]} shards\n")
+            formatted_list.append(f"• {shiki[0]} | `x{shiki[1]} [{shiki[2]} shards]`\n")
 
         await self.shikigami_list_paginate(member, formatted_list, rarity, ctx, "Shikigamis")
 
@@ -1356,7 +1365,7 @@ class Economy(commands.Cog):
 
         formatted_list = []
         for shiki in uncollected_list:
-            formatted_list.append(f"▫{shiki}\n")
+            formatted_list.append(f"• {shiki}\n")
 
         await self.shikigami_list_paginate(member, formatted_list, rarity, ctx, "Uncollected shikigamis")
 
@@ -1364,17 +1373,17 @@ class Economy(commands.Cog):
 
         page = 1
         max_lines = 10
-        page_total = int(len(formatted_list) / max_lines)
+        page_total = ceil(len(formatted_list) / max_lines)
 
         def create_new_embed_page(page_new):
             end = page_new * max_lines
             start = end - max_lines
             embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
+            embed_new.title = f"{get_rarity_emoji(rarity.upper())} Shikigamis"
             embed_new.description = "".join(formatted_list[start:end])
-            embed_new.set_author(icon_url=member.avatar_url, name=author_name)
             embed_new.set_footer(
-                text=f"Rarity: {rarity.upper()} - Page: {page_new} of {page_total}",
-                icon_url="https://i.imgur.com/CSMZAjb.png"
+                text=f"Page: {page_new} of {page_total}",
+                icon_url=member.avatar_url
             )
             return embed_new
 

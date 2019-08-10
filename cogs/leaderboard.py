@@ -5,6 +5,7 @@ Miketsu, 2019
 
 import asyncio
 from datetime import datetime
+from math import ceil
 
 import discord
 from discord.ext import commands
@@ -53,6 +54,9 @@ class Leaderboard(commands.Cog):
 
         elif args.lower() in ["level"]:
             await self.leaderboard_post_level(ctx)
+
+        elif args.lower() in ["achievements", "frames"]:
+            await self.leaderboard_post_achievements(ctx)
 
     async def leaderboard_post_ssr(self, ctx):
 
@@ -224,11 +228,33 @@ class Leaderboard(commands.Cog):
         title = f"No {e_ssr} Summon Streak LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
+    async def leaderboard_post_achievements(self, ctx):
+
+        frame_board1 = []
+        query = streak.find({}, {"_id": 0, "user_id": 1, "achievements": 1})
+
+        for user in query:
+            try:
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                frame_board1.append((member_name, len(user["achievements"])))
+
+            except AttributeError:
+                continue
+
+        frame_board2 = sorted(frame_board1, key=lambda x: x[1], reverse=True)
+        formatted_list = []
+
+        for user in frame_board2:
+            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}{e_a}\n"))
+
+        title = f"Achievements LeaderBoard"
+        await self.leaderboard_paginate(title, ctx, formatted_list)
+
     async def leaderboard_paginate(self, title, ctx, formatted_list):
 
         page = 1
         max_lines = 15
-        page_total = int(len(formatted_list) / max_lines)
+        page_total = ceil(len(formatted_list) / max_lines)
 
         def create_new_embed_page(page_new):
             end = page * max_lines

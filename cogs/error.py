@@ -154,7 +154,7 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Arguments",
-                    value="*SSR, SR, level, medals, amulets, friendship, ships, SSRstreak*",
+                    value="*SSR, SR, level, medals, amulets, friendship, ships, SSRstreak, frames*",
                     inline=False
                 )
                 embed.add_field(name="Example", value="*`;leaderboard friendship`*", inline=False)
