@@ -213,6 +213,11 @@ class Economy(commands.Cog):
                 await shop_process_purchase_frame(ctx, user, currency, amount, frame.title(), emoji)
 
         else:
+            embed = discord.Embed(
+                title="Invalid purchase code", colour=discord.Colour(embed_color),
+                description=f"{user.mention}, you entered an invalid purchase code"
+            )
+
             try:
                 offer_item, offer_amount, cost_item, cost_amount = get_offer_and_cost(args)
                 embed.description = \
@@ -226,10 +231,9 @@ class Economy(commands.Cog):
                     await shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, cost_amount)
 
             except KeyError:
-                embed = discord.Embed(
-                    title="Invalid purchase code", colour=discord.Colour(embed_color),
-                    description=f"{user.mention}, you entered an invalid purchase code"
-                )
+                await ctx.channel.send(embed=embed)
+
+            except IndexError:
                 await ctx.channel.send(embed=embed)
 
     async def shop_buy_confirmation(self, ctx, msg):
