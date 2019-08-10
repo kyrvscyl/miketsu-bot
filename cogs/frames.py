@@ -80,8 +80,7 @@ async def frame_acquisition(user, frame_name, channel, jades):
         }
     })
     embed = discord.Embed(
-        color=user.colour,
-        title="Frame Acquisition",
+        color=user.colour, title="Frame Acquisition",
         description=f"{user.mention}, you acquired the {frame_name.title()} frame and {jades:,d}{e_j}"
     )
     embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))

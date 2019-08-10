@@ -2,7 +2,7 @@
 Automation Module
 Miketsu, 2019
 """
-
+import sys
 from datetime import datetime
 
 import discord
@@ -76,7 +76,6 @@ class Automation(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-
         request = books.find_one({"server": f"{member.guild.id}"}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1})
 
         try:
@@ -87,7 +86,10 @@ class Automation(commands.Cog):
             no_maj_role_id = request["roles"]["no-maj"]
             acceptance_letter = request["letters"]["acceptance"].replace("\\n", "\n")
             welcome_message = request["letters"]["welcome"]
+
         except KeyError:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print(exc_type, "automation.py", exc_tb.tb_lineno)
             return
 
         try:
@@ -183,7 +185,7 @@ class Automation(commands.Cog):
                         title=f"Removed {changed_role2[0].name} role from {before} [{before.display_name}]",
                         timestamp=get_timestamp()
                     )
-                    embed.set_footer(icon_url=before.avatar_url)
+                    embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
                     await record_scroll_channel.send(embed=embed)
                 except AttributeError:
                     pass
@@ -199,7 +201,7 @@ class Automation(commands.Cog):
                         title=f"Added {changed_role1[0].name} role to {before} [{before.display_name}]",
                         timestamp=get_timestamp()
                     )
-                    embed.set_footer(icon_url=before.avatar_url)
+                    embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
                     await record_scroll_channel.send(embed=embed)
                 except AttributeError:
                     pass
@@ -231,11 +233,10 @@ class Automation(commands.Cog):
             try:
                 embed = discord.Embed(
                     color=0x7ed321,
-                    title="Before | New username:",
-                    value=f"{before.name} | {after.name}",
+                    description=f"{before.name} :: {after.name}",
                     timestamp=get_timestamp()
                 )
-                embed.set_footer(icon_url=before.avatar_url)
+                embed.set_author(name=f"Before :: New username", icon_url=before.avatar_url)
                 await record_scroll_channel.send(embed=embed)
             except AttributeError:
                 pass
@@ -249,10 +250,10 @@ class Automation(commands.Cog):
                 embed = discord.Embed(
                     color=0x7ed321,
                     title="Before | New nickname:",
-                    description=f"{before.display_name} | {after.display_name}",
+                    description=f"{before.display_name} :: {after.display_name}",
                     timestamp=get_timestamp()
                 )
-                embed.set_footer(icon_url=before.avatar_url)
+                embed.set_author(name=f"Before :: New nickname", icon_url=before.avatar_url)
                 await record_scroll_channel.send(embed=embed)
             except AttributeError:
                 pass

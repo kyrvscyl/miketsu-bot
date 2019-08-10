@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
+import os
 import random
 import sys
 from datetime import datetime
@@ -11,6 +12,7 @@ from datetime import datetime
 import discord
 import pytz
 from discord.ext import commands
+from pushbullet import PushBullet
 
 from cogs.castle import Castle
 from cogs.economy import Economy, reset_boss
@@ -20,6 +22,10 @@ from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
 from cogs.reminder import Reminder
 from cogs.startup import embed_color
+
+# PushBullet
+pushbullet_api = os.environ.get("PUSHBULLETAPI")
+pb = PushBullet(str(pushbullet_api))
 
 # Collections
 books = get_collections("bukkuman", "books")
@@ -203,7 +209,7 @@ class Clock(commands.Cog):
 
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, "clock.py", exc_tb.tb_lineno)
+            pb.push_note("clock.py error", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
 
 def setup(client):

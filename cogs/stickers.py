@@ -93,8 +93,7 @@ class Emotes(commands.Cog):
 
         if alias in actions:
             embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"Alias `{alias}` is already taken",
+                color=ctx.author.colour, title=f"Alias `{alias}` is already taken",
             )
             await ctx.channel.send(embed=embed)
 

@@ -689,6 +689,7 @@ class Encounter(commands.Cog):
             pass
 
         self.client.get_command("encounter_search").reset_cooldown(ctx)
+        users.update_many({"level": 60}, {"$set": {"experience": 100000}})
         status_set(False)
 
     @commands.command(aliases=["binfo", "bossinfo"])

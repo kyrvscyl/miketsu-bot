@@ -5,3 +5,4 @@ pymongo==3.8.0
 pytz==2019.1
 discord-webhook==0.4.1
 Pillow==6.1.0
+pushbullet.py==0.11.0
