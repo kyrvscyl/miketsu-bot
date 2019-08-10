@@ -8,11 +8,16 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands
+from pushbullet import PushBullet
 
 from cogs.mongo.database import get_collections
 
 # Collections
 tokens = get_collections("bukkuman", "tokens")
+
+# PushBullet
+pushbullet_api = os.environ.get("PUSHBULLETAPI")
+pb = PushBullet(str(pushbullet_api))
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 bot = os.path.basename(__file__)[:-3:]
@@ -143,4 +148,7 @@ async def cogs_extension_initialize(ctx):
 
 print("-------")
 
-client.run(token)
+try:
+    client.run(token)
+except RuntimeError:
+    pb.push_note("SIGTERM Restart", "Successfully passed RuntimeError")
