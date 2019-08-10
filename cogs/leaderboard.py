@@ -231,13 +231,12 @@ class Leaderboard(commands.Cog):
     async def leaderboard_post_achievements(self, ctx):
 
         frame_board1 = []
-        query = streak.find({}, {"_id": 0, "user_id": 1, "achievements": 1})
+        query = users.find({}, {"_id": 0, "user_id": 1, "achievements": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
                 frame_board1.append((member_name, len(user["achievements"])))
-
             except AttributeError:
                 continue
 
@@ -245,9 +244,9 @@ class Leaderboard(commands.Cog):
         formatted_list = []
 
         for user in frame_board2:
-            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}{e_a}\n"))
+            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
-        title = f"Achievements LeaderBoard"
+        title = "<:blazingsun:606711888541384714> Frames LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
     async def leaderboard_paginate(self, title, ctx, formatted_list):

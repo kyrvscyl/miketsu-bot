@@ -56,10 +56,7 @@ def get_not_shrine_rarity(rarity):
 def get_shard_requirement(x):
     rarity = shikigamis.find_one({"shikigami.name": x}, {"_id": 0, "rarity": 1})["rarity"]
     dictionary = {
-        "SP": 25,
-        "SSR": 20,
-        "SR": 15,
-        "R": 10
+        "SP": 25, "SSR": 20, "SR": 15, "R": 10
     }
     return dictionary[rarity], rarity
 
@@ -75,6 +72,13 @@ for shiki in shikigamis.aggregate(get_not_shrine_rarity("SR")):
 
 for shiki in shikigamis.aggregate(get_not_shrine_rarity("R")):
     pool_r.append(shiki["shikigami"]["name"])
+
+
+def get_thumbnail_shikigami(shikigami):
+    url = shikigamis.find_one({"shikigami": {"$elemMatch": {"name": shikigami}}}, {
+        {"_id": 0, "shikigami.$.name": 1}
+    })["shikigami"][0]["thumbnail"]["pre_evo"]
+    return url
 
 
 async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
@@ -99,12 +103,9 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
         })
 
         if query is None:
-
-            evolve = "False"
-            shards = 0
+            evolve, shards = "False", 0
             if summon[0] == "SP":
-                evolve = "True"
-                shards = 5
+                evolve, shards = "True", 5
 
             users.update_one({
                 "user_id": str(user.id)}, {
@@ -131,22 +132,15 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
 
 async def summon_streak(user, summon_pull):
     if streak.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-        profile = {
-            "user_id": str(user.id),
-            "SSR_current": 0, "SSR_record": 0
-        }
-        streak.insert_one(profile)
+        streak.insert_one({"user_id": str(user.id), "SSR_current": 0, "SSR_record": 0})
 
     for summon in summon_pull:
-
         ssr_current = streak.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_current"]
         ssr_record = streak.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_record"]
 
         if summon[0] == "SP" or summon[0] == "SR" or summon[0] == "R":
-
             if ssr_current == ssr_record:
                 streak.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1, "SSR_record": 1}})
-
             else:
                 streak.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1}})
 
@@ -162,16 +156,12 @@ async def summon_perform(ctx, user, amulet_pull):
 
         if roll < 1.2:
             p = random.uniform(0, 1.2)
-
             if p >= 126 / 109:
                 summon_pull.append(("SP", "||{}||".format(random.choice(pool_sp))))
-
             else:
                 summon_pull.append(("SSR", "||{}||".format(random.choice(pool_ssr))))
-
         elif roll <= 18.8:
             summon_pull.append(("SR", random.choice(pool_sr)))
-
         else:
             summon_pull.append(("R", random.choice(pool_r)))
 
@@ -187,7 +177,7 @@ async def summon_perform(ctx, user, amulet_pull):
 
     description = ""
     for x in summon_pull:
-        description += ":small_orange_diamond:{}\n".format(x[1])
+        description += "🔸{}\n".format(x[1])
 
     embed = discord.Embed(color=user.colour, title="🎊 Results", description=description)
 
@@ -195,18 +185,8 @@ async def summon_perform(ctx, user, amulet_pull):
         embed.set_footer(text=f"{f_sp}; {f_ssr}; {f_sr}; {f_r}")
 
     elif amulet_pull == 1:
-        rarity = summon_pull[0][0]
         shikigami_pulled = summon_pull[0][1].replace("||", "")
-
-        thumbnail = shikigamis.find_one({
-            "rarity": rarity}, {
-            "_id": 0, "shikigami": {
-                "$elemMatch": {
-                    "name": shikigami_pulled
-                }
-            }
-        })
-        embed.set_thumbnail(url=thumbnail["shikigami"][0]["thumbnail"]["pre_evo"])
+        embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled))
 
     msg = "{}".format(random.choice(summon_caption)).format(user.mention)
     await ctx.channel.send(msg, embed=embed)
@@ -232,11 +212,9 @@ async def summon_perform_shards(ctx, shikigami, user):
             })
 
             if query is None:
-                evolve = "False"
-                shards = 0
+                evolve, shards = "False", 0
                 if rarity == "SP":
-                    evolve = "True"
-                    shards = 5
+                    evolve, shards = "True", 0
 
                 users.update_one({
                     "user_id": str(user.id)}, {
@@ -261,20 +239,11 @@ async def summon_perform_shards(ctx, shikigami, user):
                     "shikigami.$.shards": -required_shards
                 }
             })
-            thumbnail = shikigamis.find_one({
-                "rarity": rarity}, {
-                "_id": 0, "shikigami": {
-                    "$elemMatch": {
-                        "name": shikigami
-                    }
-                }
-            })
-
             embed = discord.Embed(
                 title="Summon success", colour=discord.Colour(embed_color),
                 description=f"{user.mention}, you summon the {rarity} shikigami {shikigami}!"
             )
-            embed.set_thumbnail(url=thumbnail["shikigami"][0]["thumbnail"]["pre_evo"])
+            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami))
             await ctx.channel.send(embed=embed)
 
         else:

@@ -249,7 +249,6 @@ class Automation(commands.Cog):
             try:
                 embed = discord.Embed(
                     color=0x7ed321,
-                    title="Before | New nickname:",
                     description=f"{before.display_name} :: {after.display_name}",
                     timestamp=get_timestamp()
                 )

@@ -23,7 +23,8 @@ with open("data/shop.json") as f:
 
 # Listings
 purchasable_frames = []
-trading_value_list = []
+trading_list = []
+trading_list_formatted = []
 
 for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
     purchasable_frames.append(document["name"].lower())
@@ -31,14 +32,8 @@ for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
 
 def get_emoji(item):
     emoji_dict = {
-        "jades": e_j,
-        "coins": e_c,
-        "realm_ticket": "🎟",
-        "amulets": e_a,
-        "medals": e_m,
-        "friendship": e_f,
-        "encounter_ticket": "🎫",
-        "talisman": e_t
+        "jades": e_j, "coins": e_c, "realm_ticket": "🎟", "amulets": e_a, "medals": e_m, "friendship": e_f,
+        "encounter_ticket": "🎫", "talisman": e_t
     }
     return emoji_dict[item]
 
@@ -61,16 +56,22 @@ def get_offer_and_cost(x):
     return offer_item_, offer_amount_, cost_item_, cost_amount_
 
 
-for key in shop_dict:
-    for key2 in shop_dict[key]:
-        _offer_item = shop_dict[key][key2]["offer"][0]
-        _offer_amount = shop_dict[key][key2]["offer"][1]
-        _cost_item = shop_dict[key][key2]["cost"][0]
-        _cost_amount = shop_dict[key][key2]["cost"][1]
-        trading_value_list.append(
-            f"• {_offer_amount}{get_emoji(_offer_item)} for .... "
-            f"{_cost_amount:,d}{get_emoji(_cost_item)} | *`{key} {key2}`*\n⠀\n"
-        )
+for offer in shop_dict:
+    for amount in shop_dict[offer]:
+        trading_list.append([
+            shop_dict[offer][amount]["offer"][0],
+            shop_dict[offer][amount]["offer"][1],
+            shop_dict[offer][amount]["cost"][0],
+            shop_dict[offer][amount]["cost"][1],
+            offer,
+            amount
+        ])
+
+
+for trade in trading_list:
+    trading_list_formatted.append(
+        f"▫ `{trade[1]}`{get_emoji(trade[0])} for `{trade[3]:,d}`{get_emoji(trade[2])} | {trade[4]} {trade[5]}\n"
+    )
 
 
 async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, cost_amount):
@@ -143,11 +144,12 @@ class Economy(commands.Cog):
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/8/86/246a.jpg")
         embed.add_field(
-            inline=False,
             name="Trading List",
-            value="".join(trading_value_list)
+            value="".join(trading_list_formatted),
+            inline=False
         )
         embed.add_field(name="Example", value="*`;buy amulets 11`*", inline=False)
+
         msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("🖼")
 
@@ -200,12 +202,8 @@ class Economy(commands.Cog):
 
             frame = " ".join(args[-2:]).lower()
             request = frames.find_one({"name": frame.title()}, {"_id": 0})
-            emoji = request["emoji"]
-            currency = request["currency"]
-            amount = request["amount"]
-
-            embed.description = \
-                f"{emoji} {frame.title()} frame for `{amount:,d}` {get_emoji(currency)}"
+            emoji, currency, amount = request["emoji"], request["currency"], request["amount"]
+            embed.description = f"{emoji} {frame.title()} frame for `{amount:,d}` {get_emoji(currency)}"
 
             msg = await ctx.channel.send(embed=embed)
             await msg.add_reaction("✅")

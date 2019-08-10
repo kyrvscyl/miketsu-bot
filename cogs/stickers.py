@@ -64,7 +64,7 @@ class Emotes(commands.Cog):
             embed.set_footer(text=f"Page {y}")
             return embed
 
-        msg = await ctx.channel.send(embed=generate_stickers_embed(1))
+        msg = await ctx.channel.send(embed=generate_stickers_embed(page))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
@@ -92,20 +92,12 @@ class Emotes(commands.Cog):
         link = args
 
         if alias in actions:
-            embed = discord.Embed(
-                color=ctx.author.colour, title=f"Alias `{alias}` is already taken",
-            )
+            embed = discord.Embed(color=ctx.author.colour, title=f"Alias `{alias}` is already taken",)
             await ctx.channel.send(embed=embed)
 
         elif link[:20] == "https://i.imgur.com/" and link[-4:] == ".png":
-
-            document = {"alias": alias, "link": link}
-            stickers.insert_one(document)
-
-            embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"New sticker added with alias: `{alias}`",
-            )
+            stickers.insert_one({"alias": alias, "link": link})
+            embed = discord.Embed(color=ctx.author.colour,title=f"New sticker added with alias: `{alias}`")
             embed.set_image(url=link)
             await ctx.channel.send(embed=embed)
             generate_new_stickers()
