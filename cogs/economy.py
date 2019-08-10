@@ -474,7 +474,6 @@ class Economy(commands.Cog):
     async def wish_show_list(self, ctx):
 
         wishes = users.find({"wish": {"$ne": True}}, {"_id": 0, "wish": 1, "user_id": 1})
-        ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
 
         shard_wishes = []
         for wish in wishes:
@@ -482,52 +481,54 @@ class Economy(commands.Cog):
             wish = wish['wish']
             if wish is False:
                 wish = "Fulfilled"
-            shard_wishes.append(f"▫{user} | {wish}")
+            shard_wishes.append(f"▫{user} | *{wish}*")
 
-        description = "\n".join(shard_wishes[0:10])
-        embed = discord.Embed(
-            color=embed_color,
-            title=f"🗒 Wish List [{ordinal(get_time().timetuple().tm_yday)} day]",
-            description=description,
-            timestamp=get_timestamp()
-        )
-        embed.set_footer(
-            text="Page: 1"
-        )
-        await self.paginate_embed(ctx, shard_wishes, embed)
+        await self.wish_show_list_paginate(ctx, shard_wishes)
 
-    async def paginate_embed(self, ctx, shard_wishes, embed):
+    async def wish_show_list_paginate(self, ctx, shard_wishes):
 
-        msg = await ctx.channel.send(embed=embed)
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
+        page = 1
+        max_lines = 10
+        page_total = int(len(shard_wishes) / max_lines)
+        ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
+
+        def create_new_embed_page(page_new):
+            end = page_new * max_lines
+            start = end - max_lines
+            description_new = "".join(shard_wishes[start:end])
+
+            embed_new = discord.Embed(
+                color=embed_color,
+                title=f"🗒 Wish List [{ordinal(get_time().timetuple().tm_yday)} day]",
+                description=f"{description_new}",
+                timestamp=get_timestamp()
+            )
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            embed_new.set_thumbnail(url=ctx.guild.icon_url)
+            return embed_new
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
 
-        page = 1
+        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
         while True:
             try:
-                timeout = 60
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if str(reaction.emoji) == "⬅":
-                    page -= 1
-                    if page == 0:
-                        page = 1
-
-                start = page * 10 - 10
-                end = page * 10
-                description = "\n".join(shard_wishes[start:end])
-                embed.description = description
-                embed.set_footer(
-                    text=f"Page: {page}"
-                )
-                await msg.edit(embed=embed)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
                 break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=create_new_embed_page(page))
 
     @commands.command(aliases=["fulfill", "ff"])
     @commands.guild_only()
@@ -546,7 +547,6 @@ class Economy(commands.Cog):
             return
 
         try:
-
             shikigami_wished_for = users.find_one({"user_id": str(member.id)}, {"_id": 0, "wish": 1})["wish"]
 
         except KeyError:
@@ -1249,7 +1249,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["shikigamis", "shikis", "shiki"])
     @commands.guild_only()
-    async def shikigami_list_show(self, ctx, arg1, member: discord.Member = None):
+    async def shikigami_list_show_collected(self, ctx, arg1, member: discord.Member = None):
 
         rarity = str(arg1.upper())
 
@@ -1257,12 +1257,61 @@ class Economy(commands.Cog):
             return
 
         elif member is None:
-            await self.shikigami_list_post(ctx.author, rarity, ctx)
+            await self.shikigami_list_post_collected(ctx.author, rarity, ctx)
 
         else:
-            await self.shikigami_list_post(member, rarity, ctx)
+            await self.shikigami_list_post_collected(member, rarity, ctx)
 
-    async def shikigami_list_post(self, member, rarity, ctx):
+    async def shikigami_list_post_collected(self, member, rarity, ctx):
+
+        user_shikigamis = []
+        for entry in users.aggregate([{
+            "$match": {
+                "user_id": str(member.id)
+            }}, {
+            "$unwind": {
+                "path": "$shikigami"
+            }}, {
+            "$match": {
+                "shikigami.rarity": rarity
+            }}, {
+            "$project": {
+                "_id": 0,
+                "shikigami.name": 1,
+                "shikigami.owned": 1,
+                "shikigami.shards": 1
+            }
+        }]):
+            user_shikigamis.append((
+                entry["shikigami"]["name"],
+                entry["shikigami"]["owned"],
+                entry["shikigami"]["shards"]
+            ))
+
+        user_shikigamis_sorted = sorted(user_shikigamis, key=lambda x: x[1], reverse=True)
+
+        formatted_list = []
+        for shiki in user_shikigamis_sorted:
+            formatted_list.append(f"▫{shiki[0]}, x{shiki[1]}, x{shiki[2]} shards\n")
+
+        await self.shikigami_list_paginate(member, formatted_list, rarity, ctx, "Shikigamis")
+
+    @commands.command(aliases=["uncollected", "unc"])
+    @commands.guild_only()
+    async def shikigami_list_show_uncollected(self, ctx, arg1, member: discord.Member = None):
+
+        rarity = str(arg1.upper())
+
+        if rarity not in rarities:
+            return
+
+        elif member is None:
+            await self.shikigami_list_post_uncollected(ctx.author, rarity, ctx)
+
+        else:
+            await self.shikigami_list_post_uncollected(member, rarity, ctx)
+
+    async def shikigami_list_post_uncollected(self, member, rarity, ctx):
 
         user_shikigamis = []
         for entry in users.aggregate([{
@@ -1280,27 +1329,50 @@ class Economy(commands.Cog):
             }
         }]):
             user_shikigamis.append((
-                entry["shikigami"]["name"],
-                entry["shikigami"]["owned"],
-                entry["shikigami"]["shards"]
+                entry["shikigami"]["name"]
             ))
 
-        user_shikigamis_sorted = sorted(user_shikigamis, key=lambda x: x[1], reverse=True)
+        pool_rarity_select = []
+        for entry in shikigamis.aggregate([{
+            "$match": {
+                "rarity": rarity}}, {
+            "$unwind": {
+                    "path": "$shikigami"}}, {
+            "$project": {
+                    "_id": 0,
+                    "shikigami.name": 1
+                }
+            }
+        ]):
+            pool_rarity_select.append(entry["shikigami"]["name"])
 
-        description = []
-        for shiki in user_shikigamis_sorted:
-            description.append(f"▫{shiki[0]}, x{shiki[1]}, x{shiki[2]} shards\n")
+        uncollected_list = list(set(pool_rarity_select) - set(user_shikigamis))
 
-        icon_url = "https://i.imgur.com/CSMZAjb.png"
-        user_shikigamis_page = 1
-        embed = discord.Embed(color=member.colour, description="".join(description[0:10]))
-        embed.set_author(icon_url=member.avatar_url, name=f"{member.display_name}'s shikigamis")
-        embed.set_footer(
-            text=f"Rarity: {rarity.upper()} - Page: {user_shikigamis_page}",
-            icon_url=icon_url
-        )
+        formatted_list = []
+        for shiki in uncollected_list:
+            formatted_list.append(f"▫{shiki}\n")
 
-        msg = await ctx.channel.send(embed=embed)
+        await self.shikigami_list_paginate(member, formatted_list, rarity, ctx, "Uncollected shikigamis")
+
+    async def shikigami_list_paginate(self, member, formatted_list, rarity, ctx, author_name):
+
+        page = 1
+        max_lines = 10
+        page_total = int(len(formatted_list) / max_lines)
+
+        def create_new_embed_page(page_new):
+            end = page_new * max_lines
+            start = end - max_lines
+            embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
+            embed_new.description = "".join(formatted_list[start:end])
+            embed_new.set_author(icon_url=member.avatar_url, name=author_name)
+            embed_new.set_footer(
+                text=f"Rarity: {rarity.upper()} - Page: {page_new} of {page_total}",
+                icon_url="https://i.imgur.com/CSMZAjb.png"
+            )
+            return embed_new
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(1))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
@@ -1309,27 +1381,19 @@ class Economy(commands.Cog):
 
         while True:
             try:
-                timeout = 30
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-
-                if str(reaction.emoji) == "➡":
-                    user_shikigamis_page += 1
-                if str(reaction.emoji) == "⬅":
-                    user_shikigamis_page -= 1
-                    if user_shikigamis_page == 0:
-                        user_shikigamis_page = 1
-
-                start = user_shikigamis_page * 10 - 10
-                end = user_shikigamis_page * 10
-                embed = discord.Embed(color=member.colour, description="".join(description[start:end]))
-                embed.set_author(icon_url=member.avatar_url, name=f"{member.display_name}'s Shikigamis")
-                embed.set_footer(
-                    text=f"Rarity: {rarity.upper()} - Page: {user_shikigamis_page}",
-                    icon_url=icon_url
-                )
-                await msg.edit(embed=embed)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
                 break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=create_new_embed_page(page))
 
     @commands.command(aliases=["addshiki"])
     @commands.is_owner()
@@ -1627,7 +1691,8 @@ class Economy(commands.Cog):
                                     "rarity": rarity,
                                     "grade": 1,
                                     "owned": 0,
-                                    "evolved": "False"
+                                    "evolved": "False",
+                                    "shards": 0
                                 }
                             }
                         })
@@ -1643,7 +1708,7 @@ class Economy(commands.Cog):
                     })
                     embed = discord.Embed(
                         title="Exchange success!", colour=discord.Colour(embed_color),
-                        description=f"{ctx.author.mention}, acquired {name} for {required_talisman}{e_t}"
+                        description=f"{ctx.author.mention}, acquired {name} for {required_talisman:,d}{e_t}"
                     )
                     await ctx.channel.send(embed=embed)
 
