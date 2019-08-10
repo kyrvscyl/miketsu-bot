@@ -177,6 +177,7 @@ class Startup(commands.Cog):
             )
             embed.add_field(name="Formats", value="*`;raid @member`*, *`;r <name#discriminator>`*")
             await ctx.channel.send(embed=embed)
+            return
 
         elif victim.bot or victim.id == ctx.author.id:
             return
