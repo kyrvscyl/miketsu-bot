@@ -398,7 +398,7 @@ class Economy(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command(aliases=["wish", "w"])
+    @commands.command(aliases=["wish"])
     @commands.guild_only()
     async def wish_perform(self, ctx, *, shikigami=None):
 
