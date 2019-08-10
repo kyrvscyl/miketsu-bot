@@ -170,6 +170,8 @@ class Clock(commands.Cog):
                 try:
                     clock = self.client.get_channel(int(clock_channel))
                     await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
+                except RuntimeError:
+                    continue
                 except AttributeError:
                     continue
                 except discord.errors.InvalidArgument:

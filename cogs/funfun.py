@@ -22,29 +22,6 @@ failed_lists = failed_lists_.read().splitlines()
 failed_lists_.close()
 
 
-async def mike_shoot(user, guild, channel, args):
-    msg_formatted = args.lower().split(" ")
-
-    for word in msg_formatted:
-
-        if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
-
-            user_id = re.sub("[<>@!]", "", word)
-            member = guild.get_member(int(user_id))
-
-            roll = random.randint(1, 100)
-            response = random.choice(success_lists).format(member.mention)
-            if roll >= 45:
-                response = random.choice(failed_lists).format(user.mention)
-
-            embed = discord.Embed(
-                color=member.colour,
-                description="\"*" + response + "*\""
-            )
-            await channel.send(embed=embed)
-            break
-
-
 async def mike_how_hot(guild, channel, msg):
     msg_formatted = msg.lower().split(" ")
 
@@ -101,13 +78,36 @@ class Funfun(commands.Cog):
                     await message.delete(delay=15)
 
                 elif message.content.lower().split(" ", 2)[1] == "shoot":
-                    await mike_shoot(message.author, message.guild, message.channel, message.content)
+                    await self.mike_shoot(message.author, message.guild, message.channel, message.content)
 
                 elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
                     await mike_how_hot(message.guild, message.channel, message.content)
 
             except IndexError:
                 return
+
+    async def mike_shoot(self, user, guild, channel, args):
+        msg_formatted = args.lower().split(" ")
+
+        for word in msg_formatted:
+
+            if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
+
+                user_id = re.sub("[<>@!]", "", word)
+                member = guild.get_member(int(user_id))
+
+                if member is not self.client.user:
+                    roll = random.randint(1, 100)
+                    response = random.choice(success_lists).format(member.mention)
+                    if roll >= 45:
+                        response = random.choice(failed_lists).format(user.mention)
+
+                    embed = discord.Embed(
+                        color=member.colour,
+                        description="\"*" + response + "*\""
+                    )
+                    await channel.send(embed=embed)
+                    break
 
 
 def setup(client):

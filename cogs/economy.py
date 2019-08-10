@@ -491,8 +491,8 @@ class Economy(commands.Cog):
             user = self.client.get_user(int(wish["user_id"]))
             wish = wish['wish']
             if wish is False:
-                wish = "Fulfilled"
-            shard_wishes.append(f"▫{user} | *{wish}*\n")
+                wish = "✅"
+            shard_wishes.append(f"▫{user} | {wish}\n")
 
         await self.wish_show_list_paginate(ctx, shard_wishes)
 
