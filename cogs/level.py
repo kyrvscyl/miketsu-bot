@@ -44,7 +44,7 @@ async def level_up(user, ctx):
             users.update_one({
                 "user_id": str(user.id)}, {
                 "$set": {
-                    "level_exp_next": 60,
+                    "level_exp_next": 100000,
                     "level": 60
                 },
                 "$inc": {
