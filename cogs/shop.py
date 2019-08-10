@@ -12,7 +12,7 @@ import pytz
 from discord.ext import commands
 
 from cogs.mongo.db import get_collections
-from cogs.startup import e_a, e_j, e_c, e_m, e_f, embed_color
+from cogs.startup import e_a, e_j, e_c, e_m, e_f, e_t, embed_color
 
 # Collections
 users = get_collections("miketsu", "users")
@@ -37,7 +37,8 @@ def get_emoji(item):
         "amulets": e_a,
         "medals": e_m,
         "friendship": e_f,
-        "encounter_ticket": "🎫"
+        "encounter_ticket": "🎫",
+        "talisman": e_t
     }
     return emoji_dict[item]
 
@@ -67,15 +68,14 @@ for key in shop_dict:
         _cost_item = shop_dict[key][key2]["cost"][0]
         _cost_amount = shop_dict[key][key2]["cost"][1]
         trading_value_list.append(
-            f"• `{_offer_amount}` {get_emoji(_offer_item)} ` "
-            f"for ` `{_cost_amount:,d}` {get_emoji(_cost_item)} "
-            f"| `{key} {key2}`\n"
+            f"• {_offer_amount}{get_emoji(_offer_item)} for .... "
+            f"{_cost_amount:,d}{get_emoji(_cost_item)} | *`{key} {key2}`*\n⠀\n"
         )
 
 
 async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, cost_amount):
-    if users.find_one({"user_id": str(user.id)}, {"_id": 0, cost_item: 1})[cost_item] >= int(cost_amount):
 
+    if users.find_one({"user_id": str(user.id)}, {"_id": 0, cost_item: 1})[cost_item] >= int(cost_amount):
         users.update_one({
             "user_id": str(user.id)}, {
             "$inc": {
@@ -99,8 +99,8 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
 
 
 async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, emoji):
-    if users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency] >= amount:
 
+    if users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency] >= amount:
         users.update_one({
             "user_id": str(user.id)}, {
             "$inc": {
@@ -148,7 +148,39 @@ class Economy(commands.Cog):
             value="".join(trading_value_list)
         )
         embed.add_field(name="Example", value="*`;buy amulets 11`*", inline=False)
-        await ctx.channel.send(embed=embed)
+        msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("🖼")
+
+        def check(r, u):
+            return str(r.emoji) == "🖼" and r.message.id == msg.id and u.bot is False
+
+        try:
+            await self.client.wait_for("reaction_add", timeout=30, check=check)
+        except asyncio.TimeoutError:
+            return
+        else:
+            try:
+                url = self.client.get_user(518416258312699906).avatar_url
+            except AttributeError:
+                url = ""
+
+            embed = discord.Embed(
+                title="AkiraKL's Frame Shop", colour=discord.Colour(embed_color),
+                description="purchase premium frames for premium prices"
+            )
+            embed.set_thumbnail(url=url)
+            for frame in frames.find({"purchase": True}, {"_id": 0, "currency": 1, "amount": 1, "name": 1, "emoji": 1}):
+                embed.add_field(
+                    name=f"{frame['emoji']} {frame['name']}",
+                    value=f"Acquire for {frame['amount']:,d}{get_emoji(frame['currency'])}",
+                    inline=False
+                )
+            embed.add_field(
+                name=f"Format",
+                value="*`;buy frame <frame_name>`*",
+                inline=False
+            )
+            await msg.edit(embed=embed)
 
     @commands.command(aliases=["buy"])
     @commands.guild_only()
@@ -161,34 +193,10 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 title="buy", colour=discord.Colour(embed_color),
                 description="purchase from the list of items from the *`;shop`*\nreact to confirm purchase")
-            embed.add_field(name="Format", value="*`;buy <item> <amount>`*")
+            embed.add_field(name="Format", value="*`;buy <item> <amount>`*\n*`;buy frame <frame_name>`*")
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["frame", "frames"] and len(args) == 1:
-
-            embed = discord.Embed(
-                title="AkiraKL's Frame Shop", colour=discord.Colour(embed_color),
-                description="purchase premium frames for premium prices"
-            )
-
-            for frame in frames.find({"purchase": True}, {"_id": 0, "currency": 1, "amount": 1, "name": 1, "emoji": 1}):
-                embed.add_field(
-                    name=f"{frame['emoji']} {frame['name']}",
-                    value=f"Acquire for {frame['amount']:,d}{get_emoji(frame['currency'])}"
-                )
-
-            embed.add_field(
-                name=f"Format",
-                value="*`;buy frame <frame_name>`*",
-                inline=False
-            )
-
-            await ctx.channel.send(embed=embed)
-            return
-
-        elif args[0].lower() in ["frame", "frames"] \
-                and len(args) > 1 and " ".join(args[-2:]).lower() in \
-                purchasable_frames:
+        elif args[0].lower() in ["frame"] and len(args) > 1 and " ".join(args[-2:]).lower() in purchasable_frames:
 
             frame = " ".join(args[-2:]).lower()
             request = frames.find_one({"name": frame.title()}, {"_id": 0})
@@ -205,23 +213,6 @@ class Economy(commands.Cog):
 
             if answer is True:
                 await shop_process_purchase_frame(ctx, user, currency, amount, frame.title(), emoji)
-
-        elif len(args) == 1:
-            embed = discord.Embed(
-                title="buy", colour=discord.Colour(embed_color),
-                description="buy items from the mystic trader"
-            )
-            embed.add_field(
-                name=f"Arguments",
-                value="*amulets, frames, enc, raid, medals*",
-                inline=False
-            )
-            embed.add_field(
-                name=f"Example",
-                value="*`;buy frames`*",
-                inline=False
-            )
-            await ctx.channel.send(embed=embed)
 
         else:
             try:

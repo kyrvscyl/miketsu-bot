@@ -160,13 +160,17 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value="*`;leaderboard friendship`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "shikigami_list_show":
+            elif str(ctx.command) in ["shikigami_list_show_collected", "shikigami_list_show_uncollected"]:
                 embed = discord.Embed(
-                    title="shikigamis, shikis", colour=discord.Colour(embed_color),
+                    title="shikigamis, shikis, uncollected, unc", colour=discord.Colour(embed_color),
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
                 embed.add_field(name="Arguments", value="*SP, SSR, SR, R*", inline=False)
-                embed.add_field(name="Format", value="*`;shikis <rarity> <optional: @member>`*", inline=False)
+                embed.add_field(
+                    name="Format", inline=False,
+                    value="*`;shikis <rarity> <optional: @member>`*"
+                          "*`;unc <rarity> <optional: @member>`*"
+                )
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "profile_change_display":

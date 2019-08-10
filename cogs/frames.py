@@ -19,6 +19,7 @@ books = get_collections("bukkuman", "books")
 frames = get_collections("miketsu", "frames")
 users = get_collections("miketsu", "users")
 shikigamis = get_collections("miketsu", "shikigamis")
+ships = get_collections("miketsu", "ships")
 
 
 total_sp = 0
@@ -183,7 +184,8 @@ class Frames(commands.Cog):
 
         guild = self.client.get_guild(int(primary_id))
         query = users.find({}, {
-            "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1
+            "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1,
+            "friendship": 1
         })
 
         for document in query:
@@ -198,52 +200,130 @@ class Frames(commands.Cog):
                 except KeyError:
                     continue
 
-            count_sr = 0
-            for result in users.aggregate([
-                {
-                    "$match": {
-                        "user_id": str(member.id)
-                    }
-                }, {
-                    "$unwind": {
-                        "path": "$shikigami"
-                    }
-                }, {
-                    "$match": {
-                        "shikigami.rarity": "SR"
-                    }
-                }, {
-                    "$count": "count"
-                }
-            ]):
-                count_sr = result["count"]
+            if "The Scholar" not in user_frames:
+                profile = users.find_one({
+                    "user_id": document["user_id"], "shikigami.name": "Koi"}, {
+                    "_id": 0, "shikigami.$": 1
+                })
 
-            maple_evolve = []
-            for result in users.aggregate([
-                {
-                    "$match": {
-                        "user_id": "437941992748482562"
-                    }
-                }, {
-                    "$unwind": {
-                        "path": "$shikigami"
-                    }
-                }, {
-                    "$match": {
-                        "shikigami.name": {
-                            "$in": [
-                                "Shuten Doji", "Momiji"
-                            ]
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["owned"] >= 100:
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "The Scholar",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 3500
                         }
+                    })
+                    await self.achievements_process_record_user(member, "The Scholar")
+
+            if "Cursed Blade" not in user_frames:
+                profile = users.find_one({
+                    "user_id": document["user_id"], "shikigami.name": "Yoto Hime"}, {
+                    "_id": 0, "shikigami.$": 1
+                })
+
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["evolved"] == "True":
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "Cursed Blade",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 3500
+                        }
+                    })
+                    await self.achievements_process_record_user(member, "Cursed Blade")
+
+            if document["friendship"] >= 1000 and "Dawn of the Thrilling Spring" not in user_frames:
+                users.update_one({
+                    "user_id": document["user_id"]}, {
+                    "$push": {
+                        "achievements": {
+                            "name": "Dawn of the Thrilling Spring",
+                            "date_acquired": get_time()
+                        }
+                    },
+                    "$inc": {
+                        "jades": 4500
                     }
-                }, {
-                    "$project": {
-                        "shikigami.name": 1,
-                        "shikigami.evolved": 1
+                })
+                await self.achievements_process_record_user(member, "Dawn of the Thrilling Spring")
+
+            if "Genteel Women's Reflection" not in user_frames:
+
+                request = ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{document['user_id']}.*"}})
+                total_rewards = 0
+
+                for ship in request:
+                    total_rewards += ship["level"] * 25
+
+                if total_rewards >= 1000:
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "Genteel Women's Reflection",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 4500
+                        }
+                    })
+                    await self.achievements_process_record_user(member, "Genteel Women's Reflection")
+
+            if "Vampire Blood" not in user_frames:
+                profile = users.find_one({
+                    "user_id": document["user_id"], "shikigami.name": "Vampira"}, {
+                    "_id": 0, "shikigami.$": 1
+                })
+
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["owned"] >= 30:
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "Vampire Blood",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 3500
+                        }
+                    })
+                    await self.achievements_process_record_user(member, "Vampire Blood")
+
+            if document["amulets_spent"] >= 1000 and "Taste of the Sea" not in user_frames:
+                users.update_one({
+                    "user_id": document["user_id"]}, {
+                    "$push": {
+                        "achievements": {
+                            "name": "Taste of the Sea",
+                            "date_acquired": get_time()
+                        }
+                    },
+                    "$inc": {
+                        "jades": 3500
                     }
-                }
-            ]):
-                maple_evolve.append(result["shikigami"]["evolved"])
+                })
+                await self.achievements_process_record_user(member, "Taste of the Sea")
 
             if document["amulets_spent"] >= 2000 and "Red Carp" not in user_frames:
                 users.update_one({
@@ -305,22 +385,81 @@ class Frames(commands.Cog):
                 })
                 await self.achievements_process_record_user(member, "Cold of Mutsuki")
 
-            if count_sr == total_sr and "Kitsune" not in user_frames:
-                users.update_one({
-                    "user_id": document["user_id"]}, {
-                    "$push": {
-                        "achievements": {
-                            "name": "Kitsune",
-                            "date_acquired": get_time()
-                        }
-                    },
-                    "$inc": {
-                        "jades": 2500
-                    }
-                })
-                await self.achievements_process_record_user(member, "Kitsune")
+            if "River of Moon" not in user_frames:
 
-            if document["coins"] >= 100000000 and "Limited Gold" not in user_frames:
+                count_r = 0
+                for result in users.aggregate([
+                    {
+                        "$match": {
+                            "user_id": document["user_id"]
+                        }
+                    }, {
+                        "$unwind": {
+                            "path": "$shikigami"
+                        }
+                    }, {
+                        "$match": {
+                            "shikigami.rarity": "R"
+                        }
+                    }, {
+                        "$count": "count"
+                    }
+                ]):
+                    count_r = result["count"]
+
+                if count_r == total_r:
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "River of Moon",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 3500
+                        }
+                    })
+                    await self.achievements_process_record_user(member, "River of Moon")
+
+            if "Kitsune" not in user_frames:
+
+                count_sr = 0
+                for result in users.aggregate([
+                    {
+                        "$match": {
+                            "user_id": str(member.id)
+                        }
+                    }, {
+                        "$unwind": {
+                            "path": "$shikigami"
+                        }
+                    }, {
+                        "$match": {
+                            "shikigami.rarity": "SR"
+                        }
+                    }, {
+                        "$count": "count"
+                    }
+                ]):
+                    count_sr = result["count"]
+
+                if count_sr == total_sr:
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "Kitsune",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 2500
+                        }
+                    })
+                    await self.achievements_process_record_user(member, "Kitsune")
+
+            if document["coins"] >= 30000000 and "Limited Gold" not in user_frames:
                 users.update_one({
                     "user_id": document["user_id"]}, {
                     "$push": {
@@ -335,22 +474,113 @@ class Frames(commands.Cog):
                 })
                 await self.achievements_process_record_user(member, "Limited Gold")
 
-            if len(maple_evolve) == 2 and "Red Maple Frost" not in user_frames:
+            if "Red Maple Frost" not in user_frames:
 
-                if maple_evolve[0] == "True" and maple_evolve[1] == "True":
-                    users.update_one({
-                        "user_id": document["user_id"]}, {
-                        "$push": {
-                            "achievements": {
-                                "name": "Red Maple Frost",
-                                "date_acquired": get_time()
-                            }
-                        },
-                        "$inc": {
-                            "jades": 2500
+                maple_evolve = []
+                for result in users.aggregate([
+                    {
+                        "$match": {
+                            "user_id": document["user_id"]
                         }
-                    })
-                    await self.achievements_process_record_user(member, "Red Maple Frost")
+                    }, {
+                        "$unwind": {
+                            "path": "$shikigami"
+                        }
+                    }, {
+                        "$match": {
+                            "shikigami.name": {
+                                "$in": [
+                                    "Shuten Doji", "Momiji"
+                                ]
+                            }
+                        }
+                    }, {
+                        "$project": {
+                            "shikigami.name": 1,
+                            "shikigami.evolved": 1
+                        }
+                    }
+                ]):
+                    maple_evolve.append(result["shikigami"]["evolved"])
+
+                if len(maple_evolve) == 2:
+
+                    if maple_evolve[0] == "True" and maple_evolve[1] == "True":
+                        users.update_one({
+                            "user_id": document["user_id"]}, {
+                            "$push": {
+                                "achievements": {
+                                    "name": "Red Maple Frost",
+                                    "date_acquired": get_time()
+                                }
+                            },
+                            "$inc": {
+                                "jades": 2500
+                            }
+                        })
+                        await self.achievements_process_record_user(member, "Red Maple Frost")
+
+            if "Festival of Cherries" not in user_frames:
+
+                cherries_evolved = []
+                for result in users.aggregate([
+                    {
+                        "$match": {
+                            "user_id": document["user_id"]
+                        }
+                    }, {
+                        "$unwind": {
+                            "path": "$shikigami"
+                        }
+                    }, {
+                        "$match": {
+                            "shikigami.name": {
+                                "$in": [
+                                    "Momo", "Sakura"
+                                ]
+                            }
+                        }
+                    }, {
+                        "$project": {
+                            "shikigami.name": 1,
+                            "shikigami.evolved": 1
+                        }
+                    }
+                ]):
+                    cherries_evolved.append(result["shikigami"]["evolved"])
+
+                if len(cherries_evolved) == 2:
+
+                    if cherries_evolved[0] == "True" and cherries_evolved[1] == "True":
+                        users.update_one({
+                            "user_id": document["user_id"]}, {
+                            "$push": {
+                                "achievements": {
+                                    "name": "Festival of Cherries",
+                                    "date_acquired": get_time()
+                                }
+                            },
+                            "$inc": {
+                                "jades": 2500
+                            }
+                        })
+                        await self.achievements_process_record_user(member, "Festival of Cherries")
+
+            if len(user_frames) >= 15 and "Famous in Patronus" not in user_frames:
+
+                users.update_one({
+                    "user_id": document["user_id"]}, {
+                    "$push": {
+                        "achievements": {
+                            "name": "Famous in Patronus",
+                            "date_acquired": get_time()
+                        }
+                    },
+                    "$inc": {
+                        "jades": 3500
+                    }
+                })
+                await self.achievements_process_record_user(member, "Famous in Patronus")
 
             if document["medals"] >= 500:
 
