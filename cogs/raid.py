@@ -8,7 +8,7 @@ import random
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import e_m, e_j, e_c, embed_color
 
 # Collections

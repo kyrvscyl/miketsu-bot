@@ -11,7 +11,7 @@ import discord
 from PIL import Image
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import primary_id, embed_color
 
 # Collections

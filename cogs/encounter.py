@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands
 
 from cogs.economy import reset_boss
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import e_m, e_j, e_c, e_a, e_f, embed_color
 
 # Collections

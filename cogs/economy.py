@@ -15,7 +15,7 @@ from PIL import Image
 from discord.ext import commands
 
 from cogs.frames import Frames
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import e_m, e_j, e_c, e_f, e_a, e_sp, e_ssr, e_sr, e_r, e_t, pluralize, primary_id, embed_color
 
 # Collections
@@ -37,6 +37,7 @@ adverb = ["deliberately", "forcefully", "unknowingly", "accidentally", "dishones
 verb = ["snatched", "stole", "took", "looted", "shoplifted", "embezzled"]
 noun = ["custody", "care", "control", "ownership"]
 comment = ["Sneaky!", "Gruesome!", "Madness!"]
+
 
 for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
     try:
@@ -481,7 +482,7 @@ class Economy(commands.Cog):
             wish = wish['wish']
             if wish is False:
                 wish = "Fulfilled"
-            shard_wishes.append(f"▫{user} | *{wish}*")
+            shard_wishes.append(f"▫{user} | *{wish}*\n")
 
         await self.wish_show_list_paginate(ctx, shard_wishes)
 
@@ -489,7 +490,7 @@ class Economy(commands.Cog):
 
         page = 1
         max_lines = 10
-        page_total = int(len(shard_wishes) / max_lines)
+        page_total = ceil(len(shard_wishes) / max_lines)
         ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
 
         def create_new_embed_page(page_new):
@@ -669,8 +670,13 @@ class Economy(commands.Cog):
 
         for channel in spell_spams_id:
             current_channel = self.client.get_channel(int(channel))
-            await current_channel.send(embed=embed1)
-            await current_channel.send(embed=embed2)
+            try:
+                await current_channel.send(embed=embed1)
+                await current_channel.send(embed=embed2)
+            except AttributeError:
+                continue
+            except discord.errors.Forbidden:
+                continue
 
     async def reset_rewards_weekly(self):
 

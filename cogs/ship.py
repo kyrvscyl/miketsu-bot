@@ -10,7 +10,7 @@ from math import ceil
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import e_f, e_j, pluralize, embed_color
 
 # Collections

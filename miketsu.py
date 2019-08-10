@@ -9,7 +9,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 
 # Collections
 tokens = get_collections("bukkuman", "tokens")

@@ -11,7 +11,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import primary_id, e_j
 
 # Collections
@@ -21,22 +21,10 @@ users = get_collections("miketsu", "users")
 shikigamis = get_collections("miketsu", "shikigamis")
 ships = get_collections("miketsu", "ships")
 
-
-total_sp = 0
-for entry in shikigamis.find_one({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1}):
-    total_sp += 1
-
-total_ssr = 0
-for entry in shikigamis.find_one({"rarity": "SSR"}, {"_id": 0, "shikigami.name": 1}):
-    total_ssr += 1
-
-total_sr = 0
-for entry in shikigamis.find_one({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1}):
-    total_sr += 1
-
-total_r = 0
-for entry in shikigamis.find_one({"rarity": "R"}, {"_id": 0, "shikigami.name": 1}):
-    total_r += 1
+total_sp = len(shikigamis.find_one({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
+total_ssr = len(shikigamis.find_one({"rarity": "SSR"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
+total_sr = len(shikigamis.find_one({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
+total_r = len(shikigamis.find_one({"rarity": "R"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
 
 
 def get_timestamp():

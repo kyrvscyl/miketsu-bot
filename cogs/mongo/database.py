@@ -1,6 +1,6 @@
 """
-Discord Miketsu Bot.
-kyrvscyl, 2019
+Database Module
+Miketsu, 2019
 """
 import os
 

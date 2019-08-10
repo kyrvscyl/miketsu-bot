@@ -11,7 +11,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 from cogs.startup import e_a, e_j, e_c, e_m, e_f, e_t, embed_color
 
 # Collections

@@ -6,7 +6,7 @@ Miketsu, 2019
 import discord
 from discord.ext import commands
 
-from cogs.mongo.db import get_collections
+from cogs.mongo.database import get_collections
 
 # Collections
 users = get_collections("miketsu", "users")
