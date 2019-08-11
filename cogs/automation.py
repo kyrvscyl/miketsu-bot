@@ -10,6 +10,7 @@ import pytz
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
+from cogs.startup import pluralize
 
 # Collections
 books = get_collections("bukkuman", "books")
@@ -185,7 +186,10 @@ class Automation(commands.Cog):
                         title=f"Removed {changed_role2[0].name} role from {before} [{before.display_name}]",
                         timestamp=get_timestamp()
                     )
-                    embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
+                    embed.set_footer(
+                        text=f"{len(after.roles)} {pluralize('role', len(after.roles))}",
+                        icon_url=before.avatar_url
+                    )
                     await record_scroll_channel.send(embed=embed)
                 except AttributeError:
                     pass

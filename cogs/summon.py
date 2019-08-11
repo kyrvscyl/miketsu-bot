@@ -75,8 +75,11 @@ for shiki in shikigamis.aggregate(get_not_shrine_rarity("R")):
 
 
 def get_thumbnail_shikigami(shikigami):
-    url = shikigamis.find_one({"shikigami": {"$elemMatch": {"name": shikigami}}}, {
-        {"_id": 0, "shikigami.$.name": 1}
+    url = shikigamis.find_one({
+        "shikigami": {
+            "$elemMatch": {
+                "name": shikigami}}}, {
+        "_id": 0, "shikigami.$.name": 1
     })["shikigami"][0]["thumbnail"]["pre_evo"]
     return url
 

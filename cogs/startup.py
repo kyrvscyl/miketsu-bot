@@ -23,7 +23,7 @@ e_r = "<:R_:602707410582241280>"
 e_n = "<:N_:602707410540560414>"
 e_t = "<:talisman:573071120685596682>"
 primary_id = 412057028887052288
-embed_color = 0xffe6a7
+embed_color = 0xffa8e1
 
 # Listings
 status = cycle([

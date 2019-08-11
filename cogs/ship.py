@@ -278,7 +278,7 @@ class Friendship(commands.Cog):
             await ctx.message.add_reaction(f"{e_f.replace('<', '').replace('>', '')}")
 
             def check(r, u):
-                return u == receiver and str(r.emoji) == e_f
+                return u.id == receiver.id and str(r.emoji) == e_f and r.message.id == ctx.message.id
 
             try:
                 await self.client.wait_for("reaction_add", timeout=120, check=check)

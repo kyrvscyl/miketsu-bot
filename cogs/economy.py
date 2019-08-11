@@ -265,9 +265,9 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
             image_url = shikigami_profile["shikigami"][0]["thumbnail"]["evo"]
 
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=user.colour,
                 title="Evolution successful",
-                description=f"{user.mention}, you have evolved your {query}!"
+                description=f"{user.mention}, you have evolved your {query}!\nAcquired 5 shards of this shikigami!"
             )
             embed.set_thumbnail(url=image_url)
             await ctx.channel.send(embed=embed)
@@ -1160,7 +1160,7 @@ class Economy(commands.Cog):
         achievements_count = profile["achievements_count"]
         achievements = profile["achievements"]
 
-        if len(achievements) > achievements_count:
+        if len(achievements) != achievements_count:
             frame = await self.profile_generate_frame_image(member, achievements)
             users.update_one({"user_id": str(member.id)}, {
                 "$set": {

@@ -57,14 +57,14 @@ def get_offer_and_cost(x):
 
 
 for offer in shop_dict:
-    for amount in shop_dict[offer]:
+    for _amount in shop_dict[offer]:
         trading_list.append([
-            shop_dict[offer][amount]["offer"][0],
-            shop_dict[offer][amount]["offer"][1],
-            shop_dict[offer][amount]["cost"][0],
-            shop_dict[offer][amount]["cost"][1],
+            shop_dict[offer][_amount]["offer"][0],
+            shop_dict[offer][_amount]["offer"][1],
+            shop_dict[offer][_amount]["cost"][0],
+            shop_dict[offer][_amount]["cost"][1],
             offer,
-            amount
+            _amount
         ])
 
 
@@ -177,11 +177,7 @@ class Economy(commands.Cog):
                     value=f"Acquire for {frame['amount']:,d}{get_emoji(frame['currency'])}",
                     inline=False
                 )
-            embed.add_field(
-                name=f"Format",
-                value="*`;buy frame <frame_name>`*",
-                inline=False
-            )
+            embed.add_field(name=f"Format", value="*`;buy frame <frame_name>`*", inline=False)
             await msg.edit(embed=embed)
 
     @commands.command(aliases=["buy"])
@@ -195,7 +191,7 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 title="buy", colour=discord.Colour(embed_color),
                 description="purchase from the list of items from the *`;shop`*\nreact to confirm purchase")
-            embed.add_field(name="Format", value="*`;buy <item> <amount>`*\n*`;buy frame <frame_name>`*")
+            embed.add_field(name="Format", value="*`;buy <purchase code>`*\n*`;buy frame <frame_name>`*")
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["frame"] and len(args) > 1 and " ".join(args[-2:]).lower() in purchasable_frames:
@@ -213,13 +209,9 @@ class Economy(commands.Cog):
                 await shop_process_purchase_frame(ctx, user, currency, amount, frame.title(), emoji)
 
         else:
-            embed = discord.Embed(
-                title="Invalid purchase code", colour=discord.Colour(embed_color),
-                description=f"{user.mention}, you entered an invalid purchase code"
-            )
-
             try:
                 offer_item, offer_amount, cost_item, cost_amount = get_offer_and_cost(args)
+                embed = discord.Embed(title="Confirm purchase?", colour=discord.Colour(embed_color))
                 embed.description = \
                     f"`{offer_amount}` {get_emoji(offer_item)} `for` `{cost_amount:,d}` {get_emoji(cost_item)}"
 
@@ -231,9 +223,17 @@ class Economy(commands.Cog):
                     await shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, cost_amount)
 
             except KeyError:
+                embed = discord.Embed(
+                    title="Invalid purchase code", colour=discord.Colour(embed_color),
+                    description=f"{user.mention}, you entered an invalid purchase code"
+                )
                 await ctx.channel.send(embed=embed)
 
             except IndexError:
+                embed = discord.Embed(
+                    title="Invalid purchase code", colour=discord.Colour(embed_color),
+                    description=f"{user.mention}, you entered an invalid purchase code"
+                )
                 await ctx.channel.send(embed=embed)
 
     async def shop_buy_confirmation(self, ctx, msg):

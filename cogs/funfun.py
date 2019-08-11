@@ -71,7 +71,7 @@ class Funfun(commands.Cog):
                 if len(message.content) == 4:
                     embed = discord.Embed(
                         colour=discord.Colour(0xffe6a7),
-                        description="*" + random.choice(reaction_list) + "*"
+                        description=random.choice(reaction_list)
                     )
                     msg = await message.channel.send(embed=embed)
                     await msg.delete(delay=15)
@@ -102,10 +102,7 @@ class Funfun(commands.Cog):
                     if roll >= 45:
                         response = random.choice(failed_lists).format(user.mention)
 
-                    embed = discord.Embed(
-                        color=member.colour,
-                        description="\"*" + response + "*\""
-                    )
+                    embed = discord.Embed(color=member.colour, description=f"*{response}*")
                     await channel.send(embed=embed)
                     break
 
