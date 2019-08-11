@@ -97,6 +97,11 @@ async def management_show_stats(ctx):
             "$in": ["Officer", "Member", "Leader"]},
         "status": "Semi-active"
     })
+    guild_members_trde = members.count({
+        "role": {
+            "$in": ["Officer", "Member", "Leader"]},
+        "status": "Trade"
+    })
 
     ex_members_away = members.count({"role": "Ex-member", "status": "Away"})
     description = \
@@ -107,6 +112,7 @@ async def management_show_stats(ctx):
         f"  • Semi-active     :: {guild_members_smac}\n" \
         f"  • Inactive        :: {guild_members_inac}\n" \
         f"  • On-leave        :: {guild_members_onlv}\n" \
+        f"  • Trade           :: {guild_members_trde}\n" \
         f"  • Away            :: {ex_members_away}\n" \
         f"  • ~ GQ/week       :: {guild_members_actv * 90 + guild_members_smac * 30:,d}" \
         f"```"

@@ -43,6 +43,10 @@ def get_time():
     return datetime.now(tz=tz_target)
 
 
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+
+
 def get_offer_and_cost(x):
     with open("data/shop.json") as g:
         shop = json.load(g)
@@ -117,7 +121,8 @@ async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, e
         embed = discord.Embed(
             title="Confirmation receipt", colour=discord.Colour(embed_color),
             description=f"{user.mention} acquired {emoji} {frame_name} "
-                        f"in exchanged for {amount:,d}{get_emoji(currency)}"
+                        f"in exchanged for {amount:,d}{get_emoji(currency)}",
+            timestamp=get_timestamp()
         )
         await ctx.channel.send(embed=embed)
 
@@ -211,7 +216,7 @@ class Economy(commands.Cog):
         else:
             try:
                 offer_item, offer_amount, cost_item, cost_amount = get_offer_and_cost(args)
-                embed = discord.Embed(title="Confirm purchase?", colour=discord.Colour(embed_color))
+                embed = discord.Embed(title="Confirm purchase?", colour=user.colour)
                 embed.description = \
                     f"`{offer_amount}` {get_emoji(offer_item)} `for` `{cost_amount:,d}` {get_emoji(cost_item)}"
 

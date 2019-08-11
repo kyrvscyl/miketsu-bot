@@ -168,7 +168,7 @@ class Error(commands.Cog):
                 embed.add_field(name="Arguments", value="*SP, SSR, SR, R*", inline=False)
                 embed.add_field(
                     name="Format", inline=False,
-                    value="*`;shikis <rarity> <optional: @member>`*"
+                    value="*`;shikis <rarity> <optional: @member>`*\n"
                           "*`;unc <rarity> <optional: @member>`*"
                 )
                 await ctx.channel.send(embed=embed)
