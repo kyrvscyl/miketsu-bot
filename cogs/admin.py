@@ -101,7 +101,7 @@ async def management_show_stats(ctx):
     description = \
         f"```" \
         f"• Total Accounts    :: {members.count()}\n" \
-        f"• Guild Occupancy   :: {guild_members_all}/160\n" \
+        f"• Guild Occupancy   :: {guild_members_all}/170\n" \
         f"  • Active          :: {guild_members_actv}\n" \
         f"  • Semi-active     :: {guild_members_smac}\n" \
         f"  • Inactive        :: {guild_members_inac}\n" \
