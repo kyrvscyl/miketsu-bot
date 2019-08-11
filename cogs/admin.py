@@ -6,6 +6,7 @@ Miketsu, 2019
 import asyncio
 import re
 from datetime import datetime
+from math import ceil
 
 import discord
 import pytz
@@ -766,7 +767,7 @@ class Admin(commands.Cog):
 
         page = 1
         max_lines = 20
-        page_total = int(len(formatted_list) / max_lines)
+        page_total = ceil(len(formatted_list) / max_lines)
 
         def create_new_embed_page(page_new):
             end = page_new * max_lines
