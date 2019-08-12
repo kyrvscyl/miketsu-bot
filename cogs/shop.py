@@ -29,6 +29,7 @@ trading_list_formatted = []
 for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
     purchasable_frames.append(document["name"].lower())
 
+print(purchasable_frames)
 
 def get_emoji(item):
     emoji_dict = {
@@ -199,9 +200,9 @@ class Economy(commands.Cog):
             embed.add_field(name="Format", value="*`;buy <purchase code>`*\n*`;buy frame <frame_name>`*")
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["frame"] and len(args) > 1 and " ".join(args[-2:]).lower() in purchasable_frames:
+        elif args[0].lower() in ["frame"] and len(args) > 1 and " ".join(args[1::]).lower() in purchasable_frames:
 
-            frame = " ".join(args[-2:]).lower()
+            frame = " ".join(args[1::]).lower()
             request = frames.find_one({"name": frame.title()}, {"_id": 0})
             emoji, currency, amount = request["emoji"], request["currency"], request["amount"]
             embed.description = f"{emoji} {frame.title()} frame for `{amount:,d}` {get_emoji(currency)}"
