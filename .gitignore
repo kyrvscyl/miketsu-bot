@@ -114,3 +114,4 @@ bounty.txt
 .idea/modules.xml
 .idea/vcs.xml
 .idea/workspace.xml
+/cogs/duel.py

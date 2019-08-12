@@ -44,6 +44,8 @@ async def post_table_of_content_restricted(channel):
         webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
     except AttributeError:
         return False
+    except discord.errors.Forbidden:
+        return False
 
     description = \
         "• To open a book use `;open [section] [index]`\n" \
@@ -86,6 +88,8 @@ async def post_table_of_content_reference(channel):
         bukkuman = webhooks[0]
         webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
     except AttributeError:
+        return False
+    except discord.errors.Forbidden:
         return False
 
     lists_souls_formatted = ", ".join(lists_souls)

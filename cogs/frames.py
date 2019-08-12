@@ -92,6 +92,12 @@ class Frames(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    @commands.command()
+    @commands.is_owner()
+    async def achievements_process_all(self, ctx):
+        await self.achievements_process_weekly()
+        await ctx.message.delete()
+
     @commands.command(aliases=["af"])
     @commands.is_owner()
     @commands.guild_only()
@@ -602,7 +608,7 @@ class Frames(commands.Cog):
         request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels": 1})
         spell_spam_id = request["channels"]["spell-spam"]
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
-        users.update_many({"achievements.name": "Eboshi"}, {"$pull": {"achievements.name": "Eboshi"}})
+        users.update_many({"achievements.name": "Eboshi"}, {"$pull": {"achievements.$.name": "Eboshi"}})
 
         medal_board1 = []
         query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})

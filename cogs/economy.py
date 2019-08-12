@@ -472,11 +472,10 @@ class Economy(commands.Cog):
 
             embed = discord.Embed(
                 color=user.colour,
-                title=f"Successfully registered your wish",
+                title=f"Wish registered",
                 description=f"{user.mention}, you wished for {shikigami.title()} shard",
                 timestamp=get_timestamp()
             )
-            embed.set_footer(text=f"use ;wishlist for daily shard wishes")
             await ctx.message.add_reaction("✅")
             await ctx.channel.send(embed=embed)
 
