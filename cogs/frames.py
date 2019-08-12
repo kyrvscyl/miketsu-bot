@@ -627,6 +627,7 @@ class Frames(commands.Cog):
             if user is None:
                 continue
             await frame_acquisition(user, "Eboshi", spell_spam_channel, jades=750)
+            await asyncio.sleep(1)
             i += 1
 
     async def achievements_process_daily(self):

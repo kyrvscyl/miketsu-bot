@@ -49,7 +49,7 @@ class Error(commands.Cog):
             embed.add_field(
                 name=f"Error Traceback",
                 value=f"User: {ctx.author} | {ctx.author.id}\n"
-                      f"DMchannel: #{ctx.channel.name} | {ctx.channel.id}\n",
+                      f"DMchannel: #{ctx.channel} | {ctx.channel.id}\n",
                 inline=False
             )
             await channel.send(embed=embed)
