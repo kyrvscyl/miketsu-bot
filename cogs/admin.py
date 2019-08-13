@@ -673,7 +673,7 @@ class Admin(commands.Cog):
                         members.update_one({
                             "name_lower": member.lower()}, {
                             "$set": {
-                                "status": "Inactive",
+                                "status": "Semi-active",
                                 "weekly_gq": 60,
                                 "status_update1": get_time_est().strftime('%d.%b %y'),
                                 "status_update2": get_time_est().strftime('%Y:%m:%d')
