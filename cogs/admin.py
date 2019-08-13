@@ -392,7 +392,10 @@ class Admin(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and args[1].lower() == "inactives" and len(args) == 2:
-            await self.management_guild_update_performance(ctx)
+            await self.management_guild_update_performance_inactives(ctx)
+
+        elif args[0].lower() in ["update", "u"] and args[1].lower() == "semi-actives" and len(args) == 2:
+            await self.management_guild_update_performance_semi_actives(ctx)
 
         elif args[0].lower() in ["update", "u"] and args[1].lower() == "feats" and len(args) == 2:
             await self.management_guild_update_feats(ctx)
@@ -490,7 +493,7 @@ class Admin(commands.Cog):
             await ctx.message.add_reaction("❌")
 
     # noinspection PyMethodMayBeStatic
-    async def management_guild_update_performance(self, ctx):
+    async def management_guild_update_performance_inactives(self, ctx):
 
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
@@ -546,6 +549,7 @@ class Admin(commands.Cog):
                 }, {
                     "$set": {
                         "status": "Active",
+                        "weekly_gq": 90,
                         "status_update1": get_time_est().strftime('%d.%b %y'),
                         "status_update2": get_time_est().strftime('%Y:%m:%d')
                     }
@@ -567,6 +571,7 @@ class Admin(commands.Cog):
                             "name_lower": member}, {
                             "$set": {
                                 "status": "Inactive",
+                                "weekly_gq": 30,
                                 "status_update1": get_time_est().strftime('%d.%b %y'),
                                 "status_update2": get_time_est().strftime('%Y:%m:%d')
                             }
@@ -576,7 +581,81 @@ class Admin(commands.Cog):
         embed = discord.Embed(colour=ctx.author.colour, title="Inactive list batch change success")
         embed.description = "Changed the rest of the member's status to Active\n" \
                             "Kindly iterate also the semi-active ones"
+        await ctx.channel.send(embed=embed)
+
+    async def management_guild_update_performance_semi_actives(self, ctx):
+
+        embed = discord.Embed(
+            colour=discord.Colour(embed_color),
+            title="Enter the name (case insensitive) or code of the semi-active members separated by spaces\n"
+                  "Example: `kyrvsycl xann happybunny siegs`"
+        )
+        await ctx.channel.send(embed=embed)
+
+        def check(m):
+            return m.author == ctx.message.author and m.channel.id == ctx.channel.id
+
+        async with ctx.channel.typing():
+            try:
+                members_inactives = await self.client.wait_for("message", timeout=360, check=check)
+            except asyncio.TimeoutError:
+                return
+            else:
+                accepted_members = []
+                unaccepted_members = []
+                for member in members_inactives.content.split(" "):
+                    try:
+                        int(member)
+                        if members.find_one({"#": member.lower()}) is not None:
+                            accepted_members.append(int(member))
+                        else:
+                            unaccepted_members.append(member)
+                    except ValueError:
+                        if members.find_one({"name_lower": member.lower()}) is not None:
+                            accepted_members.append(member)
+                        else:
+                            unaccepted_members.append(member)
+
+        embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
+        embed.add_field(name="Accepted Members", value=" ,".join(accepted_members), inline=False)
+        embed.add_field(name="Invalid Members", value=" ,".join(unaccepted_members), inline=False)
         msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("✅")
+
+        def check(r, u):
+            return u == ctx.author and str(r.emoji) == "✅" and msg.id == r.message.id
+
+        try:
+            await self.client.wait_for("reaction_add", timeout=60, check=check)
+        except asyncio.TimeoutError:
+            return
+        else:
+            async with ctx.channel.typing():
+                for member in accepted_members:
+                    if isinstance(member, int):
+                        members.update_one({
+                            "#": member}, {
+                            "$set": {
+                                "status": "Semi-active",
+                                "weekly_gq": 60,
+                                "status_update1": get_time_est().strftime('%d.%b %y'),
+                                "status_update2": get_time_est().strftime('%Y:%m:%d')
+                            }
+                        })
+                    else:
+                        members.update_one({
+                            "name_lower": member}, {
+                            "$set": {
+                                "status": "Inactive",
+                                "weekly_gq": 60,
+                                "status_update1": get_time_est().strftime('%d.%b %y'),
+                                "status_update2": get_time_est().strftime('%Y:%m:%d')
+                            }
+                        })
+
+
+        embed = discord.Embed(colour=ctx.author.colour, title="Semi-active list batch change success")
+        await ctx.channel.send(embed=embed)
 
     async def management_guild_update_feats(self, ctx):
 
