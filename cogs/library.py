@@ -2,14 +2,21 @@
 Library Module
 Miketsu, 2019
 """
-
+import os
+import sys
 import urllib.request
 
 import discord
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
+from pushbullet import PushBullet
 
 from cogs.mongo.database import get_collections
+
+# PushBullet
+pushbullet_api = os.environ.get("PUSHBULLETAPI")
+pb = PushBullet(str(pushbullet_api))
+
 
 # Collections
 books = get_collections("bukkuman", "books")
@@ -39,96 +46,104 @@ async def post_process_books(ctx, query):
 
 async def post_table_of_content_restricted(channel):
     try:
-        webhooks = await channel.webhooks()
-        bukkuman = webhooks[0]
-        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
-    except AttributeError:
-        return False
-    except discord.errors.Forbidden:
-        return False
+        try:
+            webhooks = await channel.webhooks()
+            bukkuman = webhooks[0]
+            webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+        except AttributeError:
+            return False
+        except discord.errors.Forbidden:
+            return False
 
-    description = \
-        "• To open a book use `;open [section] [index]`\n" \
-        "• Example: `;open da 8`"
+        description = \
+            "• To open a book use `;open [section] [index]`\n" \
+            "• Example: `;open da 8`"
 
-    embed = DiscordEmbed(
-        title=":bookmark: Table of Contents",
-        colour=discord.Colour(0xa0c29a),
-        description=description
-    )
-    embed.add_embed_field(
-        name=":notebook: Defense Against The Dark Arts `[DA]`",
-        value="• `[1]` Wind Kirin\n"
-              "• `[2]` Fire Kirin\n"
-              "• `[3]` Lightning Kirin\n"
-              "• `[4]` Water Kirin\n"
-              "• `[5]` Namazu\n"
-              "• `[6]` Oboroguruma\n"
-              "• `[7]` Odokuro\n"
-              "• `[8]` Shinkirou\n"
-              "• `[9]` Tsuchigumo\n"
-    )
-    embed.add_embed_field(
-        name=":notebook: Fantastic Beasts and How to Deal with Them `[FB]`",
-        value="• `[1]` Winged Tsukinohime Guide\n"
-              "• `[2]` Song of the Isle and Sorrow Guide\n"
-    )
-    embed.add_embed_field(
-        name=":notebook: The Dark Arts Outsmarted `[DAO]`",
-        value="• `[1]` True Orochi Co-op Carry"
-    )
-    webhook.add_embed(embed)
-    webhook.execute()
-    return True
+        embed = DiscordEmbed(
+            title=":bookmark: Table of Contents",
+            colour=discord.Colour(0xa0c29a),
+            description=description
+        )
+        embed.add_embed_field(
+            name=":notebook: Defense Against The Dark Arts `[DA]`",
+            value="• `[1]` Wind Kirin\n"
+                  "• `[2]` Fire Kirin\n"
+                  "• `[3]` Lightning Kirin\n"
+                  "• `[4]` Water Kirin\n"
+                  "• `[5]` Namazu\n"
+                  "• `[6]` Oboroguruma\n"
+                  "• `[7]` Odokuro\n"
+                  "• `[8]` Shinkirou\n"
+                  "• `[9]` Tsuchigumo\n"
+        )
+        embed.add_embed_field(
+            name=":notebook: Fantastic Beasts and How to Deal with Them `[FB]`",
+            value="• `[1]` Winged Tsukinohime Guide\n"
+                  "• `[2]` Song of the Isle and Sorrow Guide\n"
+        )
+        embed.add_embed_field(
+            name=":notebook: The Dark Arts Outsmarted `[DAO]`",
+            value="• `[1]` True Orochi Co-op Carry"
+        )
+        webhook.add_embed(embed)
+        webhook.execute()
+        return True
+    except:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        pb.push_note("clock.py error", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
 
 async def post_table_of_content_reference(channel):
     try:
-        webhooks = await channel.webhooks()
-        bukkuman = webhooks[0]
-        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
-    except AttributeError:
-        return False
-    except discord.errors.Forbidden:
-        return False
+        try:
+            webhooks = await channel.webhooks()
+            bukkuman = webhooks[0]
+            webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+        except AttributeError:
+            return False
+        except discord.errors.Forbidden:
+            return False
 
-    lists_souls_formatted = ", ".join(lists_souls)
-    description = \
-        "• To open a book use `;open [section] [index]`\n" \
-        "• Example: `;open sbs 3`"
+        lists_souls_formatted = ", ".join(lists_souls)
+        description = \
+            "• To open a book use `;open [section] [index]`\n" \
+            "• Example: `;open sbs 3`"
 
-    embed = DiscordEmbed(
-        title=":bookmark: Table of Magical Contents",
-        colour=discord.Colour(0xa0c29a),
-        description=description
-    )
-    embed.add_embed_field(
-        name=":book: The Standard Book of Souls - Year 1 `[SBS]`",
-        value="{}".format(lists_souls_formatted)
-    )
-    embed.add_embed_field(
-        name=":book: The Standard Book of Souls - Year 5 `[SBS]`",
-        value="• `[1]` Souls 10 Speed Run (24-25s)\n"
-              "• `[2]` Souls 10 Speed Run (20-21s)\n"
-              "• `[3]` Souls Moan Team Varieties"
-    )
-    embed.add_embed_field(
-        name=":closed_book: Secret Duelling Books `[SDB]`",
-        value="• `[1]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
-              "• `[2]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
-              "• `[3]` What if by Quinlynn - Book 1\n"
-              "• `[4]` What if by Quinlynn - Book 2"
-    )
-    embed.add_embed_field(
-        name=":books: Assorted Books `[AB]`",
-        value="• `[1]` Advanced Realm-Making\n"
-              "• `[2]` A Beginner's Guide to Shikigami Affection\n"
-              "• `[3]` Predicting the Unpredictable: Summon Odds\n"
-              "• `[4]` Spellman's Syllabary: Contractions"
-    )
-    webhook.add_embed(embed)
-    webhook.execute()
-    return True
+        embed = DiscordEmbed(
+            title=":bookmark: Table of Magical Contents",
+            colour=discord.Colour(0xa0c29a),
+            description=description
+        )
+        embed.add_embed_field(
+            name=":book: The Standard Book of Souls - Year 1 `[SBS]`",
+            value="{}".format(lists_souls_formatted)
+        )
+        embed.add_embed_field(
+            name=":book: The Standard Book of Souls - Year 5 `[SBS]`",
+            value="• `[1]` Souls 10 Speed Run (24-25s)\n"
+                  "• `[2]` Souls 10 Speed Run (20-21s)\n"
+                  "• `[3]` Souls Moan Team Varieties"
+        )
+        embed.add_embed_field(
+            name=":closed_book: Secret Duelling Books `[SDB]`",
+            value="• `[1]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
+                  "• `[2]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
+                  "• `[3]` What if by Quinlynn - Book 1\n"
+                  "• `[4]` What if by Quinlynn - Book 2"
+        )
+        embed.add_embed_field(
+            name=":books: Assorted Books `[AB]`",
+            value="• `[1]` Advanced Realm-Making\n"
+                  "• `[2]` A Beginner's Guide to Shikigami Affection\n"
+                  "• `[3]` Predicting the Unpredictable: Summon Odds\n"
+                  "• `[4]` Spellman's Syllabary: Contractions"
+        )
+        webhook.add_embed(embed)
+        webhook.execute()
+        return True
+    except:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        pb.push_note("clock.py error", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
 
 class Library(commands.Cog):
