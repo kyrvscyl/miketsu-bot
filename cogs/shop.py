@@ -29,7 +29,6 @@ trading_list_formatted = []
 for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
     purchasable_frames.append(document["name"].lower())
 
-print(purchasable_frames)
 
 def get_emoji(item):
     emoji_dict = {
