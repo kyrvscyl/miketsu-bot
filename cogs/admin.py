@@ -545,7 +545,12 @@ class Admin(commands.Cog):
         try:
             await self.client.wait_for("reaction_add", timeout=60, check=check)
         except asyncio.TimeoutError:
-            return
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                description=f"{ctx.author.mention}, you did not confirm on time",
+                title="Session ended"
+            )
+            await ctx.channel.send(embed=embed)
         else:
             async with ctx.channel.typing():
                 members.update_many({
@@ -575,7 +580,7 @@ class Admin(commands.Cog):
                         })
                     else:
                         members.update_one({
-                            "name_lower": member}, {
+                            "name_lower": member.lower()}, {
                             "$set": {
                                 "status": "Inactive",
                                 "weekly_gq": 30,
