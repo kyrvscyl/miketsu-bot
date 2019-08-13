@@ -497,8 +497,8 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title="Enter the name (case insensitive) or code of the inactive members separated by spaces\n"
-                  "Example: `kyrvsycl xann happybunny siegs`"
+            description="Enter the name (case insensitive) or code of the inactive members separated by spaces\n"
+                        "Example: `kyrvsycl xann happybunny siegs`"
         )
         await ctx.channel.send(embed=embed)
 
@@ -526,9 +526,16 @@ class Admin(commands.Cog):
                         else:
                             unaccepted_members.append(member)
 
+        formatted_accepted_members = ", ".join(accepted_members)
+        formatted_unaccepted_members = ", ".join(unaccepted_members)
+        if len(formatted_accepted_members) == 0:
+            formatted_accepted_members = "None"
+        if len(formatted_unaccepted_members) == 0:
+            formatted_unaccepted_members = "None"
+
         embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
-        embed.add_field(name="Accepted Members", value=" ,".join(accepted_members), inline=False)
-        embed.add_field(name="Invalid Members", value=" ,".join(unaccepted_members), inline=False)
+        embed.add_field(name="Accepted Members", value=formatted_accepted_members, inline=False)
+        embed.add_field(name="Invalid Members", value=formatted_unaccepted_members, inline=False)
         msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("✅")
 
@@ -587,8 +594,8 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title="Enter the name (case insensitive) or code of the semi-active members separated by spaces\n"
-                  "Example: `kyrvsycl xann happybunny siegs`"
+            description="Enter the name (case insensitive) or code of the semi-active members separated by spaces\n"
+                        "Example: `kyrvsycl xann happybunny siegs`"
         )
         await ctx.channel.send(embed=embed)
 
@@ -617,8 +624,15 @@ class Admin(commands.Cog):
                             unaccepted_members.append(member)
 
         embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
-        embed.add_field(name="Accepted Members", value=" ,".join(accepted_members), inline=False)
-        embed.add_field(name="Invalid Members", value=" ,".join(unaccepted_members), inline=False)
+        formatted_accepted_members = ", ".join(accepted_members)
+        formatted_unaccepted_members = ", ".join(unaccepted_members)
+        if len(formatted_accepted_members) == 0:
+            formatted_accepted_members = "None"
+        if len(formatted_unaccepted_members) == 0:
+            formatted_unaccepted_members = "None"
+
+        embed.add_field(name="Accepted Members", value=formatted_accepted_members, inline=False)
+        embed.add_field(name="Invalid Members", value=formatted_unaccepted_members, inline=False)
         msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("✅")
 
