@@ -26,7 +26,7 @@ shikigamis = get_collections("miketsu", "shikigamis")
 # Listings
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
-status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade", "inactives"]
+status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
 admin_roles = ["Head", "Alpha", "📝"]
 
 
@@ -534,8 +534,16 @@ class Admin(commands.Cog):
             formatted_unaccepted_members = "None"
 
         embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
-        embed.add_field(name="Accepted Members", value=formatted_accepted_members, inline=False)
-        embed.add_field(name="Invalid Members", value=formatted_unaccepted_members, inline=False)
+        embed.add_field(
+            name=f"{len(accepted_members)} Accepted {pluralize('members', len(accepted_members))}",
+            value=formatted_accepted_members,
+            inline=False
+        )
+        embed.add_field(
+            name=f"{len(unaccepted_members)} Invalid {pluralize('members', len(unaccepted_members))}",
+            value=formatted_unaccepted_members,
+            inline=False
+        )
         msg = await ctx.channel.send(embed=embed)
         await msg.add_reaction("✅")
 
@@ -663,7 +671,7 @@ class Admin(commands.Cog):
                         })
                     else:
                         members.update_one({
-                            "name_lower": member}, {
+                            "name_lower": member.lower()}, {
                             "$set": {
                                 "status": "Inactive",
                                 "weekly_gq": 60,
