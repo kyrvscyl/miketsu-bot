@@ -26,7 +26,7 @@ shikigamis = get_collections("miketsu", "shikigamis")
 # Listings
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
 roles = ["member", "ex-member", "officer", "leader"]
-status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
+status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade", "inactives"]
 admin_roles = ["Head", "Alpha", "📝"]
 
 
@@ -38,6 +38,8 @@ def check_if_has_any_role(ctx):
 
 
 def check_if_guild_is_primary(ctx):
+    if ctx.author.id == 180717337475809281:
+        return True
     return ctx.guild.id == primary_id
 
 
@@ -372,12 +374,19 @@ class Admin(commands.Cog):
                 value="• **name** :: <new_name>\n"
                       "• **notes** :: *<any officer notes>*\n"
                       "• **role** :: *member, ex-member, officer*\n"
-                      "• **status** :: *active, inactive, on-leave, kicked, semi-active, away, left*",
+                      "• **status** :: *active, inactive, on-leave, kicked, semi-active, away, left, trade*",
+                inline=False
+            )
+            embed.add_field(
+                name="Batch updating",
+                value="Available for inactives & semi-actives [pluralized form]\n"
+                      "Always use the inactives first then semi-actives",
                 inline=False
             )
             embed.add_field(
                 name="Example",
-                value="`;m u 1 role member`",
+                value="*`;m u 1 role member`*\n"
+                      "*`;m u inactives`*",
                 inline=False
             )
             await ctx.channel.send(embed=embed)
@@ -480,121 +489,94 @@ class Admin(commands.Cog):
         else:
             await ctx.message.add_reaction("❌")
 
+    # noinspection PyMethodMayBeStatic
     async def management_guild_update_performance(self, ctx):
 
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title="Opening environment for batch updating of inactives.."
+            title="Enter the name (case insensitive) or code of the inactive members separated by spaces\n"
+                  "Example: `kyrvsycl xann happybunny siegs`"
         )
-        msg = await ctx.channel.send(embed=embed)
-        await asyncio.sleep(3)
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            title="Enter stop/skip to exit the environment or skip a member, respectively.."
-        )
-        await msg.edit(embed=embed)
-        await asyncio.sleep(3)
-
-        description = \
-            "• `90` : `ACTV` | `>= 90 GQ`\n" \
-            "• `60` : `SMAC` | `90 > GQ > 30`\n" \
-            "• `30` : `INAC` | `<30 GQ`"
-
-        embed1 = discord.Embed(
-            color=ctx.author.colour,
-            title="GQ Codes",
-            description=description
-        )
-        embed2 = discord.Embed(
-            color=ctx.author.colour,
-            title="Performing initial calculations...",
-            description="iterating first..."
-        )
-        await msg.edit(embed=embed1)
-        await asyncio.sleep(4)
-        msg = await ctx.channel.send("Enter the GQ code `(90/60/30)` for: ", embed=embed2)
-
-        query = {"role": {"$in": ["Officer", "Member", "Leader"]}, "status": {"$in": ["Semi-active", "Inactive"]}}
-        project = {
-            "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update1": 1
-        }
+        await ctx.channel.send(embed=embed)
 
         def check(m):
+            return m.author == ctx.message.author and m.channel.id == ctx.channel.id
+
+        async with ctx.channel.typing():
             try:
-                if int(m.content) not in [90, 60, 30] and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise KeyError
-            except ValueError:
-                if m.content.lower() == "stop" \
-                        and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise TypeError
-                elif m.content.lower() == "skip" \
-                        and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise IndexError
-                elif m.content.lower() not in ["stop", "skip"] \
-                        and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise KeyError
-            return m.author == ctx.message.author and m.channel == ctx.channel
-
-        for member in members.find(query, project).sort([("total_feats", -1)]):
-            embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}",
-                timestamp=get_timestamp()
-            )
-            embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.add_field(
-                name="⛳ Status",
-                value=f"{member['status']} [{member['status_update1']}]"
-            )
-            embed.add_field(
-                name="🏆 Feats | GQ",
-                value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{get_time_est().isocalendar()[1]}]"
-            )
-            await asyncio.sleep(2)
-            await msg.edit(embed=embed)
-
-            i = 0
-            while i < 1:
-                try:
-                    answer = await self.client.wait_for("message", timeout=180, check=check)
-                except IndexError:
-                    break
-                except TypeError:
-                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Exiting environment..")
-                    msg = await ctx.channel.send(embed=embed)
-                    await msg.add_reaction("✅")
-                    i = "cancel"
-                    break
-                except KeyError:
-                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Invalid input")
-                    msg = await ctx.channel.send(embed=embed)
-                    await asyncio.sleep(2)
-                    await msg.delete()
-                    i = 0
-                except asyncio.TimeoutError:
-                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Timeout! Exiting...")
-                    msg = await ctx.channel.send(embed=embed)
-                    await asyncio.sleep(1)
-                    await msg.add_reaction("✅")
-                    i = "cancel"
-                    break
-                else:
-                    value = int(answer.content)
-                    members.update_one({"name": str(member["name"])}, {
-                        "$set": dict(
-                            status=get_status(value),
-                            status_update1=get_time_est().strftime("%d.%b %y"),
-                            status_update2=get_time_est().strftime("%Y:%m:%d"),
-                            weekly_gq=value)
-                    })
-                    await answer.add_reaction("✅")
-                    await asyncio.sleep(3)
-                    await answer.delete()
-                    break
-            if i == "cancel":
-                break
+                members_inactives = await self.client.wait_for("message", timeout=360, check=check)
+            except asyncio.TimeoutError:
+                return
             else:
-                continue
+                accepted_members = []
+                unaccepted_members = []
+                for member in members_inactives.content.split(" "):
+                    try:
+                        int(member)
+                        if members.find_one({"#": member.lower()}) is not None:
+                            accepted_members.append(int(member))
+                        else:
+                            unaccepted_members.append(member)
+                    except ValueError:
+                        if members.find_one({"name_lower": member.lower()}) is not None:
+                            accepted_members.append(member)
+                        else:
+                            unaccepted_members.append(member)
+
+        embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
+        embed.add_field(name="Accepted Members", value=" ,".join(accepted_members), inline=False)
+        embed.add_field(name="Invalid Members", value=" ,".join(unaccepted_members), inline=False)
+        msg = await ctx.channel.send(embed=embed)
+        await msg.add_reaction("✅")
+
+        def check(r, u):
+            return u == ctx.author and str(r.emoji) == "✅" and msg.id == r.message.id
+
+        try:
+            await self.client.wait_for("reaction_add", timeout=60, check=check)
+        except asyncio.TimeoutError:
+            return
+        else:
+            async with ctx.channel.typing():
+                members.update_many({
+                    "role": {
+                        "$in": ["Officer", "Member", "Leader"]},
+                    "status": {
+                        "$in": ["Semi-active", "Inactive", "Active"]}
+                }, {
+                    "$set": {
+                        "status": "Active",
+                        "status_update1": get_time_est().strftime('%d.%b %y'),
+                        "status_update2": get_time_est().strftime('%Y:%m:%d')
+                    }
+                })
+
+                for member in accepted_members:
+                    if isinstance(member, int):
+                        members.update_one({
+                            "#": member}, {
+                            "$set": {
+                                "status": "Inactive",
+                                "weekly_gq": 30,
+                                "status_update1": get_time_est().strftime('%d.%b %y'),
+                                "status_update2": get_time_est().strftime('%Y:%m:%d')
+                            }
+                        })
+                    else:
+                        members.update_one({
+                            "name_lower": member}, {
+                            "$set": {
+                                "status": "Inactive",
+                                "status_update1": get_time_est().strftime('%d.%b %y'),
+                                "status_update2": get_time_est().strftime('%Y:%m:%d')
+                            }
+                        })
+
+
+        embed = discord.Embed(colour=ctx.author.colour, title="Inactive list batch change success")
+        embed.description = "Changed the rest of the member's status to Active\n" \
+                            "Kindly iterate also the semi-active ones"
+        msg = await ctx.channel.send(embed=embed)
 
     async def management_guild_update_feats(self, ctx):
 
