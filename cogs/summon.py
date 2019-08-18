@@ -21,67 +21,38 @@ pool_sp = []
 pool_ssr = []
 pool_sr = []
 pool_r = []
+pool_shrinable = []
 pool_all = []
 
 caption = open("lists/summon.lists")
 summon_caption = caption.read().splitlines()
 caption.close()
 
-for document in shikigamis.aggregate([
-    {
-        "$project": {
-            "shikigami.name": 1
-        }
-    }, {
-        "$unwind": {
-            "path": "$shikigami"
-        }
-    }, {
-        "$project": {
-            "_id": 0
-        }
-    }
-]):
-    pool_all.append(document["shikigami"]["name"])
+
+for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
+    if shikigami["shrine"] is True:
+        pool_shrinable.append(shikigami["name"])
+    elif shikigami["rarity"] == "SP":
+        pool_sp.append(shikigami["name"])
+    elif shikigami["rarity"] == "SSR":
+        pool_ssr.append(shikigami["name"])
+    elif shikigami["rarity"] == "SR":
+        pool_sr.append(shikigami["name"])
+    elif shikigami["rarity"] == "R":
+        pool_r.append(shikigami["name"])
 
 
-def get_not_shrine_rarity(rarity):
-    query_ssr_not_shrine = [{
-        '$match': {'rarity': rarity}}, {'$unwind': {'path': '$shikigami'}}, {
-        '$match': {'shikigami.shrine': False}}, {'$project': {'shikigami.name': 1}}
-    ]
-    return query_ssr_not_shrine
-
-
-def get_shard_requirement(x):
-    rarity = shikigamis.find_one({"shikigami.name": x}, {"_id": 0, "rarity": 1})["rarity"]
+def get_shard_requirement(shiki):
+    rarity = shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "rarity": 1})["rarity"]
     dictionary = {
-        "SP": 25, "SSR": 20, "SR": 15, "R": 10
+        "SP": 15, "SSR": 12, "SR": 9, "R": 6
     }
     return dictionary[rarity], rarity
 
 
-for shiki in shikigamis.aggregate(get_not_shrine_rarity("SP")):
-    pool_sp.append(shiki["shikigami"]["name"])
-
-for shiki in shikigamis.aggregate(get_not_shrine_rarity("SSR")):
-    pool_ssr.append(shiki["shikigami"]["name"])
-
-for shiki in shikigamis.aggregate(get_not_shrine_rarity("SR")):
-    pool_sr.append(shiki["shikigami"]["name"])
-
-for shiki in shikigamis.aggregate(get_not_shrine_rarity("R")):
-    pool_r.append(shiki["shikigami"]["name"])
-
-
-def get_thumbnail_shikigami(shikigami):
-    url = shikigamis.find_one({
-        "shikigami": {
-            "$elemMatch": {
-                "name": shikigami}}}, {
-        "_id": 0, "shikigami.$.name": 1
-    })["shikigami"][0]["thumbnail"]["pre_evo"]
-    return url
+def get_thumbnail_shikigami(shiki, evolution):
+    profile = shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "thumbnail": 1})
+    return profile["thumbnail"][evolution]
 
 
 async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull):
@@ -106,9 +77,9 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
         })
 
         if query is None:
-            evolve, shards = "False", 0
+            evolve, shards = False, 0
             if summon[0] == "SP":
-                evolve, shards = "True", 5
+                evolve, shards = True, 5
 
             users.update_one({
                 "user_id": str(user.id)}, {
@@ -180,7 +151,7 @@ async def summon_perform(ctx, user, amulet_pull):
 
     description = ""
     for x in summon_pull:
-        description += "🔸{}\n".format(x[1])
+        description += "🔸{}\n".format(x[1].title())
 
     embed = discord.Embed(color=user.colour, title="🎊 Results", description=description)
 
@@ -189,7 +160,7 @@ async def summon_perform(ctx, user, amulet_pull):
 
     elif amulet_pull == 1:
         shikigami_pulled = summon_pull[0][1].replace("||", "")
-        embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled))
+        embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled, "pre"))
 
     msg = "{}".format(random.choice(summon_caption)).format(user.mention)
     await ctx.channel.send(msg, embed=embed)
@@ -197,33 +168,33 @@ async def summon_perform(ctx, user, amulet_pull):
     await summon_streak(user, summon_pull)
 
 
-async def summon_perform_shards(ctx, shikigami, user):
+async def summon_perform_shards(ctx, shiki, user):
     try:
         profile = users.find_one({
-            "user_id": str(user.id), "shikigami.name": shikigami}, {
+            "user_id": str(user.id), "shikigami.name": shiki}, {
             "_id": 0, "shikigami.$.name": 1
         })
 
         shards = profile["shikigami"][0]["shards"]
-        required_shards, rarity = get_shard_requirement(shikigami)
+        required_shards, rarity = get_shard_requirement(shiki)
 
         if shards >= required_shards:
             query = users.find_one({
                 "user_id": str(user.id),
-                "shikigami.name": shikigami}, {
+                "shikigami.name": shiki}, {
                 "_id": 0, "shikigami.$": 1
             })
 
             if query is None:
-                evolve, shards = "False", 0
+                evolve, shards = False, 0
                 if rarity == "SP":
-                    evolve, shards = "True", 0
+                    evolve, shards = True, 0
 
                 users.update_one({
                     "user_id": str(user.id)}, {
                     "$push": {
                         "shikigami": {
-                            "name": shikigami,
+                            "name": shiki,
                             "rarity": rarity,
                             "grade": 1,
                             "owned": 0,
@@ -235,7 +206,7 @@ async def summon_perform_shards(ctx, shikigami, user):
 
             users.update_one({
                 "user_id": str(user.id),
-                "shikigami.name": shikigami}, {
+                "shikigami.name": shiki}, {
                 "$inc": {
                     f"{rarity}": 1,
                     "shikigami.$.owned": 1,
@@ -244,22 +215,22 @@ async def summon_perform_shards(ctx, shikigami, user):
             })
             embed = discord.Embed(
                 title="Summon success", colour=discord.Colour(embed_color),
-                description=f"{user.mention}, you summon the {rarity} shikigami {shikigami}!"
+                description=f"{user.mention}, you summon the {rarity} shikigami {shiki}!"
             )
-            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami))
+            embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "pre"))
             await ctx.channel.send(embed=embed)
 
         else:
             embed = discord.Embed(
                 title="Summon failed", colour=discord.Colour(embed_color),
-                description=f"{user.mention}, you lack {required_shards - shards} {shikigami} shards"
+                description=f"{user.mention}, you lack {required_shards - shards} {shiki} shards"
             )
             await ctx.channel.send(embed=embed)
 
     except TypeError:
         embed = discord.Embed(
             title="Summon failed", colour=discord.Colour(embed_color),
-            description=f"{user.mention}, you do not have any shards of {shikigami}"
+            description=f"{user.mention}, you do not have any shards of {shiki}"
         )
         await ctx.channel.send(embed=embed)
 
@@ -275,21 +246,6 @@ class Summon(commands.Cog):
     async def summon_perform(self, ctx, *, args=None):
 
         user = ctx.author
-        embed = discord.Embed(
-            title="summon, s", colour=discord.Colour(embed_color),
-            description="simulate summon and collect shikigamis"
-        )
-        embed.add_field(
-            name="Shard Requirement",
-            value="```"
-                  "SP    ::   25\n"
-                  "SSR   ::   20\n"
-                  "SR    ::   15\n"
-                  "R     ::   10\n"
-                  "```",
-            inline=False
-        )
-        embed.add_field(name="Formats", value="*`;summon <1, 10, shikigami_name>`*", inline=False)
 
         try:
             amulet_pull = int(args)
@@ -303,7 +259,7 @@ class Summon(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
             elif args not in ["1", "10"]:
-                await ctx.channel.send(embed=embed)
+                raise commands.MissingRequiredArgument(ctx.author)
 
             elif amulet_have > 0:
 
@@ -321,15 +277,19 @@ class Summon(commands.Cog):
                     await summon_perform(ctx, user, amulet_pull)
 
         except TypeError:
-            await ctx.channel.send(embed=embed)
+            raise commands.MissingRequiredArgument(ctx.author)
 
         except ValueError:
-            shikigami = args.title()
+            shikigami_summon = args.lower()
 
-            if shikigami in pool_all:
-                await summon_perform_shards(ctx, shikigami, user)
+            if shikigami_summon in pool_all:
+                await summon_perform_shards(ctx, shikigami_summon, user)
 
             else:
+                embed = discord.Embed(
+                    title="Invalid shikigami name", colour=discord.Colour(embed_color),
+                    description="Check the spelling via *`;unc`*"
+                )
                 await ctx.channel.send(embed=embed)
 
         self.client.get_command("summon_perform").reset_cooldown(ctx)
