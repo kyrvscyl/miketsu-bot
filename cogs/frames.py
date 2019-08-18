@@ -21,10 +21,10 @@ users = get_collections("miketsu", "users")
 shikigamis = get_collections("miketsu", "shikigamis")
 ships = get_collections("miketsu", "ships")
 
-total_sp = len(shikigamis.find_one({"rarity": "SP"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
-total_ssr = len(shikigamis.find_one({"rarity": "SSR"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
-total_sr = len(shikigamis.find_one({"rarity": "SR"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
-total_r = len(shikigamis.find_one({"rarity": "R"}, {"_id": 0, "shikigami.name": 1})["shikigami"])
+total_sp = shikigamis.count_documents({"rarity": "SP"})
+total_ssr = shikigamis.count_documents({"rarity": "SSR"})
+total_sr = shikigamis.count_documents({"rarity": "SR"})
+total_r = shikigamis.count_documents({"rarity": "R"})
 
 
 def get_timestamp():
@@ -42,7 +42,6 @@ def get_frame_thumbnail(frame):
 
 
 async def frame_acquisition(user, frame_name, channel, jades):
-
     for result in users.aggregate([
         {
             "$match": {
@@ -226,7 +225,7 @@ class Frames(commands.Cog):
                 if profile is None:
                     pass
 
-                elif profile["shikigami"][0]["evolved"] == "True":
+                elif profile["shikigami"][0]["evolved"] is True:
                     users.update_one({
                         "user_id": document["user_id"]}, {
                         "$push": {
@@ -498,7 +497,7 @@ class Frames(commands.Cog):
 
                 if len(maple_evolve) == 2:
 
-                    if maple_evolve[0] == "True" and maple_evolve[1] == "True":
+                    if maple_evolve[0] is True and maple_evolve[1] is True:
                         users.update_one({
                             "user_id": document["user_id"]}, {
                             "$push": {
@@ -544,7 +543,7 @@ class Frames(commands.Cog):
 
                 if len(cherries_evolved) == 2:
 
-                    if cherries_evolved[0] == "True" and cherries_evolved[1] == "True":
+                    if cherries_evolved[0] is True and cherries_evolved[1] is True:
                         users.update_one({
                             "user_id": document["user_id"]}, {
                             "$push": {
@@ -560,7 +559,6 @@ class Frames(commands.Cog):
                         await self.achievements_process_record_user(member, "Festival of Cherries")
 
             if len(user_frames) >= 15 and "Famous in Patronus" not in user_frames:
-
                 users.update_one({
                     "user_id": document["user_id"]}, {
                     "$push": {
