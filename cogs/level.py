@@ -85,7 +85,7 @@ async def create_user(user):
             "weekly": False,
             "raided_count": 0,
             "friendship_pass": 0,
-            "display": "None",
+            "display": None,
             "prayers": 3,
             "achievements": [],
             "frame": "",
