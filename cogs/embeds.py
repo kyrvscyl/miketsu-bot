@@ -2,7 +2,7 @@
 Embeds Module
 Miketsu, 2019
 """
-
+import asyncio
 import urllib.request
 
 import discord
@@ -55,6 +55,7 @@ class Embeds(commands.Cog):
                 embed.set_image(url=args)
 
             await headlines_channel.send(embed=embed)
+            await asyncio.sleep(1)
 
     @commands.command(aliases=["welcome"])
     @commands.is_owner()
