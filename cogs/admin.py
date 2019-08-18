@@ -21,12 +21,12 @@ members = get_collections("bukkuman", "members")
 frames = get_collections("miketsu", "frames")
 users = get_collections("miketsu", "users")
 ships = get_collections("miketsu", "ships")
-shikigamis = get_collections("miketsu", "shikigamis")
 
 # Listings
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
-roles = ["member", "ex-member", "officer", "leader"]
+roles = ["member", "ex-member", "officer", "leader", "blacklist"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
+status_batch = {"inactives": 30, "semi-actives": 60}
 admin_roles = ["Head", "Alpha", "📝"]
 
 
@@ -43,7 +43,7 @@ def check_if_guild_is_primary(ctx):
     return ctx.guild.id == primary_id
 
 
-def get_time_est():
+def get_time():
     tz_target = pytz.timezone("America/Atikokan")
     return datetime.now(tz=tz_target)
 
@@ -53,14 +53,19 @@ def get_timestamp():
 
 
 def get_status(key):
-    dictionary = {"30": "Inactive", "60": "Semi-active", "90": "Active"}
+    dictionary = {"30": "inactive", "60": "semi-active", "90": "active"}
+    return dictionary[str(key)]
+
+
+def get_gq(key):
+    dictionary = {"inactive": "30", "semi-active": "60", "active": "90"}
     return dictionary[str(key)]
 
 
 def shorten(key):
     dictionary = {
-        "Leader": "LDR", "Member": "MEM", "Officer": "OFR", "Ex-member": "EXM", "Active": "ACTV", "Inactive": "INAC",
-        "On-leave": "ONLV", "Semi-active": "SMAC", "Away": "AWAY", "Left": "LEFT", "Kicked": "KCKD", "Trade": "TRDE"
+        "leader": "LDR", "member": "MEM", "officer": "OFR", "ex-member": "EXM", "active": "ACTV", "inactive": "INAC",
+        "on-leave": "ONLV", "semi-active": "SMAC", "away": "AWAY", "left": "LEFT", "kicked": "KCKD", "trade": "TRDE"
     }
     return dictionary[key]
 
@@ -74,38 +79,40 @@ def lengthen(index):
     return prefix.format(index)
 
 
-async def management_show_stats(ctx):
+async def management_guild_show_stats(ctx):
     guild_members_all = members.count({
         "role": {
-            "$in": ["Officer", "Member", "Leader"]}
+            "$in": ["officer", "member", "leader"]}
     })
     guild_members_actv = members.count({
         "role": {
-            "$in": ["Officer", "Member", "Leader"]},
-        "status": "Active"
+            "$in": ["officer", "member", "leader"]},
+        "status": "active"
     })
     guild_members_inac = members.count({
         "role": {
-            "$in": ["Officer", "Member", "Leader"]},
-        "status": "Inactive"
+            "$in": ["officer", "member", "leader"]},
+        "status": "inactive"
     })
     guild_members_onlv = members.count({
         "role": {
-            "$in": ["Officer", "Member", "Leader"]},
-        "status": "On-leave"
+            "$in": ["officer", "member", "leader"]},
+        "status": "on-leave"
     })
     guild_members_smac = members.count({
         "role": {
-            "$in": ["Officer", "Member", "Leader"]},
-        "status": "Semi-active"
+            "$in": ["officer", "member", "leader"]},
+        "status": "semi-active"
     })
     guild_members_trde = members.count({
         "role": {
-            "$in": ["Officer", "Member", "Leader"]},
-        "status": "Trade"
+            "$in": ["officer", "member", "leader"]},
+        "status": "trade"
+    })
+    guild_members_away = members.count({
+        "role": "ex-member", "status": "away"
     })
 
-    ex_members_away = members.count({"role": "Ex-member", "status": "Away"})
     description = \
         f"```" \
         f"• Total Accounts    :: {members.count()}\n" \
@@ -115,7 +122,7 @@ async def management_show_stats(ctx):
         f"  • Inactive        :: {guild_members_inac}\n" \
         f"  • On-leave        :: {guild_members_onlv}\n" \
         f"  • Trade           :: {guild_members_trde}\n" \
-        f"  • Away            :: {ex_members_away}\n" \
+        f"  • Away            :: {guild_members_away}\n" \
         f"  • ~ GQ/week       :: {guild_members_actv * 90 + guild_members_smac * 30:,d}" \
         f"```"
 
@@ -126,7 +133,7 @@ async def management_show_stats(ctx):
     await ctx.channel.send(embed=embed)
 
 
-async def management_show_profile(ctx, args):
+async def management_guild_show_profile(ctx, args):
     try:
         reference_id = int(args[1])
         member = members.find_one({"#": reference_id}, {"_id": 0})
@@ -162,7 +169,7 @@ async def management_show_profile(ctx, args):
         await ctx.channel.send(embed=embed)
 
 
-async def management_update_field(ctx, args):
+async def management_guild_update_field(ctx, args):
     try:
         reference_id = int(args[1])
         find_query = {"#": reference_id}
@@ -178,24 +185,30 @@ async def management_update_field(ctx, args):
         await ctx.channel.send(embed=embed)
 
     elif args[2].lower() == "status" and args[3].lower() in status_values:
-        members.update_one(find_query, {
-            "$set": {
-                "status": args[3].capitalize(),
-                "status_update1": get_time_est().strftime('%d.%b %y'),
-                "status_update2": get_time_est().strftime('%Y:%m:%d')
-            }
-        })
+
+        update = {"$set": {"status": args[3].lower(), "status_update": get_time()}}
+
+        if args[3].lower() in ["active", "inactive", "semi-active"]:
+            weekly_gq_add = {"weekly_gq": get_gq(args[3].lower())}
+            set_dict = update["$set"]
+            set_dict.update(weekly_gq_add)
+            update.update(set_dict)
 
         if args[3].lower() in ["away", "left", "kicked"]:
-            members.update_one(find_query, {"$set": {"role": "Ex-member"}})
+            new_role = {"role": "ex-member"}
+            set_dict = update["$set"]
+            set_dict.update(new_role)
+            update.update(set_dict)
+
+        members.update_one(find_query, update)
         await ctx.message.add_reaction("✅")
 
-    elif args[2].lower() in ("notes", "note"):
+    elif args[2].lower() in ["notes", "note"]:
         members.update_one(find_query, {
             "$push": {
                 "notes": {
                     "officer": ctx.author.name,
-                    "time": get_time_est().strftime('%d.%b %y'),
+                    "time": get_time(),
                     "note": " ".join(args[3::])
                 }
             }
@@ -203,23 +216,19 @@ async def management_update_field(ctx, args):
         await ctx.message.add_reaction("✅")
 
     elif args[2].lower() == "name":
-        members.update_one(find_query, {
-            "$set": {
-                "name": args[3],
-                "name_lower": args[3].lower()
-            }
-        })
+        members.update_one(find_query, {"$set": {"name": args[3], "name_lower": args[3].lower()}})
         await ctx.message.add_reaction("✅")
 
     elif args[2].lower() == "role" and args[3].lower() in roles:
-        members.update_one(find_query, {"$set": {"role": args[3].capitalize()}})
+        members.update_one(find_query, {"$set": {"role": args[3].lower()}})
         await ctx.message.add_reaction("✅")
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title="Changing the member's role may require to change the status also"
+            title="Role Update Notice",
+            description="Changing the member's role may require to change the status also"
         )
         msg = await ctx.channel.send(embed=embed)
-        await msg.delete(delay=5)
+        await msg.delete(delay=10)
 
     elif args[2].lower() == "tfeat":
         try:
@@ -237,8 +246,7 @@ async def management_update_field(ctx, args):
                 members.update_one(find_query, {
                     "$set": dict(
                         status=get_status(value),
-                        status_update1=get_time_est().strftime("%d.%b %y"),
-                        status_update2=get_time_est().strftime("%Y:%m:%d"),
+                        status_update=get_time(),
                         weekly_gq=value
                     )
                 })
@@ -250,6 +258,31 @@ async def management_update_field(ctx, args):
 
     else:
         await ctx.message.add_reaction("❌")
+
+
+async def management_guild_add_member(ctx, args):
+    if members.find_one({"name_lower": args[2].lower()}) is None:
+
+        profile = {
+            "#": members.count() + 1,
+            "name": args[2],
+            "role": args[1].lower(),
+            "status": "active",
+            "notes": [],
+            "name_lower": args[2].lower(),
+            "total_feats": 0,
+            "weekly_gq": 30,
+            "status_update": get_time()
+        }
+        members.insert_one(profile)
+        await ctx.message.add_reaction("✅")
+
+    else:
+        embed = discord.Embed(
+            title="Invalid name", colour=discord.Colour(embed_color),
+            description="That name already exists in the database"
+        )
+        await ctx.channel.send(embed=embed)
 
 
 class Admin(commands.Cog):
@@ -342,26 +375,8 @@ class Admin(commands.Cog):
             embed.add_field(name="Roles", value="*member, ex-member, officer*", inline=False)
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["add", "a"] and len(args) == 3 and args[1] in roles:
-            if members.find_one({"name_lower": args[2].lower()}) is None:
-                count = members.count() + 1
-                profile = {
-                    "#": count,
-                    "name": args[2],
-                    "role": args[1].capitalize(),
-                    "status": "Active",
-                    "status_update1": get_time_est().strftime("%d.%b %y"),
-                    "status_update2": get_time_est().strftime("%Y:%m:%d"),
-                    "country": "<CC>",
-                    "timezone": "['/']",
-                    "notes": [],
-                    "name_lower": args[2].lower()
-                }
-                members.insert_one(profile)
-                await ctx.message.add_reaction("✅")
-
-            else:
-                await ctx.message.add_reaction("❌")
+        elif args[0].lower() in ["add", "a"] and len(args) == 3 and args[1].lower() in roles:
+            await management_guild_add_member(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
@@ -371,48 +386,53 @@ class Admin(commands.Cog):
             embed.add_field(name="Format", value="*`;m u <name or id> <field> <value>`*")
             embed.add_field(
                 name="field :: value",
-                value="• **name** :: <new_name>\n"
-                      "• **notes** :: *<any officer notes>*\n"
-                      "• **role** :: *member, ex-member, officer*\n"
-                      "• **status** :: *active, inactive, on-leave, kicked, semi-active, away, left, trade*",
+                value=f"• **name** :: <new_name>\n"
+                      f"• **notes** :: *<any officer notes>*\n"
+                      f"• **role** :: *{', '.join(roles)}*\n"
+                      f"• **status** :: *{', '.join(status_values)}*",
                 inline=False
             )
             embed.add_field(
                 name="Batch updating",
-                value="Available for inactives & semi-actives [pluralized form]\n"
-                      "Always use the inactives first then semi-actives",
+                value="Available for inactives & semi-actives [pluralized form]",
                 inline=False
             )
             embed.add_field(
                 name="Example",
                 value="*`;m u 1 role member`*\n"
+                      "*`;m u 100 notes alt account`*\n"
                       "*`;m u inactives`*",
                 inline=False
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["update", "u"] and args[1].lower() == "inactives" and len(args) == 2:
-            await self.management_guild_update_performance_inactives(ctx)
-
-        elif args[0].lower() in ["update", "u"] and args[1].lower() == "semi-actives" and len(args) == 2:
-            await self.management_guild_update_performance_semi_actives(ctx)
+        elif args[0].lower() in ["update", "u"] and args[1].lower() in list(status_batch) and len(args) == 2:
+            await self.management_guild_update_performance(ctx, args[1].lower(), status_batch[args[1].lower()])
 
         elif args[0].lower() in ["update", "u"] and args[1].lower() == "feats" and len(args) == 2:
             await self.management_guild_update_feats(ctx)
 
         elif args[0].lower() in ["update", "u"] and len(args) == 2:
+            fields_formatted = []
+            for field in fields:
+                fields_formatted.append(f"`{field}`")
+
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="No field and value provided",
-                description="Valid fields: `name`, `role`, `status`, `notes`"
+                description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and args[2].lower() not in fields and len(args) >= 3:
+            fields_formatted = []
+            for field in fields:
+                fields_formatted.append(f"`{field}`")
+
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Invalid field update request",
-                description="Valid fields: `name`, `role`, `status`, `notes`"
+                description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -420,18 +440,18 @@ class Admin(commands.Cog):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Invalid field update request",
-                description="No value provided for the field."
+                description=f"No value provided for the field {args[2].lower()}"
             )
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in fields:
-            await management_update_field(ctx, args)
+            await management_guild_update_field(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
             embed = discord.Embed(
                 title="manage show, m s", colour=discord.Colour(embed_color),
-                description="queries the guild database")
-
+                description="queries the guild database"
+            )
             embed.add_field(
                 name="Formats",
                 value="• *`;m s all <opt: [<startswith> or guild]>`*\n"
@@ -441,26 +461,36 @@ class Admin(commands.Cog):
             )
             embed.add_field(
                 name="Examples",
-                value="• *`;m s all aki`*\n"
+                value="• *`;m s all`*\n"
+                      "• *`;m s all aki`*\n"
                       "• *`;m s all status inactive`*\n"
+                      "• *`;m s 120`*\n"
                       "• *`;m s all guild`*",
                 inline=False
             )
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() == "role":
+            roles_formatted = []
+            for role in roles:
+                roles_formatted.append(f"`{role}`")
+
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Provide a role value to show",
-                description="Example: `;m show role <member, ex-member, etc..>`"
+                description=f"Valid values: *`{', '.join(roles_formatted)}`*"
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["show", "s"] and len(args) == 2 and (args[1].lower() == "status"):
+        elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() == "status":
+            statuses_formatted = []
+            for status in status_values:
+                statuses_formatted.append(f"`{status}`")
+
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Provide a status value to show",
-                description="Example: `;m show status <active, inactive, etc..>`"
+                description=f"Valid values: *`{', '.join(statuses_formatted)}`*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -472,11 +502,11 @@ class Admin(commands.Cog):
             await self.management_guild_show_current_members(ctx)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "all":
-            await self.management_guild_show_characters(ctx, args)
+            await self.management_guild_show_startswith(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() != "all" \
                 and args[1].lower() not in fields:
-            await management_show_profile(ctx, args)
+            await management_guild_show_profile(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "status" \
                 and args[2].lower() in status_values:
@@ -487,19 +517,18 @@ class Admin(commands.Cog):
             await self.management_guild_show_field_role(ctx, args)
 
         elif args[0].lower() == "stats" and len(args) == 1:
-            await management_show_stats(ctx)
+            await management_guild_show_stats(ctx)
 
         else:
             await ctx.message.add_reaction("❌")
 
-    # noinspection PyMethodMayBeStatic
-    async def management_guild_update_performance_inactives(self, ctx):
+    async def management_guild_update_performance(self, ctx, status, weekly_gq):
 
         embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            description="Enter the name (case insensitive) or code of the inactive members separated by spaces\n"
-                        "Example: `kyrvsycl xann happybunny siegs`"
+            color=ctx.author.colour,
+            description=f"Enter the names or codes of the {status} members separated by spaces"
         )
+        embed.add_field(name="Example", value="*`kyrvsycl xann happybunny shaly`*")
         await ctx.channel.send(embed=embed)
 
         def check(m):
@@ -507,41 +536,60 @@ class Admin(commands.Cog):
 
         async with ctx.channel.typing():
             try:
-                members_inactives = await self.client.wait_for("message", timeout=360, check=check)
+                submitted_list = await self.client.wait_for("message", timeout=360, check=check)
             except asyncio.TimeoutError:
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color), title="Batch update cancelled",
+                    description=f"{ctx.author.mention}, you did not submit on time"
+                )
+                await ctx.channel.send(embed=embed)
                 return
             else:
-                accepted_members = []
-                unaccepted_members = []
-                for member in members_inactives.content.split(" "):
+                accepted, not_accepted, already_inactive = [], [], []
+                for member in submitted_list.content.split(" "):
                     try:
-                        int(member)
-                        if members.find_one({"#": member.lower()}) is not None:
-                            accepted_members.append(int(member))
-                        else:
-                            unaccepted_members.append(member)
+                        search = int(member)
+                        find_query = {"#": search}
                     except ValueError:
-                        if members.find_one({"name_lower": member.lower()}) is not None:
-                            accepted_members.append(member)
+                        search = member.lower()
+                        find_query = {"name_lower": search}
+
+                    if members.find_one(find_query) is not None:
+                        profile = members.find_one(find_query, {"_id": 0, "name": 1, "status": 1})
+                        if profile["status"] == status:
+                            already_inactive.append(profile["name"])
                         else:
-                            unaccepted_members.append(member)
+                            accepted.append(profile["name"])
+                    else:
+                        not_accepted.append(member)
 
-        formatted_accepted_members = ", ".join(accepted_members)
-        formatted_unaccepted_members = ", ".join(unaccepted_members)
-        if len(formatted_accepted_members) == 0:
-            formatted_accepted_members = "None"
-        if len(formatted_unaccepted_members) == 0:
-            formatted_unaccepted_members = "None"
+        values = [already_inactive, accepted, not_accepted, ]
+        values_formatted = []
 
-        embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
+        for value in values:
+            if len(value) == 0:
+                values_formatted.append("None")
+            else:
+                values_formatted.append(", ".join(value))
+
+        timeout = 120
+        embed = discord.Embed(
+            colour=ctx.author.colour, title="Revision Summary",
+            description=f"react within {timeout} seconds to confirm the changes", timestamp=get_timestamp()
+        )
         embed.add_field(
-            name=f"{len(accepted_members)} Accepted {pluralize('members', len(accepted_members))}",
-            value=formatted_accepted_members,
+            name=f"{len(not_accepted)} already inactive {pluralize('member', len(not_accepted))}",
+            value=values_formatted[0],
             inline=False
         )
         embed.add_field(
-            name=f"{len(unaccepted_members)} Invalid {pluralize('members', len(unaccepted_members))}",
-            value=formatted_unaccepted_members,
+            name=f"{len(accepted)} new inactive {pluralize('member', len(accepted))}",
+            value=values_formatted[1],
+            inline=False
+        )
+        embed.add_field(
+            name=f"{len(not_accepted)} invalid {pluralize('member', len(not_accepted))}",
+            value=values_formatted[2],
             inline=False
         )
         msg = await ctx.channel.send(embed=embed)
@@ -551,138 +599,35 @@ class Admin(commands.Cog):
             return u == ctx.author and str(r.emoji) == "✅" and msg.id == r.message.id
 
         try:
-            await self.client.wait_for("reaction_add", timeout=60, check=check)
+            await self.client.wait_for("reaction_add", timeout=timeout, check=check)
         except asyncio.TimeoutError:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 description=f"{ctx.author.mention}, you did not confirm on time",
-                title="Session ended"
+                title="Batch update cancelled",
+                timestamp=get_timestamp()
             )
             await ctx.channel.send(embed=embed)
         else:
             async with ctx.channel.typing():
-                members.update_many({
-                    "role": {
-                        "$in": ["Officer", "Member", "Leader"]},
-                    "status": {
-                        "$in": ["Semi-active", "Inactive", "Active"]}
-                }, {
-                    "$set": {
-                        "status": "Active",
-                        "weekly_gq": 90,
-                        "status_update1": get_time_est().strftime('%d.%b %y'),
-                        "status_update2": get_time_est().strftime('%Y:%m:%d')
-                    }
-                })
+                for member in accepted:
+                    members.update_one({
+                        "name_lower": member.lower()}, {
+                        "$set": {
+                            "status": status,
+                            "weekly_gq": weekly_gq,
+                            "status_update": get_time()
+                        }
+                    })
 
-                for member in accepted_members:
-                    if isinstance(member, int):
-                        members.update_one({
-                            "#": member}, {
-                            "$set": {
-                                "status": "Inactive",
-                                "weekly_gq": 30,
-                                "status_update1": get_time_est().strftime('%d.%b %y'),
-                                "status_update2": get_time_est().strftime('%Y:%m:%d')
-                            }
-                        })
-                    else:
-                        members.update_one({
-                            "name_lower": member.lower()}, {
-                            "$set": {
-                                "status": "Inactive",
-                                "weekly_gq": 30,
-                                "status_update1": get_time_est().strftime('%d.%b %y'),
-                                "status_update2": get_time_est().strftime('%Y:%m:%d')
-                            }
-                        })
-
-
-        embed = discord.Embed(colour=ctx.author.colour, title="Inactive list batch change success")
-        embed.description = "Changed the rest of the member's status to Active\n" \
-                            "Kindly iterate also the semi-active ones"
-        await ctx.channel.send(embed=embed)
-
-    async def management_guild_update_performance_semi_actives(self, ctx):
-
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            description="Enter the name (case insensitive) or code of the semi-active members separated by spaces\n"
-                        "Example: `kyrvsycl xann happybunny siegs`"
-        )
-        await ctx.channel.send(embed=embed)
-
-        def check(m):
-            return m.author == ctx.message.author and m.channel.id == ctx.channel.id
-
-        async with ctx.channel.typing():
-            try:
-                members_inactives = await self.client.wait_for("message", timeout=360, check=check)
-            except asyncio.TimeoutError:
-                return
-            else:
-                accepted_members = []
-                unaccepted_members = []
-                for member in members_inactives.content.split(" "):
-                    try:
-                        int(member)
-                        if members.find_one({"#": member.lower()}) is not None:
-                            accepted_members.append(int(member))
-                        else:
-                            unaccepted_members.append(member)
-                    except ValueError:
-                        if members.find_one({"name_lower": member.lower()}) is not None:
-                            accepted_members.append(member)
-                        else:
-                            unaccepted_members.append(member)
-
-        embed = discord.Embed(colour=ctx.author.colour, title="Summary of changes")
-        formatted_accepted_members = ", ".join(accepted_members)
-        formatted_unaccepted_members = ", ".join(unaccepted_members)
-        if len(formatted_accepted_members) == 0:
-            formatted_accepted_members = "None"
-        if len(formatted_unaccepted_members) == 0:
-            formatted_unaccepted_members = "None"
-
-        embed.add_field(name="Accepted Members", value=formatted_accepted_members, inline=False)
-        embed.add_field(name="Invalid Members", value=formatted_unaccepted_members, inline=False)
-        msg = await ctx.channel.send(embed=embed)
-        await msg.add_reaction("✅")
-
-        def check(r, u):
-            return u == ctx.author and str(r.emoji) == "✅" and msg.id == r.message.id
-
-        try:
-            await self.client.wait_for("reaction_add", timeout=60, check=check)
-        except asyncio.TimeoutError:
-            return
-        else:
-            async with ctx.channel.typing():
-                for member in accepted_members:
-                    if isinstance(member, int):
-                        members.update_one({
-                            "#": member}, {
-                            "$set": {
-                                "status": "Semi-active",
-                                "weekly_gq": 60,
-                                "status_update1": get_time_est().strftime('%d.%b %y'),
-                                "status_update2": get_time_est().strftime('%Y:%m:%d')
-                            }
-                        })
-                    else:
-                        members.update_one({
-                            "name_lower": member.lower()}, {
-                            "$set": {
-                                "status": "Semi-active",
-                                "weekly_gq": 60,
-                                "status_update1": get_time_est().strftime('%d.%b %y'),
-                                "status_update2": get_time_est().strftime('%Y:%m:%d')
-                            }
-                        })
-
-
-        embed = discord.Embed(colour=ctx.author.colour, title="Semi-active list batch change success")
-        await ctx.channel.send(embed=embed)
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    title=f"{status.capitalize()} list batch update successful",
+                    description=", ".join(accepted),
+                    timestamp=get_timestamp()
+                )
+                embed.set_footer(text=f"{len(accepted)} inactive {pluralize('member', len(accepted))}")
+                await ctx.channel.send(embed=embed)
 
     async def management_guild_update_feats(self, ctx):
 
@@ -721,12 +666,12 @@ class Admin(commands.Cog):
                     raise KeyError
             return m.author == ctx.message.author and m.channel == ctx.channel
 
-        query = {"role": {"$in": ["Officer", "Member", "Leader"]}}
+        find_query = {"role": {"$in": ["officer", "member", "leader"]}}
         project = {
             "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update1": 1
         }
 
-        for member in members.find(query, project).sort([("total_feats", 1)]):
+        for member in members.find(find_query, project).sort([("total_feats", 1)]):
             embed = discord.Embed(
                 color=ctx.author.colour,
                 title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
@@ -738,7 +683,7 @@ class Admin(commands.Cog):
             )
             embed.add_field(
                 name="🏆 Feats | GQ",
-                value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{get_time_est().isocalendar()[1]}]"
+                value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{get_time().isocalendar()[1]}]"
             )
             await asyncio.sleep(1)
             await msg.edit(embed=embed)
@@ -783,10 +728,10 @@ class Admin(commands.Cog):
     async def management_guild_show_current_members(self, ctx):
 
         formatted_list = []
-        query = {"role": {"$in": ["Officer", "Member", "Leader"]}}
+        find_query = {"role": {"$in": ["officer", "member", "leader"]}}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
-        for member in members.find(query, project).sort([("total_feats", -1)]):
+        for member in members.find(find_query, project).sort([("total_feats", -1)]):
             role = shorten(member["role"])
             status = shorten(member["status"])
             number = lengthen(member["#"])
@@ -796,29 +741,29 @@ class Admin(commands.Cog):
         content = f"There are {len(formatted_list)} {noun} currently in the guild"
         await self.management_guild_paginate_embeds(ctx, formatted_list, content)
 
-    async def management_guild_show_characters(self, ctx, args):
+    async def management_guild_show_startswith(self, ctx, args):
 
         formatted_list = []
-        query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
+        find_query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
-        for member in members.find(query, project).sort([("name_lower", 1)]):
+        for member in members.find(find_query, project).sort([("name_lower", 1)]):
             role = shorten(member["role"])
             status = shorten(member["status"])
             number = lengthen(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
-        content = f"I've got {len(formatted_list)} {noun} for names starting with {args[2].lower()}"
+        content = f"I've got {len(formatted_list)} {noun} for names starting with __{args[2].lower()}__"
         await self.management_guild_paginate_embeds(ctx, formatted_list, content)
 
     async def management_guild_show_all(self, ctx):
 
         formatted_list = []
-        query = {}
+        find_query = {}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
-        for member in members.find(query, project).sort([("name_lower", 1)]):
+        for member in members.find(find_query, project).sort([("name_lower", 1)]):
             role = shorten(member["role"])
             status = shorten(member["status"])
             number = lengthen(member["#"])
@@ -831,12 +776,13 @@ class Admin(commands.Cog):
     async def management_guild_show_field_role(self, ctx, args):
 
         formatted_list = []
-        query = {"role": args[2].capitalize()}
-        project = {"_id": 0, "name": 1, "status_update1": 1, "status_update2": 1, "#": 1, "role": 1}
+        filter_query = {"role": args[2]}
+        project = {"_id": 0, "name": 1, "status_update": 1, "#": 1, "role": 1}
 
-        for member in members.find(query, project).sort([("status_update2", 1)]):
+        for member in members.find(filter_query, project).sort([("status_update", 1)]):
             number = lengthen(member["#"])
-            formatted_list.append(f"`{number}: {member['status_update1']}` | {member['name']}\n")
+            status_update_formatted = member["status_update"].strftime("%d.%b %y")
+            formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
         content = f"I've got {len(formatted_list)} {noun} for members with role {args[2].lower()}"
@@ -845,12 +791,13 @@ class Admin(commands.Cog):
     async def management_guild_show_field_status(self, ctx, args):
 
         formatted_list = []
-        query = {"status": args[2].capitalize()}
-        project = {"_id": 0, "name": 1, "status_update1": 1, "status_update2": 1, "#": 1}
+        find_query = {"status": args[2]}
+        project = {"_id": 0, "name": 1, "status_update": 1, "#": 1}
 
-        for member in members.find(query, project).sort([("status_update2", 1)]):
+        for member in members.find(find_query, project).sort([("status_update", 1)]):
             number = lengthen(member["#"])
-            formatted_list.append(f"`{number}: {member['status_update1']}` | {member['name']}\n")
+            status_update_formatted = member["status_update"].strftime("%d.%b %y")
+            formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
         content = f"I've got {len(formatted_list)} {noun} for members with status {args[2].lower()}"
@@ -862,6 +809,8 @@ class Admin(commands.Cog):
         page = 1
         max_lines = 20
         page_total = ceil(len(formatted_list) / max_lines)
+        if page_total == 0:
+            page_total = 1
 
         def create_new_embed_page(page_new):
             end = page_new * max_lines
