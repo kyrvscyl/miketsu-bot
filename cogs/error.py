@@ -9,7 +9,7 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import embed_color
+from cogs.startup import embed_color, primary_id
 
 # Collections
 books = get_collections("bukkuman", "books")
@@ -72,6 +72,9 @@ class Error(commands.Cog):
                     description=f"Missing required roles"
                 )
                 await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in ["management_guild"]:
+                return
 
             else:
                 await self.submit_error(ctx, error)
@@ -154,7 +157,7 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Arguments",
-                    value="*SSR, SR, level, medals, amulets, friendship, ships, SSRstreak, frames*",
+                    value="*SP, SSR, SR, level, medals, amulets, friendship, ships, SSRstreak, frames*",
                     inline=False
                 )
                 embed.add_field(name="Example", value="*`;leaderboard friendship`*", inline=False)
@@ -185,6 +188,16 @@ class Error(commands.Cog):
                     title="summon, s", colour=discord.Colour(embed_color),
                     description="simulate summon and collect shikigamis"
                 )
+                embed.add_field(
+                    name="Shard Requirement",
+                    value="```"
+                          "SP    ::   15\n"
+                          "SSR   ::   12\n"
+                          "SR    ::    9\n"
+                          "R     ::    6\n"
+                          "```",
+                    inline=False
+                )
                 embed.add_field(name="Formats", value="*`;summon <1, 10, shikigami_name>`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
@@ -210,10 +223,10 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Format",
-                    value="*`;frame add <name> <floor#1-7> <img_link or default> <desc.>`*", inline=False)
+                    value="*`;portrait add <name> <floor#1-7> <img_link or default> <desc.>`*", inline=False)
                 embed.add_field(
                     name="Example",
-                    value="*`;frame add xann 6 default Headless`*",
+                    value="*`;portrait add xann 6 default Headless`*",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -258,7 +271,7 @@ class Error(commands.Cog):
 
             if isinstance(ctx.channel, discord.DMChannel):
                 spell_spam_id = books.find_one({
-                    "server": "412057028887052288"}, {
+                    "server": str(primary_id)}, {
                     "_id": 0, "channels": 1
                 })["channels"]["spell-spam"]
 
@@ -279,11 +292,14 @@ class Error(commands.Cog):
                 "raid_perform_attack",
                 "raid_perform_calculation",
                 "profile_show",
-                "friendship_give"
+                "friendship_give",
+                "wish_grant",
+                "friendship_change_name",
+                "friendship_ship"
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(embed_color),
-                    description="That member doesn't exist nor has a profile in this guild"
+                    description="That member does not exist nor has a profile in this guild"
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -296,7 +312,11 @@ class Error(commands.Cog):
         elif isinstance(error, commands.CommandInvokeError):
 
             if str(ctx.command) == "announcement_post_message":
-                await ctx.channel.send("Please provide a valid channel")
+                embed = discord.Embed(
+                    title="Invalid syntax", colour=discord.Colour(embed_color),
+                    description="Provide a valid channel"
+                )
+                await ctx.channel.send(embed=embed)
 
             else:
                 await self.submit_error(ctx, error)
