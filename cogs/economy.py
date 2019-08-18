@@ -959,8 +959,6 @@ class Economy(commands.Cog):
             else:
                 parade_pull.append(random.choice(pool_r))
 
-        print(parade_pull)
-
         achievements_address = []
         for entry in parade_pull:
             try:
@@ -986,7 +984,7 @@ class Economy(commands.Cog):
         address = f"temp/{ctx.author.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(606688376648761380)
+        hosting_channel = self.client.get_channel(556032841897607178)
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
