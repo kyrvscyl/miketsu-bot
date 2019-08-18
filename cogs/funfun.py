@@ -96,7 +96,7 @@ class Funfun(commands.Cog):
                 user_id = re.sub("[<>@!]", "", word)
                 member = guild.get_member(int(user_id))
 
-                if member is not self.client.user:
+                if member.id != self.client.user.id:
                     roll = random.randint(1, 100)
                     response = random.choice(success_lists).format(member.mention)
                     if roll >= 45:

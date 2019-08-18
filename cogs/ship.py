@@ -193,8 +193,8 @@ class Friendship(commands.Cog):
                 )
                 embed.add_field(
                     name="Formats",
-                    value="*• `;ship @member`*\n"
-                          "*• `;ship @member @member`*\n"
+                    value="*• `;ship <@member>`*\n"
+                          "*• `;ship <@member> <@member>`*\n"
                           "*• `;ships`*"
                 )
                 await ctx.channel.send(embed=embed)

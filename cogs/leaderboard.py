@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import e_f, e_a, e_m, e_ssr, e_sr
+from cogs.startup import e_f, e_a, e_m, e_ssr, e_sr, e_sp
 
 # Collections
 users = get_collections("miketsu", "users")
@@ -33,6 +33,9 @@ class Leaderboard(commands.Cog):
 
         if args.lower() in ["ssr"]:
             await self.leaderboard_post_ssr(ctx)
+
+        elif args.lower() in ["sp"]:
+            await self.leaderboard_post_sp(ctx)
 
         elif args.lower() in ["sr"]:
             await self.leaderboard_post_sr(ctx)
@@ -60,41 +63,56 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_ssr(self, ctx):
 
-        ssr_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "SSR": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                ssr_board1.append((member_name, user["SSR"]))
+                raw_list.append((member_name, user["SSR"]))
             except AttributeError:
                 continue
 
-        ssr_board2 = sorted(ssr_board1, key=lambda x: x[1], reverse=True)
-
-        formatted_list = []
-        for user in ssr_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
         title = f"{e_ssr} LeaderBoard"
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
+    async def leaderboard_post_sp(self, ctx):
+
+        raw_list = []
+        formatted_list = []
+        query = users.find({}, {"_id": 0, "user_id": 1, "SP": 1})
+
+        for user in query:
+            try:
+                member_name = self.client.get_user(int(user["user_id"])).display_name
+                raw_list.append((member_name, user["SSR"]))
+            except AttributeError:
+                continue
+
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
+            formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
+
+        title = f"{e_sp} LeaderBoard"
+        await self.leaderboard_paginate(title, ctx, formatted_list)
+
     async def leaderboard_post_sr(self, ctx):
 
-        sr_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "SR": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                sr_board1.append((member_name, user["SR"]))
+                raw_list.append((member_name, user["SR"]))
             except AttributeError:
                 continue
 
-        sr_board2 = sorted(sr_board1, key=lambda x: x[1], reverse=True)
-
-        formatted_list = []
-        for user in sr_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
         title = f"{e_sr} LeaderBoard"
@@ -102,21 +120,19 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_medals(self, ctx):
 
-        medal_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                medal_board1.append((member_name, user["medals"]))
+                raw_list.append((member_name, user["medals"]))
 
             except AttributeError:
                 continue
 
-        medal_board2 = sorted(medal_board1, key=lambda x: x[1], reverse=True)
-
-        formatted_list = []
-        for user in medal_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]:,d}\n"))
 
         title = f"{e_m} Medal LeaderBoard"
@@ -124,20 +140,18 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_level(self, ctx):
 
-        level_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "level": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                level_board1.append((member_name, user["level"]))
+                raw_list.append((member_name, user["level"]))
             except AttributeError:
                 continue
 
-        level_board2 = sorted(level_board1, key=lambda x: x[1], reverse=True)
-        formatted_list = []
-
-        for user in level_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
         title = "⤴ Level LeaderBoard"
@@ -145,21 +159,19 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_amulet(self, ctx):
 
-        amulet_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "amulets_spent": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                amulet_board1.append((member_name, user["amulets_spent"]))
+                raw_list.append((member_name, user["amulets_spent"]))
 
             except AttributeError:
                 continue
 
-        amulet_board2 = sorted(amulet_board1, key=lambda x: x[1], reverse=True)
-        formatted_list = []
-
-        for user in amulet_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
         title = f"{e_a} Spender LeaderBoard"
@@ -167,21 +179,19 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_friendship(self, ctx):
 
-        fp_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "friendship": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                fp_board1.append((member_name, user["friendship"]))
+                raw_list.append((member_name, user["friendship"]))
 
             except AttributeError:
                 continue
 
-        fp_board2 = sorted(fp_board1, key=lambda x: x[1], reverse=True)
-        formatted_list = []
-
-        for user in fp_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
         title = f"{e_f} Friendship LeaderBoard"
@@ -189,18 +199,16 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_ships(self, ctx):
 
-        ship_board1 = []
+        raw_list = []
+        formatted_list = []
         query = ships.find({}, {
             "_id": 0, "points": 1, "shipper1": 1, "shipper2": 1, "ship_name": 1, "level": 1
         })
 
         for ship in query:
-            ship_board1.append((ship["ship_name"], ship["shipper1"], ship["shipper2"], ship["level"], ship["points"]))
+            raw_list.append((ship["ship_name"], ship["shipper1"], ship["shipper2"], ship["level"], ship["points"]))
 
-        ship_board2 = sorted(ship_board1, key=lambda x: x[4], reverse=True)
-        formatted_list = []
-
-        for ship in ship_board2:
+        for ship in sorted(raw_list, key=lambda x: x[4], reverse=True):
             formatted_list.append("{}".format(f"🔸{ship[0]}, x{ship[4]}{e_f}\n"))
 
         title = "🚢 Ships LeaderBoard"
@@ -208,21 +216,19 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_streak(self, ctx):
 
-        streakboard1 = []
+        raw_list = []
+        formatted_list = []
         query = streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                streakboard1.append((member_name, user["SSR_current"]))
+                raw_list.append((member_name, user["SSR_current"]))
 
             except AttributeError:
                 continue
 
-        streakboard2 = sorted(streakboard1, key=lambda x: x[1], reverse=True)
-        formatted_list = []
-
-        for user in streakboard2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}{e_a}\n"))
 
         title = f"No {e_ssr} Summon Streak LeaderBoard"
@@ -230,20 +236,18 @@ class Leaderboard(commands.Cog):
 
     async def leaderboard_post_achievements(self, ctx):
 
-        frame_board1 = []
+        raw_list = []
+        formatted_list = []
         query = users.find({}, {"_id": 0, "user_id": 1, "achievements": 1})
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                frame_board1.append((member_name, len(user["achievements"])))
+                raw_list.append((member_name, len(user["achievements"])))
             except AttributeError:
                 continue
 
-        frame_board2 = sorted(frame_board1, key=lambda x: x[1], reverse=True)
-        formatted_list = []
-
-        for user in frame_board2:
+        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
             formatted_list.append("{}".format(f"🔸{user[0]}, x{user[1]}\n"))
 
         title = "<:blazingsun:606711888541384714> Frames LeaderBoard"
@@ -254,6 +258,8 @@ class Leaderboard(commands.Cog):
         page = 1
         max_lines = 15
         page_total = ceil(len(formatted_list) / max_lines)
+        if page_total == 0:
+            page_total = 1
 
         def create_new_embed_page(page_new):
             end = page * max_lines
