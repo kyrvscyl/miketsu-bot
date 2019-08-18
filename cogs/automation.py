@@ -41,39 +41,42 @@ class Automation(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
+        try:
+            if str(payload.data["channel_id"]) not in shard_trading_ids:
+                return
 
-        if str(payload.data["channel_id"]) not in shard_trading_ids:
-            return
+            elif payload.data["pinned"] is True:
+                print(payload.data)
+                request = books.find_one({
+                    "server": f"{payload.data['guild_id']}"}, {
+                    "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1
+                })
 
-        elif payload.data["pinned"] is True:
-            print(payload.data)
-            request = books.find_one({
-                "server": f"{payload.data['guild_id']}"}, {
-                "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1
-            })
+                guild_id = payload.data['guild_id']
+                user_id = payload.data["author"]["id"]
+                headlines_id = request["channels"]["headlines"]
+                shard_trading_id = request["channels"]["shard-trading"]
+                shard_seeker_id = request["roles"]["shard_seekers"]
+                attachments = payload.data["attachments"]
+                description = payload.data["content"]
 
-            guild_id = payload.data['guild_id']
-            user_id = payload.data["author"]["id"]
-            headlines_id = request["channels"]["headlines"]
-            shard_trading_id = request["channels"]["shard-trading"]
-            shard_seeker_id = request["roles"]["shard_seekers"]
-            attachments = payload.data["attachments"]
-            description = payload.data["content"]
+                guild = self.client.get_guild(int(guild_id))
+                user = guild.get_member(int(user_id))
+                headlines_channel = self.client.get_channel(int(headlines_id))
+                shard_trading_channel = self.client.get_channel(int(shard_trading_id))
 
-            guild = self.client.get_guild(int(guild_id))
-            user = guild.get_member(int(user_id))
-            headlines_channel = self.client.get_channel(int(headlines_id))
-            shard_trading_channel = self.client.get_channel(int(shard_trading_id))
+                content = f"<@&{shard_seeker_id}>!"
+                embed = discord.Embed(color=user.colour, description=description, timestamp=get_timestamp())
+                embed.set_author(name=f"{user.display_name} is looking for shards!", icon_url=user.avatar_url)
+                embed.set_footer(text=f"#{shard_trading_channel.name}")
 
-            content = f"<@&{shard_seeker_id}>!"
-            embed = discord.Embed(color=user.colour, description=description, timestamp=get_timestamp())
-            embed.set_author(name=f"{user.display_name} is looking for shards!", icon_url=user.avatar_url)
-            embed.set_footer(text=f"#{shard_trading_channel.name}")
+                if len(attachments) > 0:
+                    embed.set_image(url=attachments[0]["url"])
 
-            if len(attachments) > 0:
-                embed.set_image(url=attachments[0]["url"])
+                await headlines_channel.send(content=content, embed=embed)
 
-            await headlines_channel.send(content=content, embed=embed)
+        except KeyError:
+            pass
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
