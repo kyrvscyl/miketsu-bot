@@ -407,7 +407,7 @@ class Admin(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and args[1].lower() in list(status_batch) and len(args) == 2:
-            await self.management_guild_update_performance(ctx, args[1].lower(), status_batch[args[1].lower()])
+            await self.management_guild_update_performance(ctx, args[1].lower()[:-1], status_batch[args[1].lower()])
 
         elif args[0].lower() in ["update", "u"] and args[1].lower() == "feats" and len(args) == 2:
             await self.management_guild_update_feats(ctx)
