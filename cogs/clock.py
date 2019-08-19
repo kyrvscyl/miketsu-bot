@@ -128,7 +128,7 @@ class Clock(commands.Cog):
         await reset_purchase()
         await Expecto(self.client).send_off_report_quest1()
         await Expecto(self.client).send_off_complete_quest1()
-        await ctx.author.send("Actions reset, purchase reset, send-off reports performed")
+        await ctx.author.send("Actions reset, purchase perform_reset, send-off reports performed")
 
     async def clear_secrets(self):
         query = books.find({}, {

@@ -193,7 +193,8 @@ async def claim_rewards_daily_give(user, ctx):
             "jades": 50,
             "coins": 25000,
             "realm_ticket": 3,
-            "encounter_ticket": 4
+            "encounter_ticket": 4,
+            "parade_tickets": 3
         },
         "$set": {
             "daily": True
@@ -202,7 +203,7 @@ async def claim_rewards_daily_give(user, ctx):
     embed = discord.Embed(
         color=ctx.author.colour,
         title="🎁 Daily Rewards",
-        description=f"A box containing 5 💗, 50{e_j}, 25k{e_c}, 3 🎟, 4 🎫"
+        description=f"A box containing 5 💗, 50{e_j}, 25k{e_c}, 3 🎟, 4 🎫, 3 🎏"
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -667,9 +668,9 @@ class Economy(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-    @commands.command()
+    @commands.command(aliases=["reset"])
     @commands.is_owner()
-    async def reset(self, ctx, *, args):
+    async def perform_reset(self, ctx, *, args):
 
         if args == "daily":
             await self.reset_rewards_daily()
@@ -704,7 +705,7 @@ class Economy(commands.Cog):
             users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
 
         embed1 = discord.Embed(
-            title="🎁 Daily rewards have been reset", colour=discord.Colour(embed_color),
+            title="🎁 Daily rewards have been perform_reset", colour=discord.Colour(embed_color),
             description="Claim yours using `;daily`"
         )
         embed2 = discord.Embed(
@@ -727,7 +728,7 @@ class Economy(commands.Cog):
         users.update_many({}, {"$set": {"weekly": False}})
 
         embed = discord.Embed(
-            title="💝 Weekly rewards have been reset", colour=discord.Colour(embed_color),
+            title="💝 Weekly rewards have been perform_reset", colour=discord.Colour(embed_color),
             description="Claim yours using `;weekly`"
         )
         for channel in spell_spams_id:
@@ -989,8 +990,6 @@ class Economy(commands.Cog):
         attachment_link = msg.attachments[0].url
 
         x_init, y_init = random.randint(0, 10), random.randint(0, 10)
-        print(f"{x_init}, {y_init}")
-
         beaned_shikigamis = []
         beans = 10
 
@@ -1003,8 +1002,8 @@ class Economy(commands.Cog):
                 color=ctx.author.color,
                 title="Demon Parade",
                 description=f"Beans: 10\n"
-                            f"Time Limit: 20 seconds, resets for every bean\n"
-                            f"Other Mechanics: Cannot bean the same shikigami twice"
+                            f"Time Limit: 30 seconds, resets for every bean\n"
+                            f"Note: Cannot bean the same shikigami twice"
             )
             embed.set_image(url=attachment_link)
             embed.add_field(name="Beaned Shikigamis", value=value)
@@ -1044,7 +1043,7 @@ class Economy(commands.Cog):
 
         while beans != -1:
             try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=20, check=check)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=30, check=check)
             except asyncio.TimeoutError:
                 await perform_parade_issue_shards(ctx.author, beaned_shikigamis, ctx, msg)
             else:

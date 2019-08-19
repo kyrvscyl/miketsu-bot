@@ -66,6 +66,13 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "perform_parade":
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    description=f"{ctx.author.mention}, no more parade tickets today 🎏"
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "announcement_post_message":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
@@ -81,7 +88,17 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.NotOwner):
 
-            await self.submit_error(ctx, error)
+            if str(ctx.command) in [
+                "perform_reset",
+                "issue_frame_rewards",
+                "bounty_add_alias",
+                "shikigami_add",
+                "shikigami_update"
+            ]:
+                return
+
+            else:
+                await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
 
