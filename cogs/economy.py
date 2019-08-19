@@ -527,7 +527,7 @@ class Economy(commands.Cog):
             wish = wish['wish']
             if wish is False:
                 wish = "✅"
-            shard_wishes.append(f"▫{user} | {wish}\n")
+            shard_wishes.append(f"▫{user} | {wish.title()}\n")
 
         await self.wish_show_list_paginate(ctx, shard_wishes)
 
@@ -1483,8 +1483,12 @@ class Economy(commands.Cog):
                 "shikigami.name": 1,
                 "shikigami.owned": 1,
                 "shikigami.shards": 1
-            }
-        }]):
+            }}, {
+            "$match": {
+                "shikigami.owned": {
+                    "$gt": 0
+                }}}
+        ]):
             user_shikigamis.append((
                 entry["shikigami"]["name"]
             ))
