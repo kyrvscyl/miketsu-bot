@@ -1491,24 +1491,14 @@ class Economy(commands.Cog):
             ))
 
         pool_rarity_select = []
-        for entry in shikigamis.aggregate([{
-            "$match": {
-                "rarity": rarity}}, {
-            "$unwind": {
-                    "path": "$shikigami"}}, {
-            "$project": {
-                    "_id": 0,
-                    "shikigami.name": 1
-                }
-            }
-        ]):
-            pool_rarity_select.append(entry["shikigami"]["name"])
+        for entry in shikigamis.find({"rarity": rarity}, {"_id": 0, "name": 1}):
+            pool_rarity_select.append(entry["name"])
 
         uncollected_list = list(set(pool_rarity_select) - set(user_shikigamis))
 
         formatted_list = []
         for shiki in uncollected_list:
-            formatted_list.append(f"• {shiki}\n")
+            formatted_list.append(f"• {shiki.title()}\n")
 
         await self.shikigami_list_paginate(member, formatted_list, rarity, ctx, "Uncollected")
 
