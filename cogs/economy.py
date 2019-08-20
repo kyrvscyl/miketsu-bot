@@ -1169,7 +1169,7 @@ class Economy(commands.Cog):
         if bounty_search1 is not None:
             try:
                 thumbnail = get_thumbnail_shikigami(query.lower(), "pre")
-            except KeyError:
+            except TypeError:
                 thumbnail = ""
 
             name = bounty_search1["bounty"].title()
@@ -1404,14 +1404,125 @@ class Economy(commands.Cog):
                 users.update_one({"user_id": str(user.id)}, {"$set": {"display": select_formatted}})
                 await ctx.message.add_reaction("✅")
 
-    @commands.command(aliases=["shikigamis", "shikis", "shiki"])
+    @commands.command(aliases=["collections", "col"])
+    @commands.guild_only()
+    async def shikigami_image_show_collected(self, ctx, arg1, member: discord.Member = None):
+
+        rarity = str(arg1.upper())
+
+        if rarity not in rarities:
+            raise commands.MissingRequiredArgument(ctx.author)
+
+        elif member is None:
+            await self.shikigami_show_post_collected(ctx.author, rarity, ctx)
+
+        else:
+            await self.shikigami_show_post_collected(member, rarity, ctx)
+
+    async def shikigami_show_post_collected(self, member, rarity, ctx):
+
+        user_shikigamis_with_evo = []
+        user_shikigamis = []
+        for entry in users.aggregate([{
+            "$match": {
+                "user_id": str(member.id)}}, {
+            "$unwind": {
+                "path": "$shikigami"}}, {
+            "$match": {
+                "shikigami.rarity": rarity}}, {
+            "$project": {
+                "_id": 0,
+                "shikigami.name": 1,
+                "shikigami.owned": 1,
+                "shikigami.shards": 1,
+                "shikigami.evolved": 1
+            }}, {
+            "$match": {
+                "shikigami.owned": {
+                    "$gt": 0
+                }}}
+        ]):
+            user_shikigamis_with_evo.append((entry["shikigami"]["name"], entry["shikigami"]["evolved"]))
+            user_shikigamis.append(entry["shikigami"]["name"])
+
+        pool_rarity_select = []
+        for entry in shikigamis.find({"rarity": rarity}, {"_id": 0, "name": 1}):
+            pool_rarity_select.append(entry["name"])
+
+        uncollected_list = list(set(pool_rarity_select) - set(user_shikigamis))
+
+        link = await self.shikigami_show_post_collected_generate(
+            user_shikigamis_with_evo, uncollected_list, pool_rarity_select, rarity, member
+        )
+
+        embed = discord.Embed(
+            title=f"{get_rarity_emoji(rarity)} Collection",
+            color=member.colour,
+            timestamp=get_timestamp()
+        )
+        embed.set_image(url=link)
+        embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
+        await ctx.channel.send(embed=embed)
+
+    async def shikigami_show_post_collected_generate(
+            self, user_shikigamis, uncollected_list, pool_rarity_select, rarity, member
+    ):
+
+        images = []
+        for entry in user_shikigamis:
+            address = f"data/shikigamis/{entry[0]}_pre.jpg"
+            if entry[1] is True:
+                address = f"data/shikigamis/{entry[0]}_evo.jpg"
+            images.append(Image.open(address))
+
+        for entry in uncollected_list:
+            address = f"data/shikigamis/{entry}_pre.jpg"
+            images.append(Image.open(address).convert("LA"))
+
+        def get_variables(r):
+            dictionary = {
+                "SP": [90 * 6, 6],
+                "SSR": [90 * 8, 8],
+                "SR": [90 * 10, 10],
+                "R": [90 * 8, 8]
+            }
+            return dictionary[r]
+
+        w = get_variables(rarity)[0]
+        col = get_variables(rarity)[1]
+
+        def get_image_variables(x):
+            total_shikis = len(x)
+            h = ceil(total_shikis / col) * 90
+            return w, h
+
+        width, height = get_image_variables(pool_rarity_select)
+        new_im = Image.new("RGBA", (width, height))
+
+        def get_coordinates(c):
+            a = (c * 90 - (ceil(c / col) - 1) * w) - 90
+            b = (ceil(c / col) * 90) - 90
+            return a, b
+
+        for index, item in enumerate(images):
+            new_im.paste(images[index], (get_coordinates(index + 1)))
+
+        address = f"temp/{member.id}.png"
+        new_im.save(address)
+        new_photo = discord.File(address, filename=f"{member.id}.png")
+        hosting_channel = self.client.get_channel(556032841897607178)
+        msg = await hosting_channel.send(file=new_photo)
+        attachment_link = msg.attachments[0].url
+        return attachment_link
+
+    @commands.command(aliases=["shikigamis", "shikis"])
     @commands.guild_only()
     async def shikigami_list_show_collected(self, ctx, arg1, member: discord.Member = None):
 
         rarity = str(arg1.upper())
 
         if rarity not in rarities:
-            return
+            raise commands.MissingRequiredArgument(ctx.author)
 
         elif member is None:
             await self.shikigami_list_post_collected(ctx.author, rarity, ctx)
@@ -1449,7 +1560,7 @@ class Economy(commands.Cog):
 
         formatted_list = []
         for shiki in user_shikigamis_sorted:
-            formatted_list.append(f"• {shiki[0]} | `x{shiki[1]} [{shiki[2]} shards]`\n")
+            formatted_list.append(f"• {shiki[0].title()} | `x{shiki[1]} [{shiki[2]} shards]`\n")
 
         await self.shikigami_list_paginate(member, formatted_list, rarity, ctx, "Owned")
 

@@ -173,19 +173,21 @@ class Error(commands.Cog):
                     description="shows various leaderboards"
                 )
                 embed.add_field(
-                    name="Arguments",
+                        name="Arguments",
                     value="*SP, SSR, SR, level, medals, amulets, friendship, ships, SSRstreak, frames*",
                     inline=False
                 )
                 embed.add_field(name="Example", value="*`;leaderboard friendship`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) in ["shikigami_list_show_collected", "shikigami_list_show_uncollected"]:
+            elif str(ctx.command) in [
+                "shikigami_list_show_collected", "shikigami_list_show_uncollected", "shikigami_image_show_collected"
+            ]:
                 embed = discord.Embed(
-                    title="shikigamis, shikis, uncollected, unc", colour=discord.Colour(embed_color),
+                    title="shikigamis, shikis, uncollected, unc, collections, col", colour=discord.Colour(embed_color),
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
-                embed.add_field(name="Arguments", value="*SP, SSR, SR, R*", inline=False)
+                embed.add_field(name="Rarities", value="*SP, SSR, SR, R*", inline=False)
                 embed.add_field(
                     name="Format", inline=False,
                     value="*`;shikis <rarity> <optional: @member>`*\n"
