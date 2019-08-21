@@ -1020,7 +1020,7 @@ class Economy(commands.Cog):
             return msg.id == r.message.id and str(r.emoji) in arrows and u.id == ctx.author.id
 
         def get_new_coordinates(x_coor, y_coor, emoji):
-            dictionary = {"⬅": -1, "⬆": 1, "⬇": -1, "➡": 1}
+            dictionary = {"⬅": -1, "⬆": -1, "⬇": 1, "➡": 1}
             new_x, new_y = x_coor, y_coor
 
             if emoji in ["⬅", "➡"]:
