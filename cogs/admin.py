@@ -149,7 +149,7 @@ async def management_guild_show_profile(ctx, args):
         embed.set_thumbnail(url=ctx.guild.icon_url)
         embed.add_field(
             name="⛳ Status",
-            value=f"{member['status']} [{member['status_update1']}]"
+            value=f"{member['status']} [{member['status_update'].strftime('%d.%b %y')}]"
         )
 
         if not member["notes"]:
@@ -668,7 +668,7 @@ class Admin(commands.Cog):
 
         find_query = {"role": {"$in": ["officer", "member", "leader"]}}
         project = {
-            "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update1": 1
+            "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update": 1
         }
 
         for member in members.find(find_query, project).sort([("total_feats", 1)]):
@@ -679,7 +679,7 @@ class Admin(commands.Cog):
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(
                 name="⛳ Status",
-                value=f"{member['status']} [{member['status_update1']}]"
+                value=f"{member['status']} [{member['status_update'].strftime('%d.%b %y')}]"
             )
             embed.add_field(
                 name="🏆 Feats | GQ",

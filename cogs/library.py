@@ -3,7 +3,6 @@ Library Module
 Miketsu, 2019
 """
 import os
-import sys
 import urllib.request
 
 import discord
@@ -52,8 +51,6 @@ async def post_table_of_content_restricted(channel):
             webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
         except AttributeError:
             return False
-        except discord.errors.Forbidden:
-            return False
 
         description = \
             "• To open a book use `;open [section] [index]`\n" \
@@ -88,9 +85,9 @@ async def post_table_of_content_restricted(channel):
         webhook.add_embed(embed)
         webhook.execute()
         return True
-    except:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        pb.push_note("clock.py error", f"{exc_type}, Line {exc_tb.tb_lineno}")
+
+    except discord.errors.Forbidden:
+        return False
 
 
 async def post_table_of_content_reference(channel):
@@ -100,8 +97,6 @@ async def post_table_of_content_reference(channel):
             bukkuman = webhooks[0]
             webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
         except AttributeError:
-            return False
-        except discord.errors.Forbidden:
             return False
 
         lists_souls_formatted = ", ".join(lists_souls)
@@ -141,9 +136,9 @@ async def post_table_of_content_reference(channel):
         webhook.add_embed(embed)
         webhook.execute()
         return True
-    except:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        pb.push_note("clock.py error", f"{exc_type}, Line {exc_tb.tb_lineno}")
+
+    except discord.errors.Forbidden:
+        return False
 
 
 class Library(commands.Cog):
