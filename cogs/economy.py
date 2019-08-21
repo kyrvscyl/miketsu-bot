@@ -943,7 +943,7 @@ class Economy(commands.Cog):
     @commands.guild_only()
     @commands.check(check_if_user_has_parade_tickets)
     async def perform_parade(self, ctx):
-        # users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"parade_tickets": -1}})
+        users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"parade_tickets": -1}})
 
         parade_pull = []
         for x in range(0, 49):
