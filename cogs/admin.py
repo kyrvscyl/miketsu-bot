@@ -144,12 +144,12 @@ async def management_guild_show_profile(ctx, args):
     try:
         embed = discord.Embed(
             color=ctx.author.colour,
-            title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}", timestamp=get_timestamp()
+            title=f"#{member['#']} : {member['name']} | 🎀 {member['role'].title()}", timestamp=get_timestamp()
         )
         embed.set_thumbnail(url=ctx.guild.icon_url)
         embed.add_field(
             name="⛳ Status",
-            value=f"{member['status']} [{member['status_update'].strftime('%d.%b %y')}]"
+            value=f"{member['status'].title()} [{member['status_update'].strftime('%d.%b %y')}]"
         )
 
         if not member["notes"]:
