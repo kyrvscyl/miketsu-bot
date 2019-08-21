@@ -14,13 +14,23 @@ from cogs.mongo.database import get_collections
 books = get_collections("bukkuman", "books")
 
 
+admin_roles = ["Head", "Alpha", "📝"]
+
+
+def check_if_has_any_role(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in admin_roles:
+            return True
+    return False
+
+
 class Embeds(commands.Cog):
 
     def __init__(self, client):
         self.client = client
 
     @commands.command(aliases=["patch"])
-    @commands.is_owner()
+    @commands.check(check_if_has_any_role)
     async def post_patch_notes(self, ctx, arg1, *, args):
 
         request = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "channels": 1})
