@@ -943,10 +943,10 @@ class Economy(commands.Cog):
     @commands.guild_only()
     @commands.check(check_if_user_has_parade_tickets)
     async def perform_parade(self, ctx):
-        users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"parade_tickets": -1}})
+        # users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"parade_tickets": -1}})
 
         parade_pull = []
-        for x in range(0, 100):
+        for x in range(0, 49):
             roll = random.uniform(0, 100)
 
             if roll < 1.2:
@@ -972,11 +972,12 @@ class Economy(commands.Cog):
                 continue
 
         images = list(map(Image.open, achievements_address))
-        new_im = Image.new("RGBA", (900, 900))
+        max_rows = 7
+        new_im = Image.new("RGBA", (max_rows * 90, max_rows * 90))
 
         def get_coordinates(c):
-            a = (c * 90 - (ceil(c / 10) - 1) * 900) - 90
-            b = (ceil(c / 10) * 90) - 90
+            a = (c * 90 - (ceil(c / max_rows) - 1) * max_rows * 90) - 90
+            b = (ceil(c / max_rows) * 90) - 90
             return a, b
 
         for index, item in enumerate(images):
@@ -989,7 +990,7 @@ class Economy(commands.Cog):
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
-        x_init, y_init = random.randint(0, 10), random.randint(0, 10)
+        x_init, y_init = random.randint(0, max_rows), random.randint(0, max_rows)
         beaned_shikigamis = []
         beans = 10
 
@@ -1002,7 +1003,7 @@ class Economy(commands.Cog):
                 color=ctx.author.color,
                 title="Demon Parade",
                 description=f"Beans: 10\n"
-                            f"Time Limit: 30 seconds, resets for every bean\n"
+                            f"Time Limit: 45 seconds, resets for every bean\n"
                             f"Note: Cannot bean the same shikigami twice"
             )
             embed.set_image(url=attachment_link)
@@ -1025,32 +1026,32 @@ class Economy(commands.Cog):
 
             if emoji in ["⬅", "➡"]:
                 new_x, new_y = x_coor + dictionary[emoji], y_coor
-                if new_x > 10:
+                if new_x > max_rows:
                     new_x = 1
 
                 if new_x < 1:
-                    new_x = 10
+                    new_x = max_rows
 
             elif emoji in ["⬇", "⬆"]:
                 new_x, new_y = x_coor, y_coor + dictionary[emoji]
-                if new_y > 10:
+                if new_y > max_rows:
                     new_y = 1
 
                 if new_y < 1:
-                    new_y = 10
+                    new_y = max_rows
 
             return new_x, new_y
 
         while beans != -1:
             try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=30, check=check)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=45, check=check)
             except asyncio.TimeoutError:
                 await perform_parade_issue_shards(ctx.author, beaned_shikigamis, ctx, msg)
             else:
                 bean_x, bean_y = get_new_coordinates(x_init, y_init, str(reaction.emoji))
 
                 def get_bean_shikigami(x_coor_get, y_coor_get):
-                    index_bean = (10 * y_coor_get) - (10 - x_coor_get)
+                    index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
                     return parade_pull[index_bean - 1]
 
                 shikigami_beaned = get_bean_shikigami(bean_x, bean_y)
