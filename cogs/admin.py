@@ -185,22 +185,15 @@ async def management_guild_update_field(ctx, args):
         await ctx.channel.send(embed=embed)
 
     elif args[2].lower() == "status" and args[3].lower() in status_values:
-
-        update = {"$set": {"status": args[3].lower(), "status_update": get_time()}}
+        update = {"status": args[3].lower(), "status_update": get_time()}
 
         if args[3].lower() in ["active", "inactive", "semi-active"]:
-            weekly_gq_add = {"weekly_gq": get_gq(args[3].lower())}
-            set_dict = update["$set"]
-            set_dict.update(weekly_gq_add)
-            update.update(set_dict)
+            update.update({"weekly_gq": get_gq(args[3].lower())})
 
         if args[3].lower() in ["away", "left", "kicked"]:
-            new_role = {"role": "ex-member"}
-            set_dict = update["$set"]
-            set_dict.update(new_role)
-            update.update(set_dict)
+            update.update({"role": "ex-member"})
 
-        members.update_one(find_query, update)
+        members.update_one(find_query, {"$set": update})
         await ctx.message.add_reaction("✅")
 
     elif args[2].lower() in ["notes", "note"]:
