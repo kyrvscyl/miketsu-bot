@@ -134,10 +134,15 @@ class Emotes(commands.Cog):
                 return
 
             else:
-                users.update_one({"user_id": str(user.id), "level": {"$lt": 60}}, {"$inc": {"experience": 20}})
+                x = users.update_one({"user_id": str(user.id), "level": {"$lt": 60}}, {"$inc": {"experience": 20}})
                 sticker_url = stickers.find_one({"alias": sticker_recognized}, {"_id": 0, "link": 1})["link"]
+
+                comment = " "
+                if x.modified_count > 0:
+                    comment = ", +20exp"
+
                 embed = discord.Embed(color=user.colour)
-                embed.set_footer(text=f"{user.display_name}, +20exp", icon_url=user.avatar_url)
+                embed.set_footer(text=f"{user.display_name}{comment}", icon_url=user.avatar_url)
                 embed.set_image(url=sticker_url)
                 await message.channel.send(embed=embed)
                 await message.delete()
