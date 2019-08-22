@@ -657,8 +657,14 @@ class Encounter(commands.Cog):
                     "$inc": {
                         "jades": round([reward][0][2]),
                         "coins": round([reward][0][1]),
-                        "medals": round([reward][0][3]),
-                        "experience": round([reward][0][4])}
+                        "medals": round([reward][0][3])
+                    }
+                })
+                users.update_one({
+                    "user_id": [reward][0][0], "level": {"$lt": 60}}, {
+                    "$inc": {
+                        "experience": round([reward][0][4])
+                    }
                 })
 
             except AttributeError:
@@ -671,6 +677,11 @@ class Encounter(commands.Cog):
                 "jades": 100,
                 "coins": 50000,
                 "medals": 15,
+            }
+        })
+        users.update_one({
+            "user_id": discoverer, "level": {"$lt": 60}}, {
+            "$inc": {
                 "experience": 100
             }
         })
@@ -689,7 +700,7 @@ class Encounter(commands.Cog):
             pass
 
         self.client.get_command("encounter_search").reset_cooldown(ctx)
-        users.update_many({"level": 60}, {"$set": {"experience": 100000}})
+        users.update_many({"level": {"$gt": 60}}, {"$set": {"experience": 100000, "level_exp_next": 100000}})
         status_set(False)
 
     @commands.command(aliases=["binfo", "bossinfo"])
