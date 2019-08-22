@@ -1678,25 +1678,23 @@ class Economy(commands.Cog):
         elif len(args) == 5:
 
             rarity = args[0].upper()
-            query = (args[1].replace("_", " ")).lower()
+            name = (args[1].replace("_", " ")).lower()
             shrine = False
 
-            if args[4] == "shrine":
+            if args[2] == "shrine":
                 shrine = True
 
-            shikigamis.update_one({
-                "rarity": rarity}, {
-                "$push": {
-                    "shikigami": {
-                        "name": query,
-                        "thumbnail": {
-                            "pre_evo": args[2],
-                            "evo": args[3]
-                        },
-                        "shrine": shrine
-                    }
+            profile = {
+                "name": name,
+                "rarity": rarity,
+                "shrine": shrine,
+                "thumbnail": {
+                    "pre": args[3],
+                    "evo": args[4]
                 }
-            })
+            }
+
+            shikigamis.insert_one(profile)
             await ctx.message.add_reaction("✅")
         else:
             await ctx.message.add_reaction("❌")
