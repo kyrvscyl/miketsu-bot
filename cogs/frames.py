@@ -714,16 +714,16 @@ class Frames(commands.Cog):
 
     async def achievements_process_record_user(self, member, frame_name):
 
-        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels.scroll-of-everything": 1})
-        record_scroll_id = request["channels"]["scroll-of-everything"]
-        record_scroll_channel = self.client.get_channel(int(record_scroll_id))
+        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels.spell-spam": 1})
+        spell_spam_id = request["channels"]["spell-spam"]
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
 
         embed = discord.Embed(color=0xe99ac9, timestamp=get_timestamp())
         embed.set_author(
             name=f"Added {frame_name} achievement for {member}",
             icon_url=member.avatar_url
         )
-        await record_scroll_channel.send(embed=embed)
+        await spell_spam_channel.send(embed=embed)
         await asyncio.sleep(2)
 
 
