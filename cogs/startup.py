@@ -68,7 +68,7 @@ class Startup(commands.Cog):
     @commands.command(aliases=["info"])
     async def show_greeting_message(self, ctx):
         embed = discord.Embed(
-            colour=discord.Colour(0xffe6a7),
+            color=embed_color,
             description="To see my commands, type *`;help`* or *`;help dm`*"
         )
         embed.set_author(name="Hello there! I'm Miketsu! ~")
@@ -78,7 +78,7 @@ class Startup(commands.Cog):
     async def show_help_message(self, ctx, *args):
         embed = discord.Embed(
             title="help",
-            colour=discord.Colour(0xffe6a7),
+            color=embed_color,
             description="append the prefix semi-colon *`;`*"
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)

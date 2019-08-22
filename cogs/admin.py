@@ -65,7 +65,8 @@ def get_gq(key):
 def shorten(key):
     dictionary = {
         "leader": "LDR", "member": "MEM", "officer": "OFR", "ex-member": "EXM", "active": "ACTV", "inactive": "INAC",
-        "on-leave": "ONLV", "semi-active": "SMAC", "away": "AWAY", "left": "LEFT", "kicked": "KCKD", "trade": "TRDE"
+        "on-leave": "ONLV", "semi-active": "SMAC", "away": "AWAY", "left": "LEFT", "kicked": "KCKD", "trade": "TRDE",
+        "blacklist": "BLCK"
     }
     return dictionary[key]
 
@@ -142,9 +143,15 @@ async def management_guild_show_profile(ctx, args):
         member = members.find_one({"name_lower": args[1].lower()}, {"_id": 0})
 
     try:
+        def get_emoji_role(x):
+            if not x == "blacklist":
+                return "🎀"
+            return "🍵"
+
         embed = discord.Embed(
             color=ctx.author.colour,
-            title=f"#{member['#']} : {member['name']} | 🎀 {member['role'].title()}", timestamp=get_timestamp()
+            title=f"#{member['#']} : {member['name']} | {get_emoji_role(member['role'])} {member['role'].title()}",
+            timestamp=get_timestamp()
         )
         embed.set_thumbnail(url=ctx.guild.icon_url)
         embed.add_field(
@@ -158,7 +165,7 @@ async def management_guild_show_profile(ctx, args):
         elif len(member["notes"]) != 0:
             notes = ""
             for note in member["notes"]:
-                entry = f"[{note['time']} | {note['officer']}]: {note['note']}\n"
+                entry = f"[{note['time'].strftime('%d.%b %y')} | {note['officer']}]: {note['note']}\n"
                 notes += entry
 
             embed.add_field(name="🗒 Notes", value=notes)

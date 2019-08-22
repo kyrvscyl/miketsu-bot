@@ -42,6 +42,13 @@ for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine"
         pool_r.append(shikigami["name"])
 
 
+pool_all.extend(pool_sp)
+pool_all.extend(pool_ssr)
+pool_all.extend(pool_sr)
+pool_all.extend(pool_r)
+pool_all.extend(pool_shrinable)
+
+
 def get_shard_requirement(shiki):
     rarity = shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "rarity": 1})["rarity"]
     dictionary = {

@@ -173,7 +173,7 @@ class Error(commands.Cog):
                     description="shows various leaderboards"
                 )
                 embed.add_field(
-                        name="Arguments",
+                    name="Arguments",
                     value="*SP, SSR, SR, level, medals, amulets, friendship, ships, SSRstreak, frames*",
                     inline=False
                 )

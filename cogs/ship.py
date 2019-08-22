@@ -133,6 +133,8 @@ class Friendship(commands.Cog):
         page = 1
         max_lines = 5
         page_total = ceil(len(formatted_list) / max_lines)
+        if page_total == 0:
+            page_total = 1
 
         def create_new_embed_page(page_new):
             end = page_new * 5
@@ -238,7 +240,7 @@ class Friendship(commands.Cog):
                       "\n * added ship exp  ::  + 3```",
                 inline=False
             )
-            embed.add_field(name="Format", value="*`;friendship @member`*", inline=False)
+            embed.add_field(name="Format", value="*`;friendship <@member>`*", inline=False)
             await ctx.channel.send(embed=embed)
 
         elif receiver.bot is True or receiver == ctx.author:

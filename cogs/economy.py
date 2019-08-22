@@ -536,6 +536,9 @@ class Economy(commands.Cog):
         page = 1
         max_lines = 10
         page_total = ceil(len(shard_wishes) / max_lines)
+        if page_total == 0:
+            page_total = 1
+
         ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
 
         def create_new_embed_page(page_new):
@@ -705,7 +708,7 @@ class Economy(commands.Cog):
             users.update_one({"user_id": ship["shipper2"]}, {"$inc": {"jades": rewards}})
 
         embed1 = discord.Embed(
-            title="🎁 Daily rewards have been perform_reset", colour=discord.Colour(embed_color),
+            title="🎁 Daily rewards have been reset", colour=discord.Colour(embed_color),
             description="Claim yours using `;daily`"
         )
         embed2 = discord.Embed(
