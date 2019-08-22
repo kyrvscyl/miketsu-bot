@@ -187,14 +187,16 @@ async def acquisition_frame(user, frame_name, channel, jades):
 
 
 async def claim_rewards_daily_give(user, ctx):
+    friendship_pass, jades, coins, realm_ticket, encounter_ticket, parade_tickets = 5, 100, 50000, 3, 4, 3
+
     users.update_one({"user_id": str(user.id)}, {
         "$inc": {
-            "friendship_pass": 5,
-            "jades": 50,
-            "coins": 25000,
-            "realm_ticket": 3,
-            "encounter_ticket": 4,
-            "parade_tickets": 3
+            "friendship_pass": friendship_pass,
+            "jades": jades,
+            "coins": coins,
+            "realm_ticket": realm_ticket,
+            "encounter_ticket": encounter_ticket,
+            "parade_tickets": parade_tickets
         },
         "$set": {
             "daily": True
@@ -203,18 +205,21 @@ async def claim_rewards_daily_give(user, ctx):
     embed = discord.Embed(
         color=ctx.author.colour,
         title="🎁 Daily Rewards",
-        description=f"A box containing 5 💗, 50{e_j}, 25k{e_c}, 3 🎟, 4 🎫, 3 🎏"
+        description=f"A box containing {friendship_pass} 💗, {jades}{e_j}, {coins:,d}{e_c}, {realm_ticket} 🎟, "
+                    f"{encounter_ticket} 🎫, {parade_tickets} 🎏"
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
     await ctx.channel.send(embed=embed)
 
 
 async def weekly_give_rewards(user, ctx):
+    jades, coins, amulets = 750, 250000, 10
+
     users.update_one({"user_id": str(user.id)}, {
         "$inc": {
-            "jades": 750,
-            "coins": 150000,
-            "amulets": 10
+            "jades": jades,
+            "coins": coins,
+            "amulets": amulets
         },
         "$set": {
             "weekly": True
@@ -224,7 +229,7 @@ async def weekly_give_rewards(user, ctx):
     embed = discord.Embed(
         color=ctx.author.colour,
         title="💝 Weekly Rewards",
-        description=f"A mythical box containing 750{e_j}, 150k{e_c}, and 10{e_a}"
+        description=f"A mythical box containing {jades}{e_j}, {coins:,d}{e_c}, and {amulets}{e_a}"
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
     await ctx.channel.send(embed=embed)
@@ -234,7 +239,7 @@ async def evolve_shikigami(ctx, rarity, evo, user, query, count):
     if rarity == "SP":
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            description=f"{user.mention}, SP shikigamis are pre-evolved"
+            description=f"{user.mention}, SP shikigamis are already evolved"
         )
         await ctx.channel.send(embed=embed)
 
@@ -952,13 +957,13 @@ class Economy(commands.Cog):
         for x in range(0, 49):
             roll = random.uniform(0, 100)
 
-            if roll < 1.2:
+            if roll < 5:
                 p = random.uniform(0, 1.2)
                 if p >= 126 / 109:
                     parade_pull.append(random.choice(pool_sp))
                 else:
                     parade_pull.append(random.choice(pool_ssr))
-            elif roll <= 18.8:
+            elif roll <= 25:
                 parade_pull.append(random.choice(pool_sr))
             else:
                 parade_pull.append(random.choice(pool_r))
@@ -968,7 +973,7 @@ class Economy(commands.Cog):
             try:
                 roll = random.uniform(0, 100)
                 suffix = "_pre"
-                if roll < 10:
+                if roll < 30:
                     suffix = "_evo"
                 achievements_address.append(f"data/shikigamis/{entry}{suffix}.jpg")
             except KeyError:
