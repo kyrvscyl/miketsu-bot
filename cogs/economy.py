@@ -1009,7 +1009,7 @@ class Economy(commands.Cog):
 
             embed = discord.Embed(
                 color=ctx.author.color,
-                title="Demon Parade",
+                title="🎏 Demon Parade",
                 description=f"Beans: 10\n"
                             f"Time Limit: 45 seconds, resets for every bean\n"
                             f"Note: Cannot bean the same shikigami twice"

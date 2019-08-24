@@ -69,7 +69,16 @@ class Error(commands.Cog):
             elif str(ctx.command) == "perform_parade":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
-                    description=f"{ctx.author.mention}, no more parade tickets today 🎏"
+                    title="Insufficient parade tickets",
+                    description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "encounter_search":
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    title="Insufficient encounter tickets",
+                    description=f"{ctx.author.mention}, purchase at the shop to obtain more"
                 )
                 await ctx.channel.send(embed=embed)
 

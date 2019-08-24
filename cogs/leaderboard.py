@@ -89,7 +89,7 @@ class Leaderboard(commands.Cog):
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                raw_list.append((member_name, user["SSR"]))
+                raw_list.append((member_name, user["SP"]))
             except AttributeError:
                 continue
 

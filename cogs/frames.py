@@ -482,7 +482,7 @@ class Frames(commands.Cog):
                         "$match": {
                             "shikigami.name": {
                                 "$in": [
-                                    "Shuten Doji", "Momiji"
+                                    "shuten doji", "momiji"
                                 ]
                             }
                         }
@@ -528,7 +528,7 @@ class Frames(commands.Cog):
                         "$match": {
                             "shikigami.name": {
                                 "$in": [
-                                    "Momo", "Sakura"
+                                    "momo", "sakura"
                                 ]
                             }
                         }

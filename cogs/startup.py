@@ -37,6 +37,8 @@ status = cycle([
 
 def pluralize(singular, count):
     if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
         return singular + "s"
     else:
         return singular
