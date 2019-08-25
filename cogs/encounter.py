@@ -532,8 +532,8 @@ class Encounter(commands.Cog):
 
         if boss_currenthp > 0:
 
-            boss_jadesteal = round(boss_profile_new["rewards"]["jades"] * 0.08)
-            boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.07)
+            boss_jadesteal = round(boss_profile_new["rewards"]["jades"] * 0.02)
+            boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.03)
 
             description = f"💨 Rare Boss {boss_select} has fled with {round(boss_currenthp):,d} remaining HP\n" \
                           f"💸 Stealing {boss_jadesteal:,d}{e_j} & {boss_coinsteal:,d}{e_c} " \

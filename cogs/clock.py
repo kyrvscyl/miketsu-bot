@@ -45,8 +45,7 @@ for guild_clock in books.find({}, {"channels.clock": 1, "_id": 0}):
 
 
 def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 def generate_weather(hour):
@@ -121,36 +120,6 @@ class Clock(commands.Cog):
             except:
                 continue
 
-    @commands.command(aliases=["fastforward"])
-    @commands.is_owner()
-    async def hourly_task(self, ctx):
-        await actions_reset()
-        await reset_purchase()
-        await Expecto(self.client).send_off_report_quest1()
-        await Expecto(self.client).send_off_complete_quest1()
-        await ctx.author.send("Actions reset, purchase perform_reset, send-off reports performed")
-
-    async def clear_secrets(self):
-        query = books.find({}, {
-            "_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1
-        })
-
-        for entry in query:
-            for secret in entry:
-                for key in entry[secret]:
-                    if key == "id":
-                        try:
-                            channel = self.client.get_channel(int(entry[secret][key]))
-                            await channel.delete()
-                        except AttributeError:
-                            continue
-                        except discord.errors.Forbidden:
-                            continue
-                        except discord.errors.NotFound:
-                            continue
-                        except discord.errors.HTTPException:
-                            continue
-
     async def clock_update(self):
 
         try:
@@ -187,7 +156,7 @@ class Clock(commands.Cog):
                 await reset_purchase()
                 await Expecto(self.client).send_off_report_quest1()
                 await Expecto(self.client).send_off_complete_quest1()
-                await self.clear_secrets()
+                await self.perform_delete_secret_channels()
                 await Frames(self.client).achievements_process_hourly()
 
             if date_time in reminders.find_one({"event": "bidding"}, {"_id": 0, "dates": 1})["dates"]:
@@ -212,6 +181,36 @@ class Clock(commands.Cog):
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             pb.push_note("clock.py error", f"{exc_type}, Line {exc_tb.tb_lineno}")
+
+    @commands.command(aliases=["ht"])
+    @commands.is_owner()
+    async def perform_hourly_task(self, ctx):
+        await actions_reset()
+        await reset_purchase()
+        await Expecto(self.client).send_off_report_quest1()
+        await Expecto(self.client).send_off_complete_quest1()
+        await ctx.author.send("Actions reset, purchase perform_reset, send-off reports performed")
+
+    async def perform_delete_secret_channels(self):
+        query = books.find({}, {
+            "_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1
+        })
+
+        for entry in query:
+            for secret in entry:
+                for key in entry[secret]:
+                    if key == "id":
+                        try:
+                            channel = self.client.get_channel(int(entry[secret][key]))
+                            await channel.delete()
+                        except AttributeError:
+                            continue
+                        except discord.errors.Forbidden:
+                            continue
+                        except discord.errors.NotFound:
+                            continue
+                        except discord.errors.HTTPException:
+                            continue
 
 
 def setup(client):

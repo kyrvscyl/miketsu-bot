@@ -24,12 +24,12 @@ duelists = get_collections("bukkuman", "duelists")
 shikigamis = get_collections("miketsu", "shikigamis")
 
 # Listings
+pool_all = []
+castles_id = []
+duelling_room_id = []
 primary_roles = ["Head", "Auror", "Patronus", "No-Maj"]
 invalid_channels = ["auror-department", "gift-game", "pvp-fair", "duelling-room"]
-duelling_room_id = []
-castles_id = []
-pool_all = []
-fields = ["name", "notes", "ban", "core", "lineup"]
+fields = ["name", "notes", "ban", "core", "lineup", "unban", "uncore"]
 
 for document in books.find({}, {"_id": 0, "categories.castle": 1}):
     try:
@@ -50,8 +50,7 @@ for document in shikigamis.find({}, {"_id": 0, "name": 1}):
 
 
 def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 def lengthen(index):
@@ -67,6 +66,11 @@ def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
+def get_emoji_primary_role(role):
+    dictionary = {"Auror": "⚜", "Head": "🔱", "Patronus": "🔮", "No-Maj": "🔥"}
+    return dictionary[role]
+
+
 def check_if_valid_and_castle(ctx):
     return str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels
 
@@ -75,16 +79,11 @@ def check_if_guild_is_patronus(ctx):
     return ctx.guild.id == 412057028887052288
 
 
-def get_emoji_primary_role(role):
-    dictionary = {"Auror": "⚜", "Head": "🔱", "Patronus": "🔮", "No-Maj": "🔥"}
-    return dictionary[role]
-
-
 def check_if_channel_is_pvp(ctx):
     return str(ctx.channel.id) in duelling_room_id
 
 
-async def duel_profile_update_field(ctx, args):
+async def management_duel_profile_update_field(ctx, args):
     try:
         reference_id = int(args[1])
         find_query = {"#": reference_id}
@@ -120,6 +119,17 @@ async def duel_profile_update_field(ctx, args):
         }})
         await ctx.message.add_reaction("✅")
 
+    elif args[2].lower() in ["unban", "uncore"] and " ".join(args[3:]).lower() in pool_all:
+        duelists.update_one(find_query, {
+            "$pull": {
+                args[2].lower()[2:]: " ".join(args[3:]).lower()
+            },
+            "$set": {
+                "last_update": get_time()
+            }
+        })
+        await ctx.message.add_reaction("✅")
+
     elif args[2].lower() in ["ban", "core"] and " ".join(args[3:]).lower() in pool_all:
         duelists.update_one(find_query, {
             "$push": {
@@ -147,7 +157,7 @@ async def duel_profile_update_field(ctx, args):
         await ctx.message.add_reaction("❌")
 
 
-async def duel_profile_add_member(ctx, args):
+async def management_duel_profile_add_member(ctx, args):
 
     if duelists.find_one({"name_lower": args[1].lower()}) is None:
 
@@ -325,7 +335,7 @@ class Castle(commands.Cog):
                 frame_id = None
                 find_role = "Head"
 
-            attachment_link = await self.post_process_frame(
+            attachment_link = await self.castle_customize_portrait_process(
                 str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
             )
 
@@ -342,7 +352,7 @@ class Castle(commands.Cog):
 
         elif arg1.lower() == "edit" and frame_profile is not None:
 
-            attachment_link = await self.post_process_frame(
+            attachment_link = await self.castle_customize_portrait_process(
                 str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
             )
             portraits.update_one({
@@ -358,7 +368,7 @@ class Castle(commands.Cog):
                 }
             })
 
-    async def post_process_frame(self, image_link, in_game_name, find_role, ctx, description, floor, frame_num):
+    async def castle_customize_portrait_process(self, img_link, ign, find_role, ctx, description, floor, frame_num):
 
         async with ctx.channel.typing():
             embed = discord.Embed(colour=discord.Colour(embed_color), title="Processing the image.. ")
@@ -373,8 +383,8 @@ class Castle(commands.Cog):
             opener = urllib.request.build_opener()
             opener.addheaders = [('User-agent', 'Mozilla/5.0')]
             urllib.request.install_opener(opener)
-            temp_address = f"temp/{in_game_name}_temp.jpg"
-            urllib.request.urlretrieve(image_link, temp_address)
+            temp_address = f"temp/{ign}_temp.jpg"
+            urllib.request.urlretrieve(img_link, temp_address)
             role_frame = f"data/frames/{find_role.lower()}.png"
 
             background = Image.open(temp_address)
@@ -382,10 +392,10 @@ class Castle(commands.Cog):
             new_foreground = Image.open(role_frame).resize((width, height), Image.NEAREST)
             background.paste(new_foreground, (0, 0), new_foreground)
 
-            new_address = f"temp/{in_game_name}.png"
+            new_address = f"temp/{ign}.png"
             background.save(new_address)
 
-            new_photo = discord.File(new_address, filename=f"{in_game_name}.png")
+            new_photo = discord.File(new_address, filename=f"{ign}.png")
             hosting_channel = self.client.get_channel(556032841897607178)
             msg = await hosting_channel.send(file=new_photo)
 
@@ -396,7 +406,7 @@ class Castle(commands.Cog):
 
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"{get_emoji_primary_role(find_role)} {in_game_name}",
+                title=f"{get_emoji_primary_role(find_role)} {ign}",
                 description=description
             )
             embed.set_image(url=attachment_link)
@@ -493,7 +503,7 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["add", "a"] and len(args) == 2:
-            await duel_profile_add_member(ctx, args)
+            await management_duel_profile_add_member(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
@@ -505,8 +515,8 @@ class Castle(commands.Cog):
                 name="field :: value",
                 value=f"• **name** :: <new_name>\n"
                       f"• **notes** :: *<any member notes>*\n"
-                      f"• **ban** :: *<shikigami>*\n"
-                      f"• **core** :: *<shikigami>*\n"
+                      f"• **ban/unban** :: *<shikigami>*\n"
+                      f"• **core/uncore** :: *<shikigami>*\n"
                       f"• **lineup** :: *attach a photo upon sending*",
                 inline=False
             )
@@ -543,7 +553,7 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
-            await duel_profile_update_field(ctx, args)
+            await management_duel_profile_update_field(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and args[2].lower() in fields and len(args) == 3:
             embed = discord.Embed(
@@ -554,7 +564,7 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in fields:
-            await duel_profile_update_field(ctx, args)
+            await management_duel_profile_update_field(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
             embed = discord.Embed(
@@ -577,19 +587,18 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() == "all":
-            await self.duel_profile_show_all(ctx)
+            await self.management_duel_profile_show_all(ctx)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "all":
-            await self.management_guild_show_startswith(ctx, args)
+            await self.management_management_guild_show_startswith(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() != "all":
-            await self.duel_profile_show_profile(ctx, args)
+            await self.management_duel_profile_show_profile(ctx, args)
 
         else:
             await ctx.message.add_reaction("❌")
 
-    # noinspection PyMethodMayBeStatic
-    async def duel_profile_show_profile(self, ctx, args):
+    async def management_duel_profile_show_profile(self, ctx, args):
         try:
             reference_id = int(args[1])
             query = {"#": reference_id}
@@ -624,7 +633,7 @@ class Castle(commands.Cog):
                 embed.add_field(name="🗒 Notes", value=notes)
 
             if len(member["ban"]) != member["ban_count"] or len(member["core"]) != member["core_count"]:
-                link = await self.duel_profile_generate_image(member["ban"], member["core"], ctx)
+                link = await self.management_duel_profile_generate_image(member["ban"], member["core"], ctx)
                 duelists.update_one(query, {
                     "$set": {
                         "link": link,
@@ -681,7 +690,7 @@ class Castle(commands.Cog):
             embed = discord.Embed(colour=discord.Colour(embed_color), title="No such duelist is found in the database")
             await ctx.channel.send(embed=embed)
 
-    async def duel_profile_generate_image(self, bans, cores, ctx):
+    async def management_duel_profile_generate_image(self, bans, cores, ctx):
 
         bans_address = []
         for shikigami in bans:
@@ -740,21 +749,21 @@ class Castle(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
-    async def duel_profile_show_all(self, ctx):
+    async def management_duel_profile_show_all(self, ctx):
 
         formatted_list = []
         find_query = {}
         project = {"_id": 0, "#": 1, "name": 1}
 
-        for duelist in duelists.find(find_query, project).sort([("name_lower", 1)]):
+        for duelist in duelists.find(find_query, project).sort([("#", 1)]):
             number = lengthen(duelist["#"])
             formatted_list.append(f"`{number}:` | {duelist['name']}\n")
 
         noun = pluralize("duelist", len(formatted_list))
         content = f"There are {len(formatted_list)} registered {noun}"
-        await self.duel_profile_paginate_embeds(ctx, formatted_list, content)
+        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
 
-    async def management_guild_show_startswith(self, ctx, args):
+    async def management_management_guild_show_startswith(self, ctx, args):
 
         formatted_list = []
         find_query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
@@ -766,9 +775,9 @@ class Castle(commands.Cog):
 
         noun = pluralize("result", len(formatted_list))
         content = f"I've got {len(formatted_list)} {noun} for duelists starting with __{args[2].lower()}__"
-        await self.duel_profile_paginate_embeds(ctx, formatted_list, content)
+        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
 
-    async def duel_profile_paginate_embeds(self, ctx, formatted_list, content):
+    async def management_duel_profile_paginate_embeds(self, ctx, formatted_list, content):
 
         page = 1
         max_lines = 20
@@ -782,7 +791,7 @@ class Castle(commands.Cog):
             description_new = "".join(formatted_list[start:end])
 
             embed_new = discord.Embed(
-                color=ctx.author.colour, title="🎌 Duel Colosseum",
+                color=ctx.author.colour, title="🎌 Secret Duelling Book",
                 description=f"{description_new}", timestamp=get_timestamp()
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")

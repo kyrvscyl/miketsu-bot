@@ -44,8 +44,7 @@ def check_if_guild_is_primary(ctx):
 
 
 def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 def get_timestamp():

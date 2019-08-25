@@ -114,7 +114,7 @@ class Startup(commands.Cog):
         except IndexError:
             await ctx.channel.send(embed=embed)
 
-    @commands.command(aliases=["suggest"])
+    @commands.command(aliases=["suggest", "report"])
     async def collect_suggestion(self, ctx, *, suggestion):
         administrator = self.client.get_user(180717337475809281)
         await administrator.send(f"{ctx.author} suggested: {suggestion}")

@@ -21,6 +21,7 @@ users = get_collections("miketsu", "users")
 shikigamis = get_collections("miketsu", "shikigamis")
 ships = get_collections("miketsu", "ships")
 
+# Variables
 total_sp = shikigamis.count_documents({"rarity": "SP"})
 total_ssr = shikigamis.count_documents({"rarity": "SSR"})
 total_sr = shikigamis.count_documents({"rarity": "SR"})
@@ -32,8 +33,7 @@ def get_timestamp():
 
 
 def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 def get_frame_thumbnail(frame):
@@ -90,12 +90,6 @@ class Frames(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-
-    @commands.command()
-    @commands.is_owner()
-    async def achievements_process_weekly_achievements(self, ctx):
-        await self.achievements_process_weekly()
-        await ctx.message.delete()
 
     @commands.command(aliases=["af"])
     @commands.is_owner()

@@ -16,9 +16,8 @@ books = get_collections("bukkuman", "books")
 reminders = get_collections("bukkuman", "reminders")
 
 
-def get_time_est():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+def get_time():
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 class Reminder(commands.Cog):

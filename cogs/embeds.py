@@ -244,7 +244,7 @@ class Embeds(commands.Cog):
             title="🎏 Banner"
         )
         embed6.set_image(
-            url="https://media.discordapp.net/attachments/556032841897607178/600170789722914847/patronus.png"
+            url="https://media.discordapp.net/attachments/473127659136614431/613020543473680394/week_1.png"
         )
         embed6.set_footer(
             text="Assets: Official Onmyoji art; Designed by: xann#8194"

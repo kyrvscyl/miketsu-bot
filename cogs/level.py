@@ -12,14 +12,14 @@ from cogs.mongo.database import get_collections
 users = get_collections("miketsu", "users")
 
 
-async def add_experience(user, exp):
+async def level_add_experience(user, exp):
     if users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"] == 60:
         return
     else:
         users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": exp}})
 
 
-async def level_up(user, ctx):
+async def level_add_level(user, ctx):
     profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
     exp = profile["experience"]
     level = profile["level"]
@@ -58,7 +58,7 @@ async def level_up(user, ctx):
             return
 
 
-async def create_user(user):
+async def level_create_user(user):
     if users.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
         profile = {
             "user_id": str(user.id),
@@ -102,7 +102,7 @@ class Level(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        await create_user(member)
+        await level_create_user(member)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -113,9 +113,9 @@ class Level(commands.Cog):
         elif message.author.bot is True:
             return
 
-        await create_user(message.author)
-        await add_experience(message.author, 5)
-        await level_up(message.author, message)
+        await level_create_user(message.author)
+        await level_add_experience(message.author, 5)
+        await level_add_level(message.author, message)
 
 
 def setup(client):

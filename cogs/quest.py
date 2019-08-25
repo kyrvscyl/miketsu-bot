@@ -26,13 +26,13 @@ thieves = get_collections("miketsu", "thieves")
 hints = get_collections("miketsu", "hints")
 
 # Listings
-diagon_alleys = []
 owls_list = []
-traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-loving"]
+diagon_alleys = []
 lengths = ["short", "long", "average"]
 flexibilities = ["high", "low", "medium"]
-cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
 wand_lengths = ["8", "9", "10", "11", "12", "13", "14"]
+cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
+traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-loving"]
 
 patronus_ = open("lists/patronuses.lists")
 patronuses = patronus_.read().splitlines()
@@ -58,8 +58,7 @@ for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
 
 
 def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 def check_quest(user):

@@ -56,7 +56,7 @@ async def raid_giverewards_raider_as_winner(victim, raider):
     users.update_one({
         "user_id": str(raider.id)}, {
         "$inc": {
-            "coins": 25000, "jades": 50, "medals": 25, "realm_ticket": -1, "experience": 40
+            "coins": 25000, "jades": 50, "medals": 25, "realm_ticket": -1
         }
     })
     users.update_one({
@@ -101,7 +101,7 @@ async def raid_perform_calculation(victim, raider, ctx):
     except KeyError:
         embed = discord.Embed(
             title="Invalid member", colour=discord.Colour(embed_color),
-            description=f"{victim} doesnt have a realm yet in this server"
+            description=f"{victim} does not have a realm yet in this server"
         )
         await ctx.channel.send(embed=embed)
 

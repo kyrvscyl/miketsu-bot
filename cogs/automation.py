@@ -29,9 +29,8 @@ def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
-def get_time_est():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+def get_time():
+    return datetime.now(tz=pytz.timezone("America/Atikokan"))
 
 
 class Automation(commands.Cog):
@@ -46,7 +45,6 @@ class Automation(commands.Cog):
                 return
 
             elif payload.data["pinned"] is True:
-                print(payload.data)
                 request = books.find_one({
                     "server": f"{payload.data['guild_id']}"}, {
                     "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1

@@ -99,7 +99,7 @@ class Error(commands.Cog):
 
             if str(ctx.command) in [
                 "perform_reset",
-                "issue_frame_rewards",
+                "frame_manual",
                 "bounty_add_alias",
                 "shikigami_add",
                 "shikigami_update"
