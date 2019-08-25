@@ -161,6 +161,7 @@ async def duel_profile_add_member(ctx, args):
             "core_count": -1,
             "lineup": [],
             "notes": [],
+            "link": None,
             "last_update": get_time()
         }
         duelists.insert_one(profile)
@@ -499,14 +500,14 @@ class Castle(commands.Cog):
                 title="duel update, d u", colour=discord.Colour(embed_color),
                 description="updates a duelist's profile"
             )
-            embed.add_field(name="Format", value="*`;m u <name or id> <field> <value>`*")
+            embed.add_field(name="Format", value="*`;d u <name or id> <field> <value>`*")
             embed.add_field(
                 name="field :: value",
                 value=f"• **name** :: <new_name>\n"
                       f"• **notes** :: *<any member notes>*\n"
                       f"• **ban** :: *<shikigami>*\n"
                       f"• **core** :: *<shikigami>*\n"
-                      f"• **lineup** :: *<attach a photo>*",
+                      f"• **lineup** :: *attach a photo upon sending*",
                 inline=False
             )
             embed.add_field(
@@ -734,7 +735,7 @@ class Castle(commands.Cog):
         combined_img.save(temp_address)
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(606688376648761380)
+        hosting_channel = self.client.get_channel(556032841897607178)
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
