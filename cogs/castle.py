@@ -608,7 +608,7 @@ class Castle(commands.Cog):
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(
                 name="📸 Stats",
-                value=f"Bans: {len(member['ban'])} | Cores:  {len(member['core'])}",
+                value=f"Bans: {len(member['ban'])} | Cores: {len(member['core'])}",
                 inline=False
             )
 
