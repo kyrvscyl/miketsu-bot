@@ -1354,7 +1354,7 @@ class Economy(commands.Cog):
 
             return new_x, new_y
 
-        while beans != 0:
+        while beans != -1:
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=45, check=check)
             except asyncio.TimeoutError:
