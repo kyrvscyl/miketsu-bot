@@ -317,8 +317,8 @@ class Encounter(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"You have successfully exchanged {cost_amount}{get_emoji(cost_item)} for "
-                                f"{offer_amount}{get_emoji(offer_item)}",
+                    description=f"You acquired {offer_amount:,d}{get_emoji(offer_item)} in exchanged for "
+                                f"{cost_amount:,d}{get_emoji(cost_item)}",
                     timestamp=get_timestamp()
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
