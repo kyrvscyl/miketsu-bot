@@ -5,6 +5,7 @@ Miketsu, 2019
 import asyncio
 import random
 import re
+from itertools import cycle
 
 import discord
 from discord.ext import commands
@@ -23,14 +24,17 @@ stickers_list = []
 
 reaction_list_ = open("lists/reactions.lists")
 reaction_list = reaction_list_.read().splitlines()
+reaction_list_cycle = cycle(reaction_list)
 reaction_list_.close()
 
 success_lists_ = open("lists/success.lists")
 success_lists = success_lists_.read().splitlines()
+success_lists_cycle = cycle(success_lists)
 success_lists_.close()
 
 failed_lists_ = open("lists/failed.lists")
 failed_lists = failed_lists_.read().splitlines()
+failed_lists_cycle = cycle(failed_lists)
 failed_lists_.close()
 
 
@@ -80,36 +84,6 @@ class Funfun(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.Cog.listener()
-    async def on_message(self, message):
-
-        if self.client.user == message.author:
-            return
-
-        elif message.author.bot:
-            return
-
-        elif message.content.lower()[:4] == "mike":
-
-            try:
-                if len(message.content) == 4:
-                    embed = discord.Embed(
-                        colour=discord.Colour(0xffe6a7),
-                        description=random.choice(reaction_list)
-                    )
-                    msg = await message.channel.send(embed=embed)
-                    await msg.delete(delay=15)
-                    await message.delete(delay=15)
-
-                elif message.content.lower().split(" ", 2)[1] == "shoot":
-                    await self.mike_shoot(message.author, message.guild, message.channel, message.content)
-
-                elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
-                    await mike_how_hot(message.guild, message.channel, message.content)
-
-            except IndexError:
-                return
-
     async def mike_shoot(self, user, guild, channel, args):
         msg_formatted = args.lower().split(" ")
 
@@ -122,9 +96,9 @@ class Funfun(commands.Cog):
 
                 if member.id != self.client.user.id:
                     roll = random.randint(1, 100)
-                    response = random.choice(success_lists).format(member.mention)
+                    response = next(success_lists_cycle).format(member.mention)
                     if roll >= 45:
-                        response = random.choice(failed_lists).format(user.mention)
+                        response = next(failed_lists_cycle).format(user.mention)
 
                     embed = discord.Embed(color=member.colour, description=f"*{response}*")
                     await channel.send(embed=embed)
@@ -209,9 +183,6 @@ class Funfun(commands.Cog):
         elif isinstance(message.channel, discord.DMChannel):
             return
 
-        elif len(message.content.split(" ")) > 2:
-            return
-
         elif "mike" in message.content.lower().split(" "):
             user = message.author
             list_message = message.content.lower().split()
@@ -223,7 +194,25 @@ class Funfun(commands.Cog):
                     break
 
             if sticker_recognized is None:
-                return
+
+                try:
+                    if len(message.content) == 4:
+                        embed = discord.Embed(
+                            colour=discord.Colour(0xffe6a7),
+                            description=next(reaction_list_cycle)
+                        )
+                        msg = await message.channel.send(embed=embed)
+                        await msg.delete(delay=15)
+                        await message.delete(delay=15)
+
+                    elif message.content.lower().split(" ", 2)[1] == "shoot":
+                        await self.mike_shoot(message.author, message.guild, message.channel, message.content)
+
+                    elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
+                        await mike_how_hot(message.guild, message.channel, message.content)
+
+                except IndexError:
+                    return
 
             else:
                 x = users.update_one({"user_id": str(user.id), "level": {"$lt": 60}}, {"$inc": {"experience": 20}})
