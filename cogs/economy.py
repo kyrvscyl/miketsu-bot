@@ -1054,7 +1054,7 @@ class Economy(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=45, check=check)
             except asyncio.TimeoutError:
-                await perform_parade_issue_shards(ctx.author, beaned_shikigamis, ctx, msg)
+                break
             else:
                 bean_x, bean_y = get_new_coordinates(x_init, y_init, str(reaction.emoji))
 
