@@ -12,14 +12,14 @@ import pytz
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import primary_id, e_j
+from cogs.startup import guild_id, e_j
 
 # Collections
-books = get_collections("bukkuman", "books")
-frames = get_collections("miketsu", "frames")
-users = get_collections("miketsu", "users")
-shikigamis = get_collections("miketsu", "shikigamis")
-ships = get_collections("miketsu", "ships")
+guilds = get_collections("guilds")
+frames = get_collections("frames")
+users = get_collections("users")
+shikigamis = get_collections("shikigamis")
+ships = get_collections("ships")
 
 # Variables
 total_sp = shikigamis.count_documents({"rarity": "SP"})
@@ -168,7 +168,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_hourly(self):
 
-        guild = self.client.get_guild(int(primary_id))
+        guild = self.client.get_guild(int(guild_id))
         query = users.find({}, {
             "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1,
             "friendship": 1
@@ -188,7 +188,7 @@ class Frames(commands.Cog):
 
             if "The Scholar" not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "Koi"}, {
+                    "user_id": document["user_id"], "shikigami.name": "koi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
 
@@ -208,11 +208,11 @@ class Frames(commands.Cog):
                             "jades": 3500
                         }
                     })
-                    await self.achievements_process_record_user(member, "The Scholar")
+                    await self.achievements_process_announce(member, "The Scholar")
 
             if "Cursed Blade" not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "Yoto Hime"}, {
+                    "user_id": document["user_id"], "shikigami.name": "yoto hime"}, {
                     "_id": 0, "shikigami.$": 1
                 })
 
@@ -232,7 +232,7 @@ class Frames(commands.Cog):
                             "jades": 3500
                         }
                     })
-                    await self.achievements_process_record_user(member, "Cursed Blade")
+                    await self.achievements_process_announce(member, "Cursed Blade")
 
             if document["friendship"] >= 1000 and "Dawn of the Thrilling Spring" not in user_frames:
                 users.update_one({
@@ -247,7 +247,7 @@ class Frames(commands.Cog):
                         "jades": 4500
                     }
                 })
-                await self.achievements_process_record_user(member, "Dawn of the Thrilling Spring")
+                await self.achievements_process_announce(member, "Dawn of the Thrilling Spring")
 
             if "Genteel Women's Reflection" not in user_frames:
 
@@ -270,11 +270,11 @@ class Frames(commands.Cog):
                             "jades": 4500
                         }
                     })
-                    await self.achievements_process_record_user(member, "Genteel Women's Reflection")
+                    await self.achievements_process_announce(member, "Genteel Women's Reflection")
 
             if "Vampire Blood" not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "Vampira"}, {
+                    "user_id": document["user_id"], "shikigami.name": "vampira"}, {
                     "_id": 0, "shikigami.$": 1
                 })
 
@@ -294,7 +294,7 @@ class Frames(commands.Cog):
                             "jades": 3500
                         }
                     })
-                    await self.achievements_process_record_user(member, "Vampire Blood")
+                    await self.achievements_process_announce(member, "Vampire Blood")
 
             if document["amulets_spent"] >= 1000 and "Taste of the Sea" not in user_frames:
                 users.update_one({
@@ -309,7 +309,7 @@ class Frames(commands.Cog):
                         "jades": 3500
                     }
                 })
-                await self.achievements_process_record_user(member, "Taste of the Sea")
+                await self.achievements_process_announce(member, "Taste of the Sea")
 
             if document["amulets_spent"] >= 2000 and "Red Carp" not in user_frames:
                 users.update_one({
@@ -324,7 +324,7 @@ class Frames(commands.Cog):
                         "jades": 4500
                     }
                 })
-                await self.achievements_process_record_user(member, "Red Carp")
+                await self.achievements_process_announce(member, "Red Carp")
 
             if document["level"] >= 30 and "Ubumomma" not in user_frames:
                 users.update_one({
@@ -339,7 +339,7 @@ class Frames(commands.Cog):
                         "jades": 1500
                     }
                 })
-                await self.achievements_process_record_user(member, "Ubumomma")
+                await self.achievements_process_announce(member, "Ubumomma")
 
             if document["level"] >= 50 and "Pine of Kisaragi" not in user_frames:
                 users.update_one({
@@ -354,7 +354,7 @@ class Frames(commands.Cog):
                         "jades": 2500
                     }
                 })
-                await self.achievements_process_record_user(member, "Pine of Kisaragi")
+                await self.achievements_process_announce(member, "Pine of Kisaragi")
 
             if document["level"] == 60 and "Cold of Mutsuki" not in user_frames:
                 users.update_one({
@@ -369,7 +369,7 @@ class Frames(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.achievements_process_record_user(member, "Cold of Mutsuki")
+                await self.achievements_process_announce(member, "Cold of Mutsuki")
 
             if "River of Moon" not in user_frames:
 
@@ -406,7 +406,7 @@ class Frames(commands.Cog):
                             "jades": 3500
                         }
                     })
-                    await self.achievements_process_record_user(member, "River of Moon")
+                    await self.achievements_process_announce(member, "River of Moon")
 
             if "Kitsune" not in user_frames:
 
@@ -443,7 +443,7 @@ class Frames(commands.Cog):
                             "jades": 2500
                         }
                     })
-                    await self.achievements_process_record_user(member, "Kitsune")
+                    await self.achievements_process_announce(member, "Kitsune")
 
             if document["coins"] >= 30000000 and "Limited Gold" not in user_frames:
                 users.update_one({
@@ -458,7 +458,7 @@ class Frames(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.achievements_process_record_user(member, "Limited Gold")
+                await self.achievements_process_announce(member, "Limited Gold")
 
             if "Red Maple Frost" not in user_frames:
 
@@ -504,7 +504,7 @@ class Frames(commands.Cog):
                                 "jades": 2500
                             }
                         })
-                        await self.achievements_process_record_user(member, "Red Maple Frost")
+                        await self.achievements_process_announce(member, "Red Maple Frost")
 
             if "Festival of Cherries" not in user_frames:
 
@@ -550,7 +550,7 @@ class Frames(commands.Cog):
                                 "jades": 2500
                             }
                         })
-                        await self.achievements_process_record_user(member, "Festival of Cherries")
+                        await self.achievements_process_announce(member, "Festival of Cherries")
 
             if len(user_frames) >= 15 and "Famous in Patronus" not in user_frames:
                 users.update_one({
@@ -565,7 +565,7 @@ class Frames(commands.Cog):
                         "jades": 3500
                     }
                 })
-                await self.achievements_process_record_user(member, "Famous in Patronus")
+                await self.achievements_process_announce(member, "Famous in Patronus")
 
             if document["medals"] >= 500:
 
@@ -593,11 +593,11 @@ class Frames(commands.Cog):
                                 "jades": 750
                             }
                         })
-                        await self.achievements_process_record_user(member, reward[0])
+                        await self.achievements_process_announce(member, reward[0])
 
     async def achievements_process_weekly(self):
 
-        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels": 1})
+        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})
         spell_spam_id = request["channels"]["spell-spam"]
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         users.update_many({"achievements.name": "Eboshi"}, {"$pull": {"achievements": {"name": "Eboshi"}}})
@@ -624,7 +624,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_daily(self):
 
-        guild = self.client.get_guild(int(primary_id))
+        guild = self.client.get_guild(int(guild_id))
         guild_1st_anniversary = datetime.strptime("2019-Feb-01", "%Y-%b-%d")
 
         query = users.find({}, {
@@ -659,7 +659,7 @@ class Frames(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.achievements_process_record_user(member, "Recalling the Past")
+                await self.achievements_process_announce(member, "Recalling the Past")
 
             if delta_days >= 365 and "Loyal Company" not in user_frames:
                 users.update_one({
@@ -674,7 +674,7 @@ class Frames(commands.Cog):
                         "jades": 10000
                     }
                 })
-                await self.achievements_process_record_user(member, "Loyal Company")
+                await self.achievements_process_announce(member, "Loyal Company")
 
             if guild_1st_anniversary > date_joined and "One Year Anniversary" not in user_frames:
                 users.update_one({
@@ -689,7 +689,7 @@ class Frames(commands.Cog):
                         "jades": 3500
                     }
                 })
-                await self.achievements_process_record_user(member, "One Year Anniversary")
+                await self.achievements_process_announce(member, "One Year Anniversary")
 
             if "Starlight Sky" in user_frames and "Blazing Sun" in user_frames and "The Sun & Moon" not in user_frames:
                 users.update_one({
@@ -704,11 +704,11 @@ class Frames(commands.Cog):
                         "jades": 5000
                     }
                 })
-                await self.achievements_process_record_user(member, "The Sun & Moon")
+                await self.achievements_process_announce(member, "The Sun & Moon")
 
-    async def achievements_process_record_user(self, member, frame_name):
+    async def achievements_process_announce(self, member, frame_name):
 
-        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels.spell-spam": 1})
+        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels.spell-spam": 1})
         spell_spam_id = request["channels"]["spell-spam"]
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
 

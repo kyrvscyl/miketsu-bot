@@ -16,17 +16,18 @@ from discord.ext import commands
 
 from cogs.frames import Frames
 from cogs.mongo.database import get_collections
-from cogs.startup import e_m, e_j, e_c, e_f, e_a, e_sp, e_ssr, e_sr, e_r, e_t, pluralize, primary_id, embed_color
+from cogs.startup import \
+    e_m, e_j, e_c, e_f, e_a, e_sp, e_ssr, e_sr, e_r, e_t, pluralize, guild_id, embed_color, hosting_id
 
 # Collections
-books = get_collections("bukkuman", "books")
-bounty = get_collections("bukkuman", "bounty")
-shikigamis = get_collections("miketsu", "shikigamis")
-users = get_collections("miketsu", "users")
-ships = get_collections("miketsu", "ships")
-streak = get_collections("miketsu", "streak")
-frames = get_collections("miketsu", "frames")
-boss = get_collections("miketsu", "boss")
+guilds = get_collections("guilds")
+bounties = get_collections("bounties")
+shikigamis = get_collections("shikigamis")
+users = get_collections("users")
+ships = get_collections("ships")
+streaks = get_collections("streaks")
+frames = get_collections("frames")
+bosses = get_collections("bosses")
 
 # Listings
 pool_sp = []
@@ -47,11 +48,11 @@ verb = ["snatched", "stole", "took", "looted", "shoplifted", "embezzled"]
 noun = ["custody", "care", "control", "ownership"]
 comment = ["Sneaky!", "Gruesome!", "Madness!"]
 
+developer_team = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "developers": 1})["developers"]
 
 caption = open("lists/summon.lists")
 summon_caption = caption.read().splitlines()
 caption.close()
-
 
 for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
     purchasable_frames.append(document["name"].lower())
@@ -70,7 +71,7 @@ for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine"
         pool_r.append(shikigami["name"])
 
 
-for document in books.find({}, {"_id": 0, "channels.spell-spam": 1}):
+for document in guilds.find({}, {"_id": 0, "channels.spell-spam": 1}):
     try:
         spell_spams_id.append(document["channels"]["spell-spam"])
     except KeyError:
@@ -81,6 +82,10 @@ pool_all.extend(pool_ssr)
 pool_all.extend(pool_sr)
 pool_all.extend(pool_r)
 pool_all.extend(pool_shrinable)
+
+
+def check_if_developer_team(ctx):
+    return str(ctx.author.id) in developer_team
 
 
 def check_if_user_has_prayers(ctx):
@@ -195,7 +200,7 @@ def get_thumbnail_shikigami(shiki, evolution):
 
 
 async def reset_boss():
-    boss.update_many({}, {
+    bosses.update_many({}, {
         "$set": {
             "discoverer": 0,
             "level": 0,
@@ -406,7 +411,7 @@ async def frame_starlight(guild, spell_spam_channel):
     starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
 
     streak_list = []
-    for user in streak.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
+    for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
         streak_list.append((user["user_id"], user["SSR_current"]))
 
     streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
@@ -619,21 +624,21 @@ async def summon_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summo
 
 
 async def summon_streak(user, summon_pull):
-    if streak.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-        streak.insert_one({"user_id": str(user.id), "SSR_current": 0, "SSR_record": 0})
+    if streaks.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
+        streaks.insert_one({"user_id": str(user.id), "SSR_current": 0, "SSR_record": 0})
 
     for summon in summon_pull:
-        ssr_current = streak.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_current"]
-        ssr_record = streak.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_record"]
-
-        if summon[0] == "SP" or summon[0] == "SR" or summon[0] == "R":
+        ssr_current = streaks.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_current"]
+        ssr_record = streaks.find_one({"user_id": str(user.id)}, {"_id": 0})["SSR_record"]
+        
+        if summon[0] in ["SP", "SR", "R"]:
             if ssr_current == ssr_record:
-                streak.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1, "SSR_record": 1}})
+                streaks.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1, "SSR_record": 1}})
             else:
-                streak.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1}})
+                streaks.update_one({"user_id": str(user.id)}, {"$inc": {"SSR_current": 1}})
 
-        if summon[0] == "SSR":
-            streak.update_one({"user_id": str(user.id)}, {"$set": {"SSR_current": 0}})
+        elif summon[0] == "SSR":
+            streaks.update_one({"user_id": str(user.id)}, {"$set": {"SSR_current": 0}})
 
 
 async def summon_perform(ctx, user, amulet_pull):
@@ -749,10 +754,107 @@ async def summon_perform_shards(ctx, shiki, user):
         await ctx.channel.send(embed=embed)
 
 
+async def level_add_experience(user, exp):
+    if users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"] == 60:
+        return
+    else:
+        users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": exp}})
+
+
+async def level_add_level(user, ctx):
+    profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
+    exp = profile["experience"]
+    level = profile["level"]
+    level_end = int(exp ** 0.3556302501)
+
+    if level > level_end:
+        users.update_one({"user_id": str(user.id)}, {"$set": {"level": level_end}})
+
+    if level < level_end:
+        level_next = 5 * (round(((level + 2) ** 2.811909279) / 5))
+        users.update_one({
+            "user_id": str(user.id)}, {
+            "$set": {
+                "level_exp_next": level_next,
+                "level": level_end
+            },
+            "$inc": {
+                "jades": 150, "amulets": 10, "coins": 100000
+            }
+        })
+        if level_end == 60:
+            users.update_one({
+                "user_id": str(user.id)}, {
+                "$set": {
+                    "level_exp_next": 100000,
+                    "level": 60
+                },
+                "$inc": {
+                    "jades": 4000, "amulets": 50, "coins": 1000000
+                }
+            })
+
+        try:
+            await ctx.add_reaction("⤴")
+        except discord.errors.HTTPException:
+            return
+
+
+async def level_create_user(user):
+    if users.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
+        profile = {
+            "user_id": str(user.id),
+            "experience": 0,
+            "level": 1,
+            "level_exp_next": 5,
+            "amulets": 10,
+            "amulets_spent": 0,
+            "SP": 0,
+            "SSR": 0,
+            "SR": 0,
+            "R": 0,
+            "jades": 0,
+            "coins": 0,
+            "medals": 0,
+            "realm_ticket": 3,
+            "honor": 0,
+            "talisman": 0,
+            "friendship": 0,
+            "guild_medal": 0,
+            "shikigami": [],
+            "encounter_ticket": 0,
+            "daily": False,
+            "weekly": False,
+            "raided_count": 0,
+            "friendship_pass": 0,
+            "display": None,
+            "prayers": 3,
+            "achievements": [],
+            "frame": "",
+            "achievements_count": 0,
+            "wish": True,
+            "parade_tickets": 0
+        }
+        users.insert_one(profile)
+
+
 class Economy(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if message.author == self.client.user:
+            return
+
+        elif message.author.bot is True:
+            return
+
+        await level_create_user(message.author)
+        await level_add_experience(message.author, 5)
+        await level_add_level(message.author, message)
 
     @commands.command(aliases=["wish"])
     @commands.guild_only()
@@ -914,6 +1016,9 @@ class Economy(commands.Cog):
             await ctx.channel.send(embed=embed)
             return
 
+        except TypeError:
+            return
+
         if shikigami_wished_for is True:
             embed = discord.Embed(
                 color=user.colour,
@@ -981,7 +1086,7 @@ class Economy(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["reset"])
-    @commands.is_owner()
+    @commands.check(check_if_developer_team)
     async def perform_reset(self, ctx, *, args):
 
         if args == "daily":
@@ -1298,7 +1403,7 @@ class Economy(commands.Cog):
         address = f"temp/{ctx.author.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(556032841897607178)
+        hosting_channel = self.client.get_channel(hosting_id)
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
@@ -1432,14 +1537,14 @@ class Economy(commands.Cog):
                 amount, rewards = get_rewards(str(reaction.emoji))
                 embed = discord.Embed(
                     title=f"Results", color=ctx.author.colour,
-                    description=f"||Your prayer has been heard, you obtained {amount}{str(reaction.emoji)}||"
+                    description=f"||Your prayer has been heard, you obtained {amount:,d}{str(reaction.emoji)}||"
                 )
                 users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {rewards: amount}})
                 await ctx.channel.send(embed=embed)
                 return
 
     @commands.command(aliases=["fm"])
-    @commands.is_owner()
+    @commands.check(check_if_developer_team)
     async def frame_manual(self, ctx):
 
         await self.frame_automate()
@@ -1447,7 +1552,7 @@ class Economy(commands.Cog):
 
     async def frame_automate(self):
 
-        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "channels": 1})
+        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})
         spell_spam_id = request["channels"]["spell-spam"]
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         guild = spell_spam_channel.guild
@@ -1457,12 +1562,12 @@ class Economy(commands.Cog):
         await frame_blazing(guild, spell_spam_channel)
 
     @commands.command(aliases=["add"])
-    @commands.is_owner()
+    @commands.check(check_if_developer_team)
     async def bounty_add_alias(self, ctx, *args):
 
         name = args[0].replace("_", " ").lower()
         alias = " ".join(args[1::]).replace("_", " ").lower()
-        bounty.update_one({"aliases": name}, {"$push": {"aliases": alias}})
+        bounties.update_one({"aliases": name}, {"$push": {"aliases": alias}})
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
             title=f"Successfully added {alias} to {name}"
@@ -1476,8 +1581,8 @@ class Economy(commands.Cog):
         if len(query) < 2:
             return
 
-        bounty_search1 = bounty.find_one({"aliases": query.lower()}, {"_id": 0})
-        bounty_search2 = bounty.find({"aliases": {"$regex": f"^{query[:2].lower()}"}}, {"_id": 0})
+        bounty_search1 = bounties.find_one({"aliases": query.lower()}, {"_id": 0})
+        bounty_search2 = bounties.find({"aliases": {"$regex": f"^{query[:2].lower()}"}}, {"_id": 0})
 
         if bounty_search1 is not None:
             try:
@@ -1583,7 +1688,7 @@ class Economy(commands.Cog):
         address = f"temp/{member.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(556032841897607178)
+        hosting_channel = self.client.get_channel(hosting_id)
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -1823,7 +1928,7 @@ class Economy(commands.Cog):
         address = f"temp/{member.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(556032841897607178)
+        hosting_channel = self.client.get_channel(hosting_id)
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -1973,7 +2078,7 @@ class Economy(commands.Cog):
                 await msg.edit(embed=create_new_embed_page(page))
 
     @commands.command(aliases=["addshiki"])
-    @commands.is_owner()
+    @commands.check(check_if_developer_team)
     async def shikigami_add(self, ctx, *args):
 
         if len(args) < 5:
@@ -2004,7 +2109,7 @@ class Economy(commands.Cog):
             await ctx.message.add_reaction("❌")
 
     @commands.command(aliases=["update"])
-    @commands.is_owner()
+    @commands.check(check_if_developer_team)
     async def shikigami_update(self, ctx, *args):
 
         if len(args) == 0:
@@ -2481,6 +2586,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["friendship", "fp"])
     @commands.guild_only()
+    @commands.cooldown(1, 2, commands.BucketType.user)
     async def friendship_give(self, ctx, *, receiver: discord.Member = None):
 
         giver = ctx.author

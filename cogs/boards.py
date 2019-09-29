@@ -14,9 +14,9 @@ from cogs.mongo.database import get_collections
 from cogs.startup import e_f, e_a, e_m, e_ssr, e_sr, e_sp
 
 # Collections
-users = get_collections("miketsu", "users")
-ships = get_collections("miketsu", "ships")
-streak = get_collections("miketsu", "streak")
+users = get_collections("users")
+ships = get_collections("ships")
+streak = get_collections("streaks")
 
 
 def get_timestamp():

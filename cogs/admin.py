@@ -13,21 +13,21 @@ import pytz
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import pluralize, primary_id, embed_color
+from cogs.startup import pluralize, embed_color
 
 # Collections
-books = get_collections("bukkuman", "books")
-members = get_collections("bukkuman", "members")
-frames = get_collections("miketsu", "frames")
-users = get_collections("miketsu", "users")
-ships = get_collections("miketsu", "ships")
+guilds = get_collections("guilds")
+members = get_collections("members")
+frames = get_collections("frames")
+users = get_collections("users")
+ships = get_collections("ships")
 
 # Listings
 fields = ["name", "role", "status", "notes", "note", "tfeat", "gq"]
-roles = ["member", "ex-member", "officer", "leader", "blacklist"]
+roles = ["member", "ex-member", "officer", "leader", "blacklist", "applicant"]
 status_values = ["active", "inactive", "on-leave", "kicked", "semi-active", "away", "left", "trade"]
 status_batch = {"inactives": 30, "semi-actives": 60}
-admin_roles = ["Head", "Alpha", "📝"]
+admin_roles = ["Head"]
 
 
 def check_if_has_any_role(ctx):
@@ -35,12 +35,6 @@ def check_if_has_any_role(ctx):
         if role.name in admin_roles:
             return True
     return False
-
-
-def check_if_guild_is_primary(ctx):
-    if ctx.author.id == 180717337475809281:
-        return True
-    return ctx.guild.id == primary_id
 
 
 def get_time():
@@ -65,7 +59,7 @@ def shorten(key):
     dictionary = {
         "leader": "LDR", "member": "MEM", "officer": "OFR", "ex-member": "EXM", "active": "ACTV", "inactive": "INAC",
         "on-leave": "ONLV", "semi-active": "SMAC", "away": "AWAY", "left": "LEFT", "kicked": "KCKD", "trade": "TRDE",
-        "blacklist": "BLCK"
+        "blacklist": "BLK", "applicant": "APL"
     }
     return dictionary[key]
 
@@ -353,7 +347,6 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=["m", "manage"])
     @commands.check(check_if_has_any_role)
-    @commands.check(check_if_guild_is_primary)
     async def management_guild(self, ctx, *args):
 
         if len(args) == 0 or args[0].lower() in ["help", "h"]:

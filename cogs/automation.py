@@ -2,23 +2,23 @@
 Automation Module
 Miketsu, 2019
 """
-import sys
 from datetime import datetime
 
 import discord
 import pytz
 from discord.ext import commands
 
+from cogs.economy import level_create_user
 from cogs.mongo.database import get_collections
 from cogs.startup import pluralize
 
 # Collections
-books = get_collections("bukkuman", "books")
+guilds = get_collections("guilds")
 
 # Listings
 shard_trading_ids = []
 
-for document in books.find({}, {"_id": 0, "channels.shard-trading": 1}):
+for document in guilds.find({}, {"_id": 0, "channels.shard-trading": 1}):
     try:
         shard_trading_ids.append(str(document["channels"]["shard-trading"]))
     except KeyError:
@@ -45,7 +45,7 @@ class Automation(commands.Cog):
                 return
 
             elif payload.data["pinned"] is True:
-                request = books.find_one({
+                request = guilds.find_one({
                     "server": f"{payload.data['guild_id']}"}, {
                     "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1
                 })
@@ -78,7 +78,9 @@ class Automation(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        request = books.find_one({"server": f"{member.guild.id}"}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1})
+
+        await level_create_user(member)
+        request = guilds.find_one({"server": f"{member.guild.id}"}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1})
 
         try:
             common_room_id = request["channels"]["the-common-room"]
@@ -90,8 +92,6 @@ class Automation(commands.Cog):
             welcome_message = request["letters"]["welcome"]
 
         except KeyError:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            print(exc_type, "automation.py", exc_tb.tb_lineno)
             return
 
         try:
@@ -146,7 +146,7 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        request = books.find_one({"server": str(member.guild.id)}, {"_id": 0, "channels.scroll-of-everything": 1})
+        request = guilds.find_one({"server": str(member.guild.id)}, {"_id": 0, "channels.scroll-of-everything": 1})
         record_scroll_id = request["channels"]["scroll-of-everything"]
         record_scroll_channel = self.client.get_channel(int(record_scroll_id))
 
@@ -169,11 +169,16 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
 
-        request = books.find_one({
-            "server": str(before.guild.id)}, {
-            "_id": 0, "channels.scroll-of-everything": 1, "channels.auror-department": 1
-        })
-        record_scroll_id = request["channels"]["scroll-of-everything"]
+        try:
+            request = guilds.find_one({
+                "server": str(before.guild.id)}, {
+                "_id": 0, "channels.scroll-of-everything": 1, "channels.auror-department": 1
+            })
+            record_scroll_id = request["channels"]["scroll-of-everything"]
+
+        except TypeError:
+            return
+
         record_scroll_channel = self.client.get_channel(int(record_scroll_id))
 
         if before.roles != after.roles:

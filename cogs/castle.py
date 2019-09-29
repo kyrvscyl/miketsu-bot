@@ -13,15 +13,17 @@ import discord
 import pytz
 from PIL import Image, ImageFont, ImageDraw
 from discord.ext import commands
+from discord_webhook import DiscordWebhook, DiscordEmbed
 
 from cogs.mongo.database import get_collections
-from cogs.startup import primary_id, embed_color, pluralize
+from cogs.startup import embed_color, pluralize, hosting_id
 
 # Collections
-portraits = get_collections("bukkuman", "portraits")
-books = get_collections("bukkuman", "books")
-duelists = get_collections("bukkuman", "duelists")
-shikigamis = get_collections("miketsu", "shikigamis")
+portraits = get_collections("portraits")
+guilds = get_collections("guilds")
+duelists = get_collections("duelists")
+shikigamis = get_collections("shikigamis")
+books = get_collections("books")
 
 # Listings
 pool_all = []
@@ -30,15 +32,23 @@ duelling_room_id = []
 primary_roles = ["Head", "Auror", "Patronus", "No-Maj"]
 invalid_channels = ["auror-department", "gift-game", "pvp-fair", "duelling-room"]
 fields = ["name", "notes", "ban", "core", "lineup", "unban", "uncore"]
+lists_souls = []
+lists_souls_raw = []
 
-for document in books.find({}, {"_id": 0, "categories.castle": 1}):
+
+for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_id": 0, "index": 1}):
+    lists_souls.append("`{}`".format(soul["index"].lower()))
+    lists_souls_raw.append(soul["index"].lower())
+
+
+for document in guilds.find({}, {"_id": 0, "categories.castle": 1}):
     try:
         castles_id.append(document["categories"]["castle"])
     except KeyError:
         continue
 
 
-for document in books.find({}, {"_id": 0, "channels.duelling-room": 1}):
+for document in guilds.find({}, {"_id": 0, "channels.duelling-room": 1}):
     try:
         duelling_room_id.append(document["channels"]["duelling-room"])
     except KeyError:
@@ -81,6 +91,109 @@ def check_if_guild_is_patronus(ctx):
 
 def check_if_channel_is_pvp(ctx):
     return str(ctx.channel.id) in duelling_room_id
+
+
+def check_if_reference_section(ctx):
+    return ctx.channel.name == "reference-section"
+
+
+def check_if_restricted_section(ctx):
+    return ctx.channel.name == "restricted-section"
+
+
+async def post_process_books(ctx, query):
+    books.update_one(query, {"$inc": {"borrows": 1}})
+    await ctx.message.delete()
+
+
+async def post_table_of_content_restricted(channel):
+    try:
+        webhooks = await channel.webhooks()
+        bukkuman = webhooks[0]
+        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+    except AttributeError:
+        return False
+
+    description = \
+        "• To open a book use `;open [section] [index]`\n" \
+        "• Example: `;open da 8`"
+
+    embed = DiscordEmbed(
+        title=":bookmark: Table of Contents",
+        colour=discord.Colour(0xa0c29a),
+        description=description
+    )
+    embed.add_embed_field(
+        name=":notebook: Defense Against The Dark Arts `[DA]`",
+        value="• `[1]` Wind Kirin\n"
+              "• `[2]` Fire Kirin\n"
+              "• `[3]` Lightning Kirin\n"
+              "• `[4]` Water Kirin\n"
+              "• `[5]` Namazu\n"
+              "• `[6]` Oboroguruma\n"
+              "• `[7]` Odokuro\n"
+              "• `[8]` Shinkirou\n"
+              "• `[9]` Tsuchigumo\n"
+    )
+    embed.add_embed_field(
+        name=":notebook: Fantastic Beasts and How to Deal with Them `[FB]`",
+        value="• `[1]` Winged Tsukinohime Guide\n"
+              "• `[2]` Song of the Isle and Sorrow Guide\n"
+    )
+    embed.add_embed_field(
+        name=":notebook: The Dark Arts Outsmarted `[DAO]`",
+        value="• `[1]` True Orochi Co-op Carry"
+    )
+    webhook.add_embed(embed)
+    webhook.execute()
+    return True
+
+
+async def post_table_of_content_reference(channel):
+    try:
+        webhooks = await channel.webhooks()
+        bukkuman = webhooks[0]
+        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+    except AttributeError:
+        return False
+
+    lists_souls_formatted = ", ".join(lists_souls)
+    description = \
+        "• To open a book use `;open [section] [index]`\n" \
+        "• Example: `;open sbs 3`"
+
+    embed = DiscordEmbed(
+        title=":bookmark: Table of Magical Contents",
+        colour=discord.Colour(0xa0c29a),
+        description=description
+    )
+    embed.add_embed_field(
+        name=":book: The Standard Book of Souls - Year 1 `[SBS]`",
+        value="{}".format(lists_souls_formatted)
+    )
+    embed.add_embed_field(
+        name=":book: The Standard Book of Souls - Year 5 `[SBS]`",
+        value="• `[1]` Souls 10 Speed Run (24-25s)\n"
+              "• `[2]` Souls 10 Speed Run (20-21s)\n"
+              "• `[3]` Souls Moan Team Varieties"
+    )
+    embed.add_embed_field(
+        name=":closed_book: Secret Duelling Books `[SDB]`",
+        value="• `[1]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
+              "• `[2]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
+              "• `[3]` What if by Quinlynn - Book 1\n"
+              "• `[4]` What if by Quinlynn - Book 2"
+    )
+    embed.add_embed_field(
+        name=":books: Assorted Books `[AB]`",
+        value="• `[1]` Advanced Realm-Making\n"
+              "• `[2]` A Beginner's Guide to Shikigami Affection\n"
+              "• `[3]` Predicting the Unpredictable: Summon Odds\n"
+              "• `[4]` Spellman's Syllabary: Contractions"
+    )
+    webhook.add_embed(embed)
+    webhook.execute()
+    return True
 
 
 async def management_duel_profile_update_field(ctx, args):
@@ -189,6 +302,187 @@ class Castle(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    def create_webhook_post(self, webhooks, book):
+
+        bukkuman = webhooks[0]
+        webhook = DiscordWebhook(
+            content=book['content'],
+            url=bukkuman.url,
+            avatar_url="https://i.imgur.com/5FflHQ5.jpg",
+            username="Professor Bukkuman"
+        )
+
+        def generate_embed_value_1(dictionary, key):
+            try:
+                value = dictionary[key]
+            except KeyError:
+                value = None
+            return value
+
+        try:
+            for entry in book["embeds"]:
+                embed = DiscordEmbed(color=generate_embed_value_1(entry, "color"))
+                try:
+                    embed.title = generate_embed_value_1(entry, "title")
+                except AttributeError:
+                    pass
+                except TypeError:
+                    pass
+
+                try:
+                    embed.description = generate_embed_value_1(entry, "description").replace("\\n", "\n")
+                except AttributeError:
+                    pass
+                except TypeError:
+                    pass
+
+                try:
+                    embed.set_thumbnail(url=generate_embed_value_1(entry, "thumbnail")["url"])
+                except TypeError:
+                    pass
+
+                try:
+                    embed.set_image(url=generate_embed_value_1(entry, "image")["url"])
+                except TypeError:
+                    pass
+
+                try:
+                    for field in entry["fields"]:
+                        embed.add_embed_field(
+                            name=field["name"],
+                            value=field["value"].replace("\\n", "\n"),
+                            inline=False
+                        )
+                except KeyError:
+                    pass
+
+                try:
+                    user_id = generate_embed_value_1(entry, "author")["icon_url"]
+                    user = self.client.get_user(int(user_id))
+                    embed.set_author(
+                        name=generate_embed_value_1(entry, "author")["name"],
+                        icon_url=str(user.avatar_url_as(format="jpg", size=128))
+                    )
+                except ValueError:
+                    return
+                except TypeError:
+                    pass
+                except AttributeError:
+                    pass
+
+                try:
+                    user_id = generate_embed_value_1(entry, "footer")["text"]
+                    user = self.client.get_user(int(user_id))
+                    embed.set_footer(
+                        text=f"Guide by {user.name}",
+                        icon_url=str(user.avatar_url_as(format="jpg", size=128))
+                    )
+                except ValueError:
+                    embed.set_footer(
+                        text=generate_embed_value_1(entry, "footer")["text"]
+                    )
+                except TypeError:
+                    pass
+                except AttributeError:
+                    pass
+
+                webhook.add_embed(embed)
+
+        except KeyError:
+            pass
+
+        return webhook
+
+    @commands.command(aliases=["guides", "guide"])
+    @commands.guild_only()
+    async def post_table_of_content(self, ctx):
+
+        if check_if_reference_section(ctx):
+
+            await post_table_of_content_reference(ctx.channel)
+            await ctx.message.delete()
+
+        elif check_if_restricted_section(ctx):
+
+            await post_table_of_content_restricted(ctx.channel)
+            await ctx.message.delete()
+
+        else:
+            request = guilds.find_one({"server": str(ctx.guild.id)}, {
+                "channels.restricted-section": 1, "channels.reference-section": 1
+            })
+
+            reference_section = f"{request['channels']['reference-section']}"
+            restricted_section = f"{request['channels']['restricted-section']}"
+
+            embed = discord.Embed(
+                title="guides, guide", colour=discord.Colour(0xffe6a7),
+                description="show the guild's game guides collection, usable only at the library"
+            )
+            embed.add_field(name="Libraries", value=f"<#{reference_section}>, <#{restricted_section}>")
+            await ctx.channel.send(embed=embed)
+
+    @commands.command(aliases=["open"])
+    @commands.guild_only()
+    async def post_book_reference(self, ctx, arg1, *, args="None"):
+
+        if check_if_reference_section(ctx):
+
+            webhooks = await ctx.channel.webhooks()
+            query = {"section": arg1.lower(), "index": args.lower()}
+
+            if arg1.lower() == "pb" and args.lower() == "bgt":
+                query = {"section": arg1.lower(), "index": "0"}
+
+            book = books.find_one(query, {"_id": 0})
+
+            if arg1.lower() in ["ab", "sbs"] and args.lower() in ["3"]:
+
+                opener = urllib.request.build_opener()
+                opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+                urllib.request.install_opener(opener)
+                urllib.request.urlretrieve(book["attachment"], book["address"])
+
+                file = discord.File(book["address"], filename=book["filename"])
+                contributor = self.client.get_user(int(book["contributor"]))
+                await ctx.channel.send(
+                    content=f"{book['content']} {contributor}",
+                    file=file
+                )
+                await post_process_books(ctx, query)
+
+            elif book is not None:
+
+                webhook = self.create_webhook_post(webhooks, book)
+                webhook.execute()
+                await post_process_books(ctx, query)
+
+        elif check_if_restricted_section(ctx):
+
+            webhooks = await ctx.channel.webhooks()
+            query = {"section": arg1.lower(), "index": args.lower()}
+            book = books.find_one(query, {"_id": 0})
+
+            if arg1.lower() in ["fb"] and args.lower() in ["1", "2"]:
+
+                opener = urllib.request.build_opener()
+                opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+                urllib.request.install_opener(opener)
+                urllib.request.urlretrieve(book["attachment"], book["address"])
+
+                file = discord.File(book["address"], filename=book["filename"])
+                await ctx.channel.send(
+                    content=f"{book['content']}",
+                    file=file
+                )
+                await post_process_books(ctx, query)
+
+            elif book is not None:
+
+                webhook = self.create_webhook_post(webhooks, book)
+                webhook.execute()
+                await post_process_books(ctx, query)
 
     @commands.command(aliases=["portraits"])
     @commands.guild_only()
@@ -396,7 +690,7 @@ class Castle(commands.Cog):
             background.save(new_address)
 
             new_photo = discord.File(new_address, filename=f"{ign}.png")
-            hosting_channel = self.client.get_channel(556032841897607178)
+            hosting_channel = self.client.get_channel(hosting_id)
             msg = await hosting_channel.send(file=new_photo)
 
             await asyncio.sleep(3)
@@ -418,68 +712,6 @@ class Castle(commands.Cog):
             await msg1.delete()
 
         return attachment_link
-
-    @commands.command(aliases=["transform"])
-    @commands.is_owner()
-    async def transformation_trigger(self, ctx, *, args):
-
-        if args.lower() == "start":
-            await self.transformation_start()
-            await ctx.message.delete()
-
-        elif args.lower() == "end":
-            await self.transformation_end()
-            await ctx.message.delete()
-
-    async def transformation_end(self):
-
-        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "server": 1})
-        roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
-        server = self.client.get_guild(int(request["server"]))
-
-        try:
-            reference_role = discord.utils.get(server.roles, name="Head")
-        except AttributeError:
-            return
-
-        for role in roles:
-            try:
-                current_role = discord.utils.get(server.roles, name=role)
-                await current_role.edit(position=reference_role.position - 1)
-                await asyncio.sleep(1)
-            except AttributeError:
-                continue
-            except discord.errors.Forbidden:
-                continue
-            except discord.errors.HTTPException:
-                continue
-            except discord.errors.InvalidArgument:
-                continue
-
-    async def transformation_start(self):
-
-        request = books.find_one({"server": str(primary_id)}, {"_id": 0, "server": 1})
-        roles = ["No-Maj", "Patronus", "Auror", "Dementor", "Junior Duel Champion", "Senior Duel Champion"]
-        server = self.client.get_guild(int(request["server"]))
-
-        try:
-            reference_role = discord.utils.get(server.roles, name="🏆")
-        except AttributeError:
-            return
-
-        for role in roles:
-            try:
-                current_role = discord.utils.get(server.roles, name=role)
-                await current_role.edit(position=reference_role.position - 1)
-                await asyncio.sleep(1)
-            except AttributeError:
-                continue
-            except discord.errors.Forbidden:
-                continue
-            except discord.errors.HTTPException:
-                continue
-            except discord.errors.InvalidArgument:
-                continue
 
     @commands.command(aliases=["duel", "d"])
     @commands.check(check_if_channel_is_pvp)
@@ -744,7 +976,7 @@ class Castle(commands.Cog):
         combined_img.save(temp_address)
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(556032841897607178)
+        hosting_channel = self.client.get_channel(hosting_id)
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link

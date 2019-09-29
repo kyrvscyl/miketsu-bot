@@ -13,14 +13,13 @@ from discord.ext import commands
 from cogs.mongo.database import get_collections
 
 # Collections
-books = get_collections("bukkuman", "books")
-stickers = get_collections("bukkuman", "stickers")
-users = get_collections("miketsu", "users")
+guilds = get_collections("guilds")
+stickers = get_collections("stickers")
+users = get_collections("users")
 
 # Listings
 actions = []
 stickers_list = []
-
 
 reaction_list_ = open("lists/reactions.lists")
 reaction_list = reaction_list_.read().splitlines()

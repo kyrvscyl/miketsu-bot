@@ -3,12 +3,18 @@ Startup Module
 Miketsu, 2019
 """
 
+import os
 from datetime import datetime
 from itertools import cycle
 
 import discord
 import pytz
 from discord.ext import tasks, commands
+
+from cogs.mongo.database import get_collections
+
+# Collections
+guilds = get_collections("guilds")
 
 # Global Variables
 e_m = "<:medal:573071121545560064>"
@@ -22,8 +28,13 @@ e_sr = "<:SR:602707410922242048>"
 e_r = "<:R_:602707410582241280>"
 e_n = "<:N_:602707410540560414>"
 e_t = "<:talisman:573071120685596682>"
-primary_id = 412057028887052288
+
 embed_color = 0xffa8e1
+guild_id = int(os.environ.get("PATRONUS"))
+hosting_id = int(guilds.find_one({
+    "server": str(guild_id)}, {
+    "_id": 0, "channels.bot-sparring": 1
+})["channels"]["bot-sparring"])
 
 # Listings
 status = cycle([
@@ -51,11 +62,13 @@ class Startup(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+        owner_id = await self.client.application_info()
+
         print("Initializing...")
         print("-------")
         print("Logged in as {0.user}".format(self.client))
-        print("Hi! {}!".format(self.client.get_user(180717337475809281)))
-        print("Time now: {}".format(datetime.now(tz=pytz.timezone("Asia/Manila")).strftime("%d.%b %Y %H:%M:%S")))
+        print("Hi! {}!".format(self.client.get_user(owner_id.owner.id)))
+        print("Time now: {}".format(datetime.now(tz=pytz.timezone("America/Atikokan")).strftime("%d.%b %Y %H:%M:%S")))
         print("-------")
         self.change_status.start()
         print("-------")
@@ -73,7 +86,7 @@ class Startup(commands.Cog):
             color=embed_color,
             description="To see my commands, type *`;help`* or *`;help dm`*"
         )
-        embed.set_author(name="Hello there! I'm Miketsu! ~")
+        embed.set_author(name=f"Hello there! I'm {self.client.user.display_name}! ~")
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["h", "help"])
@@ -116,8 +129,16 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["suggest", "report"])
     async def collect_suggestion(self, ctx, *, suggestion):
-        administrator = self.client.get_user(180717337475809281)
-        await administrator.send(f"{ctx.author} suggested: {suggestion}")
+        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels.headmasters-office": 1})
+
+        headmaster_office_id = request["channels"]["headmasters-office"]
+        headmaster_office_channel = self.client.get_channel(int(headmaster_office_id))
+
+        link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
+        embed = discord.Embed(color=embed_color, title="New Report/Suggestion")
+        embed.description = f"{ctx.author.mention} suggested: {suggestion} at <#{ctx.channel.id}>\n" \
+                            f"Message link: [here]({link})"
+        await headmaster_office_channel.send(embed=embed)
         await ctx.message.add_reaction("📩")
 
 

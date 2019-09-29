@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 import asyncio
 import urllib.request
+from math import ceil
 
 import discord
 from discord.ext import commands
@@ -11,10 +12,10 @@ from discord.ext import commands
 from cogs.mongo.database import get_collections
 
 # Collections
-books = get_collections("bukkuman", "books")
+guilds = get_collections("guilds")
 
-
-admin_roles = ["Head", "Alpha", "📝"]
+# Listings
+admin_roles = ["Head"]
 
 
 def check_if_has_any_role(ctx):
@@ -33,7 +34,7 @@ class Embeds(commands.Cog):
     @commands.check(check_if_has_any_role)
     async def post_patch_notes(self, ctx, arg1, *, args):
 
-        request = books.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "channels": 1})
+        request = guilds.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "channels": 1})
         headlines_id = request["channels"]["headlines"]
         headlines_channel = self.client.get_channel(int(headlines_id))
 
@@ -42,7 +43,7 @@ class Embeds(commands.Cog):
         text = f.read().decode('utf-8')
         split_text = text.replace("\r", "\\n").split("\n")
         cap = 1500
-        max_embeds = round(len(text) / cap)
+        max_embeds = ceil(len(text) / cap)
 
         lines = 0
         lines_start = 0
@@ -71,7 +72,7 @@ class Embeds(commands.Cog):
     @commands.is_owner()
     async def edit_message_welcome(self, ctx):
 
-        request = books.find_one({
+        request = guilds.find_one({
             "server": f"{ctx.guild.id}"}, {
             "_id": 0,
             "channels": 1,
@@ -272,7 +273,7 @@ class Embeds(commands.Cog):
     async def edit_message_beasts_selection(self, ctx):
 
         guild_roles = ctx.guild.roles
-        request = books.find_one({
+        request = guilds.find_one({
             "server": f"{ctx.guild.id}"}, {
             "_id": 0,
             "channels.sorting-hat": 1,
@@ -347,7 +348,7 @@ class Embeds(commands.Cog):
     @commands.is_owner()
     async def edit_message_quest_selection(self, ctx):
 
-        request = books.find_one({
+        request = guilds.find_one({
             "server": f"{ctx.guild.id}"}, {
             "_id": 0, "messages.quests": 1, "channels.sorting-hat": 1
         })
@@ -377,7 +378,7 @@ class Embeds(commands.Cog):
     @commands.is_owner()
     async def edit_special_roles(self, ctx):
 
-        request = books.find_one({
+        request = guilds.find_one({
             "server": f"{ctx.guild.id}"}, {
             "_id": 0, "messages.special_roles": 1, "channels.sorting-hat": 1, "channels.co-op-team": 1
         })
@@ -430,7 +431,7 @@ class Embeds(commands.Cog):
     @commands.is_owner()
     async def post_message_quest1(self, ctx):
 
-        request = books.find_one({
+        request = guilds.find_one({
             "server": f"{ctx.guild.id}"}, {
             "_id": 0, "sorting": 1, "patronus_role": 1, "headlines": 1, "gift-game": 1
         })
@@ -500,7 +501,7 @@ class Embeds(commands.Cog):
         msg2 = await sorting.send(embed=embed)
         await msg2.add_reaction("🍵")
 
-        books.update_one({
+        guilds.update_one({
             "server": str(ctx.guild.id)}, {
             "$set": {
                 "messages.quests.quest2": str(msg2.id)

@@ -16,14 +16,14 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 from cogs.mongo.database import get_collections
 
 # Collections
-books = get_collections("bukkuman", "books")
-weather = get_collections("bukkuman", "weather")
-owls = get_collections("miketsu", "owls")
-sendoff = get_collections("miketsu", "sendoff")
-patronus = get_collections("bukkuman", "patronus")
-quests = get_collections("miketsu", "quests")
-thieves = get_collections("miketsu", "thieves")
-hints = get_collections("miketsu", "hints")
+guilds = get_collections("guilds")
+weather = get_collections("weathers")
+owls = get_collections("owls")
+sendoffs = get_collections("sendoffs")
+patronus = get_collections("patronus")
+quests = get_collections("quests")
+thieves = get_collections("thieves")
+hints = get_collections("hints")
 
 # Listings
 owls_list = []
@@ -46,8 +46,7 @@ flexibility_types_ = open("lists/flexibility_types.lists")
 flexibility_types = flexibility_types_.read().splitlines()
 flexibility_types_.close()
 
-
-for guild_channel in books.find({}, {"_id": 0, "categories.diagon-alley": 1}):
+for guild_channel in guilds.find({}, {"_id": 0, "categories.diagon-alley": 1}):
     diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
 
 for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
@@ -225,7 +224,7 @@ async def generate_data(guild, secret_channel, channel):
         username = "Ollivanders"
         url = "https://i.imgur.com/5ibOfcp.jpg"
 
-    books.update_one({
+    guilds.update_one({
         "server": str(guild.id)}, {
         "$set": {
             f"{channel_name}.id": str(channel.id),
@@ -257,7 +256,8 @@ async def reaction_closed(message):
 
 
 async def secret_response(guild_id, channel_name, description):
-    secret = books.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
+
+    secret = guilds.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
     webhook_url = secret[str(channel_name)]["webhook"]
     avatar = secret[str(channel_name)]["avatar"]
     username = secret[str(channel_name)]["username"]
@@ -298,7 +298,7 @@ class Quest(commands.Cog):
         self.client = client
 
     async def logging(self, msg):
-        channel = self.client.get_channel(592270990894170112)
+        channel = self.client.get_channel(433547467988926464)
         await channel.send(f"[{get_time().strftime('%Y-%b-%d %HH')}] " + msg)
 
     @commands.command(aliases=["hint"])
@@ -441,7 +441,7 @@ class Quest(commands.Cog):
 
         elif "gringotts-bank" in channels and int(get_time().strftime("%H")) in [9, 10, 11, 12, 21, 22, 23, 0]:
 
-            gringotts_id = books.find_one({"server": str(guild.id)}, {"gringotts-bank": 1})["gringotts-bank"]["id"]
+            gringotts_id = guilds.find_one({"server": str(guild.id)}, {"gringotts-bank": 1})["gringotts-bank"]["id"]
             gringotts_channel = self.client.get_channel(int(gringotts_id))
 
             await gringotts_channel.set_permissions(
@@ -514,7 +514,7 @@ class Quest(commands.Cog):
                     msg2 = responses["success"].format(user.mention)
                     vault = f"{str(user.id).replace('1', '@').replace('5', '%').replace('7', '&').replace('3', '#')}"
 
-                    secret = books.find_one({"server": str(guild.id)}, {"_id": 0, str(message.channel.name): 1})
+                    secret = guilds.find_one({"server": str(guild.id)}, {"_id": 0, str(message.channel.name): 1})
                     webhook_url = secret[str(message.channel.name)]["webhook"]
                     avatar = secret[str(message.channel.name)]["avatar"]
                     username = secret[str(message.channel.name)]["username"]
@@ -781,7 +781,7 @@ class Expecto(commands.Cog):
         self.client = client
 
     async def send_off_complete_quest1(self):
-        for entry in sendoff.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
+        for entry in sendoffs.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
             try:
                 user = self.client.get_user(int(entry["user_id"]))
                 cycle, path, timestamp, user_hint, actions, purchase = get_data_quest1(user.id)
@@ -803,7 +803,7 @@ class Expecto(commands.Cog):
                         msg = await user.send(responses[2].format(entry['type'].capitalize()))
                         await msg.add_reaction("✉")
 
-                        sendoff.update_one({
+                        sendoffs.update_one({
                             "user_id": str(user.id), "cycle": cycle}, {
                             "$set": {"status": "done"}
                         })
@@ -818,7 +818,7 @@ class Expecto(commands.Cog):
 
                 try:
                     await user.send(f"Your {entry['type']} has fully recovered")
-                    sendoff.update_one({
+                    sendoffs.update_one({
                         "user_id": str(user.id), "cycle": cycle}, {
                         "$unset": {
                             "delay": "",
@@ -838,7 +838,7 @@ class Expecto(commands.Cog):
                     continue
 
     async def send_off_report_quest1(self):
-        query = sendoff.find({
+        query = sendoffs.find({
             "quest": 1,
             "timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {
             "_id": 0
@@ -960,7 +960,7 @@ class Expecto(commands.Cog):
 
     async def generate_owl_report_quest1(self, user, cycle, responses):
 
-        profile = sendoff.find_one({"user_id": str(user.id), "cycle": cycle}, {"_id": 0})
+        profile = sendoffs.find_one({"user_id": str(user.id), "cycle": cycle}, {"_id": 0})
         weather1 = weather.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
         weather2 = weather.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
@@ -988,7 +988,7 @@ class Expecto(commands.Cog):
         timestamp_update = (get_time() + timedelta(days=1 / 24)).strftime("%Y-%b-%d %HH")
         timestamp_complete = (get_time() + timedelta(days=delay / 24)).strftime("%Y-%b-%d %HH")
 
-        sendoff.update_one({
+        sendoffs.update_one({
             "user_id": str(user.id),
             "cycle": cycle}, {
             "$set": {
@@ -1243,7 +1243,7 @@ class Expecto(commands.Cog):
         if user in role_dolphin.members:
             return
 
-        request = books.find_one({
+        request = guilds.find_one({
             "server": f"{payload.guild_id}"}, {
             "_id": 0, "messages.quests": 1
         })
@@ -1313,7 +1313,7 @@ class Expecto(commands.Cog):
 
             cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
             server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
-            request = books.find_one({
+            request = guilds.find_one({
                 "server": server["server"]}, {
                 "_id": 0, "channels.welcome": 1, "channels.sorting-hat": 1
             })
@@ -1348,7 +1348,7 @@ class Expecto(commands.Cog):
         elif str(reaction.emoji) == "🦉":
 
             role_owl = discord.utils.get(reaction.message.guild.roles, name="🦉")
-            request = books.find_one({
+            request = guilds.find_one({
                 "server": f"{reaction.message.guild.id}"}, {
                 "_id": 0, "channels.absence-applications": 1
             })
@@ -1358,12 +1358,12 @@ class Expecto(commands.Cog):
             if user not in role_owl.members:
                 await penalize_quest1(user, cycle, points=30)
 
-            elif (valid_channel_id not in msg or "180717337475809281" not in msg) and "✉" not in msg:
+            elif (valid_channel_id not in msg or "486940955270971402" not in msg) and "✉" not in msg:
 
                 await reaction.message.add_reaction("❔")
                 await penalize_quest1(user, cycle, points=10)
 
-            elif (valid_channel_id in msg or "180717337475809281" in msg) and "✉" in msg:
+            elif (valid_channel_id in msg or "486940955270971402" in msg) and "✉" in msg:
 
                 cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
@@ -1520,7 +1520,7 @@ class Expecto(commands.Cog):
                         embed.set_thumbnail(url=owl_profile["thumbnail"])
 
                         owls.update_one({"type": owl_buy}, {"$set": {"purchaser": str(user.id)}})
-                        sendoff.insert_one({"user_id": str(user.id), "type": owl_buy, "cycle": cycle})
+                        sendoffs.insert_one({"user_id": str(user.id), "type": owl_buy, "cycle": cycle})
                         quests.update_one({
                             "user_id": str(user.id),
                             "quest1.cycle": cycle}, {
@@ -1579,7 +1579,7 @@ class Expecto(commands.Cog):
         elif "eeylops-owl-emporium" in channels \
                 and int(get_time().strftime("%H")) in [8, 9, 10, 11, 12, 13, 20, 21, 22, 23, 0, 1]:
 
-            emporium_id = books.find_one({
+            emporium_id = guilds.find_one({
                 "server": str(guild.id)}, {
                 "eeylops-owl-emporium": 1
             })
@@ -1632,7 +1632,7 @@ class Expecto(commands.Cog):
 
         elif "ollivanders" in channels and int(get_time().strftime("%H")) in [13, 14, 15, 16, 17, 1, 2, 3, 4, 5]:
 
-            ollivanders_id = books.find_one({"server": str(guild.id)}, {"ollivanders": 1})["ollivanders"]["id"]
+            ollivanders_id = guilds.find_one({"server": str(guild.id)}, {"ollivanders": 1})["ollivanders"]["id"]
             ollivanders_channel = self.client.get_channel(int(ollivanders_id))
 
             await ollivanders_channel.set_permissions(

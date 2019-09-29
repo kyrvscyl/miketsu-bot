@@ -18,10 +18,10 @@ from cogs.mongo.database import get_collections
 from cogs.startup import e_m, e_j, e_c, e_a, e_f, embed_color, pluralize
 
 # Collections
-books = get_collections("bukkuman", "books")
-users = get_collections("miketsu", "users")
-boss = get_collections("miketsu", "boss")
-shikigamis = get_collections("miketsu", "shikigamis")
+guilds = get_collections("guilds")
+users = get_collections("users")
+bosses = get_collections("bosses")
+shikigamis = get_collections("shikigamis")
 
 # Listings
 demons = []
@@ -40,7 +40,7 @@ attack_list.close()
 for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
     quizzes.append(quiz)
 
-for document in boss.find({}, {"_id": 0, "boss": 1}):
+for document in bosses.find({}, {"_id": 0, "boss": 1}):
     demons.append(document["boss"])
 
 boss_spawn = False
@@ -74,6 +74,161 @@ def check_if_user_has_encounter_tickets(ctx):
     return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "encounter_ticket": 1})["encounter_ticket"] > 0
 
 
+def calculate(x, y, z):
+    try:
+        if x - y > 0:
+            return ((x - y) / x) * z
+        elif x - y < 0:
+            return -((y - x) / y) * z
+        else:
+            return 0
+    except ZeroDivisionError:
+        return 0
+
+
+def get_raid_count(victim):
+    request = users.find_one({
+        "user_id": str(victim.id)}, {
+        "_id": 0, "raided_count": 1
+    })
+    return request["raided_count"]
+
+
+async def raid_giverewards_victim_as_winner(victim, raider):
+    users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": 50000, "jades": 100, "medals": 50}})
+    users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
+    users.update_one({
+        "user_id": str(raider.id), "level": {"$lt": 60}}, {
+        "$inc": {
+            "experience": 20
+        }
+    })
+
+    if users.find_one({"user_id": str(raider.id)}, {"_id": 0})["medals"] < 10:
+        users.update_one({"user_id": str(raider.id)}, {"$set": {"medals": 0}})
+
+    else:
+        users.update_one({"user_id": str(raider.id)}, {"$inc": {"medals": -10}})
+
+
+async def raid_giverewards_raider_as_winner(victim, raider):
+    users.update_one({
+        "user_id": str(raider.id)}, {
+        "$inc": {
+            "coins": 25000, "jades": 50, "medals": 25, "realm_ticket": -1
+        }
+    })
+    users.update_one({
+        "user_id": str(raider.id), "level": {"$lt": 60}}, {
+        "$inc": {
+            "experience": 40
+        }
+    })
+
+    if users.find_one({"user_id": str(victim.id)}, {"_id": 0})["medals"] < 10:
+        users.update_one({"user_id": str(victim.id)}, {"$set": {"medals": 0}})
+
+    else:
+        users.update_one({"user_id": str(victim.id)}, {"$inc": {"medals": -10}})
+
+
+async def raid_perform_calculation(victim, raider, ctx):
+    try:
+        profile_raider = users.find_one({
+            "user_id": str(raider.id)}, {
+            "_id": 0, "level": 1, "medals": 1, "SP": 1, "SSR": 1, "SR": 1, "R": 1
+        })
+        profile_victim = users.find_one({
+            "user_id": str(victim.id)}, {
+            "_id": 0, "level": 1, "medals": 1, "SP": 1, "SSR": 1, "SR": 1, "R": 1
+        })
+
+        chance1 = calculate(profile_raider["level"], profile_victim["level"], 0.15)
+        chance2 = calculate(profile_raider["medals"], profile_victim["medals"], 0.15)
+        chance3 = calculate(profile_raider["SP"], profile_victim["SP"], 0.09)
+        chance4 = calculate(profile_raider["SSR"], profile_victim["SSR"], 0.07)
+        chance5 = calculate(profile_raider["SR"], profile_victim["SR"], 0.03)
+        chance6 = calculate(profile_raider["R"], profile_victim["R"], 0.01)
+        total_chance = round((0.5 + chance1 + chance2 + chance3 + chance4 + chance5 + chance6) * 100)
+
+        embed = discord.Embed(
+            color=raider.colour,
+            title=f"{raider.display_name} vs {victim.display_name} :: {total_chance}%"
+        )
+        await ctx.channel.send(embed=embed)
+
+    except KeyError:
+        embed = discord.Embed(
+            title="Invalid member", colour=discord.Colour(embed_color),
+            description=f"{victim} does not have a realm yet in this server"
+        )
+        await ctx.channel.send(embed=embed)
+
+    except TypeError:
+        return
+
+
+async def raid_perform_attack(victim, raider, ctx):
+    try:
+        profile_raider = users.find_one({
+            "user_id": str(raider.id)}, {
+            "_id": 0, "level": 1, "medals": 1, "SP": 1, "SSR": 1, "SR": 1, "R": 1
+        })
+        profile_victim = users.find_one({
+            "user_id": str(victim.id)}, {
+            "_id": 0, "level": 1, "medals": 1, "SP": 1, "SSR": 1, "SR": 1, "R": 1
+        })
+
+        chance1 = calculate(profile_raider["level"], profile_victim["level"], 0.15)
+        chance2 = calculate(profile_raider["medals"], profile_victim["medals"], 0.15)
+        chance3 = calculate(profile_raider["SP"], profile_victim["SP"], 0.09)
+        chance4 = calculate(profile_raider["SSR"], profile_victim["SSR"], 0.07)
+        chance5 = calculate(profile_raider["SR"], profile_victim["SR"], 0.03)
+        chance6 = calculate(profile_raider["R"], profile_victim["R"], 0.01)
+        total_chance = round((0.5 + chance1 + chance2 + chance3 + chance4 + chance5 + chance6) * 100)
+        roll = random.uniform(0, 100)
+
+        if roll <= total_chance:
+            embed = discord.Embed(
+                title="Realm Raid", color=raider.colour,
+                description=f"{raider.mention} raids {victim.display_name}'s realm!"
+            )
+            embed.add_field(
+                name=f"Results, `{total_chance}%`",
+                value=f"||"
+                      f"{raider.display_name} won!\n"
+                      f"25,000{e_c}, 50{e_j}, 25{e_m}"
+                      f"||"
+            )
+            await raid_giverewards_raider_as_winner(victim, raider)
+            await ctx.channel.send(embed=embed)
+
+        else:
+            embed = discord.Embed(
+                title="Realm Raid", color=raider.colour,
+                description=f"{raider.mention} raids {victim.display_name}'s realm!"
+            )
+            embed.add_field(
+                name=f"Results, `{total_chance}%`",
+                value=f"||"
+                      f"{victim.display_name} won!\n"
+                      f"50,000{e_c}, 100{e_j}, 50{e_m}"
+                      f"||"
+            )
+            await raid_giverewards_raider_as_winner(victim, raider)
+            await ctx.channel.send(embed=embed)
+
+    except KeyError:
+        embed = discord.Embed(
+            title="Invalid member", colour=discord.Colour(embed_color),
+            description=f"{victim} doesnt have a realm yet in this server"
+        )
+        await ctx.channel.send(embed=embed)
+
+    except TypeError:
+        return
+
+
 async def boss_create(user, boss_select):
     discoverer = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})
     boss_lvl = discoverer["level"] + 60
@@ -90,7 +245,7 @@ async def boss_create(user, boss_select):
     }]):
         total_medals = x["medals"]
 
-    boss.update_one({
+    bosses.update_one({
         "boss": boss_select}, {
         "$set": {
             "discoverer": str(user.id),
@@ -130,8 +285,8 @@ async def boss_steal(assembly_players, boss_jadesteal, boss_coinsteal):
 
 
 async def boss_daily_reset_check():
-    survivability = boss.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
-    discoverability = boss.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
+    survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
+    discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
 
     if survivability == 0 and discoverability == 0:
         await reset_boss()
@@ -141,6 +296,81 @@ class Encounter(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+    @commands.command(aliases=["raid", "r"])
+    @commands.guild_only()
+    async def raid_perform_attack(self, ctx, *, victim: discord.Member = None):
+
+        raider = ctx.author
+        raider_tickets = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "realm_ticket": 1})["realm_ticket"]
+
+        if victim is None:
+            embed = discord.Embed(
+                title="raid, r", colour=discord.Colour(embed_color),
+                description="raids the tagged member, requires 1 ticket"
+            )
+            embed.add_field(name="Formats", value="*`;raid @member`*, *`;r <name#discriminator>`*")
+            await ctx.channel.send(embed=embed)
+            return
+
+        elif victim.bot or victim.id == ctx.author.id:
+            return
+
+        elif raider_tickets < 1:
+            embed = discord.Embed(
+                title=f"{raider.display_name}, you have insufficient tickets", colour=discord.Colour(embed_color),
+                description="Purchase at the shop or get your daily rewards"
+            )
+            await ctx.channel.send(embed=embed)
+            return
+
+        try:
+            raid_count = get_raid_count(victim)
+
+            if raid_count == 3:
+                embed = discord.Embed(
+                    title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(embed_color),
+                    description="Raids are capped at 3 times per day and per realm"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif raid_count < 4:
+                users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
+                await raid_perform_attack(victim, raider, ctx)
+
+        except TypeError:
+            raise discord.ext.commands.BadArgument
+
+    @commands.command(aliases=["raidcalc", "raidc", "rc"])
+    @commands.guild_only()
+    async def raid_perform_calculation(self, ctx, *, victim: discord.Member = None):
+
+        if victim is None:
+            embed = discord.Embed(
+                title="raidcalc, raidc, rc", colour=discord.Colour(embed_color),
+                description="calculates your odds of winning"
+            )
+            embed.add_field(
+                name="Mechanics",
+                value="```"
+                      "Base Chance :: + 50 %\n"
+                      "Δ Level     :: ± 15 %\n"
+                      "Δ Medal     :: ± 15 %\n"
+                      "Δ SP        :: ±  9 %\n"
+                      "Δ SSR       :: ±  7 %\n"
+                      "Δ SR        :: ±  3 %\n"
+                      "Δ R         :: ±  1 %\n"
+                      "```",
+                inline=False
+            )
+            embed.add_field(name="Formats", value="*`;raidc @member`*, *`;rc <name#discriminator>`*", inline=False)
+            await ctx.channel.send(embed=embed)
+
+        elif victim == ctx.author or victim.bot is True:
+            return
+
+        elif victim != ctx.author:
+            await raid_perform_calculation(victim, ctx.author, ctx)
 
     @commands.command(aliases=["quiz"])
     @commands.is_owner()
@@ -175,8 +405,8 @@ class Encounter(commands.Cog):
             search_msg = await ctx.channel.send(content="🔍 Searching the depths of Netherworld...")
             await asyncio.sleep(1)
 
-        survivability = boss.count({"current_hp": {"$gt": 0}})
-        discoverability = boss.count({"discoverer": {"$eq": 0}})
+        survivability = bosses.count({"current_hp": {"$gt": 0}})
+        discoverability = bosses.count({"discoverer": {"$eq": 0}})
 
         if (survivability > 0 or discoverability > 0) and boss_spawn is False:
             roll_1 = random.randint(0, 100)
@@ -336,7 +566,7 @@ class Encounter(commands.Cog):
     async def boss_roll(self, discoverer, ctx, search_msg):
 
         boss_alive = []
-        for boss_name in boss.find({
+        for boss_name in bosses.find({
             "$or": [{
                 "discoverer": {
                     "$eq": 0}}, {
@@ -348,11 +578,11 @@ class Encounter(commands.Cog):
 
         boss_select = random.choice(boss_alive)
 
-        if boss.find_one({"boss": boss_select}, {"_id": 0, "discoverer": 1})["discoverer"] == 0:
+        if bosses.find_one({"boss": boss_select}, {"_id": 0, "discoverer": 1})["discoverer"] == 0:
             await boss_create(discoverer, boss_select)
 
         def get_boss_profile(name):
-            boss_profile_ = boss.find_one({
+            boss_profile_ = bosses.find_one({
                 "boss": name}, {
                 "_id": 0, "challengers": 1, "level": 1, "total_hp": 1, "current_hp": 1, "damage_cap": 1, "boss_url": 1,
                 "rewards.coins": 1, "rewards.experience": 1, "rewards.jades": 1, "rewards.medals": 1,
@@ -432,10 +662,10 @@ class Encounter(commands.Cog):
                     pass
 
                 elif str(user.id) not in assembly_players:
-                    query = boss.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1})
+                    query = bosses.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1})
 
                     if query is None:
-                        boss.update_one({
+                        bosses.update_one({
                             "boss": boss_select}, {
                             "$push": {
                                 "challengers": {
@@ -472,7 +702,7 @@ class Encounter(commands.Cog):
             embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=discord.Colour(embed_color))
             await ctx.channel.send(embed=embed)
 
-            boss_profile = boss.find_one({
+            boss_profile = bosses.find_one({
                 "boss": boss_select}, {
                 "_id": 0, "total_hp": 1,  "damage_cap": 1, "boss_url": 1
             })
@@ -496,7 +726,7 @@ class Encounter(commands.Cog):
                 player_dmg = boss_damagecap
 
             damage_players.append(player_dmg)
-            boss.update_one({
+            bosses.update_one({
                 "boss": boss_select,
                 "challengers.user_id": player}, {
                 "$inc": {
@@ -513,7 +743,7 @@ class Encounter(commands.Cog):
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(3)
 
-        boss_profile_new = boss.find_one({
+        boss_profile_new = bosses.find_one({
             "boss": boss_select}, {
             "_id": 0,
             "current_hp": 1,
@@ -522,13 +752,13 @@ class Encounter(commands.Cog):
         })
 
         if boss_profile_new["current_hp"] <= 0:
-            boss.update_one({"boss": boss_select}, {"$set": {"current_hp": 0}})
+            bosses.update_one({"boss": boss_select}, {"$set": {"current_hp": 0}})
 
         await self.boss_check(assembly_players, boss_select, boss_url, boss_profile_new, ctx)
 
     async def boss_check(self, assembly_players, boss_select, boss_url, boss_profile_new, ctx):
 
-        boss_currenthp = boss.find_one({"boss": boss_select}, {"_id": 0, "current_hp": 1})["current_hp"]
+        boss_currenthp = bosses.find_one({"boss": boss_select}, {"_id": 0, "current_hp": 1})["current_hp"]
 
         if boss_currenthp > 0:
 
@@ -545,7 +775,7 @@ class Encounter(commands.Cog):
             await boss_steal(assembly_players, boss_jadesteal, boss_coinsteal)
             await asyncio.sleep(3)
 
-            boss.update_one({
+            bosses.update_one({
                 "boss": boss_select}, {
                 "$inc": {
                     "rewards.jades": boss_jadesteal,
@@ -560,7 +790,7 @@ class Encounter(commands.Cog):
         elif boss_currenthp == 0:
 
             players_dmg = 0
-            for damage in boss.aggregate([{
+            for damage in bosses.aggregate([{
                 "$match": {
                     "boss": boss_select}}, {
                 "$unwind": {
@@ -578,7 +808,7 @@ class Encounter(commands.Cog):
             challengers = []
             distribution = []
 
-            for data in boss.aggregate([{
+            for data in bosses.aggregate([{
                 "$match": {
                     "boss": boss_select}}, {
                 "$unwind": {
@@ -689,7 +919,7 @@ class Encounter(commands.Cog):
             if query not in demons:
                 raise AttributeError
 
-            boss_profile = boss.find_one({
+            boss_profile = bosses.find_one({
                 "boss": query}, {
                 "_id": 0,
                 "level": 1,

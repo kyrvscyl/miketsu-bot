@@ -9,10 +9,10 @@ import discord
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import embed_color, primary_id
+from cogs.startup import embed_color, guild_id
 
 # Collections
-books = get_collections("bukkuman", "books")
+guilds = get_collections("guilds")
 
 
 class Error(commands.Cog):
@@ -21,7 +21,12 @@ class Error(commands.Cog):
         self.client = client
 
     async def submit_error(self, ctx, error):
-        channel = self.client.get_channel(584631677804871682)
+        record_scroll_id = guilds.find_one({
+            "server": str(guild_id)}, {
+            "channels.scroll-of-everything": 1
+        })["channels"]["scroll-of-everything"]
+
+        channel = self.client.get_channel(int(record_scroll_id))
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
             title=f"Command Error Report",
@@ -298,8 +303,8 @@ class Error(commands.Cog):
         elif isinstance(error, commands.CommandNotFound):
 
             if isinstance(ctx.channel, discord.DMChannel):
-                spell_spam_id = books.find_one({
-                    "server": str(primary_id)}, {
+                spell_spam_id = guilds.find_one({
+                    "server": str(guild_id)}, {
                     "_id": 0, "channels": 1
                 })["channels"]["spell-spam"]
 
@@ -323,7 +328,8 @@ class Error(commands.Cog):
                 "friendship_give",
                 "wish_grant",
                 "friendship_change_name",
-                "friendship_ship"
+                "friendship_ship",
+                "shikigami_list_show_collected"
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(embed_color),

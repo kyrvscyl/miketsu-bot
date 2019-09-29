@@ -8,20 +8,9 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands
-from pushbullet import PushBullet
-
-from cogs.mongo.database import get_collections
-
-# Collections
-tokens = get_collections("bukkuman", "tokens")
-
-# PushBullet
-pushbullet_api = os.environ.get("PUSHBULLETAPI")
-pb = PushBullet(str(pushbullet_api))
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-bot = os.path.basename(__file__)[:-3:]
-token = tokens.find_one({bot: {"$type": "string"}}, {"_id": 0, bot: 1})[bot]
+token = os.environ.get("TOKEN")
 
 prefix = ";"
 client = commands.Bot(command_prefix=prefix)
@@ -57,7 +46,7 @@ async def show_bot_statistics(ctx):
     embed.set_thumbnail(url=client.user.avatar_url)
     embed.add_field(
         name="Development",
-        value=f"Coding: <@!180717337475809281>\nSupport Group: <@!437941992748482562>",
+        value=f"Coding: <@!180717337475809281>\nSupport Group: <@!437941992748482562>, <@!201402446705065984>",
         inline=False
     )
     embed.add_field(
@@ -151,4 +140,4 @@ print("-------")
 try:
     client.run(token)
 except RuntimeError:
-    pb.push_note("SIGTERM Restart", "Successfully passed RuntimeError")
+    pass
