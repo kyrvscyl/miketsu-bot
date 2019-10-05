@@ -14,37 +14,39 @@ from cogs.startup import embed_color, guild_id
 # Collections
 guilds = get_collections("guilds")
 
+# Variables
+spell_spam_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
+scroll_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+
 
 class Error(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     async def submit_error(self, ctx, error):
-        record_scroll_id = guilds.find_one({
-            "server": str(guild_id)}, {
-            "channels.scroll-of-everything": 1
-        })["channels"]["scroll-of-everything"]
 
-        channel = self.client.get_channel(int(record_scroll_id))
+        channel = self.client.get_channel(int(scroll_id))
+
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
             title=f"Command Error Report",
-            timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+            timestamp=get_timestamp()
         )
-        embed.add_field(
-            name=f"function call: {ctx.command}",
-            value=error,
-            inline=False
-        )
+        embed.add_field(name=f"function call: {ctx.command}", value=error, inline=False)
 
         try:
             link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
             embed.add_field(
                 name=f"Error Traceback",
-                value=f"User: {ctx.author} | {ctx.author.id}\n"
-                      f"Guild: {ctx.message.guild} | {ctx.guild.id}\n"
-                      f"Channel: #{ctx.channel} | {ctx.channel.id}\n"
+                value=f"User: {ctx.author}\n"
+                      f"Guild: {ctx.message.guild}\n"
+                      f"Channel: #{ctx.channel}\n"
                       f"Source: [message link]({link})",
                 inline=False
             )
@@ -53,8 +55,8 @@ class Error(commands.Cog):
         except AttributeError:
             embed.add_field(
                 name=f"Error Traceback",
-                value=f"User: {ctx.author} | {ctx.author.id}\n"
-                      f"DMchannel: #{ctx.channel} | {ctx.channel.id}\n",
+                value=f"User: {ctx.author}\n"
+                      f"DMchannel: #{ctx.channel}\n",
                 inline=False
             )
             await channel.send(embed=embed)
@@ -102,23 +104,15 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.NotOwner):
 
-            if str(ctx.command) in [
-                "perform_reset",
-                "frame_manual",
-                "bounty_add_alias",
-                "shikigami_add",
-                "shikigami_update"
-            ]:
-                return
-
-            else:
-                await self.submit_error(ctx, error)
+            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
 
             if str(ctx.command) in [
                 "encounter_search",
-                "summon_perform"
+                "summon_mystery_perform",
+                "friendship_give",
+                "perform_parade"
             ]:
                 return
 
@@ -127,14 +121,17 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.MissingRequiredArgument):
 
-            if str(ctx.command) == "collect_suggestion":
+            if str(ctx.command) == "collect_suggestions":
                 embed = discord.Embed(
-                    title="suggest",
+                    title="suggest, report",
                     colour=discord.Colour(embed_color),
-                    description="submit suggestions for the bot or server\n"
+                    description="submit suggestions/reports for the bot or guild\n"
                                 "available to use through direct message"
                 )
-                embed.add_field(name="Example", value="*`;suggest add new in-game stickers!`*", inline=False)
+                embed.add_field(
+                    name="Example", value=f"*`{self.prefix}suggest add new in-game stickers!`*",
+                    inline=False
+                )
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "stat_shikigami":
@@ -143,7 +140,7 @@ class Error(commands.Cog):
                     colour=discord.Colour(embed_color),
                     description="shows shikigami pulls statistics"
                 )
-                embed.add_field(name="Example", value="*`;stat tamamonomae`*", inline=False)
+                embed.add_field(name="Example", value=f"*`{self.prefix}stat tamamonomae`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "sticker_add_new":
@@ -154,12 +151,12 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Format",
-                    value="*`;ns <alias> <imgur link and png images only>`*",
+                    value=f"*`{self.prefix}ns <alias> <imgur link and png images only>`*",
                     inline=False
                 )
                 embed.add_field(
                     name="Example",
-                    value="*`;ns feelinhurt https://i.imgur.com/371bCEa.png`*",
+                    value=f"*`{self.prefix}ns feelinhurt https://i.imgur.com/371bCEa.png`*",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -171,12 +168,12 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Arguments",
-                    value="*sacrifice, exchange*",
+                    value=f"*sacrifice, exchange*",
                     inline=False
                 )
                 embed.add_field(
                     name="Example",
-                    value="*`;shrine exchange`*",
+                    value=f"*`{self.prefix}shrine exchange`*",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -188,10 +185,10 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Arguments",
-                    value="*SP, SSR, SR, level, medals, amulets, friendship, ships, SSRstreak, frames*",
+                    value=f"*SP, SSR, SR, level, medals, amulets, friendship, ships, streak, frames*",
                     inline=False
                 )
-                embed.add_field(name="Example", value="*`;leaderboard friendship`*", inline=False)
+                embed.add_field(name="Example", value=f"*`{self.prefix}leaderboard friendship`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) in [
@@ -201,11 +198,11 @@ class Error(commands.Cog):
                     title="shikigamis, shikis, uncollected, unc, collections, col", colour=discord.Colour(embed_color),
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
-                embed.add_field(name="Rarities", value="*SP, SSR, SR, R*", inline=False)
+                embed.add_field(name="Rarities", value=f"*SP, SSR, SR, R*", inline=False)
                 embed.add_field(
                     name="Format", inline=False,
-                    value="*`;shikis <rarity> <optional: @member>`*\n"
-                          "*`;unc <rarity> <optional: @member>`*"
+                    value=f"*`{self.prefix}shikis <rarity> <optional: @member>`*\n"
+                          f"*`{self.prefix}unc <rarity> <optional: @member>`*"
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -213,17 +210,17 @@ class Error(commands.Cog):
                 embed = discord.Embed(
                     title="display", colour=discord.Colour(embed_color),
                     description="changes your profile display thumbnail")
-                embed.add_field(name="Example", value="*`;display inferno ibaraki`*", inline=False)
+                embed.add_field(name="Example", value=f"*`{self.prefix}display inferno ibaraki`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "summon_perform":
+            elif str(ctx.command) == "summon_mystery_perform":
                 embed = discord.Embed(
                     title="summon, s", colour=discord.Colour(embed_color),
                     description="simulate summon and collect shikigamis"
                 )
                 embed.add_field(
                     name="Shard Requirement",
-                    value="```"
+                    value=f"```"
                           "SP    ::   15\n"
                           "SSR   ::   12\n"
                           "SR    ::    9\n"
@@ -231,16 +228,24 @@ class Error(commands.Cog):
                           "```",
                     inline=False
                 )
-                embed.add_field(name="Formats", value="*`;summon <1, 10, shikigami_name>`*", inline=False)
+                embed.add_field(name="Formats", value=f"*`{self.prefix}summon <1, 10, shikigami_>`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "bounty_query":
+            elif str(ctx.command) in ["bounty_query", "bounty_add_location", "bounty_add_alias"]:
                 embed = discord.Embed(
                     title="bounty, b",
                     colour=discord.Colour(embed_color),
-                    description="search shikigami bounty locations"
+                    description="search shikigami bounty locations or modify them"
                 )
-                embed.add_field(name="Format", value="*`;bounty <shikigami or its first 2 letters>`*", inline=False)
+                embed.add_field(
+                    name="Format",
+                    value=f"*"
+                          f"`{self.prefix}bounty <shikigami>`\n"
+                          f"`{self.prefix}baa <shikigami> <new alias>`\n"
+                          f"`{self.prefix}bal <shikigami> <new location>`"
+                          f"*",
+                    inline=False
+                )
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "post_book_reference":
@@ -248,18 +253,21 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "castle_customize_portrait":
                 embed = discord.Embed(
-                    title="frame add, frame edit", colour=discord.Colour(embed_color),
-                    description="customize your own portrait\n"
-                                "appears in the castle's floors via `;wander`\n"
-                                "use `add` first before using `edit` argument\n"
-                                "use square photos for best results"
+                    title="portrait add, portrait edit", colour=discord.Colour(embed_color),
+                    description=f"customize your own guild portrait\n"
+                                f"appears in the castle's floors via `{self.prefix}wander`\n"
+                                f"use `add` first before using `edit`\n"
+                                f"use square photos for best results"
                 )
                 embed.add_field(
                     name="Format",
-                    value="*`;portrait add <name> <floor#1-7> <img_link or default> <desc.>`*", inline=False)
+                    value=f"*`{self.prefix}portrait add <name> <floor#1-7> <img_link or default> <desc.>`*",
+                    inline=False
+                )
                 embed.add_field(
                     name="Example",
-                    value="*`;portrait add xann 6 default Headless`*",
+                    value=f"*`;portraits`*\n"
+                          f"*`{self.prefix}portrait add xann 6 default Headless`*",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -271,8 +279,15 @@ class Error(commands.Cog):
                                 "prioritization: description > title > img_link\n"
                                 "where title and img_link are optional"
                 )
-                embed.add_field(name="Format", value="*`;announce <#channel> <title|description|img_link>`*")
-                embed.add_field(name="Example", value="*`;announce #headlines @role reminder to...`*", inline=False)
+                embed.add_field(
+                    name="Format",
+                    value=f"*`{self.prefix}announce <#channel> <title>|<description>|<img_link>`*"
+                )
+                embed.add_field(
+                    name="Example",
+                    value=f"*`{self.prefix}announce #headlines @Patronus reminder to...`*",
+                    inline=False
+                )
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "announcement_post_message":
@@ -281,17 +296,19 @@ class Error(commands.Cog):
                     title="say",
                     description="allows me to repeat a text message"
                 )
-                embed.add_field(name="Format", value="*`;say <#channel or channel_id> <any message>`*")
+                embed.add_field(name="Format", value=f"*`{self.prefix}say <#channel or channel_id> <any message>`*")
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "show_cycle_quest1":
                 embed = discord.Embed(
                     colour=discord.Colour(embed_color),
                     title="cycle",
-                    description="Patronus quest command participants only\nrequired to finish at least one quest cycle"
+                    description="Patronus quest command participants only"
                 )
-                embed.add_field(name="Format", value="*`;cycle <cycle#1> <@member or leave blank if for yourself>`*")
-                embed.add_field(name="Example", value="*`;cycle 1`*")
+                embed.add_field(
+                    name="Format", value=f"*`{self.prefix}cycle <cycle#1> <optional: @member>`*"
+                )
+                embed.add_field(name="Example", value=f"*`{self.prefix}cycle 1`*")
                 await ctx.channel.send(embed=embed)
 
             else:
@@ -303,10 +320,6 @@ class Error(commands.Cog):
         elif isinstance(error, commands.CommandNotFound):
 
             if isinstance(ctx.channel, discord.DMChannel):
-                spell_spam_id = guilds.find_one({
-                    "server": str(guild_id)}, {
-                    "_id": 0, "channels": 1
-                })["channels"]["spell-spam"]
 
                 embed = discord.Embed(
                     title="Invalid channel",
@@ -333,7 +346,7 @@ class Error(commands.Cog):
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(embed_color),
-                    description="That member does not exist nor has a profile in this guild"
+                    description="That member does not exist or does not have a profile in this guild"
                 )
                 await ctx.channel.send(embed=embed)
 

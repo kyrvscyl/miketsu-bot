@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
+import os
 from datetime import datetime
 from math import ceil
 
@@ -12,7 +13,6 @@ import pytz
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import guild_id, e_j
 
 # Collections
 guilds = get_collections("guilds")
@@ -20,12 +20,29 @@ frames = get_collections("frames")
 users = get_collections("users")
 shikigamis = get_collections("shikigamis")
 ships = get_collections("ships")
+config = get_collections("config")
+
+# Dictionary
+emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
 
 # Variables
+guild_id = int(os.environ.get("SERVER"))
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+
 total_sp = shikigamis.count_documents({"rarity": "SP"})
 total_ssr = shikigamis.count_documents({"rarity": "SSR"})
 total_sr = shikigamis.count_documents({"rarity": "SR"})
 total_r = shikigamis.count_documents({"rarity": "R"})
+
+e_j = emojis["j"]
+
+# Lists
+developer_team = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "developers": 1})["developers"]
+
+
+def check_if_developer_team(ctx):
+    return str(ctx.author.id) in developer_team
 
 
 def get_timestamp():
@@ -33,12 +50,11 @@ def get_timestamp():
 
 
 def get_time():
-    return datetime.now(tz=pytz.timezone("America/Atikokan"))
+    return datetime.now(tz=pytz.timezone(timezone))
 
 
 def get_frame_thumbnail(frame):
-    request = frames.find_one({"name": frame}, {"_id": 0, "link": 1})
-    return request["link"]
+    return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
 
 
 async def frame_acquisition(user, frame_name, channel, jades):
@@ -80,9 +96,11 @@ async def frame_acquisition(user, frame_name, channel, jades):
     })
     embed = discord.Embed(
         color=user.colour, title="Frame Acquisition",
-        description=f"{user.mention}, you acquired the {frame_name.title()} frame and {jades:,d}{e_j}"
+        description=f"{user.mention}, you acquired the {frame_name.title()} frame and {jades:,d}{e_j}",
+        timestamp=get_timestamp()
     )
     embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
+    embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
     await channel.send(embed=embed)
 
 
@@ -92,7 +110,7 @@ class Frames(commands.Cog):
         self.client = client
 
     @commands.command(aliases=["af"])
-    @commands.is_owner()
+    @commands.check(check_if_developer_team)
     @commands.guild_only()
     async def achievements_add_new(self, ctx, arg1, arg2, link, *, requirement):
 
@@ -712,7 +730,7 @@ class Frames(commands.Cog):
         spell_spam_id = request["channels"]["spell-spam"]
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
 
-        embed = discord.Embed(color=0xe99ac9, timestamp=get_timestamp())
+        embed = discord.Embed(color=embed_color, timestamp=get_timestamp())
         embed.set_author(
             name=f"Added {frame_name} achievement for {member}",
             icon_url=member.avatar_url

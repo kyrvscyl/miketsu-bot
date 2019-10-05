@@ -4,7 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
-import json
+import os
 import random
 from datetime import datetime, timedelta
 
@@ -24,40 +24,40 @@ patronus = get_collections("patronus")
 quests = get_collections("quests")
 thieves = get_collections("thieves")
 hints = get_collections("hints")
+config = get_collections("config")
 
-# Listings
+# Dictionary
+flexibility_category = config.find_one({"dict": 2}, {"_id": 0, "flexibility_category": 1})["flexibility_category"]
+length_category = config.find_one({"dict": 2}, {"_id": 0, "length_category": 1})["length_category"]
+owl_type = config.find_one({"dict": 2}, {"_id": 0, "owl_type": 1})["owl_type"]
+quest1_responses = config.find_one({"dict": 2}, {"_id": 0, "quest1_responses": 1})["quest1_responses"]
+
+# Lists
 owls_list = []
-diagon_alleys = []
-lengths = ["short", "long", "average"]
-flexibilities = ["high", "low", "medium"]
-wand_lengths = ["8", "9", "10", "11", "12", "13", "14"]
-cores = ["unicorn hair", "dragon heartstring", "phoenix feather"]
-traits = ["pure emotions", "adventurous", "special", "strong-willed", "nature-loving"]
 
-patronus_ = open("lists/patronuses.lists")
-patronuses = patronus_.read().splitlines()
-patronus_.close()
+lengths = config.find_one({"list": 2}, {"_id": 0, "lengths": 1})["lengths"]
+flexibilities = config.find_one({"list": 2}, {"_id": 0, "flexibilities": 1})["flexibilities"]
+wand_lengths = config.find_one({"list": 2}, {"_id": 0, "wand_lengths": 1})["wand_lengths"]
+cores = config.find_one({"list": 2}, {"_id": 0, "cores": 1})["cores"]
+traits = config.find_one({"list": 2}, {"_id": 0, "traits": 1})["traits"]
+patronuses = config.find_one({"list": 2}, {"_id": 0, "patronuses": 1})["patronuses"]
+woods = config.find_one({"list": 2}, {"_id": 0, "woods": 1})["woods"]
+flexibility_types = config.find_one({"list": 2}, {"_id": 0, "flexibility_types": 1})["flexibility_types"]
 
-woods_ = open("lists/woods.lists")
-woods = woods_.read().splitlines()
-woods_.close()
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+diagon_alleys = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["categories"]["diagon-alley"]
+record_scroll = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["channels"]["scroll-of-everything"]
+headmaster_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["headmaster"]
 
-flexibility_types_ = open("lists/flexibility_types.lists")
-flexibility_types = flexibility_types_.read().splitlines()
-flexibility_types_.close()
-
-for guild_channel in guilds.find({}, {"_id": 0, "categories.diagon-alley": 1}):
-    diagon_alleys.append(guild_channel["categories"]["diagon-alley"])
 
 for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
-    try:
-        owls_list.append(owl["type"])
-    except KeyError:
-        continue
+    owls_list.append(owl["type"])
 
 
 def get_time():
-    return datetime.now(tz=pytz.timezone("America/Atikokan"))
+    return datetime.now(tz=pytz.timezone(timezone))
 
 
 def check_quest(user):
@@ -150,59 +150,19 @@ def spell_check(msg):
 
 
 def get_owl_type(x):
-    trait = {
-        "nature-loving": "barred",
-        "adventurous": "brown",
-        "special": "screech",
-        "strong-willed": "snowy",
-        "pure emotions": "tawny"
-    }
-    return trait[x]
+    return owl_type[x]
 
 
 def get_length_category(x):
-    length = {
-        "8": "short",
-        "9": "short",
-        "10": "average",
-        "11": "average",
-        "12": "long",
-        "13": "long",
-        "14": "long"
-    }
-    return length[x]
+    return length_category[x]
 
 
 def get_flexibility_category(wand_flexibility):
-    flexibility = {
-        "pliant": "high",
-        "supple": "high",
-        "Surprisingly swishy": "high",
-        "whippy": "high",
-        "bendy": "high",
-        "swishy": "high",
-        "very flexible": "high",
-        "brittle": "low",
-        "hard": "low",
-        "rigid": "low",
-        "solid": "low",
-        "unbending": "low",
-        "unyielding": "low",
-        "stiff": "low",
-        "quite bendy": "medium",
-        "quite flexible": "medium",
-        "slightly springy": "medium",
-        "reasonably supple": "medium",
-        "slightly yielding": "medium",
-        "fairly bendy": "medium"
-    }
-    return flexibility[wand_flexibility]
+    return flexibility_category[wand_flexibility]
 
 
 def get_responses_quest1(key):
-    with open("data/responses1.json") as f:
-        responses = json.load(f)
-    return responses[key]
+    return quest1_responses[key]
 
 
 async def generate_data(guild, secret_channel, channel):
@@ -255,7 +215,7 @@ async def reaction_closed(message):
     await message.delete()
 
 
-async def secret_response(guild_id, channel_name, description):
+async def secret_response(channel_name, description):
 
     secret = guilds.find_one({"server": str(guild_id)}, {"_id": 0, str(channel_name): 1})
     webhook_url = secret[str(channel_name)]["webhook"]
@@ -296,9 +256,10 @@ class Quest(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     async def logging(self, msg):
-        channel = self.client.get_channel(433547467988926464)
+        channel = self.client.get_channel(int(record_scroll))
         await channel.send(f"[{get_time().strftime('%Y-%b-%d %HH')}] " + msg)
 
     @commands.command(aliases=["hint"])
@@ -312,7 +273,7 @@ class Quest(commands.Cog):
         delta = (t2 - t1).days * 24 + (t2 - t1).seconds // 3600
 
         if delta < 1:
-            await ctx.channel.send(f"{user.mention}, you must wait for 1 hr before you can unlock one")
+            await ctx.channel.send(f"{user.mention}, you must wait until the clock ticks an hour")
 
         elif delta >= 1:
             try:
@@ -345,11 +306,11 @@ class Quest(commands.Cog):
 
             except IndexError:
                 await user.send(
-                    f"You have used up all your hints for this path. Your hint for this hour is not consumed yet."
+                    f"You have used up all your hints for this path."
                 )
             except KeyError:
                 await user.send(
-                    f"You have used up all your hints for this path. Your hint for this hour is not consumed yet."
+                    f"You have used up all your hints for this path."
                 )
 
     @commands.Cog.listener()
@@ -377,7 +338,7 @@ class Quest(commands.Cog):
         elif spell_check(m.content) and user in role_dolphin.members:
             await Expecto(self.client).expecto_patronum(m.guild, user, m.channel, m)
 
-        elif str(m.channel.category.id) in diagon_alleys:
+        elif str(m.channel.category.id) == diagon_alleys:
 
             if msg == "eeylops owl emporium" and str(m.channel) != "eeylops-owl-emporium":
                 await Expecto(self.client).create_emporium(m.channel.category, m.guild, msg, m, user)
@@ -388,7 +349,7 @@ class Quest(commands.Cog):
             elif msg == "ollivanders" and str(m.channel) != "ollivanders":
                 await Expecto(self.client).create_ollivanders(m.channel.category, m.guild, msg, m, user)
 
-            elif "gringotts-bank" == str(m.channel) and m.content.startswith(";") is False:
+            elif "gringotts-bank" == str(m.channel) and m.content.startswith(f"{self.prefix}") is False:
                 await self.transaction_gringotts(user, m.guild, m)
 
     async def create_gringotts(self, category, guild, message, user):
@@ -478,7 +439,7 @@ class Quest(commands.Cog):
             else:
                 responses = get_responses_quest1("gringotts_bank")
                 msg = responses["has_moneybag"].format(user.mention)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=20)
 
@@ -495,19 +456,19 @@ class Quest(commands.Cog):
             elif actions < 3:
                 responses = get_responses_quest1("gringotts_bank")
                 msg = responses["transaction"][actions].format(user.mention)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 await action_update_quest1(user, cycle, actions=1)
                 await penalize_quest1(user, cycle, points=10)
 
     async def vault_access(self, user, guild, role_galleons, message, responses):
 
-        identity = await self.obtain_identity(user, guild, message, responses)
+        identity = await self.obtain_identity(user, message, responses)
 
         if identity == "Correct":
-            vault_number = await self.obtain_vault_number(user, guild, message, responses)
+            vault_number = await self.obtain_vault_number(user, message, responses)
 
             if vault_number == "Correct":
-                vault_password = await self.obtain_vault_password(user, guild, message, responses)
+                vault_password = await self.obtain_vault_password(user, message, responses)
 
                 if vault_password == "Correct":
                     msg1 = f"{user.mention} has acquired 💰 role"
@@ -537,15 +498,15 @@ class Quest(commands.Cog):
                     await user.add_roles(role_galleons)
                     await asyncio.sleep(6)
                     await message.channel.send(msg1)
-                    await secret_response(guild.id, message.channel.name, msg2)
+                    await secret_response(message.channel.name, msg2)
 
                     thieves.update_one({}, {"$pull": {"names": str(user.id)}})
 
-    async def obtain_identity(self, user, guild, message, responses):
+    async def obtain_identity(self, user, message, responses):
 
         answer, topic = "Wrong", ""
         msg = responses["get_identity"]["1"].format(user.mention)
-        await secret_response(guild.id, message.channel.name, msg)
+        await secret_response(message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if path != "path0":
@@ -557,7 +518,7 @@ class Quest(commands.Cog):
                 return
             elif str(g.content) == key and g.author == user and g.channel == message.channel:
                 return True
-            elif g.author == user and ";" not in str(g.content):
+            elif g.author == user and f"{self.prefix}" not in str(g.content):
                 raise KeyError
 
         i = 0
@@ -576,7 +537,7 @@ class Quest(commands.Cog):
                 await Expecto(self.client).update_path_quest1(user, cycle, path_new="path18")
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 await message.channel.edit(topic=topic)
                 break
 
@@ -604,7 +565,7 @@ class Quest(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
 
                 await message.channel.edit(topic=topic)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 i += 1
 
             else:
@@ -616,11 +577,11 @@ class Quest(commands.Cog):
 
         return answer
 
-    async def obtain_vault_number(self, user, guild, message, responses):
+    async def obtain_vault_number(self, user, message, responses):
 
         answer, topic = "Wrong", ""
         msg = responses["get_vault"]["1"].format(user.mention)
-        await secret_response(guild.id, message.channel.name, msg)
+        await secret_response(message.channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if path != "path0":
@@ -634,7 +595,7 @@ class Quest(commands.Cog):
                 return
             elif str(g.content) == str(user.id) and g.author == user and g.channel == message.channel:
                 return True
-            elif g.author == user and ";" not in str(g.content):
+            elif g.author == user and f"{self.prefix}" not in str(g.content):
                 raise KeyError
 
         i = 0
@@ -653,7 +614,7 @@ class Quest(commands.Cog):
                 await Expecto(self.client).update_path_quest1(user, cycle, path_new="path12")
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 await message.channel.edit(topic=topic)
                 break
 
@@ -682,7 +643,7 @@ class Quest(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
 
                 await message.channel.edit(topic=topic)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 i += 1
 
             else:
@@ -694,15 +655,15 @@ class Quest(commands.Cog):
 
         return answer
 
-    async def obtain_vault_password(self, user, guild, message, responses):
+    async def obtain_vault_password(self, user, message, responses):
 
         answer, topic, msg = "Wrong", "", ""
         msg1 = responses["get_password"]["1"].format(user.mention)
         msg2 = responses["get_password"]["2"].format(user.mention)
         await asyncio.sleep(1)
-        await secret_response(guild.id, message.channel.name, msg1)
+        await secret_response(message.channel.name, msg1)
         await asyncio.sleep(3)
-        await secret_response(guild.id, message.channel.name, msg2)
+        await secret_response(message.channel.name, msg2)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         if path != "path0":
@@ -714,7 +675,7 @@ class Quest(commands.Cog):
             elif str(g.content) == (str(user.id))[::-1] and g.author == user \
                     and g.channel == message.channel:
                 return True
-            elif g.author == user and ";" not in str(g.content):
+            elif g.author == user and f"{self.prefix}" not in str(g.content):
                 raise KeyError
 
         i = 0
@@ -733,7 +694,7 @@ class Quest(commands.Cog):
                 await Expecto(self.client).update_path_quest1(user, cycle, path_new="path13")
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 await message.channel.edit(topic=topic)
                 break
 
@@ -762,7 +723,7 @@ class Quest(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
 
                 await message.channel.edit(topic=topic)
-                await secret_response(guild.id, message.channel.name, msg)
+                await secret_response(message.channel.name, msg)
                 i += 1
 
             else:
@@ -779,6 +740,7 @@ class Expecto(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     async def send_off_complete_quest1(self):
         for entry in sendoffs.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
@@ -1181,9 +1143,9 @@ class Expecto(commands.Cog):
                     await ctx.channel.send(embed=embed)
 
                 except ValueError:
-                    await ctx.channel.send("Use `;cycle <cycle#> <@mention>.")
+                    await ctx.channel.send(f"Use `{self.prefix}cycle <cycle#> <@mention>.")
                 except TypeError:
-                    await ctx.channel.send("Use `;cycle <cycle#> <@mention>.")
+                    await ctx.channel.send(f"Use `{self.prefix}cycle <cycle#> <@mention>.")
 
     @commands.command(aliases=["progress"])
     @commands.has_role("🐬")
@@ -1358,12 +1320,12 @@ class Expecto(commands.Cog):
             if user not in role_owl.members:
                 await penalize_quest1(user, cycle, points=30)
 
-            elif (valid_channel_id not in msg or "486940955270971402" not in msg) and "✉" not in msg:
+            elif (valid_channel_id not in msg or headmaster_id not in msg) and "✉" not in msg:
 
                 await reaction.message.add_reaction("❔")
                 await penalize_quest1(user, cycle, points=10)
 
-            elif (valid_channel_id in msg or "486940955270971402" in msg) and "✉" in msg:
+            elif (valid_channel_id in msg or headmaster_id in msg) and "✉" in msg:
 
                 cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
@@ -1395,10 +1357,10 @@ class Expecto(commands.Cog):
             cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
             if actions > 3:
-                if ctx.message.content in [";knock", ";inquire"]:
+                if ctx.message.content in [f"{self.prefix}knock", f"{self.prefix}inquire"]:
                     await ctx.message.delete()
 
-            elif ctx.message.content == ";knock":
+            elif ctx.message.content == f"{self.prefix}knock":
                 if path == "path6":
                     await self.update_path_quest1(user, cycle, path_new="path9")
                 elif path == "path15":
@@ -1409,10 +1371,10 @@ class Expecto(commands.Cog):
                 topic = responses["knock"][1]
                 await ctx.channel.edit(topic=topic)
                 await ctx.message.delete()
-                await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await secret_response(ctx.channel.name, msg)
                 await penalize_quest1(user, cycle, points=15)
 
-            elif ctx.message.content == ";inquire" and actions < 3:
+            elif ctx.message.content == f"{self.prefix}inquire" and actions < 3:
                 if path == "path9":
                     await self.update_path_quest1(user, cycle, path_new="path14")
                 elif path == "path15":
@@ -1424,7 +1386,7 @@ class Expecto(commands.Cog):
                 await ctx.message.delete()
                 await action_update_quest1(user, cycle, actions=1)
                 await penalize_quest1(user, cycle, points=15)
-                await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await secret_response(ctx.channel.name, msg)
 
     @commands.command(aliases=["purchase"])
     @commands.has_role("🐬")
@@ -1456,7 +1418,7 @@ class Expecto(commands.Cog):
             elif owl_buy not in owls_list:
                 msg = responses["purchasing"]["invalid_owl"]
                 await penalize_quest1(user, cycle, points=20)
-                await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                await secret_response(ctx.channel.name, msg)
                 await ctx.message.delete()
 
             elif owl_buy in owls_list:
@@ -1468,7 +1430,7 @@ class Expecto(commands.Cog):
                     msg = responses["purchasing"]["buying_again"][0].format(user.mention)
                     topic = responses["purchasing"]["buying_again"][1]
                     await penalize_quest1(user, cycle, points=75)
-                    await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await secret_response(ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
 
@@ -1477,7 +1439,7 @@ class Expecto(commands.Cog):
                     topic = responses["purchasing"]["no_moneybag"][1]
                     await self.update_path_quest1(user, cycle, path_new="path7")
                     await penalize_quest1(user, cycle, points=10)
-                    await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await secret_response(ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
 
@@ -1494,7 +1456,7 @@ class Expecto(commands.Cog):
                     topic = responses["purchasing"]["out_of_stock"][1]
                     await self.update_path_quest1(user, cycle, path_new="path24")
                     await penalize_quest1(user, cycle, points=20)
-                    await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                    await secret_response(ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
                     await ctx.message.delete()
 
@@ -1539,7 +1501,7 @@ class Expecto(commands.Cog):
                         await asyncio.sleep(1)
                         await ctx.channel.send(f"{user.mention} has acquired 🦉 role")
                         await asyncio.sleep(2)
-                        await secret_response(ctx.guild.id, ctx.channel.name, msg)
+                        await secret_response(ctx.channel.name, msg)
                         await asyncio.sleep(3)
                         await ctx.channel.send(embed=embed)
                         await asyncio.sleep(2)
@@ -1665,7 +1627,7 @@ class Expecto(commands.Cog):
             role_star = discord.utils.get(guild.roles, name="🌟")
             responses = get_responses_quest1("ollivanders")
             msg1 = responses["intro"].format(user.mention)
-            await secret_response(guild.id, channel.name, msg1)
+            await secret_response(channel.name, msg1)
             await asyncio.sleep(3)
 
             def check(guess):
@@ -1683,13 +1645,13 @@ class Expecto(commands.Cog):
                 msg = responses["timeout_intro"].format(user.mention)
                 await penalize_quest1(user, cycle, points=10)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
 
             except KeyError:
                 msg = responses["invalid"]
                 await penalize_quest1(user, cycle, points=10)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
 
             else:
                 if user not in role_star.members and path in ["path11", "path3", "path10", "path0", "path25", "path17"]:
@@ -1697,23 +1659,23 @@ class Expecto(commands.Cog):
                     msg2 = responses["valid"][1].format(user.mention)
                     topic = responses["valid"][2]
                     await action_update_quest1(user, cycle, actions=3)
-                    await secret_response(guild.id, channel.name, msg1)
+                    await secret_response(channel.name, msg1)
                     await asyncio.sleep(6)
-                    await secret_response(guild.id, channel.name, msg2)
+                    await secret_response(channel.name, msg2)
                     await channel.edit(topic=topic)
                     await asyncio.sleep(5)
-                    await self.wand_personalise(user, guild, channel, cycle, role_star, responses)
+                    await self.wand_personalise(user, channel, cycle, role_star, responses)
 
                 else:
                     msg = responses["valid_no_owl"][0].format(user.mention)
                     topic = responses["valid_no_owl"][1]
                     await penalize_quest1(user, cycle, points=25)
                     await action_update_quest1(user, cycle, actions=3)
-                    await secret_response(guild.id, channel.name, msg)
+                    await secret_response(channel.name, msg)
                     await channel.edit(topic=topic)
 
-    async def wand_personalise(self, user, guild, channel, cycle, role_star, responses):
-        owl_type = ""
+    async def wand_personalise(self, user, channel, cycle, role_star, responses):
+        owl_type_ = ""
 
         for profile in quests.aggregate([{
             "$match": {"user_id": str(user.id)}}, {
@@ -1724,21 +1686,21 @@ class Expecto(commands.Cog):
                 }
             }
         }]):
-            owl_type = profile["quest1"][0]["owl"]
+            owl_type_ = profile["quest1"][0]["owl"]
             break
 
-        trait = owls.find_one({"type": owl_type}, {"_id": 0, "trait": 1})["trait"]
+        trait = owls.find_one({"type": owl_type_}, {"_id": 0, "trait": 1})["trait"]
         msg1 = responses["owl_analysis"][trait][0]
         topic = responses["owl_analysis"][trait][1]
 
-        await secret_response(guild.id, channel.name, msg1)
+        await secret_response(channel.name, msg1)
         await channel.edit(topic=topic)
         await asyncio.sleep(9)
 
-        wand_length = await self.get_wand_length(user, guild, channel, responses)
+        wand_length = await self.get_wand_length(user, channel, responses)
 
         if wand_length != "Wrong":
-            wand_flexibility = await self.get_wand_flexibility(user, guild, channel, responses)
+            wand_flexibility = await self.get_wand_flexibility(user, channel, responses)
 
             if wand_flexibility != "Wrong":
                 wand_length_category = get_length_category(wand_length)
@@ -1756,10 +1718,10 @@ class Expecto(commands.Cog):
                     if wand["wood"] not in wood_selection:
                         wood_selection.append(wand["wood"])
 
-                wand_wood = await self.get_wand_wood(user, guild, channel, wood_selection, responses)
+                wand_wood = await self.get_wand_wood(user, channel, wood_selection, responses)
 
                 if wand_wood != "Wrong":
-                    wand_core = await self.get_wand_core(user, guild, channel, responses)
+                    wand_core = await self.get_wand_core(user, channel, responses)
                     wand_creation = {
                         "flexibility_category": wand_flexibility_category,
                         "flexibility": wand_flexibility,
@@ -1780,7 +1742,7 @@ class Expecto(commands.Cog):
 
                     if __patronus is None:
                         msg = responses["no_patronus"].format(user.mention)
-                        await secret_response(guild.id, channel.name, msg)
+                        await secret_response(channel.name, msg)
 
                     elif __patronus is not None:
                         description = f"Wood: `{wand_wood.title()}`\n" \
@@ -1809,7 +1771,7 @@ class Expecto(commands.Cog):
                             except asyncio.TimeoutError:
                                 msg = responses["timeout_response"].format(user.mention)
                                 await penalize_quest1(user, cycle, points=20)
-                                await secret_response(guild.id, channel.name, msg)
+                                await secret_response(channel.name, msg)
                                 break
 
                             else:
@@ -1827,7 +1789,7 @@ class Expecto(commands.Cog):
 
                                     await user.add_roles(role_star)
                                     await channel.send(msg1)
-                                    await secret_response(guild.id, channel.name, msg2)
+                                    await secret_response(channel.name, msg2)
                                     break
 
                                 elif answer.content.lower() == "n":
@@ -1838,16 +1800,16 @@ class Expecto(commands.Cog):
                                         await self.update_path_quest1(user, cycle, path_new="path17")
 
                                     await penalize_quest1(user, cycle, points=20)
-                                    await secret_response(guild.id, channel.name, msg)
+                                    await secret_response(channel.name, msg)
                                     break
 
-    async def get_wand_core(self, user, guild, channel, responses):
+    async def get_wand_core(self, user, channel, responses):
 
         wand_core = ""
         formatted_cores = "`, `".join(cores)
         msg = responses["core_selection"]["1"].format(user.mention, formatted_cores)
         await asyncio.sleep(1)
-        await secret_response(guild.id, channel.name, msg)
+        await secret_response(channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -1872,7 +1834,7 @@ class Expecto(commands.Cog):
 
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
             except KeyError:
@@ -1894,7 +1856,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 i += 1
 
             else:
@@ -1905,18 +1867,18 @@ class Expecto(commands.Cog):
                 )
                 topic = responses["core_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
         return wand_core.lower()
 
-    async def get_wand_wood(self, user, guild, channel, wood_selection, responses):
+    async def get_wand_wood(self, user, channel, wood_selection, responses):
 
         wand_wood = ""
         formatted_woods = "`, `".join(wood_selection)
         msg = responses["wood_selection"]["1"].format(user.mention, formatted_woods)
         await asyncio.sleep(1)
-        await secret_response(guild.id, channel.name, msg)
+        await secret_response(channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -1941,7 +1903,7 @@ class Expecto(commands.Cog):
 
                 await penalize_quest1(user, cycle, points=15)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
             except KeyError:
@@ -1963,7 +1925,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 i += 1
 
             else:
@@ -1974,17 +1936,17 @@ class Expecto(commands.Cog):
                 )
                 topic = responses["wood_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
         return wand_wood.lower()
 
-    async def get_wand_length(self, user, guild, channel, responses):
+    async def get_wand_length(self, user, channel, responses):
 
         wand_length = ""
         msg = responses["length_selection"]["1"].format(user.mention)
         await asyncio.sleep(1)
-        await secret_response(guild.id, channel.name, msg)
+        await secret_response(channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -2010,7 +1972,7 @@ class Expecto(commands.Cog):
 
                 await penalize_quest1(user, cycle, points=15)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
             except KeyError:
@@ -2032,7 +1994,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 i += 1
 
             else:
@@ -2040,18 +2002,18 @@ class Expecto(commands.Cog):
                 msg = responses["length_selection"]["chose"][0].format(wand_length)
                 topic = responses["length_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
         return wand_length
 
-    async def get_wand_flexibility(self, user, guild, channel, responses):
+    async def get_wand_flexibility(self, user, channel, responses):
 
         wand_flexibility = ""
         formatted_flexibility = "`, `".join(flexibility_types)
         msg = responses["flexibility_selection"]["1"].format(user.mention, formatted_flexibility)
         await asyncio.sleep(2)
-        await secret_response(guild.id, channel.name, msg)
+        await secret_response(channel.name, msg)
         cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 
         def check(guess):
@@ -2076,7 +2038,7 @@ class Expecto(commands.Cog):
 
                 await penalize_quest1(user, cycle, points=15)
                 await action_update_quest1(user, cycle, actions=3)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
             except KeyError:
@@ -2098,7 +2060,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=15)
                     await channel.edit(topic=topic)
 
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 i += 1
 
             else:
@@ -2106,7 +2068,7 @@ class Expecto(commands.Cog):
                 msg = responses["flexibility_selection"]["chose"][0].format(wand_flexibility.title())
                 topic = responses["flexibility_selection"]["chose"][1]
                 await channel.edit(topic=topic)
-                await secret_response(guild.id, channel.name, msg)
+                await secret_response(channel.name, msg)
                 break
 
         return wand_flexibility.lower()

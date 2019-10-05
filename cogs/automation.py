@@ -2,6 +2,7 @@
 Automation Module
 Miketsu, 2019
 """
+import os
 from datetime import datetime
 
 import discord
@@ -10,19 +11,29 @@ from discord.ext import commands
 
 from cogs.economy import level_create_user
 from cogs.mongo.database import get_collections
-from cogs.startup import pluralize
 
 # Collections
 guilds = get_collections("guilds")
+config = get_collections("config")
 
-# Listings
-shard_trading_ids = []
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+shard_trading_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["shard-trading"]
+office_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headmasters-office"]
+scroll_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
+auror_dept_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["auror-department"]
+headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
+shard_seeker_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["shard_seekers"]
 
-for document in guilds.find({}, {"_id": 0, "channels.shard-trading": 1}):
-    try:
-        shard_trading_ids.append(str(document["channels"]["shard-trading"]))
-    except KeyError:
-        continue
+
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
 
 
 def get_timestamp():
@@ -30,7 +41,7 @@ def get_timestamp():
 
 
 def get_time():
-    return datetime.now(tz=pytz.timezone("America/Atikokan"))
+    return datetime.now(tz=pytz.timezone(timezone))
 
 
 class Automation(commands.Cog):
@@ -39,33 +50,31 @@ class Automation(commands.Cog):
         self.client = client
 
     @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if str(message.channel).startswith("Direct Message") is True:
+            record_scroll_channel = self.client.get_channel(int(scroll_id))
+            await record_scroll_channel.send(f"{message.author}: {message.content}")
+
+    @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
+
         try:
-            if str(payload.data["channel_id"]) not in shard_trading_ids:
-                return
 
-            elif payload.data["pinned"] is True:
-                request = guilds.find_one({
-                    "server": f"{payload.data['guild_id']}"}, {
-                    "_id": 0, "channels.shard-trading": 1, "channels.headlines": 1, "roles.shard_seekers": 1
-                })
+            if str(payload.data["channel_id"]) == shard_trading_id and payload.data["pinned"] is True:
 
-                guild_id = payload.data['guild_id']
                 user_id = payload.data["author"]["id"]
-                headlines_id = request["channels"]["headlines"]
-                shard_trading_id = request["channels"]["shard-trading"]
-                shard_seeker_id = request["roles"]["shard_seekers"]
                 attachments = payload.data["attachments"]
                 description = payload.data["content"]
 
                 guild = self.client.get_guild(int(guild_id))
-                user = guild.get_member(int(user_id))
+                member = guild.get_member(int(user_id))
                 headlines_channel = self.client.get_channel(int(headlines_id))
                 shard_trading_channel = self.client.get_channel(int(shard_trading_id))
 
                 content = f"<@&{shard_seeker_id}>!"
-                embed = discord.Embed(color=user.colour, description=description, timestamp=get_timestamp())
-                embed.set_author(name=f"{user.display_name} is looking for shards!", icon_url=user.avatar_url)
+                embed = discord.Embed(color=member.colour, description=description, timestamp=get_timestamp())
+                embed.set_author(name=f"{member.display_name} is looking for shards!", icon_url=member.avatar_url)
                 embed.set_footer(text=f"#{shard_trading_channel.name}")
 
                 if len(attachments) > 0:
@@ -75,6 +84,17 @@ class Automation(commands.Cog):
 
         except KeyError:
             pass
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+
+        if str(payload.emoji) != "📌":
+            return
+
+        else:
+            channel = self.client.get_channel(payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+            await message.pin()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -90,12 +110,17 @@ class Automation(commands.Cog):
             no_maj_role_id = request["roles"]["no-maj"]
             acceptance_letter = request["letters"]["acceptance"].replace("\\n", "\n")
             welcome_message = request["letters"]["welcome"]
+            bot_intro = request["letters"]["bot_intro"]
 
         except KeyError:
             return
 
         try:
-            embed3 = discord.Embed(color=0xffffff, description=welcome_message.format(member.mention))
+            embed3 = discord.Embed(
+                color=0xffffff,
+                description=welcome_message.format(member.mention),
+                timestamp=get_timestamp()
+            )
             common_room_channel = self.client.get_channel(int(common_room_id))
             await common_room_channel.send(embed=embed3)
         except AttributeError:
@@ -109,9 +134,10 @@ class Automation(commands.Cog):
             embed1 = discord.Embed(
                 color=0xffff80,
                 title="✉ Acceptance Letter",
-                description=acceptance_letter.format(member.display_name, welcome_id, sorting_hat_id)
+                description=acceptance_letter.format(member.display_name, welcome_id, sorting_hat_id),
+                timestamp=get_timestamp()
             )
-            content = "I'm Miketsu bot by the way, Patronus' exclusive Discord bot. Let me know if you need my `;help`"
+            content = bot_intro.format(self.client.user.name, self.client.command_prefix)
             await member.send(embed=embed1)
             await member.send(content=content)
         except discord.errors.Forbidden:
@@ -146,9 +172,7 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        request = guilds.find_one({"server": str(member.guild.id)}, {"_id": 0, "channels.scroll-of-everything": 1})
-        record_scroll_id = request["channels"]["scroll-of-everything"]
-        record_scroll_channel = self.client.get_channel(int(record_scroll_id))
+        record_scroll_channel = self.client.get_channel(int(scroll_id))
 
         embed = discord.Embed(color=0xffffff, timestamp=get_timestamp())
         embed.set_author(name=f"{member} [{member.display_name}] has left the house!")
@@ -169,17 +193,8 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
 
-        try:
-            request = guilds.find_one({
-                "server": str(before.guild.id)}, {
-                "_id": 0, "channels.scroll-of-everything": 1, "channels.auror-department": 1
-            })
-            record_scroll_id = request["channels"]["scroll-of-everything"]
-
-        except TypeError:
-            return
-
-        record_scroll_channel = self.client.get_channel(int(record_scroll_id))
+        record_scroll_channel = self.client.get_channel(int(scroll_id))
+        auror_department_channel = self.client.get_channel(int(auror_dept_id))
 
         if before.roles != after.roles:
             changed_role1 = list(set(after.roles) - set(before.roles))
@@ -221,8 +236,6 @@ class Automation(commands.Cog):
                     pass
 
                 if changed_role1[0].name == "Auror":
-                    auror_department_id = request["channels"]["auror-department"]
-                    auror_department_channel = self.client.get_channel(int(auror_department_id))
 
                     try:
                         embed = discord.Embed(
@@ -243,10 +256,10 @@ class Automation(commands.Cog):
             try:
                 embed = discord.Embed(
                     color=0x7ed321,
-                    description=f"{before.name} :: {after.name}",
+                    description=f"{before.name} → {after.name}",
                     timestamp=get_timestamp()
                 )
-                embed.set_author(name=f"Before :: New username", icon_url=before.avatar_url)
+                embed.set_author(name=f"Username change", icon_url=before.avatar_url)
                 await record_scroll_channel.send(embed=embed)
             except AttributeError:
                 pass
@@ -259,10 +272,10 @@ class Automation(commands.Cog):
             try:
                 embed = discord.Embed(
                     color=0x7ed321,
-                    description=f"{before.display_name} :: {after.display_name}",
+                    description=f"{before.display_name} → {after.mention}",
                     timestamp=get_timestamp()
                 )
-                embed.set_author(name=f"Before :: New nickname", icon_url=before.avatar_url)
+                embed.set_author(name=f"Nickname change", icon_url=before.avatar_url)
                 await record_scroll_channel.send(embed=embed)
             except AttributeError:
                 pass

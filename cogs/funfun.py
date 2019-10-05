@@ -16,25 +16,15 @@ from cogs.mongo.database import get_collections
 guilds = get_collections("guilds")
 stickers = get_collections("stickers")
 users = get_collections("users")
+config = get_collections("config")
 
-# Listings
+# Lists
 actions = []
 stickers_list = []
 
-reaction_list_ = open("lists/reactions.lists")
-reaction_list = reaction_list_.read().splitlines()
-reaction_list_cycle = cycle(reaction_list)
-reaction_list_.close()
-
-success_lists_ = open("lists/success.lists")
-success_lists = success_lists_.read().splitlines()
-success_lists_cycle = cycle(success_lists)
-success_lists_.close()
-
-failed_lists_ = open("lists/failed.lists")
-failed_lists = failed_lists_.read().splitlines()
-failed_lists_cycle = cycle(failed_lists)
-failed_lists_.close()
+failed_shoots = cycle(config.find_one({"list": 3}, {"_id": 0, "failed_shoots": 1})["failed_shoots"])
+success_shoots = cycle(config.find_one({"list": 3}, {"_id": 0, "success_shoots": 1})["success_shoots"])
+reactions = cycle(config.find_one({"list": 3}, {"_id": 0, "reactions": 1})["reactions"])
 
 
 def generate_new_stickers():
@@ -95,9 +85,9 @@ class Funfun(commands.Cog):
 
                 if member.id != self.client.user.id:
                     roll = random.randint(1, 100)
-                    response = next(success_lists_cycle).format(member.mention)
+                    response = next(success_shoots).format(member.mention)
                     if roll >= 45:
-                        response = next(failed_lists_cycle).format(user.mention)
+                        response = next(failed_shoots).format(user.mention)
 
                     embed = discord.Embed(color=member.colour, description=f"*{response}*")
                     await channel.send(embed=embed)
@@ -198,7 +188,7 @@ class Funfun(commands.Cog):
                     if len(message.content) == 4:
                         embed = discord.Embed(
                             colour=discord.Colour(0xffe6a7),
-                            description=next(reaction_list_cycle)
+                            description=next(reactions)
                         )
                         msg = await message.channel.send(embed=embed)
                         await msg.delete(delay=15)
@@ -216,7 +206,6 @@ class Funfun(commands.Cog):
             else:
                 x = users.update_one({"user_id": str(user.id), "level": {"$lt": 60}}, {"$inc": {"experience": 20}})
                 sticker_url = stickers.find_one({"alias": sticker_recognized}, {"_id": 0, "link": 1})["link"]
-
                 comment = " "
                 if x.modified_count > 0:
                     comment = ", +20exp"

@@ -13,9 +13,10 @@ from cogs.mongo.database import get_collections
 
 # Collections
 guilds = get_collections("guilds")
+config = get_collections("config")
 
-# Listings
-admin_roles = ["Head"]
+# Lists
+admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 
 
 def check_if_has_any_role(ctx):
@@ -29,6 +30,7 @@ class Embeds(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     @commands.command(aliases=["patch"])
     @commands.check(check_if_has_any_role)
@@ -459,9 +461,9 @@ class Embeds(commands.Cog):
         )
         embed.add_field(
             name="🗒 Game Mechanics",
-            value=f"• Allow direct messages from our bot Miketsu to join. Try `;help dm`\n"
+            value=f"• Allow direct messages from our bot Miketsu to join. Try `{self.prefix}help dm`\n"
                   f"• Interested players can start by reacting at the <#{sorting.id}>\n"
-                  f"• Hints will be available to use via `;hint`\n"
+                  f"• Hints will be available to use via `{self.prefix}hint`\n"
                   f"• When the clock ticks a new hour, various events can happen\n"
                   f"• Use <#{gift_game.id}> for any discussion, visible once accepted\n​ "
         )
@@ -474,11 +476,12 @@ class Embeds(commands.Cog):
         )
         embed.add_field(
             name="💝 Rewards System",
-            value="• Two current guild members will win Nitro\n"
-                  "• The 1st one to ever complete a quest cycle with 999+ points; and\n"
-                  "• The 1st one to complete a quest cycle without moving a path\n​\n "
-                  "• Note: Commands `;progress` and `;cycle` are unlocked once your first cycle is finished\n\n​ "
-                  ":four_leaf_clover: Good luck!​\n "
+            value=f"• Two current guild members will win Nitro\n"
+                  f"• The 1st one to ever complete a quest cycle with 999+ points; and\n"
+                  f"• The 1st one to complete a quest cycle without moving a path\n​\n "
+                  f"• Note: Commands `{self.prefix}progress` and `{self.prefix}cycle` "
+                  f"are unlocked once your first cycle is finished\n\n​ "
+                  f":four_leaf_clover: Good luck!​\n "
         )
         embed.set_footer(
             text="special thanks to xann! :3"

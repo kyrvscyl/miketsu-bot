@@ -2,10 +2,11 @@
 Startup Module
 Miketsu, 2019
 """
-
+import asyncio
 import os
 from datetime import datetime
 from itertools import cycle
+from math import ceil
 
 import discord
 import pytz
@@ -15,60 +16,47 @@ from cogs.mongo.database import get_collections
 
 # Collections
 guilds = get_collections("guilds")
+changelogs = get_collections("changelogs")
+config = get_collections("config")
 
-# Global Variables
-e_m = "<:medal:573071121545560064>"
-e_j = "<:jade:555630314282811412>"
-e_c = "<:coin:573071121495097344>"
-e_f = "<:friendship:555630314056318979>"
-e_a = "<:amulet:603989470328651787>"
-e_sp = "<:SP:602707718603538442>"
-e_ssr = "<:SSR:602707410515132456>"
-e_sr = "<:SR:602707410922242048>"
-e_r = "<:R_:602707410582241280>"
-e_n = "<:N_:602707410540560414>"
-e_t = "<:talisman:573071120685596682>"
+# Lists
+status = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
 
-embed_color = 0xffa8e1
-guild_id = int(os.environ.get("PATRONUS"))
-hosting_id = int(guilds.find_one({
-    "server": str(guild_id)}, {
-    "_id": 0, "channels.bot-sparring": 1
-})["channels"]["bot-sparring"])
-
-# Listings
-status = cycle([
-    "with the peasants via ;info",
-    "with their feelings via ;info",
-    "fake Onmyoji via ;info",
-    "with Susabi via ;info",
-    "in Patronusverse via ;info"
-])
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 
 
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
+def check_if_has_any_admin_roles(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in admin_roles:
+            return True
+    return False
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 class Startup(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     @commands.Cog.listener()
     async def on_ready(self):
         owner_id = await self.client.application_info()
+        time_now = datetime.now(tz=pytz.timezone(timezone))
 
         print("Initializing...")
         print("-------")
-        print("Logged in as {0.user}".format(self.client))
+        print("Logged in as {}".format(self.client.user))
         print("Hi! {}!".format(self.client.get_user(owner_id.owner.id)))
-        print("Time now: {}".format(datetime.now(tz=pytz.timezone("America/Atikokan")).strftime("%d.%b %Y %H:%M:%S")))
+        print("Time now: {}".format(time_now.strftime("%d.%b %Y %H:%M:%S")))
         print("-------")
         self.change_status.start()
         print("-------")
@@ -82,64 +70,123 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["info"])
     async def show_greeting_message(self, ctx):
+
         embed = discord.Embed(
             color=embed_color,
-            description="To see my commands, type *`;help`* or *`;help dm`*"
+            description=f"To see my commands, type *`{self.prefix}help`*"
         )
         embed.set_author(name=f"Hello there! I'm {self.client.user.display_name}! ~")
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["h", "help"])
-    async def show_help_message(self, ctx, *args):
+    async def show_help_message(self, ctx):
         embed = discord.Embed(
             title="help",
             color=embed_color,
-            description="append the prefix semi-colon *`;`*"
+            description=f"append the prefix symbol *`{self.prefix}`*"
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
         embed.set_footer(text="*Head commands")
         embed.add_field(
-            name="Economy",
-            value="*daily, weekly, profile, display, buy, summon, "
+            name="fake Onmyoji",
+            value="*"
+                  "daily, weekly, profile, display, buy, summon, "
                   "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray, stat, "
-                  "frames, wish, wishlist, fulfill, parade, uncollected, collections*",
+                  "frames, wish, wishlist, fulfill, parade, uncollected, collections, shards"
+                  "raid, raidc, encounter, bossinfo"
+                  "*",
             inline=False
-        )
-        embed.add_field(
-            name="Gameplay",
-            value="*raid, raidc, encounter, bossinfo*"
         )
         embed.add_field(
             name="Others",
-            value="*bounty, suggest, stickers, newsticker, wander, portrait, "
-                  "statistics, announce*\\*, *manage*\\*",
+            value="*"
+                  "changelog, bounty, suggest, stickers, newsticker, wander, portrait, "
+                  "stats, announce*\\*, *manage*\\"
+                  "*",
             inline=False
         )
 
-        try:
-            if args[0].lower() == "dm":
-                try:
-                    await ctx.author.send(embed=embed)
-                except discord.errors.Forbidden:
-                    return
-            else:
-                await ctx.channel.send(embed=embed)
-        except IndexError:
-            await ctx.channel.send(embed=embed)
+        await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["suggest", "report"])
-    async def collect_suggestion(self, ctx, *, suggestion):
+    async def collect_suggestions(self, ctx, *, content):
         request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels.headmasters-office": 1})
-
         headmaster_office_id = request["channels"]["headmasters-office"]
         headmaster_office_channel = self.client.get_channel(int(headmaster_office_id))
 
-        link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
-        embed = discord.Embed(color=embed_color, title="New Report/Suggestion")
-        embed.description = f"{ctx.author.mention} suggested: {suggestion} at <#{ctx.channel.id}>\n" \
-                            f"Message link: [here]({link})"
-        await headmaster_office_channel.send(embed=embed)
+        embed = discord.Embed(color=embed_color, title="📨 New Suggestion/Report", timestamp=get_timestamp())
+        try:
+            link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
+            embed.description = f"Author: {ctx.author.mention}\n" \
+                                f"Submitted through: {ctx.channel.mention}\n" \
+                                f"Message Link: [Here]({link})"
+        except AttributeError:
+            embed.description = f"From: {ctx.author.mention}\n" \
+                                f"Submitted through: Direct Message"
+
+        embed.add_field(name="Content", value=f"{content}", inline=False)
+        suggestion = await headmaster_office_channel.send(embed=embed)
+        await suggestion.add_reaction("📌")
         await ctx.message.add_reaction("📩")
+
+    @commands.command(aliases=["changelog", "changelogs"])
+    @commands.guild_only()
+    async def show_changelogs(self, ctx):
+
+        changelog_lines = changelogs.find_one({"logs": 1}, {"_id": 0, "details": 1})["details"][:200]
+        changelog_lines_formatted = []
+
+        for line in reversed(changelog_lines):
+            changelog_lines_formatted.append(f"• {line}\n")
+
+        embed = discord.Embed(color=embed_color, title="Changelog", timestamp=get_timestamp())
+        embed.description = " ".join(changelog_lines_formatted)
+
+        await self.show_changelogs_paginate(ctx, changelog_lines_formatted)
+
+    async def show_changelogs_paginate(self, ctx, formatted_list):
+
+        page = 1
+        max_lines = 20
+        page_total = ceil(len(formatted_list) / max_lines)
+        if page_total == 0:
+            page_total = 1
+
+        def create_new_embed_page(page_new):
+            end = page * max_lines
+            start = end - max_lines
+            description = "".join(formatted_list[start:end])
+
+            embed_new = discord.Embed(
+                color=ctx.author.colour,
+                title="Bot Changelogs",
+                description=description
+            )
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            return embed_new
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=create_new_embed_page(page))
 
 
 def setup(client):

@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
+import os
 import random
 import urllib.request
 from datetime import datetime
@@ -16,7 +17,6 @@ from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
 from cogs.mongo.database import get_collections
-from cogs.startup import embed_color, pluralize, hosting_id
 
 # Collections
 portraits = get_collections("portraits")
@@ -24,16 +24,29 @@ guilds = get_collections("guilds")
 duelists = get_collections("duelists")
 shikigamis = get_collections("shikigamis")
 books = get_collections("books")
+config = get_collections("config")
 
-# Listings
+# Lists
 pool_all = []
-castles_id = []
-duelling_room_id = []
-primary_roles = ["Head", "Auror", "Patronus", "No-Maj"]
-invalid_channels = ["auror-department", "gift-game", "pvp-fair", "duelling-room"]
-fields = ["name", "notes", "ban", "core", "lineup", "unban", "uncore"]
 lists_souls = []
 lists_souls_raw = []
+
+duel_fields = config.find_one({"list": 1}, {"_id": 0, "duel_fields": 1})["duel_fields"]
+primary_roles = config.find_one({"list": 1}, {"_id": 0, "primary_roles": 1})["primary_roles"]
+invalid_channels = config.find_one({"list": 1}, {"_id": 0, "invalid_channels": 1})["invalid_channels"]
+
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+castle_id = int(guilds.find_one({"server": str(guild_id)}, {"_id": 0, "categories": 1})["categories"]["castle"])
+duelling_room_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["duelling-room"]
+hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
+reference_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["reference-section"]
+restricted_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["restricted-section"]
+
+# Dictionaries
+primary_emojis = config.find_one({"dict": 1}, {"_id": 0, "primary_emojis": 1})["primary_emojis"]
 
 
 for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_id": 0, "index": 1}):
@@ -41,26 +54,21 @@ for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_id"
     lists_souls_raw.append(soul["index"].lower())
 
 
-for document in guilds.find({}, {"_id": 0, "categories.castle": 1}):
-    try:
-        castles_id.append(document["categories"]["castle"])
-    except KeyError:
-        continue
-
-
-for document in guilds.find({}, {"_id": 0, "channels.duelling-room": 1}):
-    try:
-        duelling_room_id.append(document["channels"]["duelling-room"])
-    except KeyError:
-        continue
-
-
 for document in shikigamis.find({}, {"_id": 0, "name": 1}):
     pool_all.append(document["name"])
 
 
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
+
+
 def get_time():
-    return datetime.now(tz=pytz.timezone("America/Atikokan"))
+    return datetime.now(tz=pytz.timezone(timezone))
 
 
 def lengthen(index):
@@ -77,28 +85,23 @@ def get_timestamp():
 
 
 def get_emoji_primary_role(role):
-    dictionary = {"Auror": "⚜", "Head": "🔱", "Patronus": "🔮", "No-Maj": "🔥"}
-    return dictionary[role]
+    return primary_emojis[role]
 
 
 def check_if_valid_and_castle(ctx):
-    return str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels
-
-
-def check_if_guild_is_patronus(ctx):
-    return ctx.guild.id == 412057028887052288
+    return ctx.channel.category.id == castle_id and str(ctx.channel.name) not in invalid_channels
 
 
 def check_if_channel_is_pvp(ctx):
-    return str(ctx.channel.id) in duelling_room_id
+    return str(ctx.channel.id) == duelling_room_id
 
 
 def check_if_reference_section(ctx):
-    return ctx.channel.name == "reference-section"
+    return ctx.channel.id == reference_id
 
 
 def check_if_restricted_section(ctx):
-    return ctx.channel.name == "restricted-section"
+    return ctx.channel.id == restricted_id
 
 
 async def post_process_books(ctx, query):
@@ -196,20 +199,52 @@ async def post_table_of_content_reference(channel):
     return True
 
 
+async def management_duel_profile_member_delete(ctx, args):
+    if duelists.find_one({"name": args[1]}) is not None:
+        duelists.delete_one({"name": args[1]})
+        await ctx.message.add_reaction("✅")
+
+        name_id = 1
+        for member in duelists.find({}, {"_id": 0, "name": 1}):
+            duelists.update_one({"name": member["name"]}, {"$set": {"#": name_id}})
+            name_id += 1
+
+    else:
+        await management_duel_show_approximate(ctx, args[1])
+
+
+async def management_duel_show_approximate(ctx, member_name):
+    members_search = duelists.find({"name_lower": {"$regex": f"^{member_name[:2].lower()}"}}, {"_id": 0})
+
+    approximate_results = []
+    for result in members_search:
+        approximate_results.append(f"{result['#']}/{result['name_lower']}")
+
+    embed = discord.Embed(
+        colour=discord.Colour(embed_color),
+        title="Invalid query",
+        description=f"The ID/name `{member_name}` returned no results"
+    )
+    embed.add_field(
+        name="Possible matches",
+        value="*{}*".format(", ".join(approximate_results))
+    )
+    await ctx.channel.send(embed=embed)
+
+
 async def management_duel_profile_update_field(ctx, args):
     try:
-        reference_id = int(args[1])
-        find_query = {"#": reference_id}
+        name_id = int(args[1])
+        find_query = {"#": name_id}
         name = "kyrvscyl"
 
     except ValueError:
         find_query = {"name_lower": args[1].lower()}
-        reference_id = 1
+        name_id = 1
         name = args[1].lower()
 
-    if duelists.find_one({"name_lower": name}) is None or duelists.find_one({"#": reference_id}) is None:
-        embed = discord.Embed(colour=discord.Colour(embed_color), title="No such duelist is found in the database")
-        await ctx.channel.send(embed=embed)
+    if duelists.find_one({"name_lower": name}) is None or duelists.find_one({"#": name_id}) is None:
+        await management_duel_show_approximate(ctx, args[1])
 
     elif args[2].lower() in ["notes", "note"]:
         duelists.update_one(find_query, {
@@ -270,7 +305,7 @@ async def management_duel_profile_update_field(ctx, args):
         await ctx.message.add_reaction("❌")
 
 
-async def management_duel_profile_add_member(ctx, args):
+async def management_duel_profile_member_add(ctx, args):
 
     if duelists.find_one({"name_lower": args[1].lower()}) is None:
 
@@ -302,6 +337,7 @@ class Castle(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     def create_webhook_post(self, webhooks, book):
 
@@ -394,7 +430,7 @@ class Castle(commands.Cog):
 
         return webhook
 
-    @commands.command(aliases=["guides", "guide"])
+    @commands.command(aliases=["guides"])
     @commands.guild_only()
     async def post_table_of_content(self, ctx):
 
@@ -518,9 +554,10 @@ class Castle(commands.Cog):
     @commands.command(aliases=["wander", "w"])
     @commands.guild_only()
     async def castle_wander(self, ctx):
-        await ctx.message.delete()
 
-        if not str(ctx.channel.category.id) in castles_id and str(ctx.channel.name) not in invalid_channels:
+        await ctx.message.delete(delay=5)
+
+        if not ctx.channel.category.id == castle_id and str(ctx.channel.name) not in invalid_channels:
             embed = discord.Embed(
                 title="wander, w",
                 colour=discord.Colour(embed_color),
@@ -607,7 +644,7 @@ class Castle(commands.Cog):
         if portraits.find({"frame_id": str(ctx.author.id)}, {"_id": 0}) is not None:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
-                description="Frame exists for this user, use `;frame edit <...>`"
+                description=f"Frame exists for this user, use `{self.prefix}frame edit <...>`"
             )
             await ctx.channel.send(embed=embed)
 
@@ -690,7 +727,7 @@ class Castle(commands.Cog):
             background.save(new_address)
 
             new_photo = discord.File(new_address, filename=f"{ign}.png")
-            hosting_channel = self.client.get_channel(hosting_id)
+            hosting_channel = self.client.get_channel(int(hosting_id))
             msg = await hosting_channel.send(file=new_photo)
 
             await asyncio.sleep(3)
@@ -714,6 +751,7 @@ class Castle(commands.Cog):
         return attachment_link
 
     @commands.command(aliases=["duel", "d"])
+    @commands.guild_only()
     @commands.check(check_if_channel_is_pvp)
     async def management_duel(self, ctx, *args):
 
@@ -722,8 +760,8 @@ class Castle(commands.Cog):
                 title="duel, d", colour=discord.Colour(embed_color),
                 description="shows the help prompt for the first 3 arguments"
             )
-            embed.add_field(name="Arguments", value="*add, update, show, stats*", inline=False)
-            embed.add_field(name="Example", value="*`;duel add`*", inline=False)
+            embed.add_field(name="Arguments", value="*add, update, show, delete*", inline=False)
+            embed.add_field(name=f"Example", value=f"*`{self.prefix}duel add`*", inline=False)
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() == "add" and len(args) <= 1:
@@ -731,18 +769,29 @@ class Castle(commands.Cog):
                 title="duel add, d a", colour=discord.Colour(embed_color),
                 description="add a new duelist in the database"
             )
-            embed.add_field(name="Format", value="*`;duel add <name>`*", inline=False)
+            embed.add_field(name="Format", value=f"*`{self.prefix}duel add <name>`*", inline=False)
+            await ctx.channel.send(embed=embed)
+
+        elif args[0].lower() == ["delete", "d"] and len(args) <= 1:
+            embed = discord.Embed(
+                title="duel delete, d d", colour=discord.Colour(embed_color),
+                description="removes a duelist in the database"
+            )
+            embed.add_field(name="Format", value=f"*`{self.prefix}duel delete <exact_name>`*", inline=False)
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["add", "a"] and len(args) == 2:
-            await management_duel_profile_add_member(ctx, args)
+            await management_duel_profile_member_add(ctx, args)
+
+        elif args[0].lower() in ["delete", "d"] and len(args) == 2:
+            await management_duel_profile_member_delete(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
                 title="duel update, d u", colour=discord.Colour(embed_color),
                 description="updates a duelist's profile"
             )
-            embed.add_field(name="Format", value="*`;d u <name or id> <field> <value>`*")
+            embed.add_field(name="Format", value=f"*`{self.prefix}d u <name or id> <field> <value>`*")
             embed.add_field(
                 name="field :: value",
                 value=f"• **name** :: <new_name>\n"
@@ -754,15 +803,15 @@ class Castle(commands.Cog):
             )
             embed.add_field(
                 name="Example",
-                value="*`;d u 1 ban enma`*\n"
-                      "*`;d u 100 notes benefits more on upper-hand teams`*",
+                value=f"*`{self.prefix}d u 1 ban enma`*\n"
+                      f"*`{self.prefix}d u 100 notes benefits more on upper-hand teams`*",
                 inline=False
             )
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) == 2:
             fields_formatted = []
-            for field in fields:
+            for field in duel_fields:
                 fields_formatted.append(f"`{field}`")
 
             embed = discord.Embed(
@@ -772,9 +821,9 @@ class Castle(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["update", "u"] and args[2].lower() not in fields and len(args) >= 3:
+        elif args[0].lower() in ["update", "u"] and args[2].lower() not in duel_fields and len(args) >= 3:
             fields_formatted = []
-            for field in fields:
+            for field in duel_fields:
                 fields_formatted.append(f"`{field}`")
 
             embed = discord.Embed(
@@ -787,7 +836,7 @@ class Castle(commands.Cog):
         elif args[0].lower() in ["update", "u"] and len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
             await management_duel_profile_update_field(ctx, args)
 
-        elif args[0].lower() in ["update", "u"] and args[2].lower() in fields and len(args) == 3:
+        elif args[0].lower() in ["update", "u"] and args[2].lower() in duel_fields and len(args) == 3:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Invalid field update request",
@@ -795,7 +844,7 @@ class Castle(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in fields:
+        elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in duel_fields:
             await management_duel_profile_update_field(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
@@ -805,15 +854,15 @@ class Castle(commands.Cog):
             )
             embed.add_field(
                 name="Formats",
-                value="• *`;d s all <opt: [<startswith>]>`*\n"
-                      "• *`;d s <name or id_num>`*",
+                value=f"• *`{self.prefix}d s all <opt: [<startswith>]>`*\n"
+                      f"• *`{self.prefix}d s <name or id_num>`*",
                 inline=False
             )
             embed.add_field(
                 name="Examples",
-                value="• *`;d s all`*\n"
-                      "• *`;d s all aki`*\n"
-                      "• *`;d s 120`*\n",
+                value=f"• *`{self.prefix}d s all`*\n"
+                      f"• *`{self.prefix}d s all aki`*\n"
+                      f"• *`{self.prefix}d s 120`*\n",
                 inline=False
             )
             await ctx.channel.send(embed=embed)
@@ -832,8 +881,8 @@ class Castle(commands.Cog):
 
     async def management_duel_profile_show_profile(self, ctx, args):
         try:
-            reference_id = int(args[1])
-            query = {"#": reference_id}
+            name_id = int(args[1])
+            query = {"#": name_id}
             member = duelists.find_one(query, {"_id": 0})
 
         except ValueError:
@@ -902,10 +951,10 @@ class Castle(commands.Cog):
                             embed_new.set_image(url=links[page - 1])
                             embed_new.set_footer(text=f"Page: {page} of {len(links)}")
                         else:
-                            embed_new.description = "This duelist has no lineup records yet\n\n" \
-                                                    "To add, use " \
-                                                    "*`;duel update <name> lineup`*\n" \
-                                                    "send it with an image uploaded in the message"
+                            embed_new.description = f"This duelist has no lineup records yet\n\n" \
+                                                    f"To add, use " \
+                                                    f"*`{self.prefix}duel update <ID/name> lineup`*\n" \
+                                                    f"send it with an image uploaded in the message"
                             embed_new.set_footer(text=f"Page: {x} of 1")
 
                         return embed_new
@@ -919,8 +968,7 @@ class Castle(commands.Cog):
                     await msg.edit(embed=generate_embed_lineup(page))
 
         except TypeError:
-            embed = discord.Embed(colour=discord.Colour(embed_color), title="No such duelist is found in the database")
-            await ctx.channel.send(embed=embed)
+            await management_duel_show_approximate(ctx, args[1])
 
     async def management_duel_profile_generate_image(self, bans, cores, ctx):
 

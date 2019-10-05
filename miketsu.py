@@ -2,28 +2,45 @@
 Discord Miketsu Bot.
 kyrvscyl, 2019
 """
-
 import os
 from datetime import datetime
 
 import discord
 from discord.ext import commands
 
+from cogs.mongo.database import get_collections
+
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 token = os.environ.get("TOKEN")
 
+# Collections
+config = get_collections("config")
+
+# Variables
 prefix = ";"
-client = commands.Bot(command_prefix=prefix)
+time_start = datetime.now()
+
+# Instantiation
+client = commands.Bot(command_prefix=prefix, case_insensitive=True)
 client.remove_command("help")
 
-time_start = datetime.now()
+# Lists
 cogs_loaded = []
+dev_roles = config.find_one({"list": 1}, {"_id": 0, "dev_roles": 1})["dev_roles"]
+
 
 for filename in sorted(os.listdir("./cogs")):
     if filename.endswith(".py"):
         client.load_extension(f"cogs.{filename[:-3]}")
         cogs_loaded.append(filename[:-3])
         print(f"Loading {filename}..")
+
+
+def check_if_has_any_development_roles(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in dev_roles:
+            return True
+    return False
 
 
 @client.command(aliases=["stats", "statistics"])
@@ -39,19 +56,20 @@ async def show_bot_statistics(ctx):
     timestamp = datetime.timestamp(datetime.now())
 
     embed = discord.Embed(
-        title=f"{client.user.name} Bot", colour=discord.Colour(0xffe6a7),
+        title=f"{client.user.name} Bot", colour=discord.Colour(16770727),
         description="A fan made Onmyoji-themed exclusive Discord bot with a touch of wizarding magic ✨",
         timestamp=datetime.utcfromtimestamp(timestamp)
     )
     embed.set_thumbnail(url=client.user.avatar_url)
     embed.add_field(
-        name="Development",
-        value=f"Coding: <@!180717337475809281>\nSupport Group: <@!437941992748482562>, <@!201402446705065984>",
+        name="💻 Development",
+        value=f"• Coding: <@!180717337475809281>\n"
+              f"• Support Group: <@!437941992748482562>, <@!201402446705065984>",
         inline=False
     )
     embed.add_field(
-        name="Statistics",
-        value=f"• Version: 1.4.9\n"
+        name="🛠 Statistics",
+        value=f"• Version: 1.5.b\n"
               f"• Servers Count: {len(guilds_list)}\n"
               f"• Servers: {' ,'.join(guilds_list)}\n"
               f"• Users: {len(client.users)}\n"
@@ -59,12 +77,12 @@ async def show_bot_statistics(ctx):
               f"• Ping: {round(client.latency, 5)} seconds",
         inline=False
     )
-    embed.add_field(name="Modules", value="{}".format(", ".join(sorted(cogs_loaded))))
+    embed.add_field(name="💾 Modules", value="{}".format(", ".join(sorted(cogs_loaded))))
     await ctx.channel.send(embed=embed)
 
 
 @client.command(aliases=["load", "l"])
-@commands.is_owner()
+@commands.check(check_if_has_any_development_roles)
 async def cogs_extension_load(ctx, extension):
     try:
         client.load_extension(f"cogs.{extension}")
@@ -77,7 +95,7 @@ async def cogs_extension_load(ctx, extension):
 
 
 @client.command(aliases=["unload", "ul"])
-@commands.is_owner()
+@commands.check(check_if_has_any_development_roles)
 async def cogs_extension_unload(ctx, extension):
     try:
         client.unload_extension(f"cogs.{extension}")
@@ -90,7 +108,7 @@ async def cogs_extension_unload(ctx, extension):
 
 
 @client.command(aliases=["reload", "rl"])
-@commands.is_owner()
+@commands.check(check_if_has_any_development_roles)
 async def cogs_extension_reload(ctx, extension):
     try:
         client.reload_extension(f"cogs.{extension}")
@@ -104,7 +122,7 @@ async def cogs_extension_reload(ctx, extension):
 
 
 @client.command(aliases=["shutdown"])
-@commands.is_owner()
+@commands.check(check_if_has_any_development_roles)
 async def cogs_extension_shutdown(ctx):
     for file_name in os.listdir("./cogs"):
         try:
@@ -119,7 +137,7 @@ async def cogs_extension_shutdown(ctx):
 
 
 @client.command(aliases=["initialize"])
-@commands.is_owner()
+@commands.check(check_if_has_any_development_roles)
 async def cogs_extension_initialize(ctx):
     for file_name in os.listdir("./cogs"):
         try:
@@ -132,7 +150,7 @@ async def cogs_extension_initialize(ctx):
         except commands.ExtensionFailed:
             continue
 
-    await ctx.channel.send("All modules have been loaded...")
+    await ctx.message.add_reaction("✅")
 
 
 print("-------")

@@ -4,7 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
-import json
+import os
 import random
 from datetime import datetime, timedelta
 from itertools import cycle
@@ -15,27 +15,36 @@ from discord.ext import commands
 
 from cogs.economy import reset_boss
 from cogs.mongo.database import get_collections
-from cogs.startup import e_m, e_j, e_c, e_a, e_f, embed_color, pluralize
 
 # Collections
 guilds = get_collections("guilds")
 users = get_collections("users")
 bosses = get_collections("bosses")
 shikigamis = get_collections("shikigamis")
+config = get_collections("config")
+logs = get_collections("logs")
 
-# Listings
+# Dictionary
+emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
+get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
+
+# Lists
 demons = []
 quizzes = []
-boss_comment = [
-    "AHAHAHA!!! <:huehue:585442161093509120>",
-    "UFUFUFUFU!! <:19:585443879541538826>",
-    "KEKEKEKE!! <:huehue:585442161093509120>",
-    "NYAHAHA!! <:19:585443879541538826>"
-]
-attack_list = open("lists/attack.lists")
-attack_verb = attack_list.read().splitlines()
-attack_list.close()
+attack_verb = config.find_one({"dict": 1}, {"_id": 0, "attack_verb": 1})["attack_verb"]
+boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
 
+
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+
+e_m = emojis["m"]
+e_j = emojis["j"]
+e_c = emojis["c"]
+e_f = emojis["f"]
+e_a = emojis["a"]
 
 for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
     quizzes.append(quiz)
@@ -48,13 +57,21 @@ quizzes_shuffle = random.shuffle(quizzes)
 quizzes_cycle = cycle(quizzes)
 
 
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
+
+
 def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 def get_time():
-    tz_target = pytz.timezone("America/Atikokan")
-    return datetime.now(tz=tz_target)
+    return datetime.now(tz=pytz.timezone(timezone))
 
 
 def status_set(x):
@@ -63,11 +80,7 @@ def status_set(x):
 
 
 def get_emoji(item):
-    emoji_dict = {
-        "jades": e_j, "coins": e_c, "realm_ticket": "🎟", "amulets": e_a, "medals": e_m,
-        "friendship": e_f, "encounter_ticket": "🎫"
-    }
-    return emoji_dict[item]
+    return get_emojis[item]
 
 
 def check_if_user_has_encounter_tickets(ctx):
@@ -87,16 +100,18 @@ def calculate(x, y, z):
 
 
 def get_raid_count(victim):
-    request = users.find_one({
-        "user_id": str(victim.id)}, {
-        "_id": 0, "raided_count": 1
-    })
-    return request["raided_count"]
+    return users.find_one({"user_id": str(victim.id)}, {"_id": 0, "raided_count": 1})["raided_count"]
 
 
 async def raid_giverewards_victim_as_winner(victim, raider):
     users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": 50000, "jades": 100, "medals": 50}})
+    await logs_add_line("coins", 50000, victim.id)
+    await logs_add_line("jades", 100, victim.id)
+    await logs_add_line("medals", 50, victim.id)
+
     users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
+    await logs_add_line("realm_ticket", -1, raider.id)
+
     users.update_one({
         "user_id": str(raider.id), "level": {"$lt": 60}}, {
         "$inc": {
@@ -109,6 +124,7 @@ async def raid_giverewards_victim_as_winner(victim, raider):
 
     else:
         users.update_one({"user_id": str(raider.id)}, {"$inc": {"medals": -10}})
+        await logs_add_line("medals", -10, raider.id)
 
 
 async def raid_giverewards_raider_as_winner(victim, raider):
@@ -118,6 +134,11 @@ async def raid_giverewards_raider_as_winner(victim, raider):
             "coins": 25000, "jades": 50, "medals": 25, "realm_ticket": -1
         }
     })
+    await logs_add_line("coins", 25000, raider.id)
+    await logs_add_line("jades", 50, raider.id)
+    await logs_add_line("medals", 25, raider.id)
+    await logs_add_line("realm_ticket", -1, raider.id)
+
     users.update_one({
         "user_id": str(raider.id), "level": {"$lt": 60}}, {
         "$inc": {
@@ -130,6 +151,7 @@ async def raid_giverewards_raider_as_winner(victim, raider):
 
     else:
         users.update_one({"user_id": str(victim.id)}, {"$inc": {"medals": -10}})
+        await logs_add_line("medals", -10, victim.id)
 
 
 async def raid_perform_calculation(victim, raider, ctx):
@@ -191,7 +213,8 @@ async def raid_perform_attack(victim, raider, ctx):
         if roll <= total_chance:
             embed = discord.Embed(
                 title="Realm Raid", color=raider.colour,
-                description=f"{raider.mention} raids {victim.display_name}'s realm!"
+                description=f"{raider.mention} raids {victim.display_name}'s realm!",
+                timestamp=get_timestamp()
             )
             embed.add_field(
                 name=f"Results, `{total_chance}%`",
@@ -206,7 +229,8 @@ async def raid_perform_attack(victim, raider, ctx):
         else:
             embed = discord.Embed(
                 title="Realm Raid", color=raider.colour,
-                description=f"{raider.mention} raids {victim.display_name}'s realm!"
+                description=f"{raider.mention} raids {victim.display_name}'s realm!",
+                timestamp=get_timestamp()
             )
             embed.add_field(
                 name=f"Results, `{total_chance}%`",
@@ -215,13 +239,14 @@ async def raid_perform_attack(victim, raider, ctx):
                       f"50,000{e_c}, 100{e_j}, 50{e_m}"
                       f"||"
             )
-            await raid_giverewards_raider_as_winner(victim, raider)
+            await raid_giverewards_victim_as_winner(victim, raider)
             await ctx.channel.send(embed=embed)
 
     except KeyError:
         embed = discord.Embed(
             title="Invalid member", colour=discord.Colour(embed_color),
-            description=f"{victim} doesnt have a realm yet in this server"
+            description=f"{victim} doesnt have a realm yet in this server",
+            timestamp=get_timestamp()
         )
         await ctx.channel.send(embed=embed)
 
@@ -267,21 +292,30 @@ async def boss_steal(assembly_players, boss_jadesteal, boss_coinsteal):
         deduction_jades = users.update_one({
             "user_id": player_id, "jades": {"$gte": boss_jadesteal}}, {
             "$inc": {
-                "jades": boss_jadesteal
+                "jades": - boss_jadesteal
             }
         })
+
         deduction_coins = users.update_one({
             "user_id": player_id, "coins": {"$gte": boss_coinsteal}}, {
             "$inc": {
-                "coins": boss_coinsteal
+                "coins": - boss_coinsteal
             }
         })
 
         if deduction_jades.modified_count == 0:
             users.update_one({"user_id": player_id}, {"$set": {"jades": 0}})
+            current_jades = users.find_one({"user_id": player_id}, {"_id": 0, "jades": 1})["jades"]
+            await logs_add_line("jades", -current_jades, player_id)
+        else:
+            await logs_add_line("jades", -boss_jadesteal, player_id)
 
         if deduction_coins.modified_count == 0:
             users.update_one({"user_id": player_id}, {"$set": {"coins": 0}})
+            current_coins = users.find_one({"user_id": player_id}, {"_id": 0, "coins": 1})["coins"]
+            await logs_add_line("coins", -current_coins, player_id)
+        else:
+            await logs_add_line("coins", -boss_coinsteal, player_id)
 
 
 async def boss_daily_reset_check():
@@ -292,10 +326,36 @@ async def boss_daily_reset_check():
         await reset_boss()
 
 
+async def logs_add_line(currency, amount, user_id):
+
+    if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
+        profile = {
+            "user_id": str(user_id),
+            "logs": []
+        }
+        logs.insert_one(profile)
+
+    logs.update_one({
+        "user_id": str(user_id)
+    }, {
+        "$push": {
+            f"logs": {
+                "$each": [{
+                    "currency": currency,
+                    "amount": amount,
+                    "date": get_time(),
+                }],
+                "$position": 0
+            }
+        }
+    })
+
+
 class Encounter(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     @commands.command(aliases=["raid", "r"])
     @commands.guild_only()
@@ -309,7 +369,10 @@ class Encounter(commands.Cog):
                 title="raid, r", colour=discord.Colour(embed_color),
                 description="raids the tagged member, requires 1 ticket"
             )
-            embed.add_field(name="Formats", value="*`;raid @member`*, *`;r <name#discriminator>`*")
+            embed.add_field(
+                name="Formats",
+                value=f"*`{self.prefix}raid @member`*, *`{self.prefix}r <name#discriminator>`*"
+            )
             await ctx.channel.send(embed=embed)
             return
 
@@ -335,8 +398,23 @@ class Encounter(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
             elif raid_count < 4:
-                users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
-                await raid_perform_attack(victim, raider, ctx)
+
+                raider_level = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
+                victim_level = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
+                level_diff = raider_level - victim_level
+
+                if abs(level_diff) <= 10:
+
+                    users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
+                    await raid_perform_attack(victim, raider, ctx)
+
+                else:
+                    embed = discord.Embed(
+                        title=f"Invalid realm", colour=discord.Colour(embed_color),
+                        description=f"{raider.mention}, you can only raid realms with ±10 of your level",
+                        timestamp=get_timestamp()
+                    )
+                    await ctx.channel.send(embed=embed)
 
         except TypeError:
             raise discord.ext.commands.BadArgument
@@ -363,7 +441,11 @@ class Encounter(commands.Cog):
                       "```",
                 inline=False
             )
-            embed.add_field(name="Formats", value="*`;raidc @member`*, *`;rc <name#discriminator>`*", inline=False)
+            embed.add_field(
+                name="Formats",
+                value=f"*`{self.prefix}raidc @member`*, *`{self.prefix}rc <name#discriminator>`*",
+                inline=False
+            )
             await ctx.channel.send(embed=embed)
 
         elif victim == ctx.author or victim.bot is True:
@@ -396,6 +478,7 @@ class Encounter(commands.Cog):
     async def encounter_search(self, ctx):
 
         users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"encounter_ticket": -1}})
+        await logs_add_line("encounter_ticket", -1, ctx.author.id)
         await self.encounter_roll(ctx.author, ctx)
         self.client.get_command("encounter_search").reset_cooldown(ctx)
 
@@ -488,6 +571,7 @@ class Encounter(commands.Cog):
                     break
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"amulets": 5}})
+                await logs_add_line("amulets", 5, ctx.author.id)
                 embed = discord.Embed(
                     title="Demon Quiz", color=user.colour,
                     description=f"You have earned 5{e_a}",
@@ -499,10 +583,9 @@ class Encounter(commands.Cog):
 
     async def encounter_roll_treasure(self, user, ctx, search_msg):
 
-        with open("data/rewards.json") as f:
-            rewards = json.load(f)
+        rewards = config.find_one({"dict": 1}, {"_id": 0, "rewards": 1})["rewards"]
 
-        roll = random.randint(1, 12)
+        roll = random.randint(1, len(rewards))
         offer_item = tuple(dict.keys(rewards[str(roll)]["offer"]))[0]
         offer_amount = tuple(dict.values(rewards[str(roll)]["offer"]))[0]
         cost_item = tuple(dict.keys(rewards[str(roll)]["cost"]))[0]
@@ -544,6 +627,10 @@ class Encounter(commands.Cog):
                         offer_item: offer_amount,
                         cost_item: -cost_amount}
                 })
+
+                await logs_add_line(offer_item, offer_amount, user.id)
+                await logs_add_line(cost_item, -cost_amount, user.id)
+
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
@@ -867,6 +954,10 @@ class Encounter(commands.Cog):
                         "medals": round([reward][0][3])
                     }
                 })
+                await logs_add_line("jades", round([reward][0][2]), [reward][0][0])
+                await logs_add_line("coins", round([reward][0][1]), [reward][0][0])
+                await logs_add_line("medals", round([reward][0][3]), [reward][0][0])
+
                 users.update_one({
                     "user_id": [reward][0][0], "level": {"$lt": 60}}, {
                     "$inc": {
@@ -886,6 +977,10 @@ class Encounter(commands.Cog):
                 "medals": 15,
             }
         })
+        await logs_add_line("jades", 100, discoverer)
+        await logs_add_line("coins", 50000, discoverer)
+        await logs_add_line("medals", 15, discoverer)
+
         users.update_one({
             "user_id": discoverer, "level": {"$lt": 60}}, {
             "$inc": {
@@ -956,7 +1051,8 @@ class Encounter(commands.Cog):
 
             embed = discord.Embed(
                 title=f"Rare Boss {query} stats", colour=discord.Colour(embed_color),
-                description=description
+                description=description,
+                timestamp=get_timestamp()
             )
             embed.set_thumbnail(url=boss_url)
             await ctx.channel.send(embed=embed)
@@ -968,7 +1064,7 @@ class Encounter(commands.Cog):
             )
             demons_formatted = ", ".join(demons)
             embed.add_field(name="Bosses", value="*{}*".format(demons_formatted))
-            embed.add_field(name="Example", value="*`;binfo namazu`*", inline=False)
+            embed.add_field(name="Example", value=f"*`{self.prefix}binfo namazu`*", inline=False)
             await ctx.channel.send(embed=embed)
 
 

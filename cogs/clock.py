@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
+import os
 import random
 import sys
 from datetime import datetime
@@ -16,27 +17,26 @@ from cogs.economy import Economy, reset_boss
 from cogs.frames import Frames
 from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
-from cogs.startup import embed_color
 
 # Collections
 guilds = get_collections("guilds")
 weathers = get_collections("weathers")
 reminders = get_collections("reminders")
 quests = get_collections("quests")
+config = get_collections("config")
 
-# Listings
-clock_channels = []
-list_clock = [
-    "", "", "", "🕐", "🕜", "🕑", "🕝", "🕒", "🕞", "🕓", "🕟", "🕔", "🕠", "🕕",
-    "🕡", "🕖", "🕢", "🕗", "🕣", "🕘", "🕤", "🕙", "🕥", "🕚", "🕦", "🕛", "🕧"
-]
+# Lists
+clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["clock_emojis"]
 
-for guild_clock in guilds.find({}, {"channels.clock": 1, "_id": 0}):
-    clock_channels.append(guild_clock["channels"]["clock"])
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+clock_channel = guilds.find_one({"server": str(guild_id)}, {"channels.clock": 1, "_id": 0})["channels"]["clock"]
 
 
 def get_time():
-    return datetime.now(tz=pytz.timezone("America/Atikokan"))
+    return datetime.now(tz=pytz.timezone(timezone))
 
 
 def generate_weather(hour):
@@ -64,7 +64,7 @@ def get_emoji(hours, minutes):
     else:
         emoji_clock_index = (int(hours) * 2) + 1
 
-    emoji_clock = list_clock[emoji_clock_index]
+    emoji_clock = clock_emojis[emoji_clock_index]
     return emoji_clock
 
 
@@ -89,17 +89,6 @@ class Clock(commands.Cog):
     async def on_ready(self):
         await self.clock_start()
 
-    @commands.command(aliases=["tick"])
-    @commands.is_owner()
-    async def clock_start_manually(self, ctx):
-
-        await self.clock_start()
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            description="Successfully started the clock manually"
-        )
-        await ctx.channel.send(embed=embed)
-
     async def clock_start(self):
         while True:
             try:
@@ -119,26 +108,26 @@ class Clock(commands.Cog):
             minute = get_time().strftime("%M")
             hour_24 = get_time().strftime("%H")
             hour_12 = get_time().strftime("%I")
+            day_week = get_time().strftime("%a")
             weather1 = weathers.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
             weather2 = weathers.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
             if minute == "00":
                 weather1, weather2 = generate_weather(int(hour_24))
 
-            for clock_channel in clock_channels:
-                try:
-                    clock = self.client.get_channel(int(clock_channel))
-                    await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
-                except RuntimeError:
-                    continue
-                except AttributeError:
-                    continue
-                except discord.errors.InvalidArgument:
-                    continue
-                except discord.errors.Forbidden:
-                    continue
-                except discord.errors.HTTPException:
-                    continue
+            try:
+                clock = self.client.get_channel(int(clock_channel))
+                await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
+            except RuntimeError:
+                pass
+            except AttributeError:
+                pass
+            except discord.errors.InvalidArgument:
+                pass
+            except discord.errors.Forbidden:
+                pass
+            except discord.errors.HTTPException:
+                pass
 
             if minute == "00":
                 await penalty_hour()
@@ -155,22 +144,16 @@ class Clock(commands.Cog):
             if hour_minute == "00:00":
                 await reset_boss()
                 await Economy(self.client).reset_rewards_daily()
+
+                if day_week.lower() == "mon":
+                    await Economy(self.client).reset_rewards_weekly()
+
                 await Economy(self.client).frame_automate()
                 await Frames(self.client).achievements_process_daily()
 
         except:
-            # Catching Errors
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
-
-    @commands.command(aliases=["ht"])
-    @commands.is_owner()
-    async def perform_hourly_task(self, ctx):
-        await actions_reset()
-        await reset_purchase()
-        await Expecto(self.client).send_off_report_quest1()
-        await Expecto(self.client).send_off_complete_quest1()
-        await ctx.author.send("Actions reset, purchase perform_reset, send-off reports performed")
 
     async def perform_delete_secret_channels(self):
         query = guilds.find({}, {
