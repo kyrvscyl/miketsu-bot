@@ -2271,21 +2271,18 @@ class Economy(commands.Cog):
             return
 
         elif len(args) == 6:
-
-            rarity = args[0].upper()
-            name = (args[1].replace("_", " ")).lower()
             shrine = False
 
             if args[2].lower() == "yes":
                 shrine = True
 
             profile = {
-                "name": name,
-                "rarity": rarity,
+                "name": (args[1].replace("_", " ")).lower(),
+                "rarity": args[0].upper(),
                 "shrine": shrine,
                 "thumbnail": {
-                    "pre": args[3],
-                    "evo": args[4]
+                    "pre": args[4],
+                    "evo": args[5]
                 },
                 "demon_quiz": None,
                 "amulet": args[3].lower()
@@ -3233,9 +3230,9 @@ class Economy(commands.Cog):
         except TypeError:
             pass
 
-    async def logs_show_member(self, ctx, user):
+    async def logs_show_member(self, ctx, member):
 
-        profile = logs.find_one({"user_id": str(user.id)}, {"_id": 0, "logs": 1})
+        profile = logs.find_one({"user_id": str(member.id)}, {"_id": 0, "logs": 1})
         formatted_list = []
 
         for entry in profile["logs"][:200]:
@@ -3247,9 +3244,9 @@ class Economy(commands.Cog):
                 f"`[{entry['date'].strftime('%d.%b %H:%M')}]` | `{operator}{entry['amount']:,d}`{emoji}\n"
             )
 
-        await self.logs_show_paginate(ctx, formatted_list)
+        await self.logs_show_paginate(ctx.channel, formatted_list, member)
 
-    async def logs_show_paginate(self, ctx, formatted_list):
+    async def logs_show_paginate(self, channel, formatted_list, member):
 
         page = 1
         max_lines = 15
@@ -3263,17 +3260,17 @@ class Economy(commands.Cog):
             description = "".join(formatted_list[start:end])
 
             embed_new = discord.Embed(
-                color=ctx.author.colour,
+                color=member.colour,
                 description=description
             )
             embed_new.set_author(
-                name=f"{ctx.author.display_name}'s last 200 logs",
-                icon_url=ctx.author.avatar_url
+                name=f"{member.display_name}'s last 200 logs",
+                icon_url=member.avatar_url
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
-        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        msg = await channel.send(embed=create_new_embed_page(page))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
@@ -3282,7 +3279,7 @@ class Economy(commands.Cog):
 
         while True:
             try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+                reaction, member = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
                 break
             else:
