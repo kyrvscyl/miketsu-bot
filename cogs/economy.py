@@ -580,6 +580,7 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
             title="Purchase successful", colour=discord.Colour(embed_color),
             timestamp=get_timestamp()
         )
+        embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
         embed.description = f"{user.mention} acquired `{offer_amount:,d}`{emojify(offer_item)} " \
                             f"in exchanged for `{cost_amount:,d}`{emojify(cost_item)}"
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/8/86/246a.jpg")
@@ -1037,6 +1038,7 @@ class Economy(commands.Cog):
                 description=f"{user.mention}, you wished for {shiki.title()} shard",
                 timestamp=get_timestamp()
             )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
             embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "pre"))
             await ctx.message.add_reaction("✅")
             await ctx.channel.send(embed=embed)
@@ -1649,9 +1651,10 @@ class Economy(commands.Cog):
         )
         embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
         msg = await ctx.channel.send(embed=embed)
-        rewards_emoji = [e_j, e_f, e_a, e_c, e_t, e_m]
 
+        rewards_emoji = [e_j, e_f, e_a, e_c, e_t, e_m]
         rewards_selection = []
+
         for x in range(0, 3):
             emoji = random.choice(rewards_emoji)
             await msg.add_reaction(emoji.replace("<", "").replace(">", ""))
@@ -1676,6 +1679,7 @@ class Economy(commands.Cog):
         try:
             roll = random.randint(1, 100)
             reaction, user = await self.client.wait_for("reaction_add", timeout=150, check=check)
+
         except asyncio.TimeoutError:
             users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"prayers": -1}})
             await logs_add_line("prayers", -1, ctx.author.id)
@@ -3153,7 +3157,7 @@ class Economy(commands.Cog):
                 continue
 
         for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
-            formatted_list.append(f"🔸{user[0]}, x{user[1]}\n")
+            formatted_list.append(f"🔸{user[0]}, x{user[1]:,d}\n")
 
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
@@ -3217,9 +3221,21 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["logs"])
     @commands.guild_only()
-    async def logs_show(self, ctx):
+    async def logs_show(self, ctx, *, member: discord.Member = None):
 
-        profile = logs.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "logs": 1})
+        try:
+            if member is None:
+                await self.logs_show_member(ctx, ctx.author)
+
+            elif member is not None:
+                await self.logs_show_member(ctx, member)
+
+        except TypeError:
+            pass
+
+    async def logs_show_member(self, ctx, user):
+
+        profile = logs.find_one({"user_id": str(user.id)}, {"_id": 0, "logs": 1})
         formatted_list = []
 
         for entry in profile["logs"][:200]:

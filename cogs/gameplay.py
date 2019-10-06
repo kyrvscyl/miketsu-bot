@@ -853,7 +853,7 @@ class Encounter(commands.Cog):
             boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.03)
 
             description = f"💨 Rare Boss {boss_select} has fled with {round(boss_currenthp):,d} remaining HP\n" \
-                          f"💸 Stealing {boss_jadesteal:,d}{e_j} & {boss_coinsteal:,d}{e_c} " \
+                          f"💸 Stealing {boss_jadesteal:,d} {e_j} & {boss_coinsteal:,d} {e_c} " \
                           f"each from its attackers!\n\n{random.choice(boss_comment)}~"
 
             embed = discord.Embed(colour=discord.Colour(embed_color), description=description)
@@ -1011,51 +1011,75 @@ class Encounter(commands.Cog):
 
         try:
             query = args.title()
-            if query not in demons:
+            if query.lower() == "all":
+
+                query = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 0, "boss": 1, "total_hp": 1, "current_hp": 1})
+                bosses_formatted = []
+
+                for boss in query:
+                    percent = (boss["current_hp"] / boss["total_hp"]) * 100
+                    bosses_formatted.append(
+                        f"• {round(percent,2)}%    {boss['boss']}"
+                    )
+
+                bosses_formatted_lines = "\n".join(bosses_formatted)
+
+                embed = discord.Embed(
+                    title=f"Boss survivability", colour=discord.Colour(embed_color),
+                    description=f"```"
+                                f"  HP        Boss\n"
+                                f"{bosses_formatted_lines}\n"
+                                f"```",
+                    timestamp=get_timestamp()
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif query not in demons:
                 raise AttributeError
 
-            boss_profile = bosses.find_one({
-                "boss": query}, {
-                "_id": 0,
-                "level": 1,
-                "total_hp": 1,
-                "current_hp": 1,
-                "rewards": 1,
-                "discoverer": 1,
-                "boss_url": 1
-            })
+            else:
+                boss_profile = bosses.find_one({
+                    "boss": query}, {
+                    "_id": 0,
+                    "level": 1,
+                    "total_hp": 1,
+                    "current_hp": 1,
+                    "rewards": 1,
+                    "discoverer": 1,
+                    "boss_url": 1
+                })
 
-            try:
-                discoverer = ctx.guild.get_member(int(boss_profile["discoverer"])).display_name
-            except AttributeError:
-                discoverer = "None"
+                try:
+                    discoverer = ctx.guild.get_member(int(boss_profile["discoverer"])).display_name
+                except AttributeError:
+                    discoverer = "None"
 
-            level = boss_profile["level"]
-            total_hp = boss_profile["total_hp"]
-            current_hp = boss_profile["current_hp"]
-            medals = boss_profile["rewards"]["medals"]
-            experience = boss_profile["rewards"]["experience"]
-            coins = boss_profile["rewards"]["coins"]
-            jades = boss_profile["rewards"]["jades"]
-            boss_url = boss_profile["boss_url"]
+                level = boss_profile["level"]
+                total_hp = boss_profile["total_hp"]
+                current_hp = boss_profile["current_hp"]
+                medals = boss_profile["rewards"]["medals"]
+                experience = boss_profile["rewards"]["experience"]
+                coins = boss_profile["rewards"]["coins"]
+                jades = boss_profile["rewards"]["jades"]
+                boss_url = boss_profile["boss_url"]
 
-            description = f"```" \
-                          f"Discoverer  :: {discoverer}\n" \
-                          f"     Level  :: {level}\n" \
-                          f"  Total Hp  :: {total_hp}\n" \
-                          f"Current Hp  :: {current_hp}\n" \
-                          f"    Medals  :: {medals}\n" \
-                          f"     Jades  :: {jades}\n" \
-                          f"     Coins  :: {coins}\n" \
-                          f"Experience  :: {experience}```"
+                description = f"```" \
+                              f"Discoverer  :: {discoverer}\n" \
+                              f"     Level  :: {level}\n" \
+                              f"  Total Hp  :: {total_hp}\n" \
+                              f"Current Hp  :: {current_hp}\n" \
+                              f"    Medals  :: {medals}\n" \
+                              f"     Jades  :: {jades}\n" \
+                              f"     Coins  :: {coins}\n" \
+                              f"Experience  :: {experience}```"
 
-            embed = discord.Embed(
-                title=f"Rare Boss {query} stats", colour=discord.Colour(embed_color),
-                description=description,
-                timestamp=get_timestamp()
-            )
-            embed.set_thumbnail(url=boss_url)
-            await ctx.channel.send(embed=embed)
+                embed = discord.Embed(
+                    title=f"Rare Boss {query} stats", colour=discord.Colour(embed_color),
+                    description=description,
+                    timestamp=get_timestamp()
+                )
+                embed.set_thumbnail(url=boss_url)
+                await ctx.channel.send(embed=embed)
 
         except AttributeError:
             embed = discord.Embed(
@@ -1063,8 +1087,13 @@ class Encounter(commands.Cog):
                 description="shows discovered boss statistics"
             )
             demons_formatted = ", ".join(demons)
-            embed.add_field(name="Bosses", value="*{}*".format(demons_formatted))
-            embed.add_field(name="Example", value=f"*`{self.prefix}binfo namazu`*", inline=False)
+            embed.add_field(name="Bosses", value=f"*{demons_formatted}*")
+            embed.add_field(
+                name="Example",
+                value=f"*`{self.prefix}binfo namazu`*\n"
+                      f"*`{self.prefix}binfo all`*",
+                inline=False
+            )
             await ctx.channel.send(embed=embed)
 
 

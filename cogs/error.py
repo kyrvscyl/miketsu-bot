@@ -69,8 +69,11 @@ class Error(commands.Cog):
             if str(ctx.command) == "pray_use":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
-                    description=f"{ctx.author.mention}, no more prayers today 🙏"
+                    title=f"Insufficient prayers",
+                    description=f"{ctx.author.mention}, no more prayers today 🙏",
+                    timestamp=get_timestamp()
                 )
+                embed.set_footer(icon_url=ctx.author.avatar_url, text=f"{ctx.author.display_name}")
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "perform_parade":
@@ -342,7 +345,8 @@ class Error(commands.Cog):
                 "wish_grant",
                 "friendship_change_name",
                 "friendship_ship",
-                "shikigami_list_show_collected"
+                "shikigami_list_show_collected",
+                "logs_show"
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(embed_color),

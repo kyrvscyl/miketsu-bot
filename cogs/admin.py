@@ -524,7 +524,7 @@ class Admin(commands.Cog):
                       f"• *`{self.prefix}m s all aki`*\n"
                       f"• *`{self.prefix}m s all status inactive`*\n"
                       f"• *`{self.prefix}m s 120`*\n"
-                      f"• *`{self.prefix}m s all guild`*",
+                      f"• *`{self.prefix}m s all <guild/abc/123>`*",
                 inline=False
             )
             await ctx.channel.send(embed=embed)
@@ -554,7 +554,19 @@ class Admin(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() == "all":
-            await self.management_guild_show_all(ctx)
+            await self.management_guild_show_all(ctx, [("name_lower", 1)])
+
+        elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "all" \
+                and args[2].lower() in ["abc", "123"]:
+
+            if args[2].lower() == "abc":
+                await self.management_guild_show_all(ctx, [("name_lower", 1)])
+
+            elif args[2].lower() == "123":
+                await self.management_guild_show_all(ctx, [("#", 1)])
+
+            else:
+                await ctx.message.add_reaction("❌")
 
         elif args[0].lower() in ["show", "s"] and len(args) == 3 \
                 and args[1].lower() == "all" and args[2].lower() == "guild":
@@ -816,17 +828,17 @@ class Admin(commands.Cog):
         content = f"I've got {len(formatted_list)} {noun} for names starting with __{args[2].lower()}__"
         await self.management_guild_paginate_embeds(ctx, formatted_list, content)
 
-    async def management_guild_show_all(self, ctx):
+    async def management_guild_show_all(self, ctx, sort):
 
         formatted_list = []
         find_query = {}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
-        for member in members.find(find_query, project).sort([("name_lower", 1)]):
+        for member in members.find(find_query, project).sort(sort):
             role = shorten(member["role"])
             status = shorten(member["status"])
             number = lengthen(member["#"])
-            name = member['name'].replace("_", "_\\__")
+            name = member['name']
             formatted_list.append(f"`{number}: {role}` | `{status}` | {name} \n")
 
         noun = pluralize("account", len(formatted_list))

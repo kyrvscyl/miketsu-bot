@@ -92,7 +92,7 @@ class Startup(commands.Cog):
             value="*"
                   "daily, weekly, profile, display, buy, summon, "
                   "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray, stat, "
-                  "frames, wish, wishlist, fulfill, parade, uncollected, collections, shards"
+                  "frames, wish, wishlist, fulfill, parade, uncollected, collections, shards, "
                   "raid, raidc, encounter, bossinfo"
                   "*",
             inline=False
