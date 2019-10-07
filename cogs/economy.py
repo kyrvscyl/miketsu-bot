@@ -750,7 +750,7 @@ async def summon_mystery_perform(ctx, user, amulet_pull):
         shikigami_pulled = summon_pull[0][1].replace("||", "")
         embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled, "pre"))
 
-    msg = "{}".format(random.choice(summon_captions_a)).format(user.mention)
+    msg = "{}".format(next(summon_captions_a)).format(user.mention)
     await ctx.channel.send(msg, embed=embed)
     await summon_mystery_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull)
     await summon_mystery_streak(user, summon_pull)
