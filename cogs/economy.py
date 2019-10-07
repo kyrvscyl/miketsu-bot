@@ -69,7 +69,6 @@ pool_all_mystery = []
 pool_all_broken = []
 
 trading_list = []
-spell_spams_id = []
 purchasable_frames = []
 trading_list_formatted = []
 
@@ -1256,7 +1255,7 @@ class Economy(commands.Cog):
             description=f"Claim yours using `{self.prefix}daily` and your income using `{self.prefix}sail`"
         )
 
-        spell_spam_channel = self.client.get_channel(int(spell_spams_id))
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         await spell_spam_channel.send(embed=embed1)
 
     async def reset_rewards_weekly(self):
@@ -1264,12 +1263,11 @@ class Economy(commands.Cog):
         users.update_many({}, {"$set": {"weekly": False}})
 
         embed = discord.Embed(
-            title="💝 Weekly rewards have been perform_reset", colour=discord.Colour(embed_color),
+            title="💝 Weekly rewards have been reset", colour=discord.Colour(embed_color),
             description=f"Claim yours using `{self.prefix}weekly`"
         )
-        for channel in spell_spams_id:
-            current_channel = self.client.get_channel(int(channel))
-            await current_channel.send(embed=embed)
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+        await spell_spam_channel.send(embed=embed)
 
     @commands.command(aliases=["stat"])
     @commands.guild_only()
