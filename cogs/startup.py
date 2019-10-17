@@ -21,13 +21,14 @@ config = get_collections("config")
 
 # Lists
 status = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
+admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
 headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
+
 
 
 def check_if_has_any_admin_roles(ctx):
@@ -101,7 +102,7 @@ class Startup(commands.Cog):
             name="Others",
             value="*"
                   "changelog, bounty, suggest, stickers, newsticker, wander, portrait, "
-                  "stats, announce*\\*, *manage*\\"
+                  "stats, announce*\\*, *manage*\\, events*\\*"
                   "*",
             inline=False
         )

@@ -27,13 +27,13 @@ logs = get_collections("logs")
 # Dictionary
 emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
 get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
+attack_verb = cycle(config.find_one({"dict": 1}, {"_id": 0, "attack_verb": 1})["attack_verb"])
 
 # Lists
 demons = []
 quizzes = []
-attack_verb = config.find_one({"dict": 1}, {"_id": 0, "attack_verb": 1})["attack_verb"]
 boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
-
+assemble_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "assemble_captions": 1})["assemble_captions"])
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
@@ -399,20 +399,19 @@ class Encounter(commands.Cog):
 
             elif raid_count < 4:
 
-                raider_level = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
-                victim_level = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
-                level_diff = raider_level - victim_level
+                raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "medals": 1})["medals"]
+                victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "medals": 1})["medals"]
+                medal_diff = raider_medals - victim_medals
+                range = 30000
 
-                if abs(level_diff) <= 10:
-
+                if abs(medal_diff) <= range:
                     users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
                     await raid_perform_attack(victim, raider, ctx)
 
                 else:
                     embed = discord.Embed(
                         title=f"Invalid realm", colour=discord.Colour(embed_color),
-                        description=f"{raider.mention}, you can only raid realms with ±10 of your level",
-                        timestamp=get_timestamp()
+                        description=f"{raider.mention}, you can only raid realms with ±{range:,d} of your medals",
                     )
                     await ctx.channel.send(embed=embed)
 
@@ -690,7 +689,8 @@ class Encounter(commands.Cog):
         count_players = 0
         assembly_players = []
         assembly_players_name = []
-
+        boss_busters_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["boss_busters"]
+        
         def generate_embed_boss(time_remaining, listings):
 
             formatted_listings = ", ".join(listings)
@@ -728,6 +728,7 @@ class Encounter(commands.Cog):
         time_discovered = get_time()
         await search_msg.edit(embed=generate_embed_boss(timeout, assembly_players_name))
         await search_msg.add_reaction("🏁")
+        await ctx.channel.send(content=f"{boss_busters_id} {next(assemble_captions)}")
 
         def check(r, u):
             return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == search_msg.id
@@ -825,7 +826,7 @@ class Encounter(commands.Cog):
             embed = discord.Embed(
                 color=player_.colour,
                 description=f"*{player_.mention} "
-                            f"{random.choice(attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
+                            f"{next(attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
             )
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(3)

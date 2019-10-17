@@ -3,7 +3,9 @@ Embeds Module
 Miketsu, 2019
 """
 import asyncio
+import os
 import urllib.request
+from datetime import datetime
 from math import ceil
 
 import discord
@@ -14,16 +16,33 @@ from cogs.mongo.database import get_collections
 # Collections
 guilds = get_collections("guilds")
 config = get_collections("config")
+sortings = get_collections("sortings")
+
+# Dictionary
+emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
 
 # Lists
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
+msg_id_list = []
+
+# Variables
+guild_id = int(os.environ.get("SERVER"))
+e_c = emojis["c"]
 
 
-def check_if_has_any_role(ctx):
+for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
+    msg_id_list.append(role_select_msg["msg_id"])
+
+
+def check_if_has_any_admin_roles(ctx):
     for role in reversed(ctx.author.roles):
         if role.name in admin_roles:
             return True
     return False
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 class Embeds(commands.Cog):
@@ -33,10 +52,11 @@ class Embeds(commands.Cog):
         self.prefix = self.client.command_prefix
 
     @commands.command(aliases=["patch"])
-    @commands.check(check_if_has_any_role)
+    @commands.check(check_if_has_any_admin_roles)
     async def post_patch_notes(self, ctx, arg1, *, args):
 
-        request = guilds.find_one({"server": str(ctx.guild.id)}, {"_id": 0, "channels": 1})
+        guild = self.client.get_guild(int(guild_id))
+        request = guilds.find_one({"server": str(guild.id)}, {"_id": 0, "channels": 1})
         headlines_id = request["channels"]["headlines"]
         headlines_channel = self.client.get_channel(int(headlines_id))
 
@@ -71,20 +91,28 @@ class Embeds(commands.Cog):
             await asyncio.sleep(1)
 
     @commands.command(aliases=["welcome"])
-    @commands.is_owner()
+    @commands.check(check_if_has_any_admin_roles)
     async def edit_message_welcome(self, ctx):
 
         request = guilds.find_one({
-            "server": f"{ctx.guild.id}"}, {
+            "server": f"{guild_id}"}, {
             "_id": 0,
             "channels": 1,
             "roles.patronus": 1,
-            "messages": 1
+            "messages": 1,
+            "links": 1
         })
+
         welcome_id = request["channels"]["welcome"]
         sorting_id = request["channels"]["sorting-hat"]
         patronus_role_id = request["roles"]["patronus"]
+        absence_app_id = request["channels"]["absence-applications"]
         welcome_channel = self.client.get_channel(int(welcome_id))
+
+        crest_link = request["links"]["crest"]
+        rules_link = request["links"]["rules_link"]
+        banners = request["links"]["banners"]
+
 
         embed1 = discord.Embed(
             colour=discord.Colour(0xe77eff),
@@ -92,9 +120,7 @@ class Embeds(commands.Cog):
             description="Herewith are the rules and information of our server!\n\n"
                         "Crest designed by <@!281223518103011340>"
         )
-        embed1.set_thumbnail(
-            url="https://cdn.discordapp.com/attachments/556032841897607178/584001678316142607/Patronus_Crest.png"
-        )
+        embed1.set_thumbnail(url=crest_link)
 
         embed2 = discord.Embed(
             colour=discord.Colour(0xff44),
@@ -123,14 +149,14 @@ class Embeds(commands.Cog):
         )
         embed2.add_field(
             name="🐼 Animagus",
-            value="• Transformed members during Night; Bots",
+            value="• Transformed members; Bots",
             inline=False
         )
 
         embed3 = discord.Embed(
             title="📋 Rules",
             colour=discord.Colour(0xf8e71c),
-            description="• Useless warnings may be issued!\n​ "
+            description="• Useless and official warnings may be issued!\n​ "
         )
         embed3.add_field(
             name="# 1. Server nickname",
@@ -179,9 +205,9 @@ class Embeds(commands.Cog):
         )
         embed4.add_field(
             name="# 2. Guild Quest (GQ) requirements",
-            value="• For apprentices, min 30 weekly GQ\n"
-                  "• For qualified mentors, min 90 weekly GQ\n"
-                  "• 2-weeks consistent inactivity will be forewarned\n​ ",
+            value="• For members as well as traders, min 90 weekly GQ\n"
+                  "• Consistent inactivity will be forewarned by Head\n"
+                  "• AQ is not the only option to fulfill GQs\n​ ",
             inline=False
         )
         embed4.add_field(
@@ -192,7 +218,7 @@ class Embeds(commands.Cog):
         )
         embed4.add_field(
             name="# 4. Guild Bonuses",
-            value="• Top 15 guild in overall activeness ranking\n"
+            value="• Top 10 guild in overall activeness ranking\n"
                   "• Rated at 60-70 guild packs per week\n"
                   "• Weekly 1-hour soul & evo bonus\n"
                   "• 24/7 exp, coin, & medal buffs\n"
@@ -204,12 +230,20 @@ class Embeds(commands.Cog):
             inline=False
         )
         embed4.add_field(
-            name="# 5. Absenteeism/leave",
-            value="• If leaving for shards, specify amount of days\n"
-                  "• File your applications prior long vacations\n"
-                  "• Up to 20-30 days of leave for old members\n​ ",
+            name="# 5. Absenteeism/Leave",
+            value=f"• File your leave prior long vacation via <#{absence_app_id}> or contact any Head\n"
+                  f"• Your maximum inactivity is assessed based on your guild retention/feats",
             inline=False
         )
+        embed4.add_field(
+            name="# 6. Shard Trading",
+            value=f"• If leaving for shards, contact any Head & specify amount of days\n"
+                  f"• If inviting a trader, notify a Head in advance\n"
+                  f"• Traders are required to fulfill our minimum GQ requirements or they will be kicked\n​ ",
+            inline=False
+        )
+
+        embed4.set_image(url=rules_link)
 
         embed5 = discord.Embed(
             colour=discord.Colour(0x50e3c2),
@@ -247,12 +281,35 @@ class Embeds(commands.Cog):
             title="🎏 Banner"
         )
         embed6.set_image(
-            url="https://media.discordapp.net/attachments/473127659136614431/613020543473680394/week_1.png"
+            url=banners[0]
         )
         embed6.set_footer(
             text="Assets: Official Onmyoji art; Designed by: xann#8194"
         )
 
+        msg1 = await welcome_channel.send(embed=embed1)
+        msg2 = await welcome_channel.send(embed=embed2)
+        msg3 = await welcome_channel.send(embed=embed3)
+        msg4 = await welcome_channel.send(embed=embed4)
+        msg5 = await welcome_channel.send(embed=embed5)
+        msg6 = await welcome_channel.send(embed=embed6)
+        await msg6.add_reaction("⬅")
+        await msg6.add_reaction("➡")
+        msg7 = await welcome_channel.send(content="Our invite link: https://discord.gg/H6N8AHB")
+        await ctx.message.delete()
+
+        guilds.update_one({"server": str(guild_id)}, {
+            "$set": {
+                "messages.intro": str(msg1.id),
+                "messages.roles": str(msg2.id),
+                "messages.server_rules": str(msg3.id),
+                "messages.ingame_rules": str(msg4.id),
+                "messages.requirements": str(msg5.id),
+                "messages.banner": str(msg6.id),
+                "messages.invite": str(msg7.id)
+            }})
+
+        """
         introduction_msg = await welcome_channel.fetch_message(int(request["messages"]["introduction"]))
         roles_information_msg = await welcome_channel.fetch_message(int(request["messages"]["roles_information"]))
         rules_msg = await welcome_channel.fetch_message(int(request["messages"]["rules"]))
@@ -269,9 +326,64 @@ class Embeds(commands.Cog):
         await banner_msg.edit(embed=embed6)
         await invite_link_msg.edit(content="Our invite link: https://discord.gg/H6N8AHB")
         await ctx.message.delete()
+        
+        """
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+
+        if self.client.get_user(int(payload.user_id)).bot:
+            return
+
+        request = guilds.find_one({
+            "server": f"{guild_id}"}, {
+            "_id": 0,
+            "channels": 1,
+            "messages": 1,
+            "links": 1
+        })
+
+        msg_banner = request["messages"]["banner"]
+        banners = request["links"]["banners"]
+
+        if str(payload.message_id) == msg_banner and str(payload.emoji) in ["⬅", "➡"]:
+
+            welcome_id = request["channels"]["welcome"]
+            welcome_channel = self.client.get_channel(int(welcome_id))
+            banner_msg = await welcome_channel.fetch_message(int(request["messages"]["banner"]))
+
+            current_thumbnail = banner_msg.embeds[0].image.url
+            current_index = banners.index(current_thumbnail)
+
+            def get_new_banner(index):
+                if str(payload.emoji) == "⬅":
+                    new_index = index - 1
+                    if index < 0:
+                        return len(banners) - 1
+                    else:
+                        return new_index
+                else:
+                    new_index = index + 1
+                    print(index)
+                    if index >= len(banners) - 1:
+                        return 0
+                    else:
+                        return new_index
+
+            embed6 = discord.Embed(
+                colour=discord.Colour(0xffd6ab),
+                title="🎏 Banner"
+            )
+            embed6.set_image(
+                url=banners[get_new_banner(current_index)]
+            )
+            embed6.set_footer(
+                text="Assets: Official Onmyoji art; Designed by: xann#8194"
+            )
+            await banner_msg.edit(embed=embed6)
 
     @commands.command(aliases=["beasts"])
-    @commands.is_owner()
+    @commands.check(check_if_has_any_admin_roles)
     async def edit_message_beasts_selection(self, ctx):
 
         guild_roles = ctx.guild.roles
@@ -299,7 +411,7 @@ class Embeds(commands.Cog):
         embed = discord.Embed(
             title="Role Color Selection",
             colour=discord.Colour(0x3b70ff),
-            description="• Freely select your preferred Animagus form. Transformation time: 19:00-06:00"
+            description="• Freely select your preferred Animagus form"
         )
         embed.add_field(
             name=":eagle: Thunderbirds",
@@ -377,7 +489,7 @@ class Embeds(commands.Cog):
         await quests_msg.edit(embed=embed)
 
     @commands.command(aliases=["special"])
-    @commands.is_owner()
+    @commands.check(check_if_has_any_admin_roles)
     async def edit_special_roles(self, ctx):
 
         request = guilds.find_one({
@@ -416,11 +528,16 @@ class Embeds(commands.Cog):
         )
         embed.add_field(
             name="⚾ Shard Seekers",
-            value="Auto-pinged whenever people post their shard list for trading",
+            value="Auto-pinged whenever people pin their shard list for trading",
             inline=False
         )
         embed.add_field(
-            name="🎰 Big Spenders",
+            name="💿 Silver Sickles",
+            value="Auto-pinged for Fortune Temple, Shrine, & Coin Chaos resets ending reminders",
+            inline=False
+        )
+        embed.add_field(
+            name="<:zzcoin:574965942912811016> Golden Galleons",
             value="Auto-pinged whenever a new round of showdown bidding has started or during Fortune Temple, Shrine, "
                   "& Coin Chaos resets, and a couple of other event ending reminders",
             inline=False
@@ -510,6 +627,70 @@ class Embeds(commands.Cog):
                 "messages.quests.quest2": str(msg2.id)
             }}
         )
+        await ctx.message.delete()
+
+    @commands.command(aliases=["sorting"])
+    @commands.is_owner()
+    async def post_sorting_messages(self, ctx):
+
+        request = guilds.find_one({
+            "server": f"{guild_id}"}, {
+            "_id": 0, "channels": 1
+        })
+
+        sorting_id = request["channels"]["sorting-hat"]
+        sorting_channel = self.client.get_channel(int(sorting_id))
+
+        guild = self.client.get_guild(int(guild_id))
+
+        for document in sortings.find({}, {"_id": 0}):
+
+            embed = discord.Embed(
+                title=document["title"],
+                description=document["description"].replace('\\n', '\n'),
+                timestamp=get_timestamp(),
+                color=document["color"]
+            )
+
+            members_count = []
+            role_emojis = []
+            for field in document["fields"]:
+
+                role_id = field["role_id"]
+                role = discord.utils.get(ctx.guild.roles, id=int(role_id))
+                role_emojis.append(field["emoji"])
+                count = len(role.members)
+                members_count.append(count)
+
+                if document["title"] != "Role Color Selection":
+                    embed.add_field(
+                        name=f"{field['emoji']} {field['role']} [{count}]",
+                        value=f"{field['description']}"
+                    )
+
+                else:
+                    embed.add_field(
+                        name=f"{field['emoji']} {field['role']} [{count}]",
+                        value="<@{}>{}".format(field['role_id'], field['description'])
+                    )
+
+            if document["multiple"] is False:
+                embed.set_footer(text=f"{sum(members_count)}/{len(guild.members)} sorted members")
+            else:
+                embed.set_footer(text=f"{sum(members_count)} special roles issued")
+
+            msg = await sorting_channel.send(embed=embed)
+
+            sortings.update_one({"title": document["title"]}, {"$set": {"msg_id": str(msg.id)}})
+
+            if document["title"] == "Quest Selection & Acceptance":
+                guilds.update_one({"server": str(guild_id)}, {"$set": {"messages.quests": str(msg.id)}})
+
+            for emoji in role_emojis:
+                await msg.add_reaction(emoji)
+
+            await asyncio.sleep(2)
+
         await ctx.message.delete()
 
 
