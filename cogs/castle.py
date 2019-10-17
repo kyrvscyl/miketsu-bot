@@ -1024,7 +1024,7 @@ class Castle(commands.Cog):
         combined_img.save(temp_address)
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(hosting_id)
+        hosting_channel = self.client.get_channel(int(hosting_id))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
