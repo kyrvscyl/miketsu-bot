@@ -141,7 +141,7 @@ class Roles(commands.Cog):
             else:
                 embed.add_field(
                     name=f"{field['emoji']} {field['role']} [{count}]",
-                    value="<@{}>{}".format(field['role_id'], field['description'])
+                    value="<@&{}>{}".format(field['role_id'], field['description'])
                 )
 
         if request["multiple"] is False:

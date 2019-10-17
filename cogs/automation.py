@@ -52,7 +52,10 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        if str(message.channel).startswith("Direct Message") is True:
+        if message.author.bot is True:
+            return
+
+        elif str(message.channel).startswith("Direct Message") is True:
             record_scroll_channel = self.client.get_channel(int(scroll_id))
             await record_scroll_channel.send(f"{message.author}: {message.content}")
 
