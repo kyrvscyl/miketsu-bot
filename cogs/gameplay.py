@@ -728,7 +728,7 @@ class Encounter(commands.Cog):
         time_discovered = get_time()
         await search_msg.edit(embed=generate_embed_boss(timeout, assembly_players_name))
         await search_msg.add_reaction("🏁")
-        await ctx.channel.send(content=f"<@&{boss_busters_id}! {next(assemble_captions)}")
+        await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(assemble_captions)}")
 
         def check(r, u):
             return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == search_msg.id
