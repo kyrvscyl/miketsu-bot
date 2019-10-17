@@ -146,6 +146,8 @@ class Roles(commands.Cog):
 
         if request["multiple"] is False:
             embed.set_footer(text=f"{sum(members_count)}/{len(guild.members)} sorted members")
+        else:
+            embed.set_footer(text=f"{sum(members_count)} special roles issued")
 
         roles_msg = await sorting_channel.fetch_message(int(msg_id))
         await roles_msg.edit(embed=embed)
