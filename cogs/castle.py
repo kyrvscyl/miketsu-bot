@@ -5,9 +5,9 @@ Miketsu, 2019
 
 import asyncio
 import os
-import random
 import urllib.request
 from datetime import datetime
+from itertools import cycle
 from math import ceil
 
 import discord
@@ -531,17 +531,16 @@ class Castle(commands.Cog):
             try:
                 value = ", ".join(portraits_listings[str(floor)])
             except KeyError:
-                value = "None"
+                value = None
             return value
 
         embed = discord.Embed(
             title="Patronus Portraits", color=ctx.author.colour,
-            description=f"There are {count} frames hanging in the castle."
+            description=f"There are {count} frames hanging in the castle"
         )
 
         for x in reversed(range(1, 8)):
             floor_frames = []
-
             for frame in portraits.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
                 floor_frames.append(frame["in_game_name"])
                 entry = {str(x): floor_frames}
@@ -552,154 +551,154 @@ class Castle(commands.Cog):
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["wander", "w"])
+    @commands.check(check_if_valid_and_castle)
     @commands.guild_only()
     async def castle_wander(self, ctx):
 
-        await ctx.message.delete(delay=5)
-
-        if not ctx.channel.category.id == castle_id and str(ctx.channel.name) not in invalid_channels:
-            embed = discord.Embed(
-                title="wander, w",
-                colour=discord.Colour(embed_color),
-                description="usable only at the castle's channels with valid floors\n"
-                            "check the channel topics for the floor number\n"
-                            "automatically deletes the command & frame after a few secs"
-            )
-            await ctx.channel.send(embed=embed)
-            return
-
         try:
             floor_num = int(ctx.channel.topic[:1])
+            floor_frames = cycle(list(portraits.find({"floor": floor_num})))
+
+            def create_new_embed_page():
+                frame_preview = next(floor_frames)
+                find_role = frame_preview["role"]
+                in_game_name = frame_preview["in_game_name"]
+                image_link = frame_preview["image_link"] + "?size=2048"
+                floor = frame_preview["floor"]
+                frame_number = frame_preview["frame"]
+                description = frame_preview["description"].replace("\\n", "\n")
+
+                embed_new = discord.Embed(
+                    color=ctx.author.colour,
+                    title=f"{get_emoji_primary_role(find_role)} {in_game_name}",
+                    description=description
+                )
+                embed_new.set_image(url=image_link)
+                embed_new.set_footer(
+                    text=f"Floor {floor} | Frame {frame_number}"
+                )
+                return embed_new
+
+            msg = await ctx.channel.send(embed=create_new_embed_page())
+            await msg.add_reaction("➡")
+
+            def check(r, u):
+                return u != self.client.user and r.message.id == msg.id
+
+            while True:
+                try:
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
+                except asyncio.TimeoutError:
+                    break
+                else:
+                    if str(reaction.emoji) == "➡":
+                        await msg.edit(embed=create_new_embed_page())
         except ValueError:
             return
 
-        floor_frames = []
-        for frame in portraits.find({"floor": floor_num}):
-            floor_frames.append(frame["frame"])
-
-        try:
-            random_frame = random.choice(floor_frames)
-        except IndexError:
-            return
-
-        frame_profile = portraits.find_one({"frame": random_frame}, {"_id": 0})
-        find_role = frame_profile["role"]
-        in_game_name = frame_profile["in_game_name"]
-        image_link = frame_profile["image_link"] + "?width=200&height=200"
-        floor = frame_profile["floor"]
-        frame_number = frame_profile["frame"]
-        description = frame_profile["description"].replace("\\n", "\n")
-
-        embed = discord.Embed(
-            color=ctx.author.colour,
-            title=f"{get_emoji_primary_role(find_role)} {in_game_name}",
-            description=description
-        )
-        embed.set_image(url=image_link)
-        embed.set_footer(
-            text=f"Floor {floor} | Frame {frame_number}"
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await msg.delete(delay=10)
-
     @commands.command(aliases=["portrait"])
     @commands.guild_only()
-    async def castle_customize_portrait(self, ctx, arg1, *, args):
+    async def castle_portrait_customize(self, ctx, arg1, *, args=None):
 
-        argument = args.split(" ", 3)
-        frame_id = str(ctx.author.id)
-        member = ctx.guild.get_member(ctx.author.id)
-        user_roles = member.roles
-        frame_profile = portraits.find_one({"frame_id": str(frame_id)}, {"_id": 0})
+        if arg1.lower() not in ["edit", "add"]:
+            embed = discord.Embed(
+                title="portrait add, portrait edit", colour=discord.Colour(embed_color),
+                description=f"use `add` first before using `edit`\n"
+                            f"use square photos for best results"
+            )
+            embed.add_field(
+                name="Format",
+                value=f"*`{self.prefix}portrait add <name> <floor#1-7> <img_link/default> <desc.>`*",
+                inline=False
+            )
+            embed.add_field(
+                name="Example",
+                value=f"*`{self.prefix}portrait add xann 6 default Headless`*",
+                inline=False
+            )
+            await ctx.channel.send(embed=embed)
 
-        try:
+        elif arg1.lower() in ["edit", "add"]:
+            frame_id = str(ctx.author.id)
+            user_roles = ctx.guild.get_member(ctx.author.id).roles
+            frame_profile = portraits.find_one({"frame_id": str(frame_id)}, {"_id": 0})
+
+            argument = args.split(" ", 3)
             in_game_name = argument[0]
-            floor = int(argument[1])
             image_link = argument[2]
             description = argument[3].replace("\\n", "\n")
             frame_num = portraits.count() + 1
 
+            try:
+                floor = int(argument[1])
+            except ValueError:
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    title="Invalid floor number",
+                    description="Available floors: 1-6 only"
+                )
+                await ctx.channel.send(embed=embed)
+                return
+
             if image_link.lower() == "default":
                 image_link = ctx.author.avatar_url
 
-        except ValueError:
-            embed = discord.Embed(
-                colour=discord.Colour(embed_color),
-                title="Invalid floor number",
-                description="Available floors: 1-6 only"
-            )
-            await ctx.channel.send(embed=embed)
-            return
+            find_role = ""
+            for role in reversed(user_roles):
+                if role.name in primary_roles:
+                    find_role = role.name
+                    break
 
-        frames_current = []
-        for frame in portraits.find({"frame": {"$exists": True}}):
-            frames_current.append(frame["frame"])
+            if frame_profile is not None:
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    description=f"portrait already exists, use `{self.prefix}frame edit <...>`"
+                )
+                await ctx.channel.send(embed=embed)
 
-        find_role = ""
-        for role in reversed(user_roles):
-            if role.name in primary_roles:
-                find_role = role.name
-                break
-
-        if portraits.find({"frame_id": str(ctx.author.id)}, {"_id": 0}) is not None:
-            embed = discord.Embed(
-                colour=discord.Colour(embed_color),
-                description=f"Frame exists for this user, use `{self.prefix}frame edit <...>`"
-            )
-            await ctx.channel.send(embed=embed)
-
-        elif floor not in [1, 2, 3, 4, 5, 6]:
-            embed = discord.Embed(
-                colour=discord.Colour(embed_color),
-                title="Invalid floor number",
-                description="Available floors: 1-6 only"
-            )
-            await ctx.channel.send(embed=embed)
-            return
-
-        if arg1.lower() in ["add", "others"]:
-
-            if arg1.lower == "add" and frame_profile is not None:
+            elif floor not in [1, 2, 3, 4, 5, 6]:
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    title="Invalid floor number",
+                    description="Available floors: 1-6 only"
+                )
+                await ctx.channel.send(embed=embed)
                 return
 
-            if arg1.lower() == "others":
-                frame_id = None
-                find_role = "Head"
+            elif arg1.lower() == "others":
+                attachment_link = await self.castle_portrait_customize_process(
+                    str(image_link), in_game_name, "Head", ctx, description, floor, frame_num
+                )
 
-            attachment_link = await self.castle_customize_portrait_process(
-                str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
-            )
-
-            profile = {
-                "frame_id": frame_id,
-                "floor": floor,
-                "frame": frame_num,
-                "in_game_name": in_game_name,
-                "role": find_role,
-                "image_link": attachment_link,
-                "description": description
-            }
-            portraits.insert_one(profile)
-
-        elif arg1.lower() == "edit" and frame_profile is not None:
-
-            attachment_link = await self.castle_customize_portrait_process(
-                str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
-            )
-            portraits.update_one({
-                "frame_id": str(ctx.author.id)}, {
-                "$set": {
+                profile = {
+                    "frame_id": None,
                     "floor": floor,
                     "frame": frame_num,
                     "in_game_name": in_game_name,
-                    "role": find_role,
+                    "role": "Head",
                     "image_link": attachment_link,
                     "description": description
-
                 }
-            })
+                portraits.insert_one(profile)
 
-    async def castle_customize_portrait_process(self, img_link, ign, find_role, ctx, description, floor, frame_num):
+            elif arg1.lower() == "edit" and frame_profile is not None:
+                attachment_link = await self.castle_portrait_customize_process(
+                    str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
+                )
+                portraits.update_one({
+                    "frame_id": str(ctx.author.id)}, {
+                    "$set": {
+                        "floor": floor,
+                        "frame": frame_num,
+                        "in_game_name": in_game_name,
+                        "role": find_role,
+                        "image_link": attachment_link,
+                        "description": description
+
+                    }
+                })
+
+    async def castle_portrait_customize_process(self, img_link, ign, find_role, ctx, description, floor, frame_num):
 
         async with ctx.channel.typing():
             embed = discord.Embed(colour=discord.Colour(embed_color), title="Processing the image.. ")

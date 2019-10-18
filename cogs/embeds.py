@@ -105,14 +105,12 @@ class Embeds(commands.Cog):
 
         welcome_id = request["channels"]["welcome"]
         sorting_id = request["channels"]["sorting-hat"]
-        patronus_role_id = request["roles"]["patronus"]
+        patronus_role_id = request["roles"]["seers"]
         absence_app_id = request["channels"]["absence-applications"]
         welcome_channel = self.client.get_channel(int(welcome_id))
-
         crest_link = request["links"]["crest"]
         rules_link = request["links"]["rules_link"]
         banners = request["links"]["banners"]
-
 
         embed1 = discord.Embed(
             colour=discord.Colour(0xe77eff),
@@ -287,47 +285,22 @@ class Embeds(commands.Cog):
             text="Assets: Official Onmyoji art; Designed by: xann#8194"
         )
 
-        msg1 = await welcome_channel.send(embed=embed1)
-        msg2 = await welcome_channel.send(embed=embed2)
-        msg3 = await welcome_channel.send(embed=embed3)
-        msg4 = await welcome_channel.send(embed=embed4)
-        msg5 = await welcome_channel.send(embed=embed5)
-        msg6 = await welcome_channel.send(embed=embed6)
-        await msg6.add_reaction("⬅")
-        await msg6.add_reaction("➡")
-        msg7 = await welcome_channel.send(content="Our invite link: https://discord.gg/H6N8AHB")
+        msg_intro = await welcome_channel.fetch_message(int(request["messages"]["intro"]))
+        msg_roles = await welcome_channel.fetch_message(int(request["messages"]["roles"]))
+        msg_rules = await welcome_channel.fetch_message(int(request["messages"]["rules"]))
+        msg_benefits = await welcome_channel.fetch_message(int(request["messages"]["benefits"]))
+        msg_events = await welcome_channel.fetch_message(int(request["messages"]["events"]))
+        msg_banner = await welcome_channel.fetch_message(int(request["messages"]["banner"]))
+        msg_invite = await welcome_channel.fetch_message(int(request["messages"]["invite"]))
+
+        await msg_intro.edit(embed=embed1)
+        await msg_roles.edit(embed=embed2)
+        await msg_rules.edit(embed=embed3)
+        await msg_benefits.edit(embed=embed4)
+        await msg_events.edit(embed=embed5)
+        await msg_banner.edit(embed=embed6)
+        await msg_invite.edit(content="Our invite link: https://discord.gg/H6N8AHB")
         await ctx.message.delete()
-
-        guilds.update_one({"server": str(guild_id)}, {
-            "$set": {
-                "messages.intro": str(msg1.id),
-                "messages.roles": str(msg2.id),
-                "messages.server_rules": str(msg3.id),
-                "messages.ingame_rules": str(msg4.id),
-                "messages.requirements": str(msg5.id),
-                "messages.banner": str(msg6.id),
-                "messages.invite": str(msg7.id)
-            }})
-
-        """
-        introduction_msg = await welcome_channel.fetch_message(int(request["messages"]["introduction"]))
-        roles_information_msg = await welcome_channel.fetch_message(int(request["messages"]["roles_information"]))
-        rules_msg = await welcome_channel.fetch_message(int(request["messages"]["rules"]))
-        requirements_msg = await welcome_channel.fetch_message(int(request["messages"]["requirements"]))
-        events_schedule_msg = await welcome_channel.fetch_message(int(request["messages"]["events_schedule"]))
-        banner_msg = await welcome_channel.fetch_message(int(request["messages"]["banner"]))
-        invite_link_msg = await welcome_channel.fetch_message(int(request["messages"]["invite_link"]))
-
-        await introduction_msg.edit(embed=embed1)
-        await roles_information_msg.edit(embed=embed2)
-        await rules_msg.edit(embed=embed3)
-        await requirements_msg.edit(embed=embed4)
-        await events_schedule_msg.edit(embed=embed5)
-        await banner_msg.edit(embed=embed6)
-        await invite_link_msg.edit(content="Our invite link: https://discord.gg/H6N8AHB")
-        await ctx.message.delete()
-        
-        """
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):

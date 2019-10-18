@@ -1826,9 +1826,10 @@ class Economy(commands.Cog):
         elif profile["daily"] is True:
             embed = discord.Embed(
                 title="Collection Failed", colour=discord.Colour(embed_color),
-                description=f"{ctx.author.mention} have collected already today. Resets everyday at 00:00 EST",
+                description=f"You have collected already today. Resets everyday at 00:00 EST",
                 timestamp=get_timestamp()
             )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
             await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["weekly"])
@@ -1844,9 +1845,10 @@ class Economy(commands.Cog):
         elif profile["weekly"] is True:
             embed = discord.Embed(
                 title="Collection Failed", colour=discord.Colour(embed_color),
-                description=f"{ctx.author.mention} have collected already this week. Resets every Mon at 00:00 EST",
+                description=f"You have collected already this week. Resets every Mon at 00:00 EST",
                 timestamp=get_timestamp()
             )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
             await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["profile", "p"])

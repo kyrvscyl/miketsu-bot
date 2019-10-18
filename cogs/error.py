@@ -44,10 +44,7 @@ class Error(commands.Cog):
             link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
             embed.add_field(
                 name=f"Error Traceback",
-                value=f"User: {ctx.author}\n"
-                      f"Guild: {ctx.message.guild}\n"
-                      f"Channel: #{ctx.channel}\n"
-                      f"Source: [message link]({link})",
+                value=f"User | Channel | Source :: {ctx.author} | #{ctx.channel} | [message link]({link})",
                 inline=False
             )
             await channel.send(embed=embed)
@@ -55,8 +52,7 @@ class Error(commands.Cog):
         except AttributeError:
             embed.add_field(
                 name=f"Error Traceback",
-                value=f"User: {ctx.author}\n"
-                      f"DMchannel: #{ctx.channel}\n",
+                value=f"User | DMchannel :: {ctx.author} | #{ctx.channel}\n",
                 inline=False
             )
             await channel.send(embed=embed)
@@ -99,6 +95,15 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "castle_wander":
+                embed = discord.Embed(
+                    title="wander, w",
+                    colour=discord.Colour(embed_color),
+                    description="usable only at the castle's channels with valid floors\n"
+                                "check the channel topics for the floor number\n"
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) in ["management_guild"]:
                 return
 
@@ -115,7 +120,8 @@ class Error(commands.Cog):
                 "encounter_search",
                 "summon_mystery_perform",
                 "friendship_give",
-                "perform_parade"
+                "perform_parade",
+                "pray_use"
             ]:
                 return
 
@@ -254,23 +260,16 @@ class Error(commands.Cog):
             elif str(ctx.command) == "post_book_reference":
                 await ctx.message.add_reaction("❌")
 
-            elif str(ctx.command) == "castle_customize_portrait":
+            elif str(ctx.command) == "castle_portrait_customize":
                 embed = discord.Embed(
-                    title="portrait add, portrait edit", colour=discord.Colour(embed_color),
+                    title="portrait, portraits", colour=discord.Colour(embed_color),
                     description=f"customize your own guild portrait\n"
-                                f"appears in the castle's floors via `{self.prefix}wander`\n"
-                                f"use `add` first before using `edit`\n"
-                                f"use square photos for best results"
-                )
-                embed.add_field(
-                    name="Format",
-                    value=f"*`{self.prefix}portrait add <name> <floor#1-7> <img_link or default> <desc.>`*",
-                    inline=False
+                                f"appears in the castle's floors via `{self.prefix}wander`"
                 )
                 embed.add_field(
                     name="Example",
                     value=f"*`;portraits`*\n"
-                          f"*`{self.prefix}portrait add xann 6 default Headless`*",
+                          f"*`{self.prefix}portrait <edit/add>`*",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)

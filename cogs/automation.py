@@ -68,7 +68,8 @@ class Automation(commands.Cog):
 
                 user_id = payload.data["author"]["id"]
                 attachments = payload.data["attachments"]
-                description = payload.data["content"]
+                link = f"https://discordapp.com/channels/{guild_id}/{shard_trading_id}/{payload.data['id']}"
+                description = payload.data["content"] + f"\n\n[Link here!]({link})"
 
                 guild = self.client.get_guild(int(guild_id))
                 member = guild.get_member(int(user_id))

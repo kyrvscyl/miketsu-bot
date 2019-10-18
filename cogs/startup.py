@@ -111,9 +111,9 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["suggest", "report"])
     async def collect_suggestions(self, ctx, *, content):
-        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels.headmasters-office": 1})
-        headmaster_office_id = request["channels"]["headmasters-office"]
-        headmaster_office_channel = self.client.get_channel(int(headmaster_office_id))
+        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels.scroll-of-everything": 1})
+        record_scroll_id = request["channels"]["scroll-of-everything"]
+        record_scroll = self.client.get_channel(int(record_scroll_id))
 
         embed = discord.Embed(color=embed_color, title="📨 New Suggestion/Report", timestamp=get_timestamp())
         try:
@@ -126,7 +126,7 @@ class Startup(commands.Cog):
                                 f"Submitted through: Direct Message"
 
         embed.add_field(name="Content", value=f"{content}", inline=False)
-        suggestion = await headmaster_office_channel.send(embed=embed)
+        suggestion = await record_scroll.send(embed=embed)
         await suggestion.add_reaction("📌")
         await ctx.message.add_reaction("📩")
 
