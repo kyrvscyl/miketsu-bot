@@ -49,7 +49,7 @@ restricted_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels"
 primary_emojis = config.find_one({"dict": 1}, {"_id": 0, "primary_emojis": 1})["primary_emojis"]
 
 
-for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2"]}}, {"_id": 0, "index": 1}):
+for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2", "3"]}}, {"_id": 0, "index": 1}):
     lists_souls.append("`{}`".format(soul["index"].lower()))
     lists_souls_raw.append(soul["index"].lower())
 
@@ -97,11 +97,11 @@ def check_if_channel_is_pvp(ctx):
 
 
 def check_if_reference_section(ctx):
-    return ctx.channel.id == reference_id
+    return str(ctx.channel.id) == reference_id
 
 
 def check_if_restricted_section(ctx):
-    return ctx.channel.id == restricted_id
+    return str(ctx.channel.id) == restricted_id
 
 
 async def post_process_books(ctx, query):

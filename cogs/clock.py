@@ -8,6 +8,7 @@ import os
 import random
 import sys
 from datetime import datetime, timedelta
+from itertools import cycle
 
 import discord
 import pytz
@@ -29,6 +30,7 @@ config = get_collections("config")
 # Lists
 clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["clock_emojis"]
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
+captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
@@ -169,6 +171,7 @@ class Clock(commands.Cog):
             hour_24 = get_time().strftime("%H")
             hour_12 = get_time().strftime("%I")
             day_week = get_time().strftime("%a")
+            bidding_format = get_time().strftime("%b %d, %Y %H:%M")
             weather1 = weathers.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
             weather2 = weathers.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
@@ -198,6 +201,7 @@ class Clock(commands.Cog):
                 await self.perform_delete_secret_channels()
                 await Frames(self.client).achievements_process_hourly()
                 await self.events_activate_reminder_submit()
+                await self.reminders_bidding_process(bidding_format)
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
@@ -342,6 +346,35 @@ class Clock(commands.Cog):
 
         else:
             await ctx.message.add_reaction("❌")
+
+    @commands.command(aliases=["test"])
+    @commands.is_owner()
+    async def manual_reminder(self, ctx):
+        date_time = "Oct 24, 2019 11:00"
+        await self.reminders_bidding_process(date_time)
+
+    async def reminders_bidding_process(self, date_time):
+
+        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0})
+        headlines_channel = self.client.get_channel(int(request["channels"]["headlines"]))
+        reminders_date_list = events.find_one({"event": "showdown bidding"}, {"_id": 1, "dates": 1})["dates"]
+        gold_galleons_id = request["roles"]["golden_galleons"]
+
+        content = f"<@&{gold_galleons_id}>"
+        embed = discord.Embed(
+            color=embed_color,
+            title="A new round of showdown bidding has started!",
+            timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+        )
+        embed.description = next(captions)
+        try:
+            embed.set_footer(text=f"Round {reminders_date_list.index(date_time) + 1} of {len(reminders_date_list)}")
+            msg = await headlines_channel.send(content=content, embed=embed)
+            await msg.add_reaction("🔵")
+            await msg.add_reaction("🔴")
+
+        except ValueError:
+            pass
 
 
 def setup(client):
