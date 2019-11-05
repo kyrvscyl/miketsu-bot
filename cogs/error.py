@@ -107,6 +107,13 @@ class Error(commands.Cog):
             elif str(ctx.command) in ["management_guild"]:
                 return
 
+            elif isinstance(error, commands.NoPrivateMessage):
+                embed = discord.Embed(
+                    title="Invalid channel", colour=discord.Colour(embed_color),
+                    description="This command can only be used inside the guild"
+                )
+                await ctx.channel.send(embed=embed)
+
             else:
                 await self.submit_error(ctx, error)
 
@@ -315,9 +322,6 @@ class Error(commands.Cog):
 
             else:
                 await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.NoPrivateMessage):
-            return
 
         elif isinstance(error, commands.CommandNotFound):
 

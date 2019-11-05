@@ -78,7 +78,7 @@ class Automation(commands.Cog):
 
                 content = f"<@&{shard_seeker_id}>!"
                 embed = discord.Embed(color=member.colour, description=description, timestamp=get_timestamp())
-                embed.set_author(name=f"{member.display_name} is looking for shards!", icon_url=member.avatar_url)
+                embed.set_author(name=f"{member.display_name} is seeking for shards!", icon_url=member.avatar_url)
                 embed.set_footer(text=f"#{shard_trading_channel.name}")
 
                 if len(attachments) > 0:

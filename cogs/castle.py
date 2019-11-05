@@ -223,7 +223,7 @@ async def management_duel_show_approximate(ctx, member_name):
     embed = discord.Embed(
         colour=discord.Colour(embed_color),
         title="Invalid query",
-        description=f"The ID/name `{member_name}` returned no results"
+        description=f"the ID/name `{member_name}` returned no results"
     )
     embed.add_field(
         name="Possible matches",
@@ -328,7 +328,7 @@ async def management_duel_profile_member_add(ctx, args):
     else:
         embed = discord.Embed(
             title="Invalid duelist", colour=discord.Colour(embed_color),
-            description="That name already exists in the database"
+            description="that name already exists in the database"
         )
         await ctx.channel.send(embed=embed)
 
@@ -635,7 +635,7 @@ class Castle(commands.Cog):
                 embed = discord.Embed(
                     colour=discord.Colour(embed_color),
                     title="Invalid floor number",
-                    description="Available floors: 1-6 only"
+                    description="available floors: 1-6 only"
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -660,7 +660,7 @@ class Castle(commands.Cog):
                 embed = discord.Embed(
                     colour=discord.Colour(embed_color),
                     title="Invalid floor number",
-                    description="Available floors: 1-6 only"
+                    description="available floors: 1-6 only"
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -950,8 +950,8 @@ class Castle(commands.Cog):
                             embed_new.set_image(url=links[page - 1])
                             embed_new.set_footer(text=f"Page: {page} of {len(links)}")
                         else:
-                            embed_new.description = f"This duelist has no lineup records yet\n\n" \
-                                                    f"To add, use " \
+                            embed_new.description = f"this duelist has no lineup records yet\n\n" \
+                                                    f"to add, use " \
                                                     f"*`{self.prefix}duel update <ID/name> lineup`*\n" \
                                                     f"send it with an image uploaded in the message"
                             embed_new.set_footer(text=f"Page: {x} of 1")
@@ -991,12 +991,6 @@ class Castle(commands.Cog):
             font = ImageFont.truetype('data/marker_felt_wide.ttf', 20)
             im = Image.new('RGBA', (90 * max_cols, 20 + (ceil(len(listings) / max_cols) * 90)), (255, 0, 0, 0))
             outline = ImageDraw.Draw(im)
-            """
-            outline.text((x - 1, y - 1), text, font=font, fill=color_outline)
-            outline.text((x + 1, y - 1), text, font=font, fill=color_outline)
-            outline.text((x - 1, y + 1), text, font=font, fill=color_outline)
-            outline.text((x + 1, y + 1), text, font=font, fill=color_outline)
-            """
             outline.text((x, y), text, font=font, fill=color_fill)
             im_shikigamis = list(map(Image.open, listings))
             im_shikigamis_plain = Image.new("RGBA", (max_cols * 90, max_cols * 90))

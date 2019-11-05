@@ -393,7 +393,7 @@ class Encounter(commands.Cog):
             if raid_count == 3:
                 embed = discord.Embed(
                     title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(embed_color),
-                    description="Raids are capped at 3 times per day and per realm"
+                    description="raids are capped at 3 times per day and per realm"
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -402,16 +402,16 @@ class Encounter(commands.Cog):
                 raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "medals": 1})["medals"]
                 victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "medals": 1})["medals"]
                 medal_diff = raider_medals - victim_medals
-                range = 30000
+                range_diff = 30000
 
-                if abs(medal_diff) <= range:
+                if abs(medal_diff) <= range_diff:
                     users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
                     await raid_perform_attack(victim, raider, ctx)
 
                 else:
                     embed = discord.Embed(
                         title=f"Invalid realm", colour=discord.Colour(embed_color),
-                        description=f"{raider.mention}, you can only raid realms with ±{range:,d} of your medals",
+                        description=f"{raider.mention}, you can only raid realms with ±{range_diff:,d} of your medals",
                     )
                     await ctx.channel.send(embed=embed)
 
@@ -616,6 +616,7 @@ class Encounter(commands.Cog):
             )
             embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
             await search_msg.edit(embed=embed)
+            await search_msg.clear_reactions()
 
         else:
             cost_item_current = users.find_one({"user_id": str(user.id)}, {"_id": 0, cost_item: 1})[cost_item]

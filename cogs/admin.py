@@ -246,10 +246,11 @@ async def management_guild_update_field(ctx, args):
     elif args[2].lower() == "role" and args[3].lower() in roles:
         members.update_one(find_query, {"$set": {"role": args[3].lower()}})
         await ctx.message.add_reaction("✅")
+
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title="Role Update Notice",
-            description="Changing the member's role may require to change their status also"
+            title="Role update notice",
+            description="changing the member's role may require to change their status also"
         )
         msg = await ctx.channel.send(embed=embed)
         await msg.delete(delay=7)
@@ -294,7 +295,7 @@ async def management_guild_show_approximate(ctx, member_name):
     embed = discord.Embed(
         colour=discord.Colour(embed_color),
         title="Invalid query",
-        description=f"The ID/name `{member_name}` returned no results"
+        description=f"the ID/name `{member_name}` returned no results"
     )
     embed.add_field(
         name="Possible matches",
@@ -323,7 +324,7 @@ async def management_guild_add_member(ctx, args):
     else:
         embed = discord.Embed(
             title="Invalid name", colour=discord.Colour(embed_color),
-            description="That name already exists in the database"
+            description="that name already exists in the database"
         )
         await ctx.channel.send(embed=embed)
 
@@ -380,7 +381,7 @@ class Admin(commands.Cog):
         except AttributeError:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
-                description="The specified channel ID was not found."
+                description="the specified channel ID was not found."
             )
             await ctx.channel.send(embed=embed)
         except discord.errors.Forbidden:
@@ -479,7 +480,7 @@ class Admin(commands.Cog):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="No field and value provided",
-                description=f"Valid fields: *{', '.join(fields_formatted)}*"
+                description=f"valid fields: *{', '.join(fields_formatted)}*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -491,7 +492,7 @@ class Admin(commands.Cog):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Invalid field update request",
-                description=f"Valid fields: *{', '.join(fields_formatted)}*"
+                description=f"valid fields: *{', '.join(fields_formatted)}*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -499,7 +500,7 @@ class Admin(commands.Cog):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Invalid field update request",
-                description=f"No value provided for the field {args[2].lower()}"
+                description=f"no value provided for the field {args[2].lower()}"
             )
             await ctx.channel.send(embed=embed)
 
@@ -537,7 +538,7 @@ class Admin(commands.Cog):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Provide a role value to show",
-                description=f"Valid values: *`{', '.join(roles_formatted)}`*"
+                description=f"valid values: *`{', '.join(roles_formatted)}`*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -549,7 +550,7 @@ class Admin(commands.Cog):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Provide a status value to show",
-                description=f"Valid values: *`{', '.join(statuses_formatted)}`*"
+                description=f"valid values: *`{', '.join(statuses_formatted)}`*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -597,7 +598,7 @@ class Admin(commands.Cog):
 
         embed = discord.Embed(
             color=ctx.author.colour,
-            description=f"Enter the names or codes of the {status} members separated by spaces"
+            description=f"enter the names or codes of the {status} members separated by spaces"
         )
         embed.add_field(name="Example", value="*`kyrvsycl xann happybunny shaly, 5, 7, 172`*")
         await ctx.channel.send(embed=embed)
@@ -611,7 +612,7 @@ class Admin(commands.Cog):
             except asyncio.TimeoutError:
                 embed = discord.Embed(
                     colour=discord.Colour(embed_color), title="Batch update cancelled",
-                    description=f"{ctx.author.mention}, you did not submit on time"
+                    description=f"submission time lapsed"
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -674,7 +675,7 @@ class Admin(commands.Cog):
         except asyncio.TimeoutError:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
-                description=f"{ctx.author.mention}, you did not confirm on time",
+                description=f"no confirmation received",
                 title="Batch update cancelled",
                 timestamp=get_timestamp()
             )
