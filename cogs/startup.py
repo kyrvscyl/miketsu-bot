@@ -91,9 +91,9 @@ class Startup(commands.Cog):
         embed.add_field(
             name="fake Onmyoji",
             value="*"
-                  "daily, weekly, profile, display, buy, summon, "
+                  "daily, weekly, profile, set, buy, summon, explore, chapter, "
                   "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray, stat, "
-                  "frames, wish, wishlist, fulfill, parade, uncollected, collections, shards, "
+                  "frames, wish, wishlist, fulfill, parade, collections, shards, "
                   "raid, raidc, encounter, bossinfo"
                   "*",
             inline=False
@@ -160,7 +160,7 @@ class Startup(commands.Cog):
 
             embed_new = discord.Embed(
                 color=ctx.author.colour,
-                title="Bot Changelogs",
+                title="Bot changelogs",
                 description=description
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")

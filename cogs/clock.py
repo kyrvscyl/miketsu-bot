@@ -26,6 +26,7 @@ reminders = get_collections("reminders")
 quests = get_collections("quests")
 events = get_collections("events")
 config = get_collections("config")
+streaks = get_collections("streaks")
 
 # Lists
 clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["clock_emojis"]
@@ -84,6 +85,23 @@ def get_emoji(hours, minutes):
     emoji_clock = clock_emojis[emoji_clock_index]
     return emoji_clock
 
+
+async def frame_automate_penalize():
+    streak_list = []
+    for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
+        streak_list.append((user["user_id"], user["SSR_current"]))
+
+    starlight_current_id = sorted(streak_list, key=lambda x: x[1], reverse=True)[0][0]
+    query = streaks.find_one({"user_id": str(starlight_current_id)}, {"_id": 0})
+    new_streak = query["SSR_current"] / 2
+
+    streaks.update_one({
+        "user_id": str(starlight_current_id)}, {
+        "$set": {
+            "SSR_current": new_streak,
+            "SSR_record": new_streak
+        }
+    })
 
 async def penalty_hour():
     quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -5}})
@@ -213,6 +231,7 @@ class Clock(commands.Cog):
                 if day_week.lower() == "mon":
                     await Economy(self.client).reset_rewards_weekly()
 
+                await frame_automate_penalize()
                 await Economy(self.client).frame_automate()
                 await Frames(self.client).achievements_process_daily()
 
@@ -258,7 +277,7 @@ class Clock(commands.Cog):
 
                 headlines_channel = self.client.get_channel(int(headlines_id))
 
-                content = f"<@{reminder['role_id']}>"
+                content = f"<@&{reminder['role_id']}>"
                 embed = discord.Embed(
                     title="⏰ Reminder",
                     description="{}".format(reminder['description'].replace('\\n', '\n')),

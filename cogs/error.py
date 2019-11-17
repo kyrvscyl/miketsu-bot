@@ -208,17 +208,27 @@ class Error(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) in [
-                "shikigami_list_show_collected", "shikigami_list_show_uncollected", "shikigami_image_show_collected"
+                "shikigami_list_show_collected", "shikigami_image_show_collected"
             ]:
                 embed = discord.Embed(
-                    title="shikigamis, shikis, uncollected, unc, collections, col", colour=discord.Colour(embed_color),
+                    title="shikigamis, shikis, collections, col", colour=discord.Colour(embed_color),
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
-                embed.add_field(name="Rarities", value=f"*SP, SSR, SR, R*", inline=False)
                 embed.add_field(
                     name="Format", inline=False,
                     value=f"*`{self.prefix}shikis <rarity> <optional: @member>`*\n"
                           f"*`{self.prefix}unc <rarity> <optional: @member>`*"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in ["shikigami_show_post_shards"]:
+                embed = discord.Embed(
+                    title="shards", colour=discord.Colour(embed_color),
+                    description="shows your or tagged member's shikigami shards count by rarity"
+                )
+                embed.add_field(
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}shards <rarity> <optional: @member>`*"
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -257,8 +267,8 @@ class Error(commands.Cog):
                     name="Format",
                     value=f"*"
                           f"`{self.prefix}bounty <shikigami>`\n"
-                          f"`{self.prefix}baa <shikigami> <new alias>`\n"
-                          f"`{self.prefix}bal <shikigami> <new location>`"
+                          f"`{self.prefix}baa <shikigami_name> <new alias/keyword>`\n"
+                          f"`{self.prefix}bal <shikigami_name> <new location>`"
                           f"*",
                     inline=False
                 )
@@ -319,6 +329,9 @@ class Error(commands.Cog):
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}cycle 1`*")
                 await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in ["post_patch_notes"]:
+                await ctx.message.add_reaction("❌")
 
             else:
                 await self.submit_error(ctx, error)

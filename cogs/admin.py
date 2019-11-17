@@ -290,7 +290,7 @@ async def management_guild_show_approximate(ctx, member_name):
 
     approximate_results = []
     for result in members_search:
-        approximate_results.append(f"{result['#']}/{result['name_lower']}")
+        approximate_results.append(f"{result['#']}/{result['name']}")
 
     embed = discord.Embed(
         colour=discord.Colour(embed_color),

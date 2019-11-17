@@ -45,6 +45,7 @@ e_j = emojis["j"]
 e_c = emojis["c"]
 e_f = emojis["f"]
 e_a = emojis["a"]
+e_t = emojis["t"]
 
 for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
     quizzes.append(quiz)
@@ -55,6 +56,15 @@ for document in bosses.find({}, {"_id": 0, "boss": 1}):
 boss_spawn = False
 quizzes_shuffle = random.shuffle(quizzes)
 quizzes_cycle = cycle(quizzes)
+
+
+def emojify(item):
+    emoji_dict = {
+        "jades": e_j, "coins": e_c, "realm_ticket": "🎟", "amulets": e_a,
+        "medals": e_m, "friendship": e_f, "encounter_ticket": "🎫", "talisman": e_t,
+        "prayers": "🙏", "friendship_pass": "💗", "parade_tickets": "🎏"
+    }
+    return emoji_dict[item]
 
 
 def pluralize(singular, count):
@@ -381,8 +391,8 @@ class Encounter(commands.Cog):
 
         elif raider_tickets < 1:
             embed = discord.Embed(
-                title=f"{raider.display_name}, you have insufficient tickets", colour=discord.Colour(embed_color),
-                description="Purchase at the shop or get your daily rewards"
+                title=f"Insufficient tickets", colour=discord.Colour(embed_color),
+                description="purchase at the shop or get your daily rewards"
             )
             await ctx.channel.send(embed=embed)
             return
@@ -399,19 +409,19 @@ class Encounter(commands.Cog):
 
             elif raid_count < 4:
 
-                raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "medals": 1})["medals"]
-                victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "medals": 1})["medals"]
-                medal_diff = raider_medals - victim_medals
-                range_diff = 30000
+                raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
+                victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
+                level_diff = raider_medals - victim_medals
+                range_diff = 30
 
-                if abs(medal_diff) <= range_diff:
+                if abs(level_diff) <= range_diff:
                     users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
                     await raid_perform_attack(victim, raider, ctx)
 
                 else:
                     embed = discord.Embed(
                         title=f"Invalid realm", colour=discord.Colour(embed_color),
-                        description=f"{raider.mention}, you can only raid realms with ±{range_diff:,d} of your medals",
+                        description=f"{raider.mention}, you can only raid realms with ±{range_diff:,d} of your level",
                     )
                     await ctx.channel.send(embed=embed)
 
@@ -631,12 +641,19 @@ class Encounter(commands.Cog):
                 await logs_add_line(offer_item, offer_amount, user.id)
                 await logs_add_line(cost_item, -cost_amount, user.id)
 
+                cost_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, cost_item: 1})[cost_item]
+                offer_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, offer_item: 1})[offer_item]
+
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
                     description=f"You acquired {offer_amount:,d}{get_emoji(offer_item)} in exchanged for "
                                 f"{cost_amount:,d}{get_emoji(cost_item)}",
                     timestamp=get_timestamp()
+                )
+                embed.add_field(
+                    name="Inventory",
+                    value=f"`{offer_item_have:,d}` {emojify(offer_item)} | `{cost_item_have:,d}` {emojify(cost_item)}"
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
@@ -717,7 +734,11 @@ class Encounter(commands.Cog):
                       f"Exp     :  {f:,d}"
                       f"```"
             )
-            embed_new.add_field(name="Assembly Players", value=formatted_listings, inline=False)
+            embed_new.add_field(
+                name=f"Assembly Players [{len(assembly_players)}]",
+                value=formatted_listings,
+                inline=False
+            )
             embed_new.set_thumbnail(url=g)
             embed_new.set_footer(
                 text=f"Discovered by {discoverer.display_name}",
@@ -830,7 +851,7 @@ class Encounter(commands.Cog):
                             f"{next(attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
             )
             await ctx.channel.send(embed=embed)
-            await asyncio.sleep(3)
+            await asyncio.sleep(1)
 
         boss_profile_new = bosses.find_one({
             "boss": boss_select}, {
@@ -858,7 +879,9 @@ class Encounter(commands.Cog):
                           f"💸 Stealing {boss_jadesteal:,d} {e_j} & {boss_coinsteal:,d} {e_c} " \
                           f"each from its attackers!\n\n{random.choice(boss_comment)}~"
 
-            embed = discord.Embed(colour=discord.Colour(embed_color), description=description)
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color), description=description, timestamp=get_timestamp()
+            )
             embed.set_thumbnail(url=boss_url)
 
             await boss_steal(assembly_players, boss_jadesteal, boss_coinsteal)

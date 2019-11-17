@@ -17,6 +17,7 @@ guilds = get_collections("guilds")
 stickers = get_collections("stickers")
 users = get_collections("users")
 config = get_collections("config")
+shoots = get_collections("shoots")
 
 # Lists
 actions = []
@@ -37,6 +38,15 @@ def generate_new_stickers():
 
 
 generate_new_stickers()
+
+
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
 
 
 async def mike_how_hot(guild, channel, msg):
@@ -68,6 +78,59 @@ async def mike_how_hot(guild, channel, msg):
             break
 
 
+async def mikes_shoot_post_process(user, victim, winner, response, channel):
+
+    if shoots.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
+        profile = {
+            "user_id": str(user.id),
+            "victim": []
+        }
+        shoots.insert_one(profile)
+
+    if shoots.find_one({"user_id": str(user.id), "victim.user_id": str(victim.id)}, {"_id": 0}) is None:
+        shoots.update_one({
+            "user_id": str(user.id)}, {
+            "$push": {
+                "victim": {
+                    "user_id": str(victim.id),
+                    "successes": 0,
+                    "fails": 0
+                }
+            }
+        })
+
+    query = shoots.find_one({
+        "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+        "_id": 0,
+        "victim.$": 1
+    })
+    successes = query["victim"][0]["successes"]
+    fails = query["victim"][0]["fails"]
+    embed = discord.Embed(color=user.colour, description=f"*{response}*")
+
+    if winner.id == user.id:
+        increment = {"victim.$.successes": 1, "victim.$.fails": 0}
+
+        embed.set_footer(
+            text=f"{successes}/{successes + fails} successful {pluralize('shooting', successes + fails)}",
+            icon_url=user.avatar_url
+        )
+
+    else:
+        increment = {"victim.$.successes": 0, "victim.$.fails": 1}
+        embed.set_footer(
+            text=f"{fails}/{successes + fails} failed {pluralize('shooting', successes + fails)}",
+            icon_url=user.avatar_url
+        )
+
+    shoots.update_one({
+        "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+        "$inc": increment
+        }
+    )
+    await channel.send(embed=embed)
+
+
 class Funfun(commands.Cog):
 
     def __init__(self, client):
@@ -81,16 +144,18 @@ class Funfun(commands.Cog):
             if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
 
                 user_id = re.sub("[<>@!]", "", word)
-                member = guild.get_member(int(user_id))
+                member_target = guild.get_member(int(user_id))
 
-                if member.id != self.client.user.id:
+                if member_target.id != self.client.user.id:
                     roll = random.randint(1, 100)
-                    response = next(success_shoots).format(member.mention)
+
                     if roll >= 45:
                         response = next(failed_shoots).format(user.mention)
+                        await mikes_shoot_post_process(user, member_target, member_target, response, channel)
+                    else:
+                        response = next(success_shoots).format(member_target.mention)
+                        await mikes_shoot_post_process(user, member_target, user, response, channel)
 
-                    embed = discord.Embed(color=member.colour, description=f"*{response}*")
-                    await channel.send(embed=embed)
                     break
 
     @commands.command(aliases=["sticker", "stickers"])
@@ -163,16 +228,14 @@ class Funfun(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        if message.author == self.client.user:
-            return
-
-        elif message.author.bot:
+        if message.author.bot and message.author is self.client.user:
             return
 
         elif isinstance(message.channel, discord.DMChannel):
             return
 
-        elif "mike" in message.content.lower().split(" "):
+        elif "mike" in message.content.lower().split(" ") and len(message.content.lower().split(" ")) < 3:
+
             user = message.author
             list_message = message.content.lower().split()
             sticker_recognized = None
