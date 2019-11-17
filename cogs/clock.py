@@ -103,6 +103,7 @@ async def frame_automate_penalize():
         }
     })
 
+
 async def penalty_hour():
     quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -5}})
 
@@ -369,8 +370,12 @@ class Clock(commands.Cog):
     @commands.command(aliases=["test"])
     @commands.is_owner()
     async def manual_reminder(self, ctx):
-        date_time = "Oct 24, 2019 11:00"
-        await self.reminders_bidding_process(date_time)
+
+        await frame_automate_penalize()
+        await Economy(self.client).frame_automate()
+
+        """date_time = "Oct 24, 2019 11:00"
+        await self.reminders_bidding_process(date_time)"""
 
     async def reminders_bidding_process(self, date_time):
 
