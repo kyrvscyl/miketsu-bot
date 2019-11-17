@@ -93,7 +93,7 @@ async def frame_automate_penalize():
 
     starlight_current_id = sorted(streak_list, key=lambda x: x[1], reverse=True)[0][0]
     query = streaks.find_one({"user_id": str(starlight_current_id)}, {"_id": 0})
-    new_streak = query["SSR_current"] / 2
+    new_streak = int(round(query["SSR_current"] / 2))
 
     streaks.update_one({
         "user_id": str(starlight_current_id)}, {
