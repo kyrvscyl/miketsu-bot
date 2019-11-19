@@ -119,6 +119,7 @@ class Error(commands.Cog):
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
+                self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
             elif str(ctx.command) in ["management_guild"]:
                 return
@@ -166,6 +167,23 @@ class Error(commands.Cog):
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in ["perform_exploration"]:
+                embed = discord.Embed(
+                    title="explore, exp",
+                    colour=discord.Colour(embed_color),
+                    description=f"explore unlocked chapters\n"
+                                f"consumes sushi, set a shikigami first `{self.prefix}set`"
+                                f"clear success:  `Onmoyji level + shikigami level - chapter level`"
+                )
+                embed.add_field(
+                    name="Format",
+                    value=f"*`{self.prefix}exp <unlocked chapter#>`*\n"
+                          f"*`{self.prefix}explore unlocked`*\n",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+                self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
             elif str(ctx.command) == "stat_shikigami":
                 embed = discord.Embed(
