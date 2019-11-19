@@ -244,13 +244,13 @@ class Funfun(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
 
-        if message.author.bot and message.author is self.client.user:
+        if message.author.bot:
             return
 
         elif isinstance(message.channel, discord.DMChannel):
             return
 
-        elif "mike" in message.content.lower().split(" ") and len(message.content.lower().split(" ")) < 3:
+        elif "mike" in message.content.lower().split(" ") and len(message.content.lower().split(" ")) < 6:
 
             user = message.author
             list_message = message.content.lower().split()
