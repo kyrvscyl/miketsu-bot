@@ -522,7 +522,7 @@ async def frame_starlight(guild, spell_spam_channel):
             f"{starlight_new.mention} {random.choice(steal_adverb)} {random.choice(steal_verb)} " \
             f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
             f"{random.choice(steal_noun)}!! {random.choice(steal_comment)}\n\n" \
-            f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons! Halves every reset!"
+            f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons! Cuts in half every reset!"
 
         embed = discord.Embed(
             color=0xac330f,
@@ -2028,7 +2028,7 @@ class Economy(commands.Cog):
             embed.set_footer(text="Hall of Frames")
             await msg.edit(embed=embed)
 
-    @commands.command(aliases=["set"])
+    @commands.command(aliases=["set", "display"])
     @commands.guild_only()
     async def profile_change_display(self, ctx, *, select):
 
@@ -3562,6 +3562,7 @@ class Economy(commands.Cog):
                 description=f"that is not a valid chapter",
             )
             await ctx.channel.send(embed=embed)
+            self.client.get_command("perform_exploration").reset_cooldown(ctx)
             return
 
         user_id = ctx.author.id
@@ -3575,6 +3576,7 @@ class Economy(commands.Cog):
                 description=f"that is not a valid chapter, < {zones.count()}",
             )
             await ctx.channel.send(embed=embed)
+            self.client.get_command("perform_exploration").reset_cooldown(ctx)
             return
 
         elif chapter > user_profile["exploration"]:
@@ -3584,12 +3586,14 @@ class Economy(commands.Cog):
                 description=f"you have not yet unlocked this chapter",
             )
             await ctx.channel.send(embed=embed)
+            self.client.get_command("perform_exploration").reset_cooldown(ctx)
             return
 
         spirits = zone["spirits"]
         sushi_required = zone["sushi_required"]
         user_level = user_profile["level"]
-        shikigami_level = get_shikigami_level(user_id, user_profile["display"])
+        shikigami_set = user_profile["display"]
+        shikigami_level = get_shikigami_level(user_id, shikigami_set)
         total_chance = user_level + shikigami_level - chapter
         adjusted_chance = random.uniform(total_chance*0.95, total_chance)
 
@@ -3613,22 +3617,30 @@ class Economy(commands.Cog):
             level_exp_next = user_shikigami["shikigami"][0]['level_exp_next']
             shiki_level = user_shikigami["shikigami"][0]['level']
 
-            embed = discord.Embed(
+            evo = users.find_one({
+                "user_id": str(user_id), "shikigami.name": shikigami_set}, {
+                "shikigami.$.name": 1
+            })["shikigami"][0]["evolved"]
+            thumbnail = get_thumbnail_shikigami(shikigami_set.lower(), get_evo_link(evo))
+
+
+            embed_explore = discord.Embed(
                 color=ctx.author.colour,
                 title=f"{strike}Exploration stage: {num}/{spirits}{strike}",
                 description=f"Chapter {arg1}: {zone['name']}\n{description2}",
                 timestamp=get_timestamp()
             )
-            embed.add_field(
+            embed_explore.add_field(
                 name=f"Shikigami: {user_profile['display'].title()}",
                 value=f"Level: {shiki_level} | Experience: {exp}/{level_exp_next}"
             )
-            embed.set_footer(
+            embed_explore.set_footer(
                 text=f"{ctx.author.display_name}",
                 icon_url=ctx.author.avatar_url
             )
+            embed_explore.set_thumbnail(url=thumbnail)
 
-            return embed
+            return embed_explore
 
         if explores.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
             profile = {
@@ -3661,7 +3673,7 @@ class Economy(commands.Cog):
             "_id": 0,
             "explores.$": 1,
         })
-        
+
         msg = await ctx.channel.send(embed=create_embed_exploration(new_explore['explores'][0]['attempts'], [], ""))
         await msg.add_reaction("🏹")
 
@@ -3710,7 +3722,7 @@ class Economy(commands.Cog):
                         "user_id": str(user_id), "shikigami.name": user_profile["display"]
                     }, {
                         "$inc": {
-                            "shikigami.$.exp": 5 * round(chapter / 2)
+                            "shikigami.$.exp": 5 * round((chapter + 1) / 2)
                         }
                     })
 
@@ -3857,10 +3869,10 @@ class Economy(commands.Cog):
 
         embed.add_field(
             name="Completion rewards",
-            value=f"~{jades}{emojify('jades')}, "
-                  f"~{coins}{emojify('coins')}, "
-                  f"~{medals}{emojify('medals')}, "
-                  f"~{amulets_b}{emojify('amulets_b')}",
+            value=f"{jades}{emojify('jades')}, "
+                  f"{coins}{emojify('coins')}, "
+                  f"{medals}{emojify('medals')}, "
+                  f"{amulets_b}{emojify('amulets_b')}",
             inline=False
         )
 
@@ -3969,46 +3981,81 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["chapter", "ch"])
     @commands.guild_only()
-    async def show_exploration_zones(self, ctx, *, arg1):
+    async def show_exploration_zones(self, ctx, *, arg1=None):
 
-        chapter = int(arg1)
-        profile = zones.find_one({"chapter": chapter}, {"_id": 0})
+        if arg1 is None:
+            embed = discord.Embed(
+                title=f"chapter, ch",
+                color=embed_color,
+                description=f"show chapter information and unlocked chapters"
+            )
+            embed.add_field(
+                name="Format",
+                value=f"*`{self.prefix}chapter <chapter#1-28>`*\n"
+                      f"*`{self.prefix}chapter unlocked`*\n",
+                inline=False
+            )
+            await ctx.channel.send(embed=embed)
 
-        description = f"```" \
-                      f"Spirits          ::    {profile['spirits']}\n" \
-                      f"Sushi/explore    ::    {profile['sushi_required']}" \
-                      f"```"
+        elif arg1.lower() == "unlocked":
 
-        jades = profile["rewards_exact"]["jades"]
-        coins = profile["rewards_exact"]["coins"]
-        medals = profile["rewards_exact"]["medals"]
-        amulets_b = profile["rewards_exact"]["amulets_b"]
+            profile = users.find_one({
+                "user_id": str(ctx.author.id)
+            }, {
+                "_id": 0,
+                "exploration": 1
+            })
+            embed = discord.Embed(
+                title=f"Unlocked chapters",
+                color=ctx.author.colour,
+                description=f"You have access up to chapter {profile['exploration']}"
+            )
+            embed.set_footer(
+                text=f"{ctx.author.display_name}",
+                icon_url=ctx.author.avatar_url
+            )
+            await ctx.channel.send(embed=embed)
 
-        shards_sp = profile["shards_count"]["SP"]
-        shards_ssr = profile["shards_count"]["SSR"]
-        shards_sr = profile["shards_count"]["SR"]
-        shards_r = profile["shards_count"]["R"]
-        shards_n = profile["shards_count"]["N"]
+        else:
 
-        embed = discord.Embed(
-            title=f"Chapter {chapter}: {profile['name']}",
-            color=ctx.author.colour,
-            description=description
-        )
-        embed.add_field(
-            name="Completion rewards",
-            value=f"~{jades}{emojify('jades')}, "
-                  f"~{coins}{emojify('coins')}, "
-                  f"~{medals}{emojify('medals')}, "
-                  f"~{amulets_b}{emojify('amulets_b')}",
-            inline=False
-        )
-        embed.add_field(
-            name="Shards drop count",
-            value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | {e_4} {shards_r} | {e_5} {shards_n}",
-            inline=False
-        )
-        await ctx.channel.send(embed=embed)
+            chapter = int(arg1)
+            profile = zones.find_one({"chapter": chapter}, {"_id": 0})
+
+            description = f"```" \
+                          f"Spirits          ::    {profile['spirits']}\n" \
+                          f"Sushi/explore    ::    {profile['sushi_required']}" \
+                          f"```"
+
+            jades = profile["rewards_exact"]["jades"]
+            coins = profile["rewards_exact"]["coins"]
+            medals = profile["rewards_exact"]["medals"]
+            amulets_b = profile["rewards_exact"]["amulets_b"]
+
+            shards_sp = profile["shards_count"]["SP"]
+            shards_ssr = profile["shards_count"]["SSR"]
+            shards_sr = profile["shards_count"]["SR"]
+            shards_r = profile["shards_count"]["R"]
+            shards_n = profile["shards_count"]["N"]
+
+            embed = discord.Embed(
+                title=f"Chapter {chapter}: {profile['name']}",
+                color=ctx.author.colour,
+                description=description
+            )
+            embed.add_field(
+                name="Completion rewards",
+                value=f"~{jades}{emojify('jades')}, "
+                      f"~{coins}{emojify('coins')}, "
+                      f"~{medals}{emojify('medals')}, "
+                      f"~{amulets_b}{emojify('amulets_b')}",
+                inline=False
+            )
+            embed.add_field(
+                name="Shards drop count",
+                value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | {e_4} {shards_r} | {e_5} {shards_n}",
+                inline=False
+            )
+            await ctx.channel.send(embed=embed)
 
 
 

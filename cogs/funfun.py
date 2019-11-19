@@ -99,17 +99,24 @@ async def mikes_shoot_post_process(user, victim, winner, response, channel):
             }
         })
 
-    query = shoots.find_one({
-        "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-        "_id": 0,
-        "victim.$": 1
-    })
-    successes = query["victim"][0]["successes"]
-    fails = query["victim"][0]["fails"]
     embed = discord.Embed(color=user.colour, description=f"*{response}*")
 
     if winner.id == user.id:
         increment = {"victim.$.successes": 1, "victim.$.fails": 0}
+
+        shoots.update_one({
+            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+            "$inc": increment
+        }
+        )
+
+        query = shoots.find_one({
+            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+            "_id": 0,
+            "victim.$": 1
+        })
+        successes = query["victim"][0]["successes"]
+        fails = query["victim"][0]["fails"]
 
         embed.set_footer(
             text=f"{successes}/{successes + fails} successful {pluralize('shooting', successes + fails)}",
@@ -118,16 +125,25 @@ async def mikes_shoot_post_process(user, victim, winner, response, channel):
 
     else:
         increment = {"victim.$.successes": 0, "victim.$.fails": 1}
+
+        shoots.update_one({
+            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+            "$inc": increment
+        }
+        )
+        query = shoots.find_one({
+            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+            "_id": 0,
+            "victim.$": 1
+        })
+        successes = query["victim"][0]["successes"]
+        fails = query["victim"][0]["fails"]
+
         embed.set_footer(
             text=f"{fails}/{successes + fails} failed {pluralize('shooting', successes + fails)}",
             icon_url=user.avatar_url
         )
 
-    shoots.update_one({
-        "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-        "$inc": increment
-        }
-    )
     await channel.send(embed=embed)
 
 

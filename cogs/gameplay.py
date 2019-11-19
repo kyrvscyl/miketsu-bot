@@ -228,10 +228,8 @@ async def raid_perform_attack(victim, raider, ctx):
             )
             embed.add_field(
                 name=f"Results, `{total_chance}%`",
-                value=f"||"
-                      f"{raider.display_name} won!\n"
+                value=f"{raider.display_name} won!\n"
                       f"25,000{e_c}, 50{e_j}, 25{e_m}"
-                      f"||"
             )
             await raid_giverewards_raider_as_winner(victim, raider)
             await ctx.channel.send(embed=embed)
@@ -244,10 +242,8 @@ async def raid_perform_attack(victim, raider, ctx):
             )
             embed.add_field(
                 name=f"Results, `{total_chance}%`",
-                value=f"||"
-                      f"{victim.display_name} won!\n"
+                value=f"{victim.display_name} won!\n"
                       f"50,000{e_c}, 100{e_j}, 50{e_m}"
-                      f"||"
             )
             await raid_giverewards_victim_as_winner(victim, raider)
             await ctx.channel.send(embed=embed)
@@ -402,8 +398,12 @@ class Encounter(commands.Cog):
 
             if raid_count == 3:
                 embed = discord.Embed(
-                    title=f"{victim.display_name}'s realm is under protection", colour=discord.Colour(embed_color),
+                    colour=discord.Colour(embed_color),
                     description="raids are capped at 3 times per day and per realm"
+                )
+                embed.set_author(
+                    name="Realm is under protection",
+                    url=victim.avatar_url
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -533,7 +533,7 @@ class Encounter(commands.Cog):
 
         embed = discord.Embed(title=f"Demon Quiz", color=user.colour)
         embed.description = f"Time Limit: {timeout} sec"
-        embed.add_field(name="Who is this shikigami?", value=f"||{question}||")
+        embed.add_field(name="Who is this shikigami?", value=f"{question}")
         embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
         await search_msg.edit(embed=embed)
 
@@ -553,7 +553,7 @@ class Encounter(commands.Cog):
                     description=f"You have failed the quiz",
                     timestamp=get_timestamp()
                 )
-                embed.add_field(name="Correct Answer", value=f"||{answer.title()}||")
+                embed.add_field(name="Correct Answer", value=f"{answer.title()}")
                 embed.set_footer(text="Time is up!", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
                 break
@@ -575,7 +575,7 @@ class Encounter(commands.Cog):
                     guesses -= 1
                     embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
                     embed.remove_field(0)
-                    embed.add_field(name="Correct Answer", value=f"||{answer.title()}||")
+                    embed.add_field(name="Correct Answer", value=f"{answer.title()}")
                     await search_msg.edit(embed=embed)
                     break
             else:

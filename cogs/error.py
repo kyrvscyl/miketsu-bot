@@ -104,6 +104,22 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) in ["perform_exploration"]:
+                embed = discord.Embed(
+                    title="explore, exp",
+                    colour=discord.Colour(embed_color),
+                    description=f"explore unlocked chapters\n"
+                                f"consumes sushi, set a shikigami first `{self.prefix}set`"
+                                f"clear success:  `Onmoyji level + shikigami level - chapter level`"
+                )
+                embed.add_field(
+                    name="Format",
+                    value=f"*`{self.prefix}exp <unlocked chapter#>`*\n"
+                          f"*`{self.prefix}explore unlocked`*\n",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) in ["management_guild"]:
                 return
 
@@ -128,7 +144,8 @@ class Error(commands.Cog):
                 "summon_mystery_perform",
                 "friendship_give",
                 "perform_parade",
-                "pray_use"
+                "pray_use",
+                "perform_exploration"
             ]:
                 return
 
@@ -235,8 +252,9 @@ class Error(commands.Cog):
             elif str(ctx.command) == "profile_change_display":
                 embed = discord.Embed(
                     title="display", colour=discord.Colour(embed_color),
-                    description="changes your profile display thumbnail")
-                embed.add_field(name="Example", value=f"*`{self.prefix}display inferno ibaraki`*", inline=False)
+                    description="changes your profile display thumbnail"
+                )
+                embed.add_field(name="Example", value=f"*`{self.prefix}set inferno ibaraki`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "summon_mystery_perform":
