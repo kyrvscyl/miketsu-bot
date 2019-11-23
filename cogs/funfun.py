@@ -283,11 +283,29 @@ class Funfun(commands.Cog):
                     return
 
             else:
-                x = users.update_one({"user_id": str(user.id), "level": {"$lt": 60}}, {"$inc": {"experience": 20}})
+                x = users.update_one({
+                    "user_id": str(user.id),
+                    "stickers": {
+                        "$lt": 21
+                    },
+                    "level": {
+                        "$lt": 60
+                    }
+                }, {
+                    "$inc": {
+                        "experience": 20
+                    }})
                 sticker_url = stickers.find_one({"alias": sticker_recognized}, {"_id": 0, "link": 1})["link"]
                 comment = " "
                 if x.modified_count > 0:
                     comment = ", +20exp"
+                    users.update_one({
+                        "user_id": str(user.id)
+                    }, {
+                        "$inc": {
+                            "stickers": 1
+                        }
+                    })
 
                 embed = discord.Embed(color=user.colour)
                 embed.set_footer(text=f"{user.display_name}{comment}", icon_url=user.avatar_url)

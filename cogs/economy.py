@@ -1021,6 +1021,78 @@ async def frame_automate_penalize():
     })
 
 
+async def perform_exploration_issue_shard_rewards(user_id, shards_reward):
+
+    trimmed = []
+    for entry in shards_reward:
+        if entry[1] != 0:
+            trimmed.append(entry)
+        else:
+            continue
+
+    for shikigami_shard in trimmed:
+
+        query = users.find_one({
+            "user_id": str(user_id),
+            "shikigami.name": shikigami_shard[0]}, {
+            "_id": 0, "shikigami.$": 1
+        })
+
+        if query is None:
+            users.update_one({
+                "user_id": str(user_id)}, {
+                "$push": {
+                    "shikigami": {
+                        "name": shikigami_shard[0],
+                        "rarity": get_rarity_shikigami(shikigami_shard[0]),
+                        "grade": 1,
+                        "owned": 0,
+                        "evolved": False,
+                        "shards": 0,
+                        "level": 1,
+                        "exp": 0,
+                        "level_exp_next": 6
+                    }
+                }
+            })
+
+        users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
+            "$inc": {
+                "shikigami.$.shards": 1
+            }
+        })
+
+
+async def shikigami_process_levelup(user_id, shiki):
+
+    profile = users.find_one({
+        "user_id": str(user_id), "shikigami.name": shiki}, {
+        "_id": 0,
+        "shikigami.$": 1,
+    })
+    exp = profile["shikigami"][0]["exp"]
+    level = profile["shikigami"][0]["level"]
+    level_end = int(exp ** 0.400515000062462)
+
+    if level > level_end:
+        users.update_one({
+            "user_id": str(user_id), "shikigami.name": shiki}, {
+            "$set": {
+                "shikigami.$.level": level_end
+            }
+        })
+
+    if level < level_end:
+        level_next = 5 * (round(((level + 2) ** (1 / 0.400515000062462)) / 5))
+        users.update_one({
+            "user_id": str(user_id), "shikigami.name": shiki}, {
+            "$set": {
+                "shikigami.$.level_exp_next": level_next,
+                "shikigami.$.level": level_end
+            }
+        })
+
+
 class Economy(commands.Cog):
 
     def __init__(self, client):
@@ -3726,7 +3798,7 @@ class Economy(commands.Cog):
                         }
                     })
 
-                    await self.shikigami_process_levelup(user_id, user_profile["display"])
+                    await shikigami_process_levelup(user_id, user_profile["display"])
                     report = new_explore["explores"][0]["logs"]
                     await msg.edit(embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, ""))
 
@@ -3768,37 +3840,6 @@ class Economy(commands.Cog):
 
         self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
-    # noinspection PyMethodMayBeStatic
-    async def shikigami_process_levelup(self, user_id, shiki):
-
-        profile = users.find_one({
-            "user_id": str(user_id), "shikigami.name": shiki}, {
-            "_id": 0,
-            "shikigami.$": 1,
-        })
-        exp = profile["shikigami"][0]["exp"]
-        level = profile["shikigami"][0]["level"]
-        level_end = int(exp ** 0.400515000062462)
-
-        if level > level_end:
-            users.update_one({
-                "user_id": str(user_id), "shikigami.name": shiki}, {
-                "$set": {
-                    "shikigami.$.level": level_end
-                }
-            })
-
-        if level < level_end:
-            level_next = 5 * (round(((level + 2) ** (1 / 0.400515000062462)) / 5))
-            users.update_one({
-                "user_id": str(user_id), "shikigami.name": shiki}, {
-                "$set": {
-                    "shikigami.$.level_exp_next": level_next,
-                    "shikigami.$.level": level_end
-                }
-            })
-
-    # noinspection PyMethodMayBeStatic
     async def perform_exploration_process_rewards(self, user_id, msg, embed, chapter):
 
         zone = zones.find_one({"chapter": chapter})
@@ -3862,17 +3903,17 @@ class Economy(commands.Cog):
             i += 1
 
         shards_reward = list(shikigami_pool.items())
-        await self.perform_exploration_issue_shard_rewards(user_id, shards_reward)
+        await perform_exploration_issue_shard_rewards(user_id, shards_reward)
 
         link = await self.perform_exploration_generate_shards(user_id, shards_reward)
         embed.set_image(url=link)
 
         embed.add_field(
             name="Completion rewards",
-            value=f"{jades}{emojify('jades')}, "
-                  f"{coins}{emojify('coins')}, "
-                  f"{medals}{emojify('medals')}, "
-                  f"{amulets_b}{emojify('amulets_b')}",
+            value=f"{jades:,d}{emojify('jades')}, "
+                  f"{coins:,d}{emojify('coins')}, "
+                  f"{medals:,d}{emojify('medals')}, "
+                  f"{amulets_b:,d}{emojify('amulets_b')}",
             inline=False
         )
 
@@ -3936,48 +3977,6 @@ class Economy(commands.Cog):
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
-
-    # noinspection PyMethodMayBeStatic
-    async def perform_exploration_issue_shard_rewards(self, user_id, shards_reward):
-
-        trimmed = []
-        for entry in shards_reward:
-            if entry[1] != 0:
-                trimmed.append(entry)
-            else:
-                continue
-
-        for shikigami_shard in trimmed:
-
-            query = users.find_one({
-                "user_id": str(user_id),
-                "shikigami.name": shikigami_shard[0]}, {
-                "_id": 0, "shikigami.$": 1
-            })
-
-            if query is None:
-                users.update_one({
-                    "user_id": str(user_id)}, {
-                    "$push": {
-                        "shikigami": {
-                            "name": shikigami_shard[0],
-                            "rarity": get_rarity_shikigami(shikigami_shard[0]),
-                            "grade": 1,
-                            "owned": 0,
-                            "evolved": False,
-                            "shards": 0,
-                            "level": 1,
-                            "exp": 0,
-                            "level_exp_next": 6
-                        }
-                    }
-                })
-
-            users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
-                "$inc": {
-                    "shikigami.$.shards": 1
-                }
-            })
 
     @commands.command(aliases=["chapter", "ch"])
     @commands.guild_only()
@@ -4056,7 +4055,6 @@ class Economy(commands.Cog):
                 inline=False
             )
             await ctx.channel.send(embed=embed)
-
 
 
 def setup(client):

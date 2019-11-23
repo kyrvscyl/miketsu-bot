@@ -109,7 +109,7 @@ class Error(commands.Cog):
                     title="explore, exp",
                     colour=discord.Colour(embed_color),
                     description=f"explore unlocked chapters\n"
-                                f"consumes sushi, set a shikigami first `{self.prefix}set`"
+                                f"consumes sushi, set a shikigami first `{self.prefix}set`\n"
                                 f"clear success:  `Onmoyji level + shikigami level - chapter level`"
                 )
                 embed.add_field(
