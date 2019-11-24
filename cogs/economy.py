@@ -607,7 +607,7 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
 async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, emoji):
     if users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency] >= amount:
 
-        if users.find_one({"user_id": str(user.id), "achievements.name": frame_name}, {"_id": 0}) is not None:
+        if users.find_one({"user_id": str(user.id), "achievements.name": frame_name}, {"_id": 0}) is None:
             users.update_one({
                 "user_id": str(user.id)}, {
                 "$inc": {
