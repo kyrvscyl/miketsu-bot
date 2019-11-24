@@ -463,6 +463,45 @@ class Frames(commands.Cog):
                     })
                     await self.achievements_process_announce(member, "Kitsune")
 
+            if "Blazing Sun" not in user_frames:
+
+                count_ssr = 0
+                for result in users.aggregate([
+                    {
+                        "$match": {
+                            "user_id": str(member.id)
+                        }
+                    }, {
+                        "$unwind": {
+                            "path": "$shikigami"
+                        }
+                    }, {
+                        "$match": {
+                            "shikigami.rarity": "SSR"
+                        }
+                    }, {
+                        "$count": "count"
+                    }
+                ]):
+                    count_ssr = result["count"]
+
+                if count_ssr == total_ssr:
+                    users.update_one({
+                        "user_id": document["user_id"]}, {
+                        "$push": {
+                            "achievements": {
+                                "name": "Blazing Sun",
+                                "date_acquired": get_time()
+                            }
+                        },
+                        "$inc": {
+                            "jades": 2500
+                        }
+                    })
+                    await self.achievements_process_announce(member, "Blazing Sun")
+                    blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
+                    await member.add_roles(blazing_role)
+
             if document["coins"] >= 30000000 and "Limited Gold" not in user_frames:
                 users.update_one({
                     "user_id": document["user_id"]}, {

@@ -647,7 +647,7 @@ class Encounter(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"You acquired {offer_amount:,d}{get_emoji(offer_item)} in exchanged for "
+                    description=f"acquired {offer_amount:,d}{get_emoji(offer_item)} in exchange for "
                                 f"{cost_amount:,d}{get_emoji(cost_item)}",
                     timestamp=get_timestamp()
                 )
@@ -657,15 +657,17 @@ class Encounter(commands.Cog):
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
+                await search_msg.clear_reactions()
             else:
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"Exchanged failed. You only have {cost_item_current}{get_emoji(cost_item)}",
+                    description=f"exchange failed, you only have {cost_item_current:,d}{get_emoji(cost_item)}",
                     timestamp=get_timestamp()
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
+                await search_msg.clear_reactions()
 
     async def boss_roll(self, discoverer, ctx, search_msg):
 
@@ -750,7 +752,12 @@ class Encounter(commands.Cog):
         time_discovered = get_time()
         await search_msg.edit(embed=generate_embed_boss(timeout, assembly_players_name))
         await search_msg.add_reaction("🏁")
-        await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(assemble_captions)}")
+
+        link = f"https://discordapp.com/channels/{search_msg.guild.id}/{search_msg.channel.id}/{search_msg.id}"
+        embed = discord.Embed(
+            title=f"🏁 [Assemble here!]({link})"
+        )
+        await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(assemble_captions)}", embed=embed)
 
         def check(r, u):
             return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == search_msg.id
@@ -953,7 +960,11 @@ class Encounter(commands.Cog):
 
     async def boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
 
-        embed = discord.Embed(colour=discord.Colour(embed_color), title="🎊 Boss Defeat Rewards!")
+        embed = discord.Embed(
+            colour=discord.Colour(embed_color),
+            title="🎊 Boss defeat rewards!",
+            timestamp=get_timestamp()
+        )
         embed.set_thumbnail(url=boss_url)
 
         for reward in rewards_zip:
@@ -968,7 +979,7 @@ class Encounter(commands.Cog):
 
                 embed.add_field(
                     name=f"{name}, {damage_contribution}%",
-                    value=f"{coins_r:,d}{e_c}, {jades_r}{e_j}, {medal_r}{e_m}, {exp_r} ⤴",
+                    value=f"{coins_r:,d}{e_c}, {jades_r:,d}{e_j}, {medal_r:,d}{e_m}, {exp_r:,d} ⤴",
                     inline=False
                 )
                 users.update_one({
@@ -993,35 +1004,38 @@ class Encounter(commands.Cog):
             except AttributeError:
                 continue
 
-        discoverer = boss_profile_new["discoverer"]
-        users.update_one({
-            "user_id": discoverer}, {
-            "$inc": {
-                "jades": 100,
-                "coins": 50000,
-                "medals": 15,
-            }
-        })
-        await logs_add_line("jades", 100, discoverer)
-        await logs_add_line("coins", 50000, discoverer)
-        await logs_add_line("medals", 15, discoverer)
-
-        users.update_one({
-            "user_id": discoverer, "level": {"$lt": 60}}, {
-            "$inc": {
-                "experience": 100
-            }
-        })
-
-        await asyncio.sleep(3)
-        await ctx.channel.send(embed=embed)
-        await asyncio.sleep(2)
-
         try:
+            jades, coins, medals, exp = 250, 150000, 150, 100
+            discoverer = boss_profile_new["discoverer"]
+            users.update_one({
+                "user_id": discoverer}, {
+                "$inc": {
+                    "jades": jades,
+                    "coins": coins,
+                    "medals": medals,
+                }
+            })
+            await logs_add_line("jades", jades, discoverer)
+            await logs_add_line("coins", coins, discoverer)
+            await logs_add_line("medals", medals, discoverer)
+
+            users.update_one({
+                "user_id": discoverer, "level": {"$lt": 60}}, {
+                "$inc": {
+                    "experience": exp
+                }
+            })
+
+            await asyncio.sleep(3)
+            await ctx.channel.send(embed=embed)
+            await asyncio.sleep(2)
             user = ctx.guild.get_member(int(discoverer))
-            description = f"{user.mention} earned an extra 100{e_j}, 50,000{e_c}, " \
-                          f"15{e_m} and 100 ⤴ for initially discovering {boss_select}!"
-            embed = discord.Embed(colour=discord.Colour(embed_color), description=description)
+            description = f"{user.mention} earned an extra {jades}{e_j}, {coins}{e_c}, " \
+                          f"{medals}{e_m} and {exp} ⤴ for initially discovering {boss_select}!"
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                description=description, timestamp=get_timestamp()
+            )
             await ctx.channel.send(embed=embed)
         except AttributeError:
             pass

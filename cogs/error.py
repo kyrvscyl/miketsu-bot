@@ -64,12 +64,11 @@ class Error(commands.Cog):
 
             if str(ctx.command) == "pray_use":
                 embed = discord.Embed(
-                    colour=ctx.author.colour,
+                    colour=embed_color,
                     title=f"Insufficient prayers",
-                    description=f"{ctx.author.mention}, no more prayers today 🙏",
+                    description=f"You have used up all your prayers today 🙏",
                     timestamp=get_timestamp()
                 )
-                embed.set_footer(icon_url=ctx.author.avatar_url, text=f"{ctx.author.display_name}")
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "perform_parade":
@@ -83,8 +82,8 @@ class Error(commands.Cog):
             elif str(ctx.command) == "encounter_search":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
-                    title="Insufficient encounter tickets",
-                    description=f"{ctx.author.mention}, purchase at the shop to obtain more"
+                    title="Insufficient tickets",
+                    description=f"purchase at the shop to obtain more"
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -142,7 +141,7 @@ class Error(commands.Cog):
 
             if str(ctx.command) in [
                 "encounter_search",
-                "summon_mystery_perform",
+                "summon_perform_mystery",
                 "friendship_give",
                 "perform_parade",
                 "pray_use",
@@ -173,7 +172,7 @@ class Error(commands.Cog):
                     title="explore, exp",
                     colour=discord.Colour(embed_color),
                     description=f"explore unlocked chapters\n"
-                                f"consumes sushi, set a shikigami first `{self.prefix}set`"
+                                f"consumes sushi, set a shikigami first `{self.prefix}set`\n"
                                 f"clear success:  `Onmoyji level + shikigami level - chapter level`"
                 )
                 embed.add_field(
@@ -275,7 +274,7 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value=f"*`{self.prefix}set inferno ibaraki`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "summon_mystery_perform":
+            elif str(ctx.command) == "summon_perform_mystery":
                 embed = discord.Embed(
                     title="summon, s", colour=discord.Colour(embed_color),
                     description="simulate summon and collect shikigamis"
