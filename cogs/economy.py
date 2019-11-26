@@ -344,8 +344,8 @@ async def frame_acquisition(user, frame_name, channel, jades):
     await logs_add_line("jades", jades, user.id)
     embed = discord.Embed(
         color=user.colour,
-        title="Frame Acquisition",
-        description=f"{user.mention} acquired the {frame_name} frame and {jades:,d}{e_j}",
+        title="Frame acquisition",
+        description=f"{user.mention} has acquired the {frame_name} frame and obtained {jades:,d}{e_j} as bonus rewards",
         timestamp=get_timestamp()
     )
     embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -381,8 +381,8 @@ async def claim_rewards_daily_give(user, ctx):
 
     embed = discord.Embed(
         color=ctx.author.colour,
-        title="🎁 Daily Rewards",
-        description=f"a box containing {friendship_pass} 💗, {jades}{e_j}, {coins:,d}{e_c}, {realm_ticket} 🎟, "
+        title="🎁 Daily rewards",
+        description=f"A box containing {friendship_pass} 💗, {jades}{e_j}, {coins:,d}{e_c}, {realm_ticket} 🎟, "
                     f"{encounter_ticket} 🎫, {parade_tickets} 🎏, {sushi} 🍣",
         timestamp=get_timestamp()
     )
@@ -410,8 +410,8 @@ async def claim_rewards_weekly_give(user, ctx):
 
     embed = discord.Embed(
         color=ctx.author.colour,
-        title="💝 Weekly Rewards",
-        description=f"a mythical box containing {jades}{e_j}, {coins:,d}{e_c}, and {amulets}{e_a}",
+        title="💝 Weekly rewards",
+        description=f"A mythical box containing {jades:,d}{e_j}, {coins:,d}{e_c}, and {amulets:,d}{e_a}",
         timestamp=get_timestamp()
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
@@ -461,8 +461,8 @@ async def perform_evolution_shikigami(ctx, rarity, evo, user, query, count):
             embed = discord.Embed(
                 colour=user.colour,
                 title="Evolution successful",
-                description=f"you have evolved your {query.title()}\n"
-                            f"acquired 5 shards of this shikigami!",
+                description=f"You have evolved your {query.title()}\n"
+                            f"Also acquired 5 shards of this shikigami",
                 timestamp=get_timestamp()
             )
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -475,7 +475,8 @@ async def perform_evolution_shikigami(ctx, rarity, evo, user, query, count):
         elif count == 0:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
-                description=f"shikigami not in possession",
+                title="Invalid selection",
+                description=f"this shikigami is not in your possession"
             )
             await ctx.channel.send(embed=embed)
 
@@ -485,7 +486,7 @@ async def perform_evolution_shikigami(ctx, rarity, evo, user, query, count):
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 title="Insufficient shikigamis",
-                description=f"lacks {required} more {query.title()} {noun_duplicate} to evolve",
+                description=f"You lack {required} more {query.title()} {noun_duplicate} to evolve",
             )
             await ctx.channel.send(embed=embed)
 
@@ -512,7 +513,7 @@ async def frame_starlight(guild, spell_spam_channel):
 
         embed = discord.Embed(
             color=0xac330f,
-            title="📨 Hall of Framers Update",
+            title="📨 Hall of Framers update",
             description=description,
             timestamp=get_timestamp()
         )
@@ -541,7 +542,7 @@ async def frame_starlight(guild, spell_spam_channel):
 
         embed = discord.Embed(
             color=0xac330f,
-            title="📨 Hall of Framers Update",
+            title="📨 Hall of Framers update",
             description=description,
             timestamp=get_timestamp()
         )
@@ -586,8 +587,8 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
             timestamp=get_timestamp()
         )
         embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-        embed.description = f"acquired `{offer_amount:,d}`{emojify(offer_item)} " \
-                            f"in exchanged for `{cost_amount:,d}`{emojify(cost_item)}"
+        embed.description = f"You acquired `{offer_amount:,d}`{emojify(offer_item)} " \
+                            f"in exchange for `{cost_amount:,d}`{emojify(cost_item)}"
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/8/86/246a.jpg")
         embed.add_field(
             name="Inventory",
@@ -598,7 +599,7 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
     else:
         embed = discord.Embed(
             title="Purchase failure", colour=discord.Colour(embed_color),
-            description=f"insufficient {emojify(cost_item)}",
+            description=f"You have insufficient {emojify(cost_item)}",
         )
         embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
         await ctx.channel.send(embed=embed)
@@ -624,7 +625,7 @@ async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, e
 
             embed = discord.Embed(
                 title="Confirmation receipt", colour=discord.Colour(embed_color),
-                description=f"acquired {emoji} {frame_name} in exchanged for {amount:,d}{emojify(currency)}",
+                description=f"You acquired {emoji} {frame_name} in exchange for {amount:,d}{emojify(currency)}",
                 timestamp=get_timestamp()
             )
             await ctx.channel.send(embed=embed)
@@ -632,14 +633,14 @@ async def shop_process_purchase_frame(ctx, user, currency, amount, frame_name, e
         else:
             embed = discord.Embed(
                 title="Purchase failure", colour=discord.Colour(embed_color),
-                description=f"frame already in possession",
+                description=f"this frame is already in your possession",
             )
             await ctx.channel.send(embed=embed)
 
     else:
         embed = discord.Embed(
             title="Purchase failure", colour=discord.Colour(embed_color),
-            description=f"insufficient {emojify(currency)}",
+            description=f" You have insufficient {emojify(currency)}",
         )
         await ctx.channel.send(embed=embed)
 
@@ -883,14 +884,14 @@ class Economy(commands.Cog):
         elif profile["wish"] is False:
             embed = discord.Embed(
                 color=user.colour,
-                description=f"wish has been fulfilled already today",
+                description=f"Their wish has been fulfilled already today",
             )
             await ctx.channel.send(embed=embed)
 
         elif profile["wish"] is not True:
             embed = discord.Embed(
                 color=user.colour,
-                description=f"wish has been placed already",
+                description=f"Your wish has been placed already today",
             )
             await ctx.channel.send(embed=embed)
 
@@ -924,7 +925,7 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 color=user.colour,
                 title=f"Wish registered",
-                description=f"You wished for {shiki.title()} shard",
+                description=f"You have wished for {shiki.title()} shard today",
                 timestamp=get_timestamp()
             )
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -1019,7 +1020,7 @@ class Economy(commands.Cog):
         except KeyError:
             embed = discord.Embed(
                 title="Invalid member", colour=discord.Colour(embed_color),
-                description="that member doesn't exist nor has a profile in this guild",
+                description="that member doesn't exist or lacks a profile in this guild",
                 timestamp=get_timestamp()
             )
             await ctx.channel.send(embed=embed)
@@ -1040,7 +1041,7 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 color=user.colour,
                 title=f"Wish fulfillment failed",
-                description=f"member has their wish fulfilled already",
+                description=f"this member has their wish fulfilled already",
             )
             await ctx.channel.send(embed=embed)
 
@@ -1081,8 +1082,8 @@ class Economy(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title=f"Wish fulfilled",
-                    description=f"donated 1 {shikigami_wished_for.title()} shard to {member.mention}\n"
-                                f"acquired 10{e_f} and 3 💗",
+                    description=f"Donated 1 {shikigami_wished_for.title()} shard to {member.mention}\n"
+                                f"Also acquired 10{e_f} and 3 💗",
                     timestamp=get_timestamp()
                 )
                 embed.set_footer(
@@ -1132,8 +1133,8 @@ class Economy(commands.Cog):
             await logs_add_line("jades", rewards, ship['shipper2'])
 
         embed1 = discord.Embed(
-            title="🎁 Daily rewards have been reset and issued", colour=discord.Colour(embed_color),
-            description=f"Claim yours using `{self.prefix}daily` and your income using `{self.prefix}sail`"
+            title="🎁 Daily rewards reset and issued", colour=discord.Colour(embed_color),
+            description=f"claim yours using `{self.prefix}daily` and check your income using `{self.prefix}sail`"
         )
 
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
@@ -1586,7 +1587,7 @@ class Economy(commands.Cog):
 
             if roll >= 55:
                 embed = discord.Embed(
-                    title=f"Results", color=ctx.author.colour,
+                    title=f"Prayer results", color=ctx.author.colour,
                     description=f"{next(prayer_ignored)}",
                     timestamp=get_timestamp()
                 )
@@ -1638,7 +1639,7 @@ class Economy(commands.Cog):
         bounties.update_one({"aliases": name.lower()}, {"$push": {"location": location}})
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title=f"Successfully added new location to {name}",
+            title=f"successfully added new location to {name}",
             description=f"{location}",
             timestamp=get_timestamp()
         )
@@ -1681,7 +1682,7 @@ class Economy(commands.Cog):
 
             embed = discord.Embed(
                 title="No exact results", colour=discord.Colour(embed_color),
-                description="provided name/keyword is non-existent",
+                description="the provided name/keyword is non-existent",
                 timestamp=get_timestamp()
             )
             embed.add_field(name="Possible queries", value="*{}*".format(", ".join(bounty_list)))
@@ -1699,7 +1700,7 @@ class Economy(commands.Cog):
         elif profile["daily"] is True:
             embed = discord.Embed(
                 title="Collection failed", colour=discord.Colour(embed_color),
-                description=f"already collected this reset"
+                description=f"already collected today, check back tomorrow"
             )
             await ctx.channel.send(embed=embed)
 
@@ -1716,7 +1717,7 @@ class Economy(commands.Cog):
         elif profile["weekly"] is True:
             embed = discord.Embed(
                 title="Collection Failed", colour=discord.Colour(embed_color),
-                description=f"already collected this reset"
+                description=f"already collected this reset, check back next week"
             )
             await ctx.channel.send(embed=embed)
 
@@ -1893,8 +1894,8 @@ class Economy(commands.Cog):
             if count != 1:
                 embed = discord.Embed(
                     colour=discord.Colour(embed_color),
-                    title="Invalid shikigami",
-                    description=f"shikigami not in possession"
+                    title="Invalid selection",
+                    description=f"this shikigami is not in your possession"
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -2205,7 +2206,7 @@ class Economy(commands.Cog):
         elif profile_my_shikigami == {}:
             embed = discord.Embed(
                 title="Invalid selection", colour=discord.Colour(embed_color),
-                description=f"shikigami is not yet owned",
+                description=f"this shikigami is not in your possession yet",
             )
             await ctx.channel.send(embed=embed)
 
@@ -2295,7 +2296,7 @@ class Economy(commands.Cog):
                 embed = discord.Embed(
                     colour=user.colour,
                     title=f"Invalid shikigami",
-                    description=f"you do not own the shikigami {shiki.title()}"
+                    description=f"no shikigami {shiki.title()} in your possession yet"
                 )
                 await ctx.channel.send(embed=embed)
                 return
@@ -2313,7 +2314,7 @@ class Economy(commands.Cog):
                 embed = discord.Embed(
                     colour=user.colour,
                     title=f"Specify amount",
-                    description=f"current possession: {count_shikigami:,d} {shiki.title()}",
+                    description=f"You currently have {count_shikigami:,d} {shiki.title()}",
                     timestamp=get_timestamp()
                 )
                 embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "evo"))
@@ -2346,7 +2347,7 @@ class Economy(commands.Cog):
                     await logs_add_line("talisman", final_talismans, user.id)
                     embed = discord.Embed(
                         title="Shrine successful", colour=user.colour,
-                        description=f"shrined {shiki.title()} for {final_talismans:,d}{e_t}",
+                        description=f"You shrined {shiki.title()} for {final_talismans:,d}{e_t}",
                         timestamp=get_timestamp()
                     )
                     embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "evo"))
@@ -2356,7 +2357,7 @@ class Economy(commands.Cog):
                 else:
                     embed = discord.Embed(
                         title="Insufficient shikigamis", colour=user.colour,
-                        description=f"lacks that amount of shikigami {shiki.title()}",
+                        description=f"You lack that amount of shikigami {shiki.title()}",
                         timestamp=get_timestamp()
                     )
                     embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "evo"))
@@ -2427,7 +2428,7 @@ class Economy(commands.Cog):
                     await logs_add_line("talisman", - required_talisman, user.id)
                     embed = discord.Embed(
                         title="Exchange success!", colour=discord.Colour(embed_color),
-                        description=f"acquired {shiki.title()} for {required_talisman:,d}{e_t}",
+                        description=f"You acquired {shiki.title()} for {required_talisman:,d}{e_t}",
                         timestamp=get_timestamp()
                     )
                     await ctx.channel.send(embed=embed)
@@ -2435,7 +2436,7 @@ class Economy(commands.Cog):
             elif talisman < required_talisman:
                 embed = discord.Embed(
                     title="Insufficient talismans", colour=discord.Colour(embed_color),
-                    description=f"lacks {required_talisman - talisman:,d}{e_t}",
+                    description=f"You lack {required_talisman - talisman:,d}{e_t}",
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -2515,7 +2516,7 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(
             color=user.colour,
-            description=f"total daily ship sail rewards: {total_rewards:,d}{e_j}",
+            description=f"Your total daily ship sail rewards: {total_rewards:,d}{e_j}",
             timestamp=get_timestamp()
         )
         embed.set_footer(
@@ -2606,7 +2607,7 @@ class Economy(commands.Cog):
             if query1 is None and query2 is None:
                 embed = discord.Embed(
                     title="ship, ships", colour=discord.Colour(embed_color),
-                    description=f"shows a ship profile or your own ships\n"
+                    description=f"shows a ship profile or your own list of ships\n"
                                 f"to change your ship's name use *`{self.prefix}fpchange`*"
                 )
                 embed.add_field(
@@ -2792,7 +2793,8 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 title="buy", colour=discord.Colour(embed_color),
                 description=f"purchase from the list of items from the *`{self.prefix}shop`*\n"
-                            f"react to confirm purchase")
+                            f"react to confirm purchase"
+            )
             embed.add_field(
                 name="Format",
                 value=f"*`{self.prefix}buy <purchase_code>`*\n*`{self.prefix}buy frame <frame_name>`*"
@@ -2853,14 +2855,14 @@ class Economy(commands.Cog):
             except KeyError:
                 embed = discord.Embed(
                     title="Invalid purchase code", colour=discord.Colour(embed_color),
-                    description=f"entered an invalid purchase code ",
+                    description=f"You entered an invalid purchase code",
                 )
                 await ctx.channel.send(embed=embed)
 
             except IndexError:
                 embed = discord.Embed(
                     title="Invalid purchase code", colour=discord.Colour(embed_color),
-                    description=f"entered an invalid purchase code ",
+                    description=f"You entered an invalid purchase code",
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -2874,7 +2876,7 @@ class Economy(commands.Cog):
         except asyncio.TimeoutError:
             embed = discord.Embed(
                 title="Timeout!", colour=discord.Colour(embed_color),
-                description=f"no confirmation received",
+                description=f"no confirmation was received",
                 timestamp=get_timestamp()
             )
             embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
@@ -2924,7 +2926,7 @@ class Economy(commands.Cog):
             else:
                 await shikigami_post_approximate_results(ctx, shiki_formatted)
 
-    @commands.command(aliases=["sb"])
+    @commands.command(aliases=["sb", "summonb"])
     @commands.guild_only()
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def summon_perform_broken(self, ctx):
@@ -2958,12 +2960,18 @@ class Economy(commands.Cog):
             if roll < 1:
                 summon_pull.append(("SSN", "||{}||".format(random.choice(pool_ssn))))
             else:
-                summon_pull.append(("N", random.choice(pool_n)))
+                roll = random.uniform(0, 100)
+                if roll <= 13:
+                    summon_pull.append(("R", "{}".format(random.choice(pool_r))))
+                else:
+                    summon_pull.append(("N", random.choice(pool_n)))
 
         sum_ssn = sum(x.count("SSN") for x in summon_pull)
+        sum_r = sum(x.count("R") for x in summon_pull)
         sum_n = sum(x.count("N") for x in summon_pull)
 
         f_ssn = str(sum_ssn) + " " + pluralize("SSN", sum_ssn)
+        f_r = str(sum_r) + " " + pluralize("R", sum_r)
         f_n = str(sum_n) + " " + pluralize("N", sum_n)
 
         description = ""
@@ -2973,18 +2981,19 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             color=user.colour, title="🎊 Summon results", description=description, timestamp=get_timestamp()
         )
-        embed.set_footer(text=f"{f_ssn}; {f_n}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"{f_ssn}; {f_r}; {f_n}", icon_url=user.avatar_url)
 
         msg = "{}".format(next(summon_captions_a)).format(user.mention)
         await ctx.channel.send(msg, embed=embed)
-        await self.summon_perform_broken_pull_update(user, sum_ssn, sum_n, amulet_pull, summon_pull)
+        await self.summon_perform_broken_pull_update(user, sum_ssn, sum_n, sum_r, amulet_pull, summon_pull)
 
-    async def summon_perform_broken_pull_update(self, user, sum_ssn, sum_n, amulet_pull, summon_pull):
+    async def summon_perform_broken_pull_update(self, user, sum_ssn, sum_n, sum_r, amulet_pull, summon_pull):
         users.update_one({
             "user_id": str(user.id)}, {
             "$inc": {
                 "SSN": sum_ssn,
                 "N": sum_n,
+                "R": sum_r,
                 "amulets_spent_b": amulet_pull,
                 "amulets_b": -amulet_pull
             }
@@ -3026,7 +3035,7 @@ class Economy(commands.Cog):
                 }
             })
 
-    @commands.command(aliases=["sm"])
+    @commands.command(aliases=["sm", "summonm"])
     @commands.guild_only()
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def summon_perform_mystery(self, ctx, *, args=None):
@@ -3052,7 +3061,7 @@ class Economy(commands.Cog):
                 if amulet_pull > amulet_have:
                     embed = discord.Embed(
                         title="Insufficient amulets", colour=discord.Colour(embed_color),
-                        description=f"only {amulet_have}{e_a} in your possession",
+                        description=f"You only have {amulet_have}{e_a} in possession",
                         timestamp=get_timestamp()
                     )
                     embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
@@ -3236,7 +3245,7 @@ class Economy(commands.Cog):
                 })
                 embed = discord.Embed(
                     title="Summon success", colour=discord.Colour(embed_color),
-                    description=f"acquired the {rarity} shikigami {shiki.title()}!",
+                    description=f"You acquired the {rarity} shikigami {shiki.title()}!",
                     timestamp=get_timestamp()
                 )
                 embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "pre"))
@@ -3253,7 +3262,7 @@ class Economy(commands.Cog):
         except TypeError:
             embed = discord.Embed(
                 title="Summon failed", colour=discord.Colour(embed_color),
-                description=f"no shards of {shiki.title()} to summon",
+                description=f"You have insufficient shards of {shiki.title()}",
                 timestamp=get_timestamp()
             )
             await ctx.channel.send(embed=embed)
@@ -3593,7 +3602,7 @@ class Economy(commands.Cog):
             )
             embed.add_field(
                 name="Rarities",
-                value="SP, SSR, SR, R, N"
+                value="SP, SSR, SR, R, N, SSN"
             )
             await ctx.channel.send(embed=embed)
 
@@ -4103,7 +4112,7 @@ class Economy(commands.Cog):
             embed = discord.Embed(
                 title=f"chapter, ch",
                 color=embed_color,
-                description=f"show chapter information and unlocked chapters"
+                description=f"shows chapter information and unlocked chapters"
             )
             embed.add_field(
                 name="Format",

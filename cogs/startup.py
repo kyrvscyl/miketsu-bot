@@ -82,7 +82,7 @@ class Startup(commands.Cog):
     @commands.command(aliases=["h", "help"])
     async def show_help_message(self, ctx):
         embed = discord.Embed(
-            title="help",
+            title="help, h",
             color=embed_color,
             description=f"append the prefix symbol *`{self.prefix}`*"
         )
@@ -92,7 +92,7 @@ class Startup(commands.Cog):
             name="fake Onmyoji",
             value="*"
                   "daily, weekly, profile, set, buy, summon, explore, chapter, "
-                  "evolve, friendship, leaderboard, shikigamis, shrine, sail, pray, stat, "
+                  "evolve, friendship, ships, leaderboard, shikigamis, shrine, sail, pray, stat, "
                   "frames, wish, wishlist, fulfill, parade, collections, shards, "
                   "raid, raidc, encounter, bossinfo"
                   "*",
@@ -102,7 +102,7 @@ class Startup(commands.Cog):
             name="Others",
             value="*"
                   "changelog, bounty, suggest, stickers, newsticker, wander, portrait, "
-                  "stats, announce*\\*, *manage*\\, events*\\*"
+                  "stats, memo*\\*, *manage*\\*, *events*\\"
                   "*",
             inline=False
         )

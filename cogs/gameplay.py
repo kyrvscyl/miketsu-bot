@@ -755,7 +755,8 @@ class Encounter(commands.Cog):
 
         link = f"https://discordapp.com/channels/{search_msg.guild.id}/{search_msg.channel.id}/{search_msg.id}"
         embed = discord.Embed(
-            title=f"🏁 [Assemble here!]({link})"
+            title=f"🏁 Assemble here!",
+            url=link
         )
         await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(assemble_captions)}", embed=embed)
 
