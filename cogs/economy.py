@@ -3717,7 +3717,7 @@ class Economy(commands.Cog):
         for result in users.aggregate([
             {
                 '$match': {
-                    'user_id': document["user_id"]
+                    'user_id': str(member.id)
                 }
             }, {
                 '$unwind': {
@@ -3915,10 +3915,12 @@ class Economy(commands.Cog):
                     })
                     shikigami_add_exp = users.update_one({
                         "user_id": str(user_id),
-                        "$and": [
-                            {"shikigami.name": user_profile["display"]},
-                            {"shikigami.level": {"$gte": 40}}
-                        ]
+                        "$and": [{
+                            "shikigami": {
+                                "$elemMatch": {
+                                    "name": "miketsu",
+                                    "level": {"$lt": 40}}
+                            }}]
                     }, {
                         "$inc": {
                             "shikigami.$.exp": 5 * round((chapter + 1) / 2)
