@@ -3702,6 +3702,44 @@ class Economy(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
+    @commands.command(aliases=["explores", "exps"])
+    @commands.guild_only()
+    async def perform_exploration_check_clears(self, ctx, *, member: discord.Member = None):
+        
+        if member is None:
+            await self.perform_exploration_check_clears_post(member, ctx)
+        else:
+            await self.perform_exploration_check_clears_post(member, ctx)
+
+    async def perform_exploration_check_clears_post(self, member, ctx):
+
+        total_explorations = 0
+        for result in users.aggregate([
+            {
+                '$match': {
+                    'user_id': document["user_id"]
+                }
+            }, {
+                '$unwind': {
+                    'path': '$explores'
+                }
+            }, {
+                '$count': 'count'
+            }
+        ]):
+            total_explorations = result["count"]
+
+        embed = discord.Embed(
+            colour=ctx.author.colour,
+            title="Exploration stats",
+            description=f"Total clears: {total_explorations}"
+        )
+        embed.set_footer(
+            text=f"{member.display_name}",
+            icon_url=member.avatar_url
+        )
+        await ctx.channel.send(embed=embed)
+
     @commands.command(aliases=["explore", "exp"])
     @commands.guild_only()
     @commands.check(check_if_user_has_sushi_1)
@@ -3879,7 +3917,7 @@ class Economy(commands.Cog):
                         "user_id": str(user_id),
                         "$and": [
                             {"shikigami.name": user_profile["display"]},
-                            {"shikigami.level": {"$lt": 40}}
+                            {"shikigami.level": {"$gte": 40}}
                         ]
                     }, {
                         "$inc": {
