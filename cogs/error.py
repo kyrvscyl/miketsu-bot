@@ -154,6 +154,23 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.MissingRequiredArgument):
 
+            if str(ctx.command) == "announcement_post_memorandum":
+                embed = discord.Embed(
+                    title="memo",
+                    colour=discord.Colour(embed_color),
+                    description="submit an official paperwork memo"
+                )
+                embed.add_field(
+                    name="Format", value=f"*`{self.prefix}memo <#channel>`*",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Notes", value=f"follow the step by step procedure\n"
+                                        f"enter any non-image link text to remove the memorandum's embedded image",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             if str(ctx.command) == "collect_suggestions":
                 embed = discord.Embed(
                     title="suggest, report",
@@ -266,7 +283,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "profile_change_display":
+            elif str(ctx.command) == "profile_change_shikigami_main":
                 embed = discord.Embed(
                     title="display", colour=discord.Colour(embed_color),
                     description="changes your profile display thumbnail"
@@ -277,7 +294,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "summon_perform_mystery":
                 embed = discord.Embed(
                     title="summon, s", colour=discord.Colour(embed_color),
-                    description="simulate summon and collect shikigamis"
+                    description="simulates summon and collect shikigamis"
                 )
                 embed.add_field(
                     name="Shard Requirement",
@@ -286,10 +303,18 @@ class Error(commands.Cog):
                           "SSR   ::   12\n"
                           "SR    ::    9\n"
                           "R     ::    6\n"
+                          "N     ::    3\n"
+                          "SSN   ::   12\n"
                           "```",
                     inline=False
                 )
-                embed.add_field(name="Formats", value=f"*`{self.prefix}summon <1, 10, shikigami_>`*", inline=False)
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}summon <shikigami>`*\n"
+                          f"*`{self.prefix}sb`*\n"
+                          f"*`{self.prefix}sm <1 or 10>`*\n",
+                    inline=False
+                )
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) in ["bounty_query", "bounty_add_location", "bounty_add_alias"]:
@@ -326,7 +351,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "announcement_post_embed":
+            elif str(ctx.command) == "announcement_post_memorandum":
                 embed = discord.Embed(
                     title="announce", colour=discord.Colour(embed_color),
                     description="sends an embed message\n"

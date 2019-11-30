@@ -1031,8 +1031,8 @@ class Encounter(commands.Cog):
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(2)
             user = ctx.guild.get_member(int(discoverer))
-            description = f"{user.mention} earned an extra {jades}{e_j}, {coins}{e_c}, " \
-                          f"{medals}{e_m} and {exp} ⤴ for initially discovering {boss_select}!"
+            description = f"{user.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
+                          f"{medals:,d}{e_m} and {exp:,d} ⤴ for initially discovering {boss_select}!"
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 description=description, timestamp=get_timestamp()

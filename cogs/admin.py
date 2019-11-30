@@ -20,9 +20,9 @@ config = get_collections("config")
 frames = get_collections("frames")
 guilds = get_collections("guilds")
 members = get_collections("members")
+memos = get_collections("memos")
 ships = get_collections("ships")
 users = get_collections("users")
-memos = get_collections("memos")
 
 # Dictionaries
 roles_emoji = config.find_one({"dict": 1}, {"_id": 0, "roles_emoji": 1})["roles_emoji"]
@@ -47,6 +47,11 @@ def check_if_has_any_admin_roles(ctx):
     return False
 
 
+def get_guild_quest_converted(key):
+    dictionary = {"inactive": "30", "semi-active": "60", "active": "90"}
+    return dictionary[str(key)]
+
+
 def get_time():
     return datetime.now(tz=pytz.timezone(timezone))
 
@@ -60,25 +65,7 @@ def get_status(key):
     return dictionary[str(key)]
 
 
-def get_gq(key):
-    dictionary = {"inactive": "30", "semi-active": "60", "active": "90"}
-    return dictionary[str(key)]
-
-
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
-
-
-def shorten(key):
-    return shortened[key]
-
-
-def lengthen(index):
+def lengthen_code(index):
     prefix = "#{}"
     if index < 10:
         prefix = "#00{}"
@@ -98,252 +85,17 @@ def lengthen_memo(index):
     return prefix.format(index)
 
 
-async def management_guild_add_delete(ctx, args):
-    if members.find_one({"name": args[1]}) is not None:
-        members.delete_one({"name": args[1]})
-        await ctx.message.add_reaction("✅")
-
-        name_id = 1
-        for member in members.find({}, {"_id": 0, "name": 1}):
-            members.update_one({"name": member["name"]}, {"$set": {"#": name_id}})
-            name_id += 1
-
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
     else:
-        embed = discord.Embed(
-            color=embed_color,
-            title="Invalid user",
-            descrption="Input the exact name including the letter cases"
-        )
-        await ctx.channel.send(embed=embed)
+        return singular
 
 
-async def management_guild_show_stats(ctx):
-    guild_members_all = members.count({
-        "role": {
-            "$in": ["officer", "member", "leader"]}
-    })
-    guild_members_actv = members.count({
-        "role": {
-            "$in": ["officer", "member", "leader"]},
-        "status": "active"
-    })
-    guild_members_inac = members.count({
-        "role": {
-            "$in": ["officer", "member", "leader"]},
-        "status": "inactive"
-    })
-    guild_members_onlv = members.count({
-        "role": {
-            "$in": ["officer", "member", "leader"]},
-        "status": "on-leave"
-    })
-    guild_members_smac = members.count({
-        "role": {
-            "$in": ["officer", "member", "leader"]},
-        "status": "semi-active"
-    })
-    guild_members_trde = members.count({
-        "role": {
-            "$in": ["officer", "member", "leader"]},
-        "status": "trade"
-    })
-    guild_members_away = members.count({
-        "role": "ex-member", "status": "away"
-    })
-    guild_applicants = members.count({
-        "role": "applicant"
-    })
-    guild_blacklists = members.count({
-        "role": "blacklist"
-    })
-
-    description = \
-        f"```" \
-        f"• Total Accounts    :: {members.count()}\n" \
-        f"• Guild Occupancy   :: {guild_members_all}/170\n" \
-        f"  • Active          :: {guild_members_actv}\n" \
-        f"  • Semi-active     :: {guild_members_smac}\n" \
-        f"  • Inactive        :: {guild_members_inac}\n" \
-        f"  • On-leave        :: {guild_members_onlv}\n" \
-        f"  • Trade           :: {guild_members_trde}\n" \
-        f"  • Away            :: {guild_members_away}\n" \
-        f"  • ~ GQ/week       :: {guild_members_actv * 90 + guild_members_smac * 30:,d}\n" \
-        f"• Applicants        :: {guild_applicants}\n" \
-        f"• Blacklisted       :: {guild_blacklists}" \
-        f"```"
-
-    embed = discord.Embed(
-        color=ctx.author.colour, title="🔱 Guild Statistics", description=f"{description}", timestamp=get_timestamp()
-    )
-    embed.set_thumbnail(url=ctx.guild.icon_url)
-    await ctx.channel.send(embed=embed)
-
-
-async def management_guild_show_profile(ctx, args):
-    try:
-        name_id = int(args[1])
-        member = members.find_one({"#": name_id}, {"_id": 0})
-
-    except ValueError:
-        member = members.find_one({"name_lower": args[1].lower()}, {"_id": 0})
-
-    try:
-        def get_emoji_role(x):
-            return roles_emoji[x]
-
-        embed = discord.Embed(
-            color=ctx.author.colour,
-            title=f"#{member['#']} : {member['name']} | {get_emoji_role(member['role'])} {member['role'].title()}",
-            timestamp=get_timestamp()
-        )
-        embed.set_thumbnail(url=ctx.guild.icon_url)
-        embed.add_field(
-            name="⛳ Status",
-            value=f"{member['status'].title()} [{member['status_update'].strftime('%d.%b %y')}]"
-        )
-
-        if not member["notes"]:
-            embed.add_field(name="🗒 Notes", value="No notes yet.")
-
-        elif len(member["notes"]) != 0:
-            notes = ""
-            for note in member["notes"]:
-                entry = f"[{note['time'].strftime('%d.%b %y')} | {note['officer']}]: {note['note']}\n"
-                notes += entry
-
-            embed.add_field(name="🗒 Notes", value=notes, inline=False)
-        await ctx.channel.send(embed=embed)
-
-    except TypeError:
-        await management_guild_show_approximate(ctx, args[1])
-
-
-async def management_guild_update_field(ctx, args):
-    try:
-        reference_id = int(args[1])
-        find_query = {"#": reference_id}
-        name = "kyrvscyl"
-
-    except ValueError:
-        find_query = {"name_lower": args[1].lower()}
-        reference_id = 1
-        name = args[1].lower()
-
-    if members.find_one({"name_lower": name}) is None or members.find_one({"#": reference_id}) is None:
-        await management_guild_show_approximate(ctx, args[1])
-
-    elif args[2].lower() == "status" and args[3].lower() in member_status:
-        update = {"status": args[3].lower(), "status_update": get_time()}
-
-        if args[3].lower() in ["active", "inactive", "semi-active"]:
-            update.update({"weekly_gq": get_gq(args[3].lower()), "role": "member"})
-
-        if args[3].lower() in ["away", "left", "kicked"]:
-            update.update({"role": "ex-member"})
-
-        members.update_one(find_query, {"$set": update})
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() in ["notes", "note"]:
-        members.update_one(find_query, {
-            "$push": {
-                "notes": {
-                    "officer": ctx.author.name,
-                    "time": get_time(),
-                    "note": " ".join(args[3::])
-                }
-            }
-        })
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() == "name":
-        members.update_one(find_query, {"$set": {"name": args[3], "name_lower": args[3].lower()}})
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() == "role" and args[3].lower() in roles:
-        members.update_one(find_query, {"$set": {"role": args[3].lower()}})
-        await ctx.message.add_reaction("✅")
-
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            title="Role updating notice",
-            description="Role changes may require to adjust their status as well"
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await msg.delete(delay=7)
-
-    elif args[2].lower() == "tfeat":
-        try:
-            total_feat_new = int(args[3])
-            members.update_one(find_query, {"$set": {"total_feats": total_feat_new}})
-            await ctx.message.add_reaction("✅")
-
-        except ValueError:
-            await ctx.message.add_reaction("❌")
-
-    elif args[2].lower() == "gq":
-        try:
-            value = int(args[3])
-            if value in [30, 60, 90]:
-                members.update_one(find_query, {
-                    "$set": dict(
-                        status=get_status(value),
-                        status_update=get_time(),
-                        weekly_gq=value
-                    )
-                })
-            else:
-                await ctx.message.add_reaction("❌")
-
-        except ValueError:
-            await ctx.message.add_reaction("❌")
-
-    else:
-        await ctx.message.add_reaction("❌")
-
-
-async def management_guild_show_approximate(ctx, query):
-    members_search = members.find({"name_lower": {"$regex": f"^{query[:2].lower()}"}}, {"_id": 0})
-
-    approximate_results = []
-    for result in members_search:
-        approximate_results.append(f"{result['#']}/{result['name']}")
-
-    embed = discord.Embed(
-        colour=discord.Colour(embed_color),
-        title="Invalid query",
-        description=f"The ID/name `{query}` returned no results"
-    )
-    embed.add_field(
-        name="Possible matches",
-        value="*{}*".format(", ".join(approximate_results))
-    )
-    await ctx.channel.send(embed=embed)
-
-
-async def management_guild_add_member(ctx, args):
-    if members.find_one({"name_lower": args[2].lower()}) is None:
-
-        profile = {
-            "#": members.count() + 1,
-            "name": args[2],
-            "role": args[1].lower(),
-            "status": "active",
-            "notes": [],
-            "name_lower": args[2].lower(),
-            "total_feats": 0,
-            "weekly_gq": 30,
-            "status_update": get_time()
-        }
-        members.insert_one(profile)
-        await ctx.message.add_reaction("✅")
-
-    else:
-        embed = discord.Embed(
-            title="Invalid name", colour=discord.Colour(embed_color),
-            description="that name already exists in the database"
-        )
-        await ctx.channel.send(embed=embed)
+def shorten_code(key):
+    return shortened[key]
 
 
 class Admin(commands.Cog):
@@ -355,11 +107,14 @@ class Admin(commands.Cog):
     @commands.command(aliases=["memo"])
     @commands.guild_only()
     @commands.check(check_if_has_any_admin_roles)
-    async def announcement_post_embed(self, ctx, channel: discord.TextChannel = None):
+    async def announcement_post_memorandum(self, ctx, channel: discord.TextChannel = None):
+
+        if channel is None:
+            raise commands.MissingRequiredArgument(ctx.author)
 
         link_default = "https://media.discordapp.net/attachments/580859502379794452/646734006624190486/image0.png"
-
         memos_count = memos.count()
+
         request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1, "roles": 1})
         head_id = request["roles"]["head"]
         memorandum_channel_id = request["channels"]["memorandum"]
@@ -386,9 +141,9 @@ class Admin(commands.Cog):
             return embed_created
 
         details = [
-            "Step 1: <Optional> Message content (useful for pinging; )",
-            "Step 2: <Optional> Embed title",
-            "Step 3: <Required> Embed description:\n\nNote: Maximum of 2000 characters",
+            "Step 1: <Optional> Enter message content (useful for pinging roles)",
+            "Step 2: <Optional> Enter the embed title",
+            "Step 3: <Required> Enter the embed description:\n\nNote: Maximum of 2000 characters",
             link_default
         ]
 
@@ -435,7 +190,12 @@ class Admin(commands.Cog):
         embed = discord.Embed(
             colour=ctx.author.colour,
             title="Confirm issuance",
-            description="Do you want to send the memo drafted above?",
+            description="Do you want to send the memo drafted above?\nAnnounces immediately",
+            timestamp=get_timestamp()
+        )
+        embed.set_footer(
+            text=f"{ctx.author.display_name}",
+            icon_url=ctx.author.avatar_url
         )
         msg1 = await ctx.channel.send(embed=embed)
         await msg1.add_reaction("✅")
@@ -525,10 +285,10 @@ class Admin(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["add", "a"] and len(args) == 3 and args[1].lower() in roles:
-            await management_guild_add_member(ctx, args)
+            await self.management_guild_add_member(ctx, args)
 
         elif args[0].lower() in ["delete", "d"] and len(args) == 2:
-            await management_guild_add_delete(ctx, args)
+            await self.management_guild_add_delete(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
@@ -610,7 +370,7 @@ class Admin(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in fields:
-            await management_guild_update_field(ctx, args)
+            await self.management_guild_update_field(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
             embed = discord.Embed(
@@ -691,7 +451,7 @@ class Admin(commands.Cog):
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() != "all" \
                 and args[1].lower() not in fields:
-            await management_guild_show_profile(ctx, args)
+            await self.management_guild_show_profile(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "status" \
                 and args[2].lower() in member_status:
@@ -702,7 +462,186 @@ class Admin(commands.Cog):
             await self.management_guild_show_field_role(ctx, args)
 
         elif args[0].lower() == "stats" and len(args) == 1:
-            await management_guild_show_stats(ctx)
+            await self.management_guild_show_stats(ctx)
+
+        else:
+            await ctx.message.add_reaction("❌")
+
+    async def management_guild_update_feats(self, ctx):
+
+        embed = discord.Embed(
+            colour=discord.Colour(embed_color),
+            title="opening the environment for batch updating of `inactives`.."
+        )
+        msg = await ctx.channel.send(embed=embed)
+        await asyncio.sleep(3)
+        embed = discord.Embed(
+            colour=discord.Colour(embed_color),
+            title="enter stop/skip to exit the environment or skip a member, respectively.."
+        )
+        await msg.edit(embed=embed)
+        await asyncio.sleep(3)
+
+        embed = discord.Embed(
+            color=ctx.author.colour,
+            title="Performing initial calculations ...",
+            description="iterating first..."
+        )
+        msg = await ctx.channel.send("Enter the total feats for: ", embed=embed)
+
+        def check(m):
+            try:
+                int(m.content)
+            except ValueError:
+                if m.content.lower() == "stop" \
+                        and m.author == ctx.message.author and m.channel == ctx.channel:
+                    raise TypeError
+                elif m.content.lower() == "skip" \
+                        and m.author == ctx.message.author and m.channel == ctx.channel:
+                    raise IndexError
+                elif m.content.lower() not in ["stop", "skip"] \
+                        and m.author == ctx.message.author and m.channel == ctx.channel:
+                    raise KeyError
+            return m.author == ctx.message.author and m.channel == ctx.channel
+
+        find_query = {"role": {"$in": ["officer", "member", "leader"]}}
+        project = {
+            "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update": 1
+        }
+
+        for member in members.find(find_query, project).sort([("total_feats", 1)]):
+            embed = discord.Embed(
+                color=ctx.author.colour,
+                title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
+            )
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.add_field(
+                name="⛳ Status",
+                value=f"{member['status']} [{member['status_update'].strftime('%d.%b %y')}]"
+            )
+            embed.add_field(
+                name="🏆 Feats | GQ",
+                value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{get_time().isocalendar()[1]}]"
+            )
+            await asyncio.sleep(1)
+            await msg.edit(embed=embed)
+
+            i = 0
+            while i < 1:
+                try:
+                    answer = await self.client.wait_for("message", timeout=180, check=check)
+                except IndexError:
+                    break
+                except TypeError:
+                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Exiting environment..")
+                    msg = await ctx.channel.send(embed=embed)
+                    await msg.add_reaction("✅")
+                    i = "cancel"
+                    break
+                except KeyError:
+                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Invalid input")
+                    msg = await ctx.channel.send(embed=embed)
+                    await asyncio.sleep(2)
+                    await msg.delete()
+                    i = 0
+                except asyncio.TimeoutError:
+                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Timeout! Exiting...")
+                    msg = await ctx.channel.send(embed=embed)
+                    await asyncio.sleep(1)
+                    await msg.add_reaction("✅")
+                    i = "cancel"
+                    break
+                else:
+                    value = int(answer.content)
+                    members.update_one({"name": str(member["name"])}, {"$set": {"total_feats": value}})
+                    await answer.add_reaction("✅")
+                    await asyncio.sleep(2)
+                    await answer.delete()
+                    break
+            if i == "cancel":
+                break
+            else:
+                continue
+
+    async def management_guild_update_field(self, ctx, args):
+        try:
+            reference_id = int(args[1])
+            find_query = {"#": reference_id}
+            name = "kyrvscyl"
+
+        except ValueError:
+            find_query = {"name_lower": args[1].lower()}
+            reference_id = 1
+            name = args[1].lower()
+
+        if members.find_one({"name_lower": name}) is None or members.find_one({"#": reference_id}) is None:
+            await self.management_guild_show_approximate(ctx, args[1])
+
+        elif args[2].lower() == "status" and args[3].lower() in member_status:
+            update = {"status": args[3].lower(), "status_update": get_time()}
+
+            if args[3].lower() in ["active", "inactive", "semi-active"]:
+                update.update({"weekly_gq": get_guild_quest_converted(args[3].lower()), "role": "member"})
+
+            if args[3].lower() in ["away", "left", "kicked"]:
+                update.update({"role": "ex-member"})
+
+            members.update_one(find_query, {"$set": update})
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() in ["notes", "note"]:
+            members.update_one(find_query, {
+                "$push": {
+                    "notes": {
+                        "officer": ctx.author.name,
+                        "time": get_time(),
+                        "note": " ".join(args[3::])
+                    }
+                }
+            })
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() == "name":
+            members.update_one(find_query, {"$set": {"name": args[3], "name_lower": args[3].lower()}})
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() == "role" and args[3].lower() in roles:
+            members.update_one(find_query, {"$set": {"role": args[3].lower()}})
+            await ctx.message.add_reaction("✅")
+
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                title="Role updating notice",
+                description="Role changes may require to adjust their status as well"
+            )
+            msg = await ctx.channel.send(embed=embed)
+            await msg.delete(delay=7)
+
+        elif args[2].lower() == "tfeat":
+            try:
+                total_feat_new = int(args[3])
+                members.update_one(find_query, {"$set": {"total_feats": total_feat_new}})
+                await ctx.message.add_reaction("✅")
+
+            except ValueError:
+                await ctx.message.add_reaction("❌")
+
+        elif args[2].lower() == "gq":
+            try:
+                value = int(args[3])
+                if value in [30, 60, 90]:
+                    members.update_one(find_query, {
+                        "$set": dict(
+                            status=get_status(value),
+                            status_update=get_time(),
+                            weekly_gq=value
+                        )
+                    })
+                else:
+                    await ctx.message.add_reaction("❌")
+
+            except ValueError:
+                await ctx.message.add_reaction("❌")
 
         else:
             await ctx.message.add_reaction("❌")
@@ -814,101 +753,21 @@ class Admin(commands.Cog):
                 embed.set_footer(text=f"{len(accepted)} inactive {pluralize('member', len(accepted))}")
                 await ctx.channel.send(embed=embed)
 
-    async def management_guild_update_feats(self, ctx):
+    async def management_guild_show_field_status(self, ctx, args):
 
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            title="opening the environment for batch updating of `inactives`.."
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await asyncio.sleep(3)
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            title="enter stop/skip to exit the environment or skip a member, respectively.."
-        )
-        await msg.edit(embed=embed)
-        await asyncio.sleep(3)
+        formatted_list = []
+        find_query = {"status": args[2]}
+        project = {"_id": 0, "name": 1, "status_update": 1, "#": 1}
 
-        embed = discord.Embed(
-            color=ctx.author.colour,
-            title="Performing initial calculations ...",
-            description="iterating first..."
-        )
-        msg = await ctx.channel.send("Enter the total feats for: ", embed=embed)
+        for member in members.find(find_query, project).sort([("status_update", 1)]):
+            number = lengthen_code(member["#"])
+            status_update_formatted = member["status_update"].strftime("%d.%b %y")
+            formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
-        def check(m):
-            try:
-                int(m.content)
-            except ValueError:
-                if m.content.lower() == "stop" \
-                        and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise TypeError
-                elif m.content.lower() == "skip" \
-                        and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise IndexError
-                elif m.content.lower() not in ["stop", "skip"] \
-                        and m.author == ctx.message.author and m.channel == ctx.channel:
-                    raise KeyError
-            return m.author == ctx.message.author and m.channel == ctx.channel
+        noun = pluralize("result", len(formatted_list))
+        content = f"I've got {len(formatted_list)} {noun} for members with status {args[2].lower()}"
+        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
 
-        find_query = {"role": {"$in": ["officer", "member", "leader"]}}
-        project = {
-            "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update": 1
-        }
-
-        for member in members.find(find_query, project).sort([("total_feats", 1)]):
-            embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
-            )
-            embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.add_field(
-                name="⛳ Status",
-                value=f"{member['status']} [{member['status_update'].strftime('%d.%b %y')}]"
-            )
-            embed.add_field(
-                name="🏆 Feats | GQ",
-                value=f"{member['total_feats']} | {member['weekly_gq']} [Wk{get_time().isocalendar()[1]}]"
-            )
-            await asyncio.sleep(1)
-            await msg.edit(embed=embed)
-
-            i = 0
-            while i < 1:
-                try:
-                    answer = await self.client.wait_for("message", timeout=180, check=check)
-                except IndexError:
-                    break
-                except TypeError:
-                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Exiting environment..")
-                    msg = await ctx.channel.send(embed=embed)
-                    await msg.add_reaction("✅")
-                    i = "cancel"
-                    break
-                except KeyError:
-                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Invalid input")
-                    msg = await ctx.channel.send(embed=embed)
-                    await asyncio.sleep(2)
-                    await msg.delete()
-                    i = 0
-                except asyncio.TimeoutError:
-                    embed = discord.Embed(colour=discord.Colour(embed_color), title="Timeout! Exiting...")
-                    msg = await ctx.channel.send(embed=embed)
-                    await asyncio.sleep(1)
-                    await msg.add_reaction("✅")
-                    i = "cancel"
-                    break
-                else:
-                    value = int(answer.content)
-                    members.update_one({"name": str(member["name"])}, {"$set": {"total_feats": value}})
-                    await answer.add_reaction("✅")
-                    await asyncio.sleep(2)
-                    await answer.delete()
-                    break
-            if i == "cancel":
-                break
-            else:
-                continue
 
     async def management_guild_show_current_members(self, ctx):
 
@@ -917,9 +776,9 @@ class Admin(commands.Cog):
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort([("total_feats", -1)]):
-            role = shorten(member["role"])
-            status = shorten(member["status"])
-            number = lengthen(member["#"])
+            role = shorten_code(member["role"])
+            status = shorten_code(member["status"])
+            number = lengthen_code(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("member", len(formatted_list))
@@ -933,14 +792,76 @@ class Admin(commands.Cog):
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort([("name_lower", 1)]):
-            role = shorten(member["role"])
-            status = shorten(member["status"])
-            number = lengthen(member["#"])
+            role = shorten_code(member["role"])
+            status = shorten_code(member["status"])
+            number = lengthen_code(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
         content = f"I've got {len(formatted_list)} {noun} for names starting with __{args[2].lower()}__"
         await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+
+    async def management_guild_show_stats(self, ctx):
+        guild_members_all = members.count({
+            "role": {
+                "$in": ["officer", "member", "leader"]}
+        })
+        guild_members_actv = members.count({
+            "role": {
+                "$in": ["officer", "member", "leader"]},
+            "status": "active"
+        })
+        guild_members_inac = members.count({
+            "role": {
+                "$in": ["officer", "member", "leader"]},
+            "status": "inactive"
+        })
+        guild_members_onlv = members.count({
+            "role": {
+                "$in": ["officer", "member", "leader"]},
+            "status": "on-leave"
+        })
+        guild_members_smac = members.count({
+            "role": {
+                "$in": ["officer", "member", "leader"]},
+            "status": "semi-active"
+        })
+        guild_members_trde = members.count({
+            "role": {
+                "$in": ["officer", "member", "leader"]},
+            "status": "trade"
+        })
+        guild_members_away = members.count({
+            "role": "ex-member", "status": "away"
+        })
+        guild_applicants = members.count({
+            "role": "applicant"
+        })
+        guild_blacklists = members.count({
+            "role": "blacklist"
+        })
+
+        description = \
+            f"```" \
+            f"• Total Accounts    :: {members.count():,d}\n" \
+            f"• Guild Occupancy   :: {guild_members_all:,d}/170\n" \
+            f"  • Active          :: {guild_members_actv:,d}\n" \
+            f"  • Semi-active     :: {guild_members_smac:,d}\n" \
+            f"  • Inactive        :: {guild_members_inac:,d}\n" \
+            f"  • On-leave        :: {guild_members_onlv:,d}\n" \
+            f"  • Trade           :: {guild_members_trde:,d}\n" \
+            f"  • Away            :: {guild_members_away:,d}\n" \
+            f"  • ~ GQ/week       :: {guild_members_actv * 90 + guild_members_smac * 30:,d}\n" \
+            f"• Applicants        :: {guild_applicants:,d}\n" \
+            f"• Blacklisted       :: {guild_blacklists:,d}" \
+            f"```"
+
+        embed = discord.Embed(
+            color=ctx.author.colour, title="🔱 Guild Statistics",
+            description=f"{description}", timestamp=get_timestamp()
+        )
+        embed.set_thumbnail(url=ctx.guild.icon_url)
+        await ctx.channel.send(embed=embed)
 
     async def management_guild_show_all(self, ctx, sort):
 
@@ -949,9 +870,9 @@ class Admin(commands.Cog):
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort(sort):
-            role = shorten(member["role"])
-            status = shorten(member["status"])
-            number = lengthen(member["#"])
+            role = shorten_code(member["role"])
+            status = shorten_code(member["status"])
+            number = lengthen_code(member["#"])
             name = member['name']
             formatted_list.append(f"`{number}: {role}` | `{status}` | {name} \n")
 
@@ -966,7 +887,7 @@ class Admin(commands.Cog):
         project = {"_id": 0, "name": 1, "status_update": 1, "#": 1, "role": 1}
 
         for member in members.find(filter_query, project).sort([("status_update", 1)]):
-            number = lengthen(member["#"])
+            number = lengthen_code(member["#"])
             status_update_formatted = member["status_update"].strftime("%d.%b %y")
             formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
@@ -974,21 +895,103 @@ class Admin(commands.Cog):
         content = f"I've got {len(formatted_list)} {noun} for members with role {args[2].lower()}"
         await self.management_guild_paginate_embeds(ctx, formatted_list, content)
 
-    async def management_guild_show_field_status(self, ctx, args):
+    async def management_guild_show_profile(self, ctx, args):
+        try:
+            name_id = int(args[1])
+            member = members.find_one({"#": name_id}, {"_id": 0})
 
-        formatted_list = []
-        find_query = {"status": args[2]}
-        project = {"_id": 0, "name": 1, "status_update": 1, "#": 1}
+        except ValueError:
+            member = members.find_one({"name_lower": args[1].lower()}, {"_id": 0})
 
-        for member in members.find(find_query, project).sort([("status_update", 1)]):
-            number = lengthen(member["#"])
-            status_update_formatted = member["status_update"].strftime("%d.%b %y")
-            formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
+        try:
+            def get_emoji_role(x):
+                return roles_emoji[x]
 
-        noun = pluralize("result", len(formatted_list))
-        content = f"I've got {len(formatted_list)} {noun} for members with status {args[2].lower()}"
+            embed = discord.Embed(
+                color=ctx.author.colour,
+                title=f"#{member['#']} : {member['name']} | {get_emoji_role(member['role'])} {member['role'].title()}",
+                timestamp=get_timestamp()
+            )
+            embed.set_thumbnail(url=ctx.guild.icon_url)
+            embed.add_field(
+                name="⛳ Status",
+                value=f"{member['status'].title()} [{member['status_update'].strftime('%d.%b %y')}]"
+            )
 
-        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+            if not member["notes"]:
+                embed.add_field(name="🗒 Notes", value="No notes yet.")
+
+            elif len(member["notes"]) != 0:
+                notes = ""
+                for note in member["notes"]:
+                    entry = f"[{note['time'].strftime('%d.%b %y')} | {note['officer']}]: {note['note']}\n"
+                    notes += entry
+
+                embed.add_field(name="🗒 Notes", value=notes, inline=False)
+            await ctx.channel.send(embed=embed)
+
+        except TypeError:
+            await self.management_guild_show_approximate(ctx, args[1])
+
+    async def management_guild_show_approximate(self, ctx, query):
+        members_search = members.find({"name_lower": {"$regex": f"^{query[:2].lower()}"}}, {"_id": 0})
+
+        approximate_results = []
+        for result in members_search:
+            approximate_results.append(f"{result['#']}/{result['name']}")
+
+        embed = discord.Embed(
+            colour=discord.Colour(embed_color),
+            title="Invalid query",
+            description=f"The ID/name `{query}` returned no results"
+        )
+        embed.add_field(
+            name="Possible matches",
+            value="*{}*".format(", ".join(approximate_results))
+        )
+        await ctx.channel.send(embed=embed)
+
+    async def management_guild_add_member(self, ctx, args):
+        if members.find_one({"name_lower": args[2].lower()}) is None:
+
+            profile = {
+                "#": members.count() + 1,
+                "name": args[2],
+                "role": args[1].lower(),
+                "status": "active",
+                "notes": [],
+                "name_lower": args[2].lower(),
+                "total_feats": 0,
+                "weekly_gq": 30,
+                "status_update": get_time()
+            }
+            members.insert_one(profile)
+            await ctx.message.add_reaction("✅")
+
+        else:
+            embed = discord.Embed(
+                title="Invalid name", colour=discord.Colour(embed_color),
+                description="that name already exists in the database"
+            )
+            await ctx.channel.send(embed=embed)
+
+    async def management_guild_add_delete(self, ctx, args):
+        if members.find_one({"name": args[1]}) is not None:
+            members.delete_one({"name": args[1]})
+            await ctx.message.add_reaction("✅")
+
+            name_id = 1
+            for member in members.find({}, {"_id": 0, "name": 1}):
+                members.update_one({"name": member["name"]}, {"$set": {"#": name_id}})
+                name_id += 1
+
+        else:
+            embed = discord.Embed(
+                color=embed_color,
+                title="Invalid user",
+                descrption="Input the exact name including the letter cases"
+            )
+            await ctx.channel.send(embed=embed)
 
     async def management_guild_paginate_embeds(self, ctx, formatted_list, content):
 

@@ -4,6 +4,7 @@ Miketsu, 2019
 """
 
 import asyncio
+import collections
 import os
 import random
 from datetime import datetime
@@ -304,55 +305,6 @@ async def reset_boss():
     })
 
 
-async def frame_acquisition(user, frame_name, channel, jades):
-    for entry in users.aggregate([
-        {
-            "$match": {
-                "user_id": str(user.id)
-            }
-        }, {
-            "$unwind": {
-                "path": "$achievements"
-            }
-        }, {
-            "$project": {
-                "achievements": 1
-            }
-        }, {
-            "$match": {
-                "achievements.name": frame_name
-            }
-        }, {
-            "$count": "count"
-        }
-    ]):
-        if entry["count"] != 0:
-            return
-
-    users.update_one({
-        "user_id": str(user.id)}, {
-        "$push": {
-            "achievements": {
-                "name": frame_name,
-                "date_acquired": get_time()
-            }
-        },
-        "$inc": {
-            "jades": jades
-        }
-    })
-    await logs_add_line("jades", jades, user.id)
-    embed = discord.Embed(
-        color=user.colour,
-        title="Frame acquisition",
-        description=f"{user.mention} has acquired the {frame_name} frame and obtained {jades:,d}{e_j} as bonus rewards",
-        timestamp=get_timestamp()
-    )
-    embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-    embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
-    await channel.send(embed=embed)
-
-
 async def claim_rewards_daily_give(user, ctx):
     friendship_pass, jades, coins, realm_ticket, encounter_ticket, parade_tickets, sushi = 5, 100, 50000, 3, 4, 3, 150
 
@@ -416,139 +368,6 @@ async def claim_rewards_weekly_give(user, ctx):
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
     await ctx.channel.send(embed=embed)
-
-
-async def perform_evolution_shikigami(ctx, rarity, evo, user, query, count):
-    if rarity == "SP":
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            title="Invalid shikigami",
-            description=f"this shikigami is already evolved upon summoning"
-        )
-        await ctx.channel.send(embed=embed)
-
-    elif evo is True:
-        embed = discord.Embed(
-            colour=discord.Colour(embed_color),
-            title="Evolution failed",
-            description=f"Your {query.title()} is already evolved",
-        )
-        embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-        embed.set_thumbnail(url=get_thumbnail_shikigami(query, "evo"))
-        await ctx.channel.send(embed=embed)
-
-    elif evo is False:
-        rarity_count = get_evo_requirement(rarity)
-
-        if count >= rarity_count:
-
-            users.update_one({
-                "user_id": str(user.id),
-                "shikigami.name": query}, {
-                "$inc": {
-                    "shikigami.$.owned": -(rarity_count - 1),
-                    f"{rarity}": -(rarity_count - 1)
-                },
-                "$set": {
-                    "shikigami.$.evolved": True,
-                    "shikigami.$.shards": 5
-                }
-            })
-
-            shikigami_profile = shikigamis.find_one({"name": query}, {"_id": 0, "thumbnail": 1})
-            image_url = shikigami_profile["thumbnail"]["evo"]
-
-            embed = discord.Embed(
-                colour=user.colour,
-                title="Evolution successful",
-                description=f"You have evolved your {query.title()}\n"
-                            f"Also acquired 5 shards of this shikigami",
-                timestamp=get_timestamp()
-            )
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-            embed.set_thumbnail(url=image_url)
-            await ctx.channel.send(embed=embed)
-
-            if query == "orochi":
-                await frame_acquisition(user, "Sword Swallowing-Snake", ctx.channel, jades=2500)
-
-        elif count == 0:
-            embed = discord.Embed(
-                colour=discord.Colour(embed_color),
-                title="Invalid selection",
-                description=f"this shikigami is not in your possession"
-            )
-            await ctx.channel.send(embed=embed)
-
-        elif count <= (get_evo_requirement(rarity) - 1):
-            required = rarity_count - count
-            noun_duplicate = pluralize('dupe', required)
-            embed = discord.Embed(
-                colour=discord.Colour(embed_color),
-                title="Insufficient shikigamis",
-                description=f"You lack {required} more {query.title()} {noun_duplicate} to evolve",
-            )
-            await ctx.channel.send(embed=embed)
-
-
-async def frame_starlight(guild, spell_spam_channel):
-    starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
-
-    streak_list = []
-    for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
-        streak_list.append((user["user_id"], user["SSR_current"]))
-
-    streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
-    starlight_new = guild.get_member(int(streak_list_new[0][0]))
-    starlight_current = starlight_role.members[0]
-
-    if len(starlight_role.members) == 0:
-        await starlight_new.add_roles(starlight_role)
-        await asyncio.sleep(3)
-
-        description = \
-            f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
-            f"earned themselves the Rare Starlight Sky Frame!\n\n" \
-            f"🍀 No SSR streak as of posting: {streak_list_new[0][1]} summons!"
-
-        embed = discord.Embed(
-            color=0xac330f,
-            title="📨 Hall of Framers update",
-            description=description,
-            timestamp=get_timestamp()
-        )
-        embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-        await spell_spam_channel.send(embed=embed)
-        await frame_acquisition(starlight_new, "Starlight Sky", spell_spam_channel, jades=2500)
-
-    if starlight_current == starlight_new:
-        users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
-        await logs_add_line("jades", 2000, starlight_current.id)
-        msg = f"{starlight_current.mention} has earned 2,000{e_j} " \
-              f"for wielding the Starlight Sky frame for a day!"
-        await spell_spam_channel.send(msg)
-
-    else:
-        await starlight_new.add_roles(starlight_role)
-        await asyncio.sleep(3)
-        await starlight_current.remove_roles(starlight_role)
-        await asyncio.sleep(3)
-
-        description = \
-            f"{starlight_new.mention} {random.choice(steal_adverb)} {random.choice(steal_verb)} " \
-            f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
-            f"{random.choice(steal_noun)}!! {random.choice(steal_comment)}\n\n" \
-            f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons! Cuts in half every reset!"
-
-        embed = discord.Embed(
-            color=0xac330f,
-            title="📨 Hall of Framers update",
-            description=description,
-            timestamp=get_timestamp()
-        )
-        embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-        await spell_spam_channel.send(embed=embed)
-        await frame_acquisition(starlight_new, "Starlight Sky", spell_spam_channel, jades=2500)
 
 
 async def frame_blazing(guild, spell_spam_channel):
@@ -1363,7 +1182,8 @@ class Economy(commands.Cog):
         users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"parade_tickets": -1}})
         await logs_add_line("parade_tickets", -1, ctx.author.id)
 
-        parade_pull = []
+        max_rows, beans, beaned_shikigamis, parade_pull = 7, 10, [], []
+
         for x in range(0, 49):
             roll = random.uniform(0, 100)
 
@@ -1372,71 +1192,22 @@ class Economy(commands.Cog):
                 if p >= 126 / 109:
                     parade_pull.append(random.choice(pool_sp))
                 else:
-                    parade_pull.append(random.choice(pool_ssr))
+                    if random.uniform(1, 50) >= 0:
+                        parade_pull.append(random.choice(pool_ssr))
+                    else:
+                        parade_pull.append(random.choice(pool_ssn))
             elif roll <= 25:
                 parade_pull.append(random.choice(pool_sr))
             else:
                 parade_pull.append(random.choice(pool_r))
 
-        achievements_address = []
-        for entry in parade_pull:
-            try:
-                roll = random.uniform(0, 100)
-                suffix = "_pre"
-                if roll < 30:
-                    suffix = "_evo"
-                achievements_address.append(f"data/shikigamis/{entry}{suffix}.jpg")
-            except KeyError:
-                continue
-
-        images = list(map(Image.open, achievements_address))
-        max_rows = 7
-        new_im = Image.new("RGBA", (max_rows * 90, max_rows * 90))
-        x_init, y_init = random.randint(0, max_rows), random.randint(0, max_rows)
-
-        def get_coordinates(c):
-            a = (c * 90 - (ceil(c / max_rows) - 1) * max_rows * 90) - 90
-            b = (ceil(c / max_rows) * 90) - 90
-            return a, b
-
-        def get_bean_shikigami_initial(x_coor_get, y_coor_get):
-            index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
-            return index_bean
-
-        def get_bean_shikigami(x_coor_get, y_coor_get):
-            index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
-            return parade_pull[index_bean - 1]
-
-        def add_border(input_image):
-            border1, border2 = 8, 8
-            address_temp = f"temp/{ctx.message.id}.jpg"
-            bordered_thumbnail = ImageOps.expand(input_image, border=(border1, border2), fill=ctx.author.color.to_rgb())
-            bordered_thumbnail.save(address_temp)
-            img = Image.open(address_temp)
-            return img.resize((90, 90))
-
-        index_initial = get_bean_shikigami_initial(x_init, y_init) - 1
-
-        for index, item in enumerate(images):
-            if index == index_initial:
-                new_im.paste(add_border(images[index]), (get_coordinates(index + 1)))
-            else:
-                new_im.paste(images[index], (get_coordinates(index + 1)))
-
-        address = f"temp/{ctx.author.id}.png"
-        new_im.save(address)
-        new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(int(hosting_id))
-        msg = await hosting_channel.send(file=new_photo)
-        attachment_link = msg.attachments[0].url
-
-        beaned_shikigamis = []
-        beans = 10
+        x_init, y_init = random.randint(1, max_rows), random.randint(1, max_rows)
+        attachment_link = await self.perform_parade_generate_image(ctx, max_rows, parade_pull, x_init, y_init)
 
         def generate_parade_embed(listings, remaining_chances):
             value = ", ".join([shiki.title() for shiki in listings])
             if len(value) == 0:
-                value = "None"
+                value = None
 
             embed = discord.Embed(
                 color=ctx.author.color,
@@ -1447,7 +1218,7 @@ class Economy(commands.Cog):
                 timestamp=get_timestamp()
             )
             embed.set_image(url=attachment_link)
-            embed.add_field(name="Beaned Shikigamis", value=value)
+            embed.add_field(name="Beaned shikigamis", value=value)
             embed.set_footer(text=f"{remaining_chances} beans", icon_url=ctx.author.avatar_url)
             return embed
 
@@ -1489,6 +1260,13 @@ class Economy(commands.Cog):
                 break
             else:
                 bean_x, bean_y = get_new_coordinates(x_init, y_init, str(reaction.emoji))
+
+                def get_bean_shikigami(x_coor_get, y_coor_get):
+                    index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
+                    print(f"{x_coor_get}, {y_coor_get}")
+                    print(index_bean - 1)
+                    return parade_pull[index_bean - 1]
+
                 shikigami_beaned = get_bean_shikigami(bean_x, bean_y)
 
                 if shikigami_beaned not in beaned_shikigamis:
@@ -1500,9 +1278,61 @@ class Economy(commands.Cog):
 
         await self.perform_parade_issue_shards(ctx.author, beaned_shikigamis, ctx, msg)
 
+    async def perform_parade_generate_image(self, ctx, max_rows, parade_pull, x_init, y_init):
+
+        achievements_address = []
+        for entry in parade_pull:
+            try:
+                roll = random.uniform(0, 100)
+                suffix = "_pre"
+                if roll < 30:
+                    suffix = "_evo"
+                achievements_address.append(f"data/shikigamis/{entry}{suffix}.jpg")
+            except KeyError:
+                continue
+
+        images = list(map(Image.open, achievements_address))
+        new_im = Image.new("RGBA", (max_rows * 90, max_rows * 90))
+
+        def get_coordinates(c):
+            a = (c * 90 - (ceil(c / max_rows) - 1) * max_rows * 90) - 90
+            b = (ceil(c / max_rows) * 90) - 90
+            return a, b
+
+        def add_border(input_image):
+            border1, border2 = 8, 8
+            address_temp = f"temp/{ctx.message.id}.jpg"
+            bordered_thumbnail = ImageOps.expand(input_image, border=(border1, border2), fill=ctx.author.color.to_rgb())
+            bordered_thumbnail.save(address_temp)
+            img = Image.open(address_temp)
+            return img.resize((90, 90))
+
+        def get_bean_shikigami_initial(x_coor_get, y_coor_get):
+            index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
+            return index_bean - 1
+
+        index_initial = get_bean_shikigami_initial(x_init, y_init) - 1
+        print(f"initial index: {index_initial}")
+
+        for index, item in enumerate(images):
+            if index == index_initial:
+                new_im.paste(add_border(images[index]), (get_coordinates(index + 1)))
+            else:
+                new_im.paste(images[index], (get_coordinates(index + 1)))
+
+        address = f"temp/{ctx.author.id}.png"
+        new_im.save(address)
+        new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
+        hosting_channel = self.client.get_channel(int(hosting_id))
+        msg = await hosting_channel.send(file=new_photo)
+        attachment_link = msg.attachments[0].url
+
+        return attachment_link
+
     async def perform_parade_issue_shards(self, user, beaned_shikigamis, ctx, msg):
         await msg.clear_reactions()
         self.client.get_command("perform_parade").reset_cooldown(ctx)
+        rarities_beaned = []
         for beaned_shikigami in beaned_shikigamis:
 
             query = users.find_one({
@@ -1510,6 +1340,7 @@ class Economy(commands.Cog):
                 "shikigami.name": beaned_shikigami}, {
                 "_id": 0, "shikigami.$": 1
             })
+            rarities_beaned.append(get_rarity_shikigami(beaned_shikigami))
 
             if query is None:
                 users.update_one({
@@ -1531,6 +1362,15 @@ class Economy(commands.Cog):
                     "shikigami.$.shards": 1
                 }
             })
+
+        try:
+            counter = collections.Counter(rarities_beaned)
+            SSR_count = dict(counter)["SSR"]
+            if SSR_count >= 4:
+                await self.frame_acquisition(user, "Flower Fest", 3500)
+
+        except KeyError:
+            pass
 
     @commands.command(aliases=["pray"])
     @commands.guild_only()
@@ -1613,7 +1453,7 @@ class Economy(commands.Cog):
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         guild = spell_spam_channel.guild
 
-        await frame_starlight(guild, spell_spam_channel)
+        await self.frame_starlight(guild, spell_spam_channel)
         await asyncio.sleep(1)
         await frame_blazing(guild, spell_spam_channel)
 
@@ -1721,7 +1561,7 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-    @commands.command(aliases=["profile", "p"])
+    @commands.command(aliases=["profile", "p", "pf"])
     @commands.guild_only()
     async def profile_show(self, ctx, *, member: discord.Member = None):
 
@@ -1731,42 +1571,6 @@ class Economy(commands.Cog):
         else:
             await self.profile_post(member, ctx)
 
-    async def profile_generate_frame_image(self, member, achievements):
-
-        achievements_address = []
-        for entry in achievements:
-            try:
-                achievements_address.append(f"data/achievements/{entry['name']}.png")
-            except KeyError:
-                continue
-
-        images = list(map(Image.open, achievements_address))
-
-        def get_image_variables(x):
-            total_frames = len(x)
-            w = 1000
-            h = ceil(total_frames / 5) * 200
-            return w, h
-
-        width, height = get_image_variables(achievements_address)
-        new_im = Image.new("RGBA", (width, height))
-
-        def get_coordinates(c):
-            x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
-            y = (ceil(c / 5) * 200) - 200
-            return x, y
-
-        for index, item in enumerate(images):
-            new_im.paste(images[index], (get_coordinates(index + 1)))
-
-        address = f"temp/{member.id}.png"
-        new_im.save(address)
-        new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(int(hosting_id))
-        msg = await hosting_channel.send(file=new_photo)
-        attachment_link = msg.attachments[0].url
-        return attachment_link
-
     async def profile_post(self, member, ctx):
 
         profile = users.find_one({
@@ -1775,7 +1579,7 @@ class Economy(commands.Cog):
             "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
             "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
             "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1, "achievements": 1, "frame": 1,
-            "achievements_count": 1, "parade_tickets": 1, "N": 1, "amulets_spent_b": 1, "amulets_b": 1,
+            "achievements_count": 1, "parade_tickets": 1, "N": 1, "amulets_spent_b": 1, "amulets_b": 1, "SSN": 1,
             "sushi": 1
         })
 
@@ -1797,19 +1601,10 @@ class Economy(commands.Cog):
         friendship_pass = profile["friendship_pass"]
         talismans = profile["talisman"]
         prayers = profile["prayers"]
-        frame = profile["frame"]
         achievements_count = profile["achievements_count"]
         achievements = profile["achievements"]
         parade = profile["parade_tickets"]
         sushi = profile["sushi"]
-
-        if len(achievements) != achievements_count:
-            frame = await self.profile_generate_frame_image(member, achievements)
-            users.update_one({"user_id": str(member.id)}, {
-                "$set": {
-                    "frame": frame, "achievements_count": len(achievements)
-                }
-            })
 
         embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
 
@@ -1833,8 +1628,9 @@ class Economy(commands.Cog):
             value=f"Level: {level} ({exp:,d}/{level_exp_next:,d})"
         )
         embed.add_field(
-            name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5}",
-            value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d} | {profile['N']:,d}",
+            name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
+            value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d} | {profile['N']:,d}, | "
+                  f"{profile['SSN']:,d}",
             inline=False
         )
         embed.add_field(
@@ -1858,25 +1654,82 @@ class Economy(commands.Cog):
         await msg.add_reaction("🖼")
 
         def check(r, u):
-            return str(r.emoji) == "🖼" and r.message.id == msg.id and u.bot is False
+            return str(r.emoji) in ["🖼"] and r.message.id == msg.id and u.bot is False and ctx.author.id == u.id
 
+        def check2(r, u):
+            return str(r.emoji) in ["➡", "⬅"] and r.message.id == msg.id and u.bot is False and ctx.author.id == u.id
+        
+        async def generate_embed(page_new):
+            embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
+            embed_new.set_author(
+                name=f"{member.display_name}'s achievements [{achievements_count}]",
+                icon_url=member.avatar_url
+            )
+            embed_new.set_image(url=await self.profile_generate_frame_image_new(member, achievements, page_new))
+            embed_new.set_footer(text="Hall of Frames")
+            return embed_new
+
+        page = 1
+        page_total = ceil(len(achievements) / 20)
+        
         try:
-            await self.client.wait_for("reaction_add", timeout=30, check=check)
+            await self.client.wait_for("reaction_add", timeout=15, check=check)
         except asyncio.TimeoutError:
             return
         else:
-            embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
-            embed.set_author(
-                name=f"{member.display_name}'s achievements",
-                icon_url=member.avatar_url
-            )
-            embed.set_image(url=frame)
-            embed.set_footer(text="Hall of Frames")
-            await msg.edit(embed=embed)
+            await msg.edit(embed=await generate_embed(page))
+            await msg.clear_reactions()
+            await msg.add_reaction("➡")
+
+        try:
+            reaction, user = await self.client.wait_for("reaction_add", timeout=15, check=check2)
+        except asyncio.TimeoutError:
+            return
+        else:
+            if str(reaction.emoji) == "➡":
+                page += 1
+
+            if page > page_total:
+                return
+            await msg.edit(embed=await generate_embed(page))
+            await msg.clear_reactions()
+
+    async def profile_generate_frame_image_new(self, member, achievements, page_new):
+
+        end = page_new * 20
+        start = end - 20
+        
+        achievements_address = []
+        for entry in achievements:
+            try:
+                achievements_address.append(f"data/achievements/{entry['name']}.png")
+            except KeyError:
+                continue
+        
+        images = list(map(Image.open, achievements_address[start:end]))
+
+        width, height = 1000, 800
+        new_im = Image.new("RGBA", (width, height))
+
+        def get_coordinates(c):
+            x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
+            y = (ceil(c / 5) * 200) - 200
+            return x, y
+
+        for q, item in enumerate(images):
+            new_im.paste(images[q], (get_coordinates(q + 1)))
+
+        address = f"temp/{member.id}.png"
+        new_im.save(address)
+        new_photo = discord.File(address, filename=f"{member.id}.png")
+        hosting_channel = self.client.get_channel(int(hosting_id))
+        msg = await hosting_channel.send(file=new_photo)
+        attachment_link = msg.attachments[0].url
+        return attachment_link
 
     @commands.command(aliases=["set", "display"])
     @commands.guild_only()
-    async def profile_change_display(self, ctx, *, select):
+    async def profile_change_shikigami_main(self, ctx, *, select):
 
         user = ctx.author
         select_formatted = select.lower()
@@ -1903,7 +1756,7 @@ class Economy(commands.Cog):
                 users.update_one({"user_id": str(user.id)}, {"$set": {"display": select_formatted}})
                 await ctx.message.add_reaction("✅")
 
-    @commands.command(aliases=["collections", "col"])
+    @commands.command(aliases=["collections", "col", "collection"])
     @commands.guild_only()
     async def shikigami_image_show_collected(self, ctx, arg1, *, member: discord.Member = None):
 
@@ -2003,7 +1856,7 @@ class Economy(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
-    @commands.command(aliases=["shikilist"])
+    @commands.command(aliases=["shikilist", "sl"])
     @commands.guild_only()
     async def shikigami_list_show_collected(self, ctx, arg1, *, member: discord.Member = None):
 
@@ -2168,6 +2021,65 @@ class Economy(commands.Cog):
         else:
             await ctx.message.add_reaction("❌")
 
+    async def frame_starlight(self, guild, spell_spam_channel):
+        starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
+
+        streak_list = []
+        for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
+            streak_list.append((user["user_id"], user["SSR_current"]))
+
+        streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
+        starlight_new = guild.get_member(int(streak_list_new[0][0]))
+        starlight_current = starlight_role.members[0]
+
+        if len(starlight_role.members) == 0:
+            await starlight_new.add_roles(starlight_role)
+            await asyncio.sleep(3)
+
+            description = \
+                f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
+                f"earned themselves the Rare Starlight Sky Frame!\n\n" \
+                f"🍀 No SSR streak as of posting: {streak_list_new[0][1]} summons!"
+
+            embed = discord.Embed(
+                color=0xac330f,
+                title="📨 Hall of Framers update",
+                description=description,
+                timestamp=get_timestamp()
+            )
+            embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
+            await spell_spam_channel.send(embed=embed)
+            await self.frame_acquisition(starlight_new, "Starlight Sky", jades=2500)
+
+        if starlight_current == starlight_new:
+            users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
+            await logs_add_line("jades", 2000, starlight_current.id)
+            msg = f"{starlight_current.mention} has earned 2,000{e_j} " \
+                  f"for wielding the Starlight Sky frame for a day!"
+            await spell_spam_channel.send(msg)
+
+        else:
+            await starlight_new.add_roles(starlight_role)
+            await asyncio.sleep(3)
+            await starlight_current.remove_roles(starlight_role)
+            await asyncio.sleep(3)
+
+            description = \
+                f"{starlight_new.mention} {random.choice(steal_adverb)} {random.choice(steal_verb)} " \
+                f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
+                f"{random.choice(steal_noun)}!! {random.choice(steal_comment)}\n\n" \
+                f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons! Cuts in half every reset!"
+
+            embed = discord.Embed(
+                color=0xac330f,
+                title="📨 Hall of Framers update",
+                description=description,
+                timestamp=get_timestamp()
+            )
+            embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
+            await spell_spam_channel.send(embed=embed)
+            await self.frame_acquisition(starlight_new, "Starlight Sky", jades=2500)
+
     @commands.command(aliases=["evolve", "evo"])
     async def perform_evolution(self, ctx, *args):
 
@@ -2214,7 +2126,79 @@ class Economy(commands.Cog):
             rarity = profile_my_shikigami["shikigami"][0]["rarity"]
             count = profile_my_shikigami["shikigami"][0]["owned"]
             evo = profile_my_shikigami["shikigami"][0]["evolved"]
-            await perform_evolution_shikigami(ctx, rarity, evo, user, query, count)
+            await self.perform_evolution_shikigami(ctx, rarity, evo, user, query, count)
+
+    async def perform_evolution_shikigami(self, ctx, rarity, evo, user, query, count):
+        if rarity == "SP":
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                title="Invalid shikigami",
+                description=f"this shikigami is already evolved upon summoning"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif evo is True:
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                title="Evolution failed",
+                description=f"Your {query.title()} is already evolved",
+            )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_thumbnail(url=get_thumbnail_shikigami(query, "evo"))
+            await ctx.channel.send(embed=embed)
+
+        elif evo is False:
+            rarity_count = get_evo_requirement(rarity)
+
+            if count >= rarity_count:
+
+                users.update_one({
+                    "user_id": str(user.id),
+                    "shikigami.name": query}, {
+                    "$inc": {
+                        "shikigami.$.owned": -(rarity_count - 1),
+                        f"{rarity}": -(rarity_count - 1)
+                    },
+                    "$set": {
+                        "shikigami.$.evolved": True,
+                        "shikigami.$.shards": 5
+                    }
+                })
+
+                shikigami_profile = shikigamis.find_one({"name": query}, {"_id": 0, "thumbnail": 1})
+                image_url = shikigami_profile["thumbnail"]["evo"]
+
+                embed = discord.Embed(
+                    colour=user.colour,
+                    title="Evolution successful",
+                    description=f"You have evolved your {query.title()}\n"
+                                f"Also acquired 5 shards of this shikigami",
+                    timestamp=get_timestamp()
+                )
+                embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+                embed.set_thumbnail(url=image_url)
+                await ctx.channel.send(embed=embed)
+
+                if query == "orochi":
+                    await self.frame_acquisition(user, "Sword Swallowing-Snake", jades=2500)
+
+            elif count == 0:
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    title="Invalid selection",
+                    description=f"this shikigami is not in your possession"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif count <= (get_evo_requirement(rarity) - 1):
+                required = rarity_count - count
+                noun_duplicate = pluralize('dupe', required)
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    title="Insufficient shikigamis",
+                    description=f"You lack {required} more {query.title()} {noun_duplicate} to evolve",
+                )
+                await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["shrine", "shr"])
     @commands.guild_only()
@@ -2926,7 +2910,7 @@ class Economy(commands.Cog):
             else:
                 await shikigami_post_approximate_results(ctx, shiki_formatted)
 
-    @commands.command(aliases=["sb", "summonb"])
+    @commands.command(aliases=["sb"])
     @commands.guild_only()
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def summon_perform_broken(self, ctx):
@@ -3035,7 +3019,7 @@ class Economy(commands.Cog):
                 }
             })
 
-    @commands.command(aliases=["sm", "summonm"])
+    @commands.command(aliases=["sm"])
     @commands.guild_only()
     @commands.cooldown(1, 180, commands.BucketType.user)
     async def summon_perform_mystery(self, ctx, *, args=None):
@@ -3891,15 +3875,21 @@ class Economy(commands.Cog):
                         "_id": 0,
                         "explores.$": 1,
                     })
-                    users.update_one({
-                        "user_id": str(user_id), "shikigami.name": user_profile["display"]
+                    shikigami_add_exp = users.update_one({
+                        "user_id": str(user_id),
+                        "$and": [
+                            {"shikigami.name": user_profile["display"]},
+                            {"shikigami.level": {"$lt": 40}}
+                        ]
                     }, {
                         "$inc": {
                             "shikigami.$.exp": 5 * round((chapter + 1) / 2)
                         }
                     })
 
-                    await self.shikigami_process_levelup(user_id, user_profile["display"])
+                    if shikigami_add_exp.modified_count > 0:
+                        await self.shikigami_process_levelup(user_id, user_profile["display"])
+
                     report = new_explore["explores"][0]["logs"]
                     await msg.edit(embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, ""))
 
@@ -3921,7 +3911,16 @@ class Economy(commands.Cog):
 
                         embed_new = create_embed_exploration(spirits, report, "~~")
                         await self.perform_exploration_process_rewards(user_id, msg, embed_new, chapter)
-                        users.update_one({"user_id": str(user_id)}, {"$inc": {"exploration": 1}})
+                        users.update_one({
+                            "user_id": str(user_id),
+                            "exploration": {
+                                "$lt": 28
+                            }
+                        }, {
+                            "$inc": {
+                                "exploration": 1
+                            }
+                        })
                         break
 
                 else:
@@ -4146,42 +4145,106 @@ class Economy(commands.Cog):
             chapter = int(arg1)
             profile = zones.find_one({"chapter": chapter}, {"_id": 0})
 
-            description = f"```" \
-                          f"Spirits          ::    {profile['spirits']}\n" \
-                          f"Sushi/explore    ::    {profile['sushi_required']}" \
-                          f"```"
+            try:
+                description = f"```" \
+                              f"Spirits          ::    {profile['spirits']}\n" \
+                              f"Sushi/explore    ::    {profile['sushi_required']}" \
+                              f"```"
 
-            jades = profile["rewards_exact"]["jades"]
-            coins = profile["rewards_exact"]["coins"]
-            medals = profile["rewards_exact"]["medals"]
-            amulets_b = profile["rewards_exact"]["amulets_b"]
+                jades = profile["rewards_exact"]["jades"]
+                coins = profile["rewards_exact"]["coins"]
+                medals = profile["rewards_exact"]["medals"]
+                amulets_b = profile["rewards_exact"]["amulets_b"]
 
-            shards_sp = profile["shards_count"]["SP"]
-            shards_ssr = profile["shards_count"]["SSR"]
-            shards_sr = profile["shards_count"]["SR"]
-            shards_r = profile["shards_count"]["R"]
-            shards_n = profile["shards_count"]["N"]
+                shards_sp = profile["shards_count"]["SP"]
+                shards_ssr = profile["shards_count"]["SSR"]
+                shards_sr = profile["shards_count"]["SR"]
+                shards_r = profile["shards_count"]["R"]
+                shards_n = profile["shards_count"]["N"]
 
-            embed = discord.Embed(
-                title=f"Chapter {chapter}: {profile['name']}",
-                color=ctx.author.colour,
-                description=description
-            )
-            embed.add_field(
-                name="Completion rewards",
-                value=f"~{jades:,d}{emojify('jades')}, "
-                      f"~{coins:,d}{emojify('coins')}, "
-                      f"~{medals:,d}{emojify('medals')}, "
-                      f"~{amulets_b:,d}{emojify('amulets_b')}",
-                inline=False
-            )
-            embed.add_field(
-                name="Shards drop count",
-                value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | "
-                      f"{e_4} {shards_r} | {e_5} {shards_n}",
-                inline=False
-            )
-            await ctx.channel.send(embed=embed)
+                embed = discord.Embed(
+                    title=f"Chapter {chapter}: {profile['name']}",
+                    color=ctx.author.colour,
+                    description=description
+                )
+                embed.add_field(
+                    name="Completion rewards",
+                    value=f"~{jades:,d}{emojify('jades')}, "
+                          f"~{coins:,d}{emojify('coins')}, "
+                          f"~{medals:,d}{emojify('medals')}, "
+                          f"~{amulets_b:,d}{emojify('amulets_b')}",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Shards drop count",
+                    value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | "
+                          f"{e_4} {shards_r} | {e_5} {shards_n}",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
+            except TypeError:
+                embed = discord.Embed(
+                    title=f"Invalid chapter",
+                    color=embed_color,
+                    description="Available chapters: 1-28 only"
+                )
+                await ctx.channel.send(embed=embed)
+
+    async def frame_acquisition(self, user, frame_name, jades):
+        for entry in users.aggregate([
+            {
+                "$match": {
+                    "user_id": str(user.id)
+                }
+            }, {
+                "$unwind": {
+                    "path": "$achievements"
+                }
+            }, {
+                "$project": {
+                    "achievements": 1
+                }
+            }, {
+                "$match": {
+                    "achievements.name": frame_name
+                }
+            }, {
+                "$count": "count"
+            }
+        ]):
+            if entry["count"] != 0:
+                return
+
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+
+        users.update_one({
+            "user_id": str(user.id)}, {
+            "$push": {
+                "achievements": {
+                    "name": frame_name,
+                    "date_acquired": get_time()
+                }
+            },
+            "$inc": {
+                "jades": jades
+            }
+        })
+        await logs_add_line("jades", jades, user.id)
+        intro_caption = " The "
+        if frame_name[:3] == "The":
+            intro_caption = " "
+
+        embed = discord.Embed(
+            color=user.colour,
+            title="Frame acquisition",
+            description=f"{user.mention} has acquired{intro_caption}{frame_name} frame!\n"
+                        f"Acquired {jades:,d}{e_j} as bonus rewards!",
+            timestamp=get_timestamp()
+        )
+        embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+        embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
+        await spell_spam_channel.send(embed=embed)
 
 
 def setup(client):

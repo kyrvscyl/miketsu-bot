@@ -13,18 +13,26 @@ from cogs.economy import level_create_user
 from cogs.mongo.database import get_collections
 
 # Collections
-guilds = get_collections("guilds")
 config = get_collections("config")
+guilds = get_collections("guilds")
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-shard_trading_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["shard-trading"]
-office_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headmasters-office"]
-scroll_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
 auror_dept_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["auror-department"]
 headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
+office_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headmasters-office"]
+scroll_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
 shard_seeker_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["shard_seekers"]
+shard_trading_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["shard-trading"]
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+
+def get_time():
+    return datetime.now(tz=pytz.timezone(timezone))
+
+
+def get_timestamp():
+    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
 def pluralize(singular, count):
@@ -34,14 +42,6 @@ def pluralize(singular, count):
         return singular + "s"
     else:
         return singular
-
-
-def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
-def get_time():
-    return datetime.now(tz=pytz.timezone(timezone))
 
 
 class Automation(commands.Cog):

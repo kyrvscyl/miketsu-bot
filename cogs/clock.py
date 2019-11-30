@@ -20,26 +20,26 @@ from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
 
 # Collections
-guilds = get_collections("guilds")
-weathers = get_collections("weathers")
-reminders = get_collections("reminders")
-quests = get_collections("quests")
-events = get_collections("events")
 config = get_collections("config")
+events = get_collections("events")
+guilds = get_collections("guilds")
+quests = get_collections("quests")
+reminders = get_collections("reminders")
 streaks = get_collections("streaks")
+weathers = get_collections("weathers")
 
 # Lists
-clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["clock_emojis"]
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
+clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["clock_emojis"]
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 clock_channel = guilds.find_one({"server": str(guild_id)}, {"channels.clock": 1, "_id": 0})["channels"]["clock"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
 silver_sickles_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["silver_sickles"]
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 
 def check_if_has_any_admin_roles(ctx):
@@ -49,12 +49,22 @@ def check_if_has_any_admin_roles(ctx):
     return False
 
 
+def get_time():
+    return datetime.now(tz=pytz.timezone(timezone))
+
+
 def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
-def get_time():
-    return datetime.now(tz=pytz.timezone(timezone))
+def get_emoji(hours, minutes):
+    if int(minutes) >= 30:
+        emoji_clock_index = (int(hours) * 2) + 2
+    else:
+        emoji_clock_index = (int(hours) * 2) + 1
+
+    emoji_clock = clock_emojis[emoji_clock_index]
+    return emoji_clock
 
 
 def generate_weather(hour):
@@ -74,16 +84,6 @@ def generate_weather(hour):
         weathers.update_one({"weather2": {"$type": "string"}}, {"$set": {"weather2": weather2}})
 
     return weather1, weather2
-
-
-def get_emoji(hours, minutes):
-    if int(minutes) >= 30:
-        emoji_clock_index = (int(hours) * 2) + 2
-    else:
-        emoji_clock_index = (int(hours) * 2) + 1
-
-    emoji_clock = clock_emojis[emoji_clock_index]
-    return emoji_clock
 
 
 async def frame_automate_penalize():
@@ -121,51 +121,6 @@ async def actions_reset():
 
 async def reset_purchase():
     quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
-
-
-async def events_activate_shrine_reminder_process(ctx, event, timing):
-
-    if timing.lower() == "now":
-        offset = (get_time().weekday() - 2) % 7
-        get_patch_start_day = (get_time() - timedelta(days=offset)).strftime("%Y-%m-%d")
-    else:
-        offset = (get_time().weekday() - 2) % 7
-        get_patch_start_day = (get_time() + timedelta(days=offset)).strftime("%Y-%m-%d")
-
-    date_absolute = datetime.strptime(get_patch_start_day, "%Y-%m-%d")
-    request = events.find_one({"code": event}, {"_id": 0})
-
-    date_next = date_absolute + timedelta(days=request['delta']) - timedelta(hours=request['delta_hr'])
-    date_start = date_absolute
-    date_end = date_absolute + timedelta(days=request['duration']) - timedelta(hours=request['delta_hr'])
-
-    events.update_one({
-        "code": event,
-    }, {
-        "$set": {
-            "status": True,
-            "last": None,
-            "next": date_next,
-            "start": date_start,
-            "end": date_end
-        }
-    })
-    await asyncio.sleep(2)
-    request = events.find_one({"code": event}, {"_id": 0})
-    role_id = request['role_id']
-
-    embed = discord.Embed(
-        title="Event Activated",
-        description=f"Title: {request['event'].title()}\n"
-                    f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until `{date_end.strftime('%Y-%m-%d | %a')}`",
-        color=embed_color,
-        timestamp=get_timestamp()
-    )
-    embed.add_field(
-        name="Action",
-        value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{headlines_id}>"
-    )
-    await ctx.channel.send(embed=embed)
 
 
 class Clock(commands.Cog):
@@ -239,8 +194,8 @@ class Clock(commands.Cog):
                 if day_week.lower() == "mon":
                     await Economy(self.client).reset_rewards_weekly()
 
-                await frame_automate_penalize()
                 await Economy(self.client).frame_automate()
+                await frame_automate_penalize()
                 await Frames(self.client).achievements_process_daily()
 
         except:
@@ -306,33 +261,37 @@ class Clock(commands.Cog):
         if len(args) == 0:
             embed = discord.Embed(
                 title="events, e",
-                description="manipulate events settings for reminders, etc.",
+                description="manipulate event settings for reminders, etc.",
                 color=embed_color
             )
             embed.add_field(
                 name="Arguments",
-                value="activate, deactivate"
+                value="activate, deactivate",
+                inline=False
             )
             await ctx.channel.send(embed=embed)
         
-        elif len(args) == 1 and args[0].lower() in ["activate", "act", "a"]:
+        elif len(args) == 1 and args[0].lower() in ["activate", "a"]:
             embed = discord.Embed(
-                title="events activate, e act, e a",
+                title="events activate, e a",
                 description="activate repetitive events",
                 color=embed_color
             )
             embed.add_field(
                 name="Timing",
-                value="now, next"
+                value="now, next",
+                inline=False
             )
             embed.add_field(
                 name="Event codes",
-                value="coin chaos [cc], fortune temple [ft], showdown bidding [sb]"
+                value="coin chaos [cc], fortune temple [ft]",
+                inline=False
             )
             embed.add_field(
                 name="Example",
                 value="*`;events act next cc`* - next Wed patch\n"
-                      "*`;events act now cc`* - activates this week"
+                      "*`;events act now cc`* - activates this week",
+                inline=False
             )
             await ctx.channel.send(embed=embed)
 
@@ -344,27 +303,29 @@ class Clock(commands.Cog):
             )
             embed.add_field(
                 name="Event codes",
-                value="coin chaos [cc], fortune temple [ft], showdown bidding [sb]"
+                value="coin chaos [cc], fortune temple [ft]",
+                inline=False
             )
             embed.add_field(
                 name="Example",
-                value="*`;events d cc`*\n"
+                value="*`;events d cc`*\n",
+                inline=False
             )
             await ctx.channel.send(embed=embed)
 
-        elif len(args) == 3 and args[0].lower() in ["activate", "act", "a"] \
+        elif len(args) == 3 and args[0].lower() in ["activate", "a"] \
                 and args[1].lower() in ["now", "next"] and args[2].lower() in ["cc", "ft"]:
-            await events_activate_shrine_reminder_process(ctx, args[2].lower(), args[1].lower())
+            await self.events_manipulate_process_activation(ctx, args[2].lower(), args[1].lower())
 
-        elif len(args) == 2 and args[0].lower() in ["deactivate", "d"] and args[2].lower() in ["cc", "ft"]:
+        elif len(args) == 2 and args[0].lower() in ["deactivate", "d"] and args[1].lower() in ["cc", "ft"]:
 
-            action = events.update_one({"code": args[2].lower(), "status": True}, {"$set": {"status": False}})
+            action = events.update_one({"code": args[1].lower(), "status": True}, {"$set": {"status": False}})
 
-            if action.modified_count() == 0:
+            if action.modified_count == 0:
                 embed = discord.Embed(
                     title="Invalid action",
                     description="this event is already deactivated",
-                    color=ctx.author.colour
+                    color=embed_color
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -374,15 +335,64 @@ class Clock(commands.Cog):
         else:
             await ctx.message.add_reaction("❌")
 
+    async def events_manipulate_process_activation(self, ctx, event, timing):
+
+        if timing.lower() == "now":
+            offset = (get_time().weekday() - 2) % 7
+            get_patch_start_day = (get_time() - timedelta(days=offset)).strftime("%Y-%m-%d")
+        else:
+            offset = (get_time().weekday() - 2) % 7
+            get_patch_start_day = (get_time() + timedelta(days=offset)).strftime("%Y-%m-%d")
+
+        date_absolute = datetime.strptime(get_patch_start_day, "%Y-%m-%d")
+        request = events.find_one({"code": event}, {"_id": 0})
+
+        date_next = date_absolute + timedelta(days=request['delta']) - timedelta(hours=request['delta_hr'])
+        date_start = date_absolute
+
+        if timing.lower() == "now":
+            date_start = datetime.strptime(get_time().strftime("%Y-%m-%d"), "%Y-%m-%d")
+            date_next = date_start + timedelta(days=request['delta']) - timedelta(hours=request['delta_hr'])
+
+            if date_start < datetime.strptime(get_time().strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M"):
+                date_start = date_start + timedelta(days=1)
+                date_next = date_next + timedelta(days=1)
+
+        date_end = date_absolute + timedelta(days=request['duration']) - timedelta(hours=request['delta_hr'])
+
+        events.update_one({
+            "code": event,
+        }, {
+            "$set": {
+                "status": True,
+                "last": None,
+                "next": date_next,
+                "start": date_start,
+                "end": date_end
+            }
+        })
+        await asyncio.sleep(2)
+        request = events.find_one({"code": event}, {"_id": 0})
+        role_id = request['role_id']
+
+        embed = discord.Embed(
+            title="Event activation",
+            description=f"Title: {request['event'].title()}\n"
+                        f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until `{date_end.strftime('%Y-%m-%d | %a')}`",
+            color=embed_color,
+            timestamp=get_timestamp()
+        )
+        embed.add_field(
+            name="Action",
+            value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{headlines_id}>"
+        )
+        await ctx.channel.send(embed=embed)
+
     @commands.command(aliases=["test"])
     @commands.is_owner()
-    async def manual_reminder(self, ctx):
+    async def events_manipulate_manual_post(self, ctx):
 
-        await frame_automate_penalize()
-        await Economy(self.client).frame_automate()
-
-        """date_time = "Oct 24, 2019 11:00"
-        await self.reminders_bidding_process(date_time)"""
+        await self.events_manipulate_process_activation(ctx, "ft", "next")
 
     async def reminders_bidding_process(self, date_time):
 

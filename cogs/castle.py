@@ -19,12 +19,12 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 from cogs.mongo.database import get_collections
 
 # Collections
-portraits = get_collections("portraits")
-guilds = get_collections("guilds")
-duelists = get_collections("duelists")
-shikigamis = get_collections("shikigamis")
 books = get_collections("books")
 config = get_collections("config")
+duelists = get_collections("duelists")
+guilds = get_collections("guilds")
+portraits = get_collections("portraits")
+shikigamis = get_collections("shikigamis")
 
 # Lists
 pool_all = []
@@ -32,18 +32,18 @@ lists_souls = []
 lists_souls_raw = []
 
 duel_fields = config.find_one({"list": 1}, {"_id": 0, "duel_fields": 1})["duel_fields"]
-primary_roles = config.find_one({"list": 1}, {"_id": 0, "primary_roles": 1})["primary_roles"]
 invalid_channels = config.find_one({"list": 1}, {"_id": 0, "invalid_channels": 1})["invalid_channels"]
+primary_roles = config.find_one({"list": 1}, {"_id": 0, "primary_roles": 1})["primary_roles"]
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 castle_id = int(guilds.find_one({"server": str(guild_id)}, {"_id": 0, "categories": 1})["categories"]["castle"])
 duelling_room_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["duelling-room"]
+embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
 reference_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["reference-section"]
 restricted_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["restricted-section"]
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 # Dictionaries
 primary_emojis = config.find_one({"dict": 1}, {"_id": 0, "primary_emojis": 1})["primary_emojis"]
@@ -58,26 +58,8 @@ for document in shikigamis.find({}, {"_id": 0, "name": 1}):
     pool_all.append(document["name"])
 
 
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
-
-
 def get_time():
     return datetime.now(tz=pytz.timezone(timezone))
-
-
-def lengthen(index):
-    prefix = "#{}"
-    if index < 10:
-        prefix = "#00{}"
-    elif index < 100:
-        prefix = "#0{}"
-    return prefix.format(index)
 
 
 def get_timestamp():
@@ -104,233 +86,27 @@ def check_if_restricted_section(ctx):
     return str(ctx.channel.id) == restricted_id
 
 
+def lengthen(index):
+    prefix = "#{}"
+    if index < 10:
+        prefix = "#00{}"
+    elif index < 100:
+        prefix = "#0{}"
+    return prefix.format(index)
+
+
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
+
+
 async def post_process_books(ctx, query):
     books.update_one(query, {"$inc": {"borrows": 1}})
     await ctx.message.delete()
-
-
-async def post_table_of_content_restricted(channel):
-    try:
-        webhooks = await channel.webhooks()
-        bukkuman = webhooks[0]
-        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
-    except AttributeError:
-        return False
-
-    description = \
-        "• To open a book use `;open [section] [index]`\n" \
-        "• Example: `;open da 8`"
-
-    embed = DiscordEmbed(
-        title=":bookmark: Table of Contents",
-        colour=discord.Colour(0xa0c29a),
-        description=description
-    )
-    embed.add_embed_field(
-        name=":notebook: Defense Against The Dark Arts `[DA]`",
-        value="• `[1]` Wind Kirin\n"
-              "• `[2]` Fire Kirin\n"
-              "• `[3]` Lightning Kirin\n"
-              "• `[4]` Water Kirin\n"
-              "• `[5]` Namazu\n"
-              "• `[6]` Oboroguruma\n"
-              "• `[7]` Odokuro\n"
-              "• `[8]` Shinkirou\n"
-              "• `[9]` Tsuchigumo\n"
-    )
-    embed.add_embed_field(
-        name=":notebook: Fantastic Beasts and How to Deal with Them `[FB]`",
-        value="• `[1]` Winged Tsukinohime Guide\n"
-              "• `[2]` Song of the Isle and Sorrow Guide\n"
-    )
-    embed.add_embed_field(
-        name=":notebook: The Dark Arts Outsmarted `[DAO]`",
-        value="• `[1]` True Orochi Co-op Carry"
-    )
-    webhook.add_embed(embed)
-    webhook.execute()
-    return True
-
-
-async def post_table_of_content_reference(channel):
-    try:
-        webhooks = await channel.webhooks()
-        bukkuman = webhooks[0]
-        webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
-    except AttributeError:
-        return False
-
-    lists_souls_formatted = ", ".join(lists_souls)
-    description = \
-        "• To open a book use `;open [section] [index]`\n" \
-        "• Example: `;open sbs 3`"
-
-    embed = DiscordEmbed(
-        title=":bookmark: Table of Magical Contents",
-        colour=discord.Colour(0xa0c29a),
-        description=description
-    )
-    embed.add_embed_field(
-        name=":book: The Standard Book of Souls - Year 1 `[SBS]`",
-        value="{}".format(lists_souls_formatted)
-    )
-    embed.add_embed_field(
-        name=":book: The Standard Book of Souls - Year 5 `[SBS]`",
-        value="• `[1]` Souls 10 Speed Run (24-25s)\n"
-              "• `[2]` Souls 10 Speed Run (20-21s)\n"
-              "• `[3]` Souls Moan Team Varieties"
-    )
-    embed.add_embed_field(
-        name=":closed_book: Secret Duelling Books `[SDB]`",
-        value="• `[1]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
-              "• `[2]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
-              "• `[3]` What if by Quinlynn - Book 1\n"
-              "• `[4]` What if by Quinlynn - Book 2"
-    )
-    embed.add_embed_field(
-        name=":books: Assorted Books `[AB]`",
-        value="• `[1]` Advanced Realm-Making\n"
-              "• `[2]` A Beginner's Guide to Shikigami Affection\n"
-              "• `[3]` Predicting the Unpredictable: Summon Odds\n"
-              "• `[4]` Spellman's Syllabary: Contractions"
-    )
-    webhook.add_embed(embed)
-    webhook.execute()
-    return True
-
-
-async def management_duel_profile_member_delete(ctx, args):
-    if duelists.find_one({"name": args[1]}) is not None:
-        duelists.delete_one({"name": args[1]})
-        await ctx.message.add_reaction("✅")
-
-        name_id = 1
-        for member in duelists.find({}, {"_id": 0, "name": 1}):
-            duelists.update_one({"name": member["name"]}, {"$set": {"#": name_id}})
-            name_id += 1
-
-    else:
-        await management_duel_show_approximate(ctx, args[1])
-
-
-async def management_duel_show_approximate(ctx, member_name):
-    members_search = duelists.find({"name_lower": {"$regex": f"^{member_name[:2].lower()}"}}, {"_id": 0})
-
-    approximate_results = []
-    for result in members_search:
-        approximate_results.append(f"{result['#']}/{result['name_lower']}")
-
-    embed = discord.Embed(
-        colour=discord.Colour(embed_color),
-        title="Invalid query",
-        description=f"the ID/name `{member_name}` returned no results"
-    )
-    embed.add_field(
-        name="Possible matches",
-        value="*{}*".format(", ".join(approximate_results))
-    )
-    await ctx.channel.send(embed=embed)
-
-
-async def management_duel_profile_update_field(ctx, args):
-    try:
-        name_id = int(args[1])
-        find_query = {"#": name_id}
-        name = "kyrvscyl"
-
-    except ValueError:
-        find_query = {"name_lower": args[1].lower()}
-        name_id = 1
-        name = args[1].lower()
-
-    if duelists.find_one({"name_lower": name}) is None or duelists.find_one({"#": name_id}) is None:
-        await management_duel_show_approximate(ctx, args[1])
-
-    elif args[2].lower() in ["notes", "note"]:
-        duelists.update_one(find_query, {
-            "$push": {
-                "note": {
-                    "member": ctx.author.name,
-                    "time": get_time(),
-                    "note": " ".join(args[3::])
-                }
-            },
-            "$set": {
-                "last_update": get_time()
-            }
-        })
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() == "name":
-        duelists.update_one(find_query, {"$set": {
-            "name": args[3], "name_lower": args[3].lower(), "last_update": get_time()
-        }})
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() in ["unban", "uncore"] and " ".join(args[3:]).lower() in pool_all:
-        duelists.update_one(find_query, {
-            "$pull": {
-                args[2].lower()[2:]: " ".join(args[3:]).lower()
-            },
-            "$set": {
-                "last_update": get_time()
-            }
-        })
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() in ["ban", "core"] and " ".join(args[3:]).lower() in pool_all:
-        duelists.update_one(find_query, {
-            "$push": {
-                args[2].lower(): " ".join(args[3:]).lower()
-            },
-            "$set": {
-                "last_update": get_time()
-            }
-        })
-        await ctx.message.add_reaction("✅")
-
-    elif args[2].lower() in ["lineup", "lineups"]:
-        image_link = ctx.message.attachments[0].url
-        duelists.update_one(find_query, {
-            "$push": {
-                "lineup": image_link
-            },
-            "$set": {
-                "last_update": get_time()
-            }
-        })
-        await ctx.message.add_reaction("✅")
-
-    else:
-        await ctx.message.add_reaction("❌")
-
-
-async def management_duel_profile_member_add(ctx, args):
-
-    if duelists.find_one({"name_lower": args[1].lower()}) is None:
-
-        profile = {
-            "#": duelists.count() + 1,
-            "name": args[1],
-            "name_lower": args[1].lower(),
-            "ban": [],
-            "ban_count": -1,
-            "core": [],
-            "core_count": -1,
-            "lineup": [],
-            "notes": [],
-            "link": None,
-            "last_update": get_time()
-        }
-        duelists.insert_one(profile)
-        await ctx.message.add_reaction("✅")
-
-    else:
-        embed = discord.Embed(
-            title="Invalid duelist", colour=discord.Colour(embed_color),
-            description="that name already exists in the database"
-        )
-        await ctx.channel.send(embed=embed)
 
 
 class Castle(commands.Cog):
@@ -436,12 +212,12 @@ class Castle(commands.Cog):
 
         if check_if_reference_section(ctx):
 
-            await post_table_of_content_reference(ctx.channel)
+            await self.post_table_of_content_reference(ctx.channel)
             await ctx.message.delete()
 
         elif check_if_restricted_section(ctx):
 
-            await post_table_of_content_restricted(ctx.channel)
+            await self.post_table_of_content_restricted(ctx.channel)
             await ctx.message.delete()
 
         else:
@@ -458,6 +234,94 @@ class Castle(commands.Cog):
             )
             embed.add_field(name="Libraries", value=f"<#{reference_section}>, <#{restricted_section}>")
             await ctx.channel.send(embed=embed)
+
+    async def post_table_of_content_restricted(self, channel):
+        try:
+            webhooks = await channel.webhooks()
+            bukkuman = webhooks[0]
+            webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+        except AttributeError:
+            return False
+
+        description = \
+            "• To open a book use `;open [section] [index]`\n" \
+            "• Example: `;open da 8`"
+
+        embed = DiscordEmbed(
+            title=":bookmark: Table of Contents",
+            colour=discord.Colour(0xa0c29a),
+            description=description
+        )
+        embed.add_embed_field(
+            name=":notebook: Defense Against The Dark Arts `[DA]`",
+            value="• `[1]` Wind Kirin\n"
+                  "• `[2]` Fire Kirin\n"
+                  "• `[3]` Lightning Kirin\n"
+                  "• `[4]` Water Kirin\n"
+                  "• `[5]` Namazu\n"
+                  "• `[6]` Oboroguruma\n"
+                  "• `[7]` Odokuro\n"
+                  "• `[8]` Shinkirou\n"
+                  "• `[9]` Tsuchigumo\n"
+        )
+        embed.add_embed_field(
+            name=":notebook: Fantastic Beasts and How to Deal with Them `[FB]`",
+            value="• `[1]` Winged Tsukinohime Guide\n"
+                  "• `[2]` Song of the Isle and Sorrow Guide\n"
+        )
+        embed.add_embed_field(
+            name=":notebook: The Dark Arts Outsmarted `[DAO]`",
+            value="• `[1]` True Orochi Co-op Carry"
+        )
+        webhook.add_embed(embed)
+        webhook.execute()
+        return True
+
+    async def post_table_of_content_reference(self, channel):
+        try:
+            webhooks = await channel.webhooks()
+            bukkuman = webhooks[0]
+            webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
+        except AttributeError:
+            return False
+
+        lists_souls_formatted = ", ".join(lists_souls)
+        description = \
+            "• To open a book use `;open [section] [index]`\n" \
+            "• Example: `;open sbs 3`"
+
+        embed = DiscordEmbed(
+            title=":bookmark: Table of Magical Contents",
+            colour=discord.Colour(0xa0c29a),
+            description=description
+        )
+        embed.add_embed_field(
+            name=":book: The Standard Book of Souls - Year 1 `[SBS]`",
+            value="{}".format(lists_souls_formatted)
+        )
+        embed.add_embed_field(
+            name=":book: The Standard Book of Souls - Year 5 `[SBS]`",
+            value="• `[1]` Souls 10 Speed Run (24-25s)\n"
+                  "• `[2]` Souls 10 Speed Run (20-21s)\n"
+                  "• `[3]` Souls Moan Team Varieties"
+        )
+        embed.add_embed_field(
+            name=":closed_book: Secret Duelling Books `[SDB]`",
+            value="• `[1]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
+                  "• `[2]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
+                  "• `[3]` What if by Quinlynn - Book 1\n"
+                  "• `[4]` What if by Quinlynn - Book 2"
+        )
+        embed.add_embed_field(
+            name=":books: Assorted Books `[AB]`",
+            value="• `[1]` Advanced Realm-Making\n"
+                  "• `[2]` A Beginner's Guide to Shikigami Affection\n"
+                  "• `[3]` Predicting the Unpredictable: Summon Odds\n"
+                  "• `[4]` Spellman's Syllabary: Contractions"
+        )
+        webhook.add_embed(embed)
+        webhook.execute()
+        return True
 
     @commands.command(aliases=["open"])
     @commands.guild_only()
@@ -780,10 +644,10 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["add", "a"] and len(args) == 2:
-            await management_duel_profile_member_add(ctx, args)
+            await self.management_duel_profile_member_add(ctx, args)
 
         elif args[0].lower() in ["delete", "d"] and len(args) == 2:
-            await management_duel_profile_member_delete(ctx, args)
+            await self.management_duel_profile_member_delete(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
@@ -833,7 +697,7 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
-            await management_duel_profile_update_field(ctx, args)
+            await self.management_duel_profile_update_field(ctx, args)
 
         elif args[0].lower() in ["update", "u"] and args[2].lower() in duel_fields and len(args) == 3:
             embed = discord.Embed(
@@ -844,7 +708,7 @@ class Castle(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in duel_fields:
-            await management_duel_profile_update_field(ctx, args)
+            await self.management_duel_profile_update_field(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
             embed = discord.Embed(
@@ -870,7 +734,7 @@ class Castle(commands.Cog):
             await self.management_duel_profile_show_all(ctx)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "all":
-            await self.management_management_guild_show_startswith(ctx, args)
+            await self.management_duel_profile_show_startswith(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() != "all":
             await self.management_duel_profile_show_profile(ctx, args)
@@ -967,7 +831,165 @@ class Castle(commands.Cog):
                     await msg.edit(embed=generate_embed_lineup(page))
 
         except TypeError:
-            await management_duel_show_approximate(ctx, args[1])
+            await self.management_duel_profile_show_approximate(ctx, args[1])
+
+    async def management_duel_profile_show_all(self, ctx):
+
+        formatted_list = []
+        find_query = {}
+        project = {"_id": 0, "#": 1, "name": 1}
+
+        for duelist in duelists.find(find_query, project).sort([("#", 1)]):
+            number = lengthen(duelist["#"])
+            formatted_list.append(f"`{number}:` | {duelist['name']}\n")
+
+        noun = pluralize("duelist", len(formatted_list))
+        content = f"There are {len(formatted_list)} registered {noun}"
+        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
+
+    async def management_duel_profile_show_startswith(self, ctx, args):
+
+        formatted_list = []
+        find_query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
+        project = {"_id": 0, "#": 1, "name": 1}
+
+        for duelist in duelists.find(find_query, project).sort([("name_lower", 1)]):
+            number = lengthen(duelist["#"])
+            formatted_list.append(f"`{number}:` | {duelist['name']}\n")
+
+        noun = pluralize("result", len(formatted_list))
+        content = f"I've got {len(formatted_list)} {noun} for duelists starting with __{args[2].lower()}__"
+        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
+
+    async def management_duel_profile_show_approximate(self, ctx, member_name):
+        members_search = duelists.find({"name_lower": {"$regex": f"^{member_name[:2].lower()}"}}, {"_id": 0})
+
+        approximate_results = []
+        for result in members_search:
+            approximate_results.append(f"{result['#']}/{result['name_lower']}")
+
+        embed = discord.Embed(
+            colour=discord.Colour(embed_color),
+            title="Invalid query",
+            description=f"the ID/name `{member_name}` returned no results"
+        )
+        embed.add_field(
+            name="Possible matches",
+            value="*{}*".format(", ".join(approximate_results))
+        )
+        await ctx.channel.send(embed=embed)
+
+    async def management_duel_profile_update_field(self, ctx, args):
+        try:
+            name_id = int(args[1])
+            find_query = {"#": name_id}
+            name = "kyrvscyl"
+
+        except ValueError:
+            find_query = {"name_lower": args[1].lower()}
+            name_id = 1
+            name = args[1].lower()
+
+        if duelists.find_one({"name_lower": name}) is None or duelists.find_one({"#": name_id}) is None:
+            await self.management_duel_profile_show_approximate(ctx, args[1])
+
+        elif args[2].lower() in ["notes", "note"]:
+            duelists.update_one(find_query, {
+                "$push": {
+                    "note": {
+                        "member": ctx.author.name,
+                        "time": get_time(),
+                        "note": " ".join(args[3::])
+                    }
+                },
+                "$set": {
+                    "last_update": get_time()
+                }
+            })
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() == "name":
+            duelists.update_one(find_query, {"$set": {
+                "name": args[3], "name_lower": args[3].lower(), "last_update": get_time()
+            }})
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() in ["unban", "uncore"] and " ".join(args[3:]).lower() in pool_all:
+            duelists.update_one(find_query, {
+                "$pull": {
+                    args[2].lower()[2:]: " ".join(args[3:]).lower()
+                },
+                "$set": {
+                    "last_update": get_time()
+                }
+            })
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() in ["ban", "core"] and " ".join(args[3:]).lower() in pool_all:
+            duelists.update_one(find_query, {
+                "$push": {
+                    args[2].lower(): " ".join(args[3:]).lower()
+                },
+                "$set": {
+                    "last_update": get_time()
+                }
+            })
+            await ctx.message.add_reaction("✅")
+
+        elif args[2].lower() in ["lineup", "lineups"]:
+            image_link = ctx.message.attachments[0].url
+            duelists.update_one(find_query, {
+                "$push": {
+                    "lineup": image_link
+                },
+                "$set": {
+                    "last_update": get_time()
+                }
+            })
+            await ctx.message.add_reaction("✅")
+
+        else:
+            await ctx.message.add_reaction("❌")
+
+    async def management_duel_profile_member_delete(self, ctx, args):
+        if duelists.find_one({"name": args[1]}) is not None:
+            duelists.delete_one({"name": args[1]})
+            await ctx.message.add_reaction("✅")
+
+            name_id = 1
+            for member in duelists.find({}, {"_id": 0, "name": 1}):
+                duelists.update_one({"name": member["name"]}, {"$set": {"#": name_id}})
+                name_id += 1
+
+        else:
+            await self.management_duel_profile_show_approximate(ctx, args[1])
+
+    async def management_duel_profile_member_add(self, ctx, args):
+
+        if duelists.find_one({"name_lower": args[1].lower()}) is None:
+
+            profile = {
+                "#": duelists.count() + 1,
+                "name": args[1],
+                "name_lower": args[1].lower(),
+                "ban": [],
+                "ban_count": -1,
+                "core": [],
+                "core_count": -1,
+                "lineup": [],
+                "notes": [],
+                "link": None,
+                "last_update": get_time()
+            }
+            duelists.insert_one(profile)
+            await ctx.message.add_reaction("✅")
+
+        else:
+            embed = discord.Embed(
+                title="Invalid duelist", colour=discord.Colour(embed_color),
+                description="that name already exists in the database"
+            )
+            await ctx.channel.send(embed=embed)
 
     async def management_duel_profile_generate_image(self, bans, cores, ctx):
 
@@ -1021,34 +1043,6 @@ class Castle(commands.Cog):
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
-
-    async def management_duel_profile_show_all(self, ctx):
-
-        formatted_list = []
-        find_query = {}
-        project = {"_id": 0, "#": 1, "name": 1}
-
-        for duelist in duelists.find(find_query, project).sort([("#", 1)]):
-            number = lengthen(duelist["#"])
-            formatted_list.append(f"`{number}:` | {duelist['name']}\n")
-
-        noun = pluralize("duelist", len(formatted_list))
-        content = f"There are {len(formatted_list)} registered {noun}"
-        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
-
-    async def management_management_guild_show_startswith(self, ctx, args):
-
-        formatted_list = []
-        find_query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
-        project = {"_id": 0, "#": 1, "name": 1}
-
-        for duelist in duelists.find(find_query, project).sort([("name_lower", 1)]):
-            number = lengthen(duelist["#"])
-            formatted_list.append(f"`{number}:` | {duelist['name']}\n")
-
-        noun = pluralize("result", len(formatted_list))
-        content = f"I've got {len(formatted_list)} {noun} for duelists starting with __{args[2].lower()}__"
-        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
 
     async def management_duel_profile_paginate_embeds(self, ctx, formatted_list, content):
 
