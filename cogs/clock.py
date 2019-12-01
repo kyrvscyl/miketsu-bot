@@ -14,7 +14,8 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.economy import Economy, reset_boss
+from cogs.economy import Economy
+from cogs.gameplay import boss_daily_reset_check
 from cogs.frames import Frames
 from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
@@ -180,15 +181,15 @@ class Clock(commands.Cog):
                 await Expecto(self.client).send_off_report_quest1()
                 await Expecto(self.client).send_off_complete_quest1()
                 await self.perform_delete_secret_channels()
-                await Frames(self.client).achievements_process_hourly()
-                await self.events_activate_reminder_submit()
                 await self.reminders_bidding_process(bidding_format)
+                await self.events_activate_reminder_submit()
+                await Frames(self.client).achievements_process_hourly()
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
 
             if hour_minute == "00:00":
-                await reset_boss()
+                await boss_daily_reset_check()
                 await Economy(self.client).reset_rewards_daily()
 
                 if day_week.lower() == "mon":
@@ -378,7 +379,8 @@ class Clock(commands.Cog):
         embed = discord.Embed(
             title="Event activation",
             description=f"Title: {request['event'].title()}\n"
-                        f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until `{date_end.strftime('%Y-%m-%d | %a')}`",
+                        f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until "
+                        f"`{date_end.strftime('%Y-%m-%d | %a')}`",
             color=embed_color,
             timestamp=get_timestamp()
         )
@@ -392,7 +394,12 @@ class Clock(commands.Cog):
     @commands.is_owner()
     async def events_manipulate_manual_post(self, ctx):
 
-        await self.events_manipulate_process_activation(ctx, "ft", "next")
+        await boss_daily_reset_check()
+        await Economy(self.client).reset_rewards_daily()
+        await Economy(self.client).frame_automate()
+        await frame_automate_penalize()
+        await Frames(self.client).achievements_process_daily()
+        await Frames(self.client).achievements_process_hourly()
 
     async def reminders_bidding_process(self, date_time):
 

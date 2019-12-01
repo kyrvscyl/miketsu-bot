@@ -40,7 +40,7 @@ embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_c
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 
-def check_if_has_any_admin_roles(ctx):
+def check_if_user_has_any_admin_roles(ctx):
     for role in reversed(ctx.author.roles):
         if role.name in admin_roles:
             return True
@@ -106,7 +106,7 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=["memo"])
     @commands.guild_only()
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def announcement_post_memorandum(self, ctx, channel: discord.TextChannel = None):
 
         if channel is None:
@@ -220,7 +220,7 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=["say"])
     @commands.guild_only()
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def announcement_post_message(self, ctx, arg1, *, args):
 
         try:
@@ -242,7 +242,7 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=["clear", "cl"])
     @commands.guild_only()
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def purge_messages(self, ctx, amount=2):
         try:
             await ctx.channel.purge(limit=amount + 1)
@@ -253,7 +253,7 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=["m", "manage"])
     @commands.guild_only()
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def management_guild(self, ctx, *args):
         status_batch = {"inactives": 30, "semi-actives": 60}
 

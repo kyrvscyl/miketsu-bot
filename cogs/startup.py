@@ -87,11 +87,11 @@ class Startup(commands.Cog):
             description=f"append the prefix symbol *`{self.prefix}`*"
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
-        embed.set_footer(text="*Head commands")
+        embed.set_footer(text="*Head commands, **#pvp-fair exclusive")
         embed.add_field(
             name="fake Onmyoji",
             value="*"
-                  "daily, weekly, profile, set, buy, summon, explore, chapter, "
+                  "daily, weekly, profile, set, buy, summon, explore, explores, chapter, "
                   "evolve, friendship, ships, leaderboard, shikigamis, shrine, sail, pray, stat, "
                   "frames, wish, wishlist, fulfill, parade, collections, shards, "
                   "raid, raidc, encounter, bossinfo"
@@ -102,11 +102,10 @@ class Startup(commands.Cog):
             name="Others",
             value="*"
                   "changelog, bounty, suggest, stickers, newsticker, wander, portrait, "
-                  "stats, memo*\\*, *manage*\\*, *events*\\"
+                  "stats, duel*\\*\\*, memo*\\*, *manage*\\*, *events*\\"
                   "*",
             inline=False
         )
-
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["suggest", "report"])

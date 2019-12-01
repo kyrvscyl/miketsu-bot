@@ -71,10 +71,16 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "raid_perform":
+                embed = discord.Embed(
+                    title=f"Insufficient realm tickets", colour=discord.Colour(embed_color),
+                    description="purchase at the shop or get your daily rewards"
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "perform_parade":
                 embed = discord.Embed(
-                    colour=ctx.author.colour,
-                    title="Insufficient parade tickets",
+                    title="Insufficient parade tickets", colour=discord.Colour(embed_color),
                     description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
                 )
                 await ctx.channel.send(embed=embed)
@@ -120,7 +126,7 @@ class Error(commands.Cog):
                 await ctx.channel.send(embed=embed)
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
-            elif str(ctx.command) in ["management_guild"]:
+            elif str(ctx.command) in ["management_guild", "encounter_add_quiz"]:
                 return
 
             elif isinstance(error, commands.NoPrivateMessage):
@@ -132,10 +138,6 @@ class Error(commands.Cog):
 
             else:
                 await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.NotOwner):
-
-            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandOnCooldown):
 
@@ -154,7 +156,46 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.MissingRequiredArgument):
 
-            if str(ctx.command) == "announcement_post_memorandum":
+            if str(ctx.command) == "raid_perform":
+                embed = discord.Embed(
+                    title="raid, r", colour=discord.Colour(embed_color),
+                    description="raids the tagged member, requires 1 🎟"
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}raid @member`*\n"
+                          f"*`{self.prefix}r <name#discriminator>`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "raid_perform_calculation":
+                embed = discord.Embed(
+                    title="raidcalc, raidc, rc", colour=discord.Colour(embed_color),
+                    description="calculates your odds of winning"
+                )
+                embed.add_field(
+                    name="Mechanics",
+                    value="```"
+                          "Base Chance :: + 50 %\n"
+                          "Δ Level     :: ± 15 %\n"
+                          "Δ Medal     :: ± 15 %\n"
+                          "Δ SP        :: ±  9 %\n"
+                          "Δ SSR       :: ±  7 %\n"
+                          "Δ SR        :: ±  3 %\n"
+                          "Δ R         :: ±  1 %\n"
+                          "```",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}raidc @member`*\n"
+                          f"*`{self.prefix}rc <name#discriminator>`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "announcement_post_memorandum":
                 embed = discord.Embed(
                     title="memo",
                     colour=discord.Colour(embed_color),
@@ -171,7 +212,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            if str(ctx.command) == "collect_suggestions":
+            elif str(ctx.command) == "collect_suggestions":
                 embed = discord.Embed(
                     title="suggest, report",
                     colour=discord.Colour(embed_color),
@@ -408,13 +449,10 @@ class Error(commands.Cog):
                 )
                 await ctx.author.send(embed=embed)
 
-        elif isinstance(error, commands.ExtensionError):
-            await self.submit_error(ctx, error)
-
         elif isinstance(error, commands.BadArgument):
 
             if str(ctx.command) in [
-                "raid_perform_attack",
+                "raid_perform",
                 "raid_perform_calculation",
                 "profile_show",
                 "friendship_give",
@@ -422,7 +460,8 @@ class Error(commands.Cog):
                 "friendship_change_name",
                 "friendship_ship",
                 "shikigami_list_show_collected",
-                "logs_show"
+                "logs_show",
+                "perform_exploration_check_clears"
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(embed_color),
@@ -432,9 +471,6 @@ class Error(commands.Cog):
 
             else:
                 await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.UserInputError):
-            await self.submit_error(ctx, error)
 
         elif isinstance(error, commands.CommandInvokeError):
 
@@ -447,6 +483,15 @@ class Error(commands.Cog):
 
             else:
                 await self.submit_error(ctx, error)
+
+        elif isinstance(error, commands.NotOwner):
+            await self.submit_error(ctx, error)
+
+        elif isinstance(error, commands.UserInputError):
+            await self.submit_error(ctx, error)
+
+        elif isinstance(error, commands.ExtensionError):
+            await self.submit_error(ctx, error)
 
         else:
             await self.submit_error(ctx, error)

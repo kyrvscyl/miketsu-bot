@@ -383,6 +383,7 @@ async def frame_blazing(guild, spell_spam_channel):
                 "amulets": 10
             }
         })
+        await logs_add_line("amulets", 10, member.id)
         await spell_spam_channel.send(msg)
 
 
@@ -1263,8 +1264,6 @@ class Economy(commands.Cog):
 
                 def get_bean_shikigami(x_coor_get, y_coor_get):
                     index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
-                    print(f"{x_coor_get}, {y_coor_get}")
-                    print(index_bean - 1)
                     return parade_pull[index_bean - 1]
 
                 shikigami_beaned = get_bean_shikigami(bean_x, bean_y)
@@ -1312,7 +1311,6 @@ class Economy(commands.Cog):
             return index_bean - 1
 
         index_initial = get_bean_shikigami_initial(x_init, y_init) - 1
-        print(f"initial index: {index_initial}")
 
         for index, item in enumerate(images):
             if index == index_initial:
@@ -3124,6 +3122,7 @@ class Economy(commands.Cog):
                 "amulets": -amulet_pull
             }
         })
+        await logs_add_line("amulets", -amulet_pull, user.id)
 
         for summon in summon_pull:
 
@@ -3232,6 +3231,7 @@ class Economy(commands.Cog):
                     description=f"You acquired the {rarity} shikigami {shiki.title()}!",
                     timestamp=get_timestamp()
                 )
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                 embed.set_thumbnail(url=get_thumbnail_shikigami(shiki, "pre"))
                 await ctx.channel.send(embed=embed)
 
@@ -3714,7 +3714,7 @@ class Economy(commands.Cog):
     async def perform_exploration_check_clears_post(self, member, ctx):
 
         total_explorations = 0
-        for result in users.aggregate([
+        for result in explores.aggregate([
             {
                 '$match': {
                     'user_id': str(member.id)
@@ -3892,7 +3892,7 @@ class Economy(commands.Cog):
                         "sushi": - sushi_required
                     }
                 })
-
+                await logs_add_line("sushi", sushi_required, ctx.author.id)
                 roll = random.uniform(0, 100)
                 if roll < adjusted_chance:
                     explores.update_one({
