@@ -296,7 +296,7 @@ class Frames(commands.Cog):
                 except KeyError:
                     continue
 
-            if "Fameous" not in user_frames:
+            if "Frameous" not in user_frames:
                 if len(user_frames) >= 40:
                     await self.achievements_process_announce(member, "Fameous", jades)
 
@@ -437,7 +437,7 @@ class Frames(commands.Cog):
                 if profile is None:
                     pass
 
-                elif profile["shikigami"][0]["evo"] is True and profile["shikigami"][0]["level"] == 40:
+                elif profile["shikigami"][0]["evolved"] is True and profile["shikigami"][0]["level"] == 40:
                     await self.achievements_process_announce(member, "King Of The Jungle", jades)
 
             if "In The Clouds" not in user_frames:

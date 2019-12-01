@@ -393,12 +393,6 @@ class Clock(commands.Cog):
     @commands.command(aliases=["test"])
     @commands.is_owner()
     async def events_manipulate_manual_post(self, ctx):
-
-        await boss_daily_reset_check()
-        await Economy(self.client).reset_rewards_daily()
-        await Economy(self.client).frame_automate()
-        await frame_automate_penalize()
-        await Frames(self.client).achievements_process_daily()
         await Frames(self.client).achievements_process_hourly()
 
     async def reminders_bidding_process(self, date_time):
