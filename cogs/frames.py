@@ -298,7 +298,7 @@ class Frames(commands.Cog):
 
             if "Frameous" not in user_frames:
                 if len(user_frames) >= 40:
-                    await self.achievements_process_announce(member, "Fameous", jades)
+                    await self.achievements_process_announce(member, "Frameous", jades)
 
             if "Fortune Puppies" not in user_frames:
                 levels = []
