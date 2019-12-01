@@ -282,6 +282,25 @@ def get_thumbnail_shikigami(shiki, evolution):
     return shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "thumbnail": 1})["thumbnail"][evolution]
 
 
+def push_new_shikigami(user_id, shiki, evolve, shards):
+    users.update_one({
+        "user_id": str(user_id)}, {
+        "$push": {
+            "shikigami": {
+                "name": shiki,
+                "rarity": get_rarity_shikigami(shiki),
+                "grade": 1,
+                "owned": 0,
+                "evolved": evolve,
+                "shards": shards,
+                "level": 1,
+                "exp": 0,
+                "level_exp_next": 6
+            }
+        }
+    })
+
+
 def pluralize(singular, count):
     if count > 1:
         if singular[-1:] == "s":
@@ -642,22 +661,7 @@ async def perform_exploration_issue_shard_rewards(user_id, shards_reward):
         })
 
         if query is None:
-            users.update_one({
-                "user_id": str(user_id)}, {
-                "$push": {
-                    "shikigami": {
-                        "name": shikigami_shard[0],
-                        "rarity": get_rarity_shikigami(shikigami_shard[0]),
-                        "grade": 1,
-                        "owned": 0,
-                        "evolved": False,
-                        "shards": 0,
-                        "level": 1,
-                        "exp": 0,
-                        "level_exp_next": 6
-                    }
-                }
-            })
+            push_new_shikigami(user_id, shikigami_shard[0], False, 0)
 
         users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
             "$inc": {
@@ -728,19 +732,7 @@ class Economy(commands.Cog):
             })
 
             if query is None:
-                users.update_one({
-                    "user_id": str(user.id)}, {
-                    "$push": {
-                        "shikigami": {
-                            "name": shiki.lower(),
-                            "rarity": get_rarity_shikigami(shiki.lower()),
-                            "grade": 1,
-                            "owned": 0,
-                            "evolved": False,
-                            "shards": 0
-                        }
-                    }
-                })
+                push_new_shikigami(user.id, shiki.lower(), False, 0)
 
             embed = discord.Embed(
                 color=user.colour,
@@ -1341,19 +1333,7 @@ class Economy(commands.Cog):
             rarities_beaned.append(get_rarity_shikigami(beaned_shikigami))
 
             if query is None:
-                users.update_one({
-                    "user_id": str(user.id)}, {
-                    "$push": {
-                        "shikigami": {
-                            "name": beaned_shikigami,
-                            "rarity": get_rarity_shikigami(beaned_shikigami),
-                            "grade": 1,
-                            "owned": 0,
-                            "evolved": False,
-                            "shards": 0
-                        }
-                    }
-                })
+                push_new_shikigami(user.id, beaned_shikigami, False, 0)
 
             users.update_one({"user_id": str(ctx.author.id), "shikigami.name": beaned_shikigami}, {
                 "$inc": {
@@ -2384,19 +2364,7 @@ class Economy(commands.Cog):
                     })
 
                     if query is None:
-                        users.update_one({
-                            "user_id": str(user.id)}, {
-                            "$push": {
-                                "shikigami": {
-                                    "name": shiki,
-                                    "rarity": rarity,
-                                    "grade": 1,
-                                    "owned": 0,
-                                    "evolved": False,
-                                    "shards": 0
-                                }
-                            }
-                        })
+                        push_new_shikigami(user.id, shiki, False, 0)
 
                     users.update_one({
                         "user_id": str(user.id),
@@ -2991,23 +2959,7 @@ class Economy(commands.Cog):
 
             if query is None:
                 evolve, shards = False, 0
-
-                users.update_one({
-                    "user_id": str(user.id)}, {
-                    "$push": {
-                        "shikigami": {
-                            "name": summon[1].replace("||", ""),
-                            "rarity": summon[0],
-                            "grade": 1,
-                            "owned": 0,
-                            "evolved": evolve,
-                            "shards": shards,
-                            "level": 1,
-                            "exp": 0,
-                            "level_exp_next": 6
-                        }
-                    }
-                })
+                push_new_shikigami(user.id, summon[1].replace("||", ""), evolve, shards)
 
             users.update_one({
                 "user_id": str(user.id),
@@ -3212,7 +3164,10 @@ class Economy(commands.Cog):
                                 "grade": 1,
                                 "owned": 0,
                                 "evolved": evolve,
-                                "shards": shards
+                                "shards": shards,
+                                "level": 1,
+                                "exp": 0,
+                                "level_exp_next": 6
                             }
                         }
                     })
