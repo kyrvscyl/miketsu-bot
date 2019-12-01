@@ -579,7 +579,7 @@ class Frames(commands.Cog):
                 await self.achievements_process_announce(member, "Ubumomma", jades)
 
             if document["level"] >= 50 and "Pine of Kisaragi" not in user_frames:
-                await self.achievements_process_announce(member, "Pine of Kisaragi", jades)
+                await self.achievements_process_announce(member, "Pine Of Kisaragi", jades)
 
             if document["level"] == 60 and "Cold of Mutsuki" not in user_frames:
                 await self.achievements_process_announce(member, "Cold of Mutsuki", jades)
@@ -918,7 +918,7 @@ class Frames(commands.Cog):
             timestamp=get_timestamp()
         )
         embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
-        embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
+        embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
         await spell_spam_channel.send(embed=embed)
         await asyncio.sleep(1)
 

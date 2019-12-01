@@ -4238,7 +4238,7 @@ class Economy(commands.Cog):
             timestamp=get_timestamp()
         )
         embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-        embed.set_thumbnail(url=get_frame_thumbnail(frame_name.title()))
+        embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
         await spell_spam_channel.send(embed=embed)
 
 
