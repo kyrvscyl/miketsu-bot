@@ -578,7 +578,7 @@ class Frames(commands.Cog):
             if document["level"] >= 30 and "Ubumomma" not in user_frames:
                 await self.achievements_process_announce(member, "Ubumomma", jades)
 
-            if document["level"] >= 50 and "Pine of Kisaragi" not in user_frames:
+            if document["level"] >= 50 and "Pine Of Kisaragi" not in user_frames:
                 await self.achievements_process_announce(member, "Pine Of Kisaragi", jades)
 
             if document["level"] == 60 and "Cold of Mutsuki" not in user_frames:
