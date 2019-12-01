@@ -558,24 +558,29 @@ async def level_create_user(user):
             "realm_ticket": 3,
             "honor": 0,
             "talisman": 0,
-            "friendship": 0,
             "guild_medal": 0,
             "shikigami": [],
+            "friendship": 0,
+            "display": None,
             "encounter_ticket": 0,
             "daily": False,
             "weekly": False,
             "raided_count": 0,
             "friendship_pass": 0,
-            "display": None,
             "prayers": 3,
             "achievements": [],
             "frame": "",
             "achievements_count": 0,
             "wish": True,
             "parade_tickets": 0,
-            "amulets_b": 0,
+            "N": 0,
             "amulets_spent_b": 0,
-            "N": 0
+            "amulets_b": 0,
+            "sushi": 100,
+            "exploration": 1,
+            "stickers": 0,
+            "SSN": 0,
+            "frames": []
         }
         users.insert_one(profile)
 
