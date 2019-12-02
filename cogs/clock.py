@@ -24,9 +24,11 @@ from cogs.quest import Expecto, owls_restock
 config = get_collections("config")
 events = get_collections("events")
 guilds = get_collections("guilds")
+logs = get_collections("logs")
 quests = get_collections("quests")
 reminders = get_collections("reminders")
 streaks = get_collections("streaks")
+users = get_collections("users")
 weathers = get_collections("weathers")
 
 # Lists
@@ -39,6 +41,7 @@ guild_id = int(os.environ.get("SERVER"))
 clock_channel = guilds.find_one({"server": str(guild_id)}, {"channels.clock": 1, "_id": 0})["channels"]["clock"]
 embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
+spell_spam_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
 silver_sickles_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["silver_sickles"]
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
@@ -87,6 +90,15 @@ def generate_weather(hour):
     return weather1, weather2
 
 
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
+
+
 async def frame_automate_penalize():
 
     for streak in streaks.find({}, {"_id": 0}):
@@ -122,6 +134,30 @@ async def actions_reset():
 
 async def reset_purchase():
     quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
+
+
+async def logs_add_line(currency, amount, user_id):
+    if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
+        profile = {
+            "user_id": str(user_id),
+            "logs": []
+        }
+        logs.insert_one(profile)
+
+    logs.update_one({
+        "user_id": str(user_id)
+    }, {
+        "$push": {
+            "logs": {
+                "$each": [{
+                    "currency": currency,
+                    "amount": amount,
+                    "date": get_timestamp(),
+                }],
+                "$position": 0
+            }
+        }
+    })
 
 
 class Clock(commands.Cog):
@@ -184,6 +220,9 @@ class Clock(commands.Cog):
                 await self.reminders_bidding_process(bidding_format)
                 await self.events_activate_reminder_submit()
                 await Frames(self.client).achievements_process_hourly()
+
+            if minute == "30":
+                await self.spawn_random_sushi()
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
@@ -393,7 +432,7 @@ class Clock(commands.Cog):
     @commands.command(aliases=["test"])
     @commands.is_owner()
     async def events_manipulate_manual_post(self, ctx):
-        await Frames(self.client).achievements_process_hourly()
+        await self.spawn_random_sushi()
 
     async def reminders_bidding_process(self, date_time):
 
@@ -417,6 +456,53 @@ class Clock(commands.Cog):
 
         except ValueError:
             pass
+
+    async def spawn_random_sushi(self):
+
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+        sushi_claimers = []
+        minutes = 10
+        timestamp = get_timestamp()
+
+        def create_embed(listings, strike):
+            embed = discord.Embed(
+                title=f"{strike}Free sushi!{strike} 🍣",
+                description=f"claim your free sushi every hour! 🎉\n"
+                            f"served {len(listings)} hungry {pluralize('Onmyoji', len(listings))}",
+                color=embed_color,
+                timestamp=timestamp
+            )
+            embed.set_footer(text=f"lasts {minutes} minutes", icon_url=self.client.user.avatar_url)
+            return embed
+
+        msg = await spell_spam_channel.send(embed=create_embed(sushi_claimers, ""))
+        await msg.add_reaction("🍽️")
+
+        def check(r, u):
+            return u != self.client.user and \
+                   r.message.id == msg.id and \
+                   str(r.emoji) == "🍽️" and \
+                   str(u.id) not in sushi_claimers
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60*minutes, check=check)
+            except asyncio.TimeoutError:
+                await msg.edit(embed=create_embed(sushi_claimers, "~~"))
+                await msg.clear_reactions()
+                break
+            else:
+                sushi = 25
+                users.update_one({
+                    "user_id": str(user.id)
+                }, {
+                    "$inc": {
+                        "sushi": sushi
+                    }
+                })
+                sushi_claimers.append(str(user.id))
+                await msg.edit(embed=create_embed(sushi_claimers, ""))
+                await logs_add_line("sushi", sushi, user.id)
 
 
 def setup(client):

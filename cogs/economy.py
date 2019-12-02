@@ -175,14 +175,14 @@ def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
-def get_shikigami_level(user_id, shiki):
+def get_shikigami_stats(user_id, shiki):
     profile = users.find_one({
         "user_id": str(user_id), "shikigami.name": shiki
     }, {
         "_id": 0,
         "shikigami.$": 1
     })
-    return profile["shikigami"][0]["level"]
+    return profile["shikigami"][0]["level"], profile["shikigami"][0]["evolved"]
 
 
 def get_time_converted(utc_dt):
@@ -968,7 +968,7 @@ class Economy(commands.Cog):
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         await spell_spam_channel.send(embed=embed)
 
-    @commands.command(aliases=["stat"])
+    @commands.command(aliases=["stat", "st"])
     @commands.guild_only()
     async def stat_shikigami(self, ctx, *, name):
 
@@ -1057,10 +1057,10 @@ class Economy(commands.Cog):
             embed.add_field(name="Total Amulets Spent", value=f"{count_total:,d}")
             await ctx.channel.send(embed=embed)
 
-        elif name.lower() not in pool_all_mystery:
+        elif name.lower() not in pool_all_mystery or name.lower() not in pool_all_broken:
             await shikigami_post_approximate_results(ctx, name.lower())
 
-        elif name.lower() in pool_all_mystery:
+        elif name.lower() in pool_all_mystery or name.lower() not in pool_all_broken:
 
             listings = []
             for entry in users.aggregate([
@@ -1172,7 +1172,7 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-    @commands.command(aliases=["parade"])
+    @commands.command(aliases=["parade", "prd"])
     @commands.guild_only()
     @commands.cooldown(1, 60, commands.BucketType.user)
     @commands.check(check_if_user_has_parade_tickets)
@@ -1296,7 +1296,7 @@ class Economy(commands.Cog):
             return a, b
 
         def add_border(input_image):
-            border1, border2 = 8, 8
+            border1, border2 = 9, 9
             address_temp = f"temp/{ctx.message.id}.jpg"
             bordered_thumbnail = ImageOps.expand(input_image, border=(border1, border2), fill=ctx.author.color.to_rgb())
             bordered_thumbnail.save(address_temp)
@@ -1307,7 +1307,7 @@ class Economy(commands.Cog):
             index_bean = (max_rows * y_coor_get) - (max_rows - x_coor_get)
             return index_bean - 1
 
-        index_initial = get_bean_shikigami_initial(x_init, y_init) - 1
+        index_initial = get_bean_shikigami_initial(x_init, y_init)
 
         for index, item in enumerate(images):
             if index == index_initial:
@@ -1584,7 +1584,6 @@ class Economy(commands.Cog):
         friendship_pass = profile["friendship_pass"]
         talismans = profile["talisman"]
         prayers = profile["prayers"]
-        achievements_count = profile["achievements_count"]
         achievements = profile["achievements"]
         parade = profile["parade_tickets"]
         sushi = profile["sushi"]
@@ -1612,7 +1611,7 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
-            value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d} | {profile['N']:,d}, | "
+            value=f"{profile['SP']} | {profile['SSR']} | {profile['SR']} | {profile['R']:,d} | {profile['N']:,d} | "
                   f"{profile['SSN']:,d}",
             inline=False
         )
@@ -3533,7 +3532,59 @@ class Economy(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
-    @commands.command(aliases=["shikis", "shiki"])
+    @commands.command(aliases=["shiki", "shikigami"])
+    @commands.guild_only()
+    async def shikigami_show_post_shiki(self, ctx, *, arg1):
+
+        shiki = arg1.lower()
+        user = ctx.author
+        user_shikigami = users.find_one({
+            "user_id": str(user.id), "shikigami.name": shiki}, {
+            "_id": 0, "shikigami.$": 1
+        })
+
+        if shiki not in pool_all_mystery or shiki not in pool_all_broken:
+            await shikigami_post_approximate_results(ctx, shiki)
+
+        elif user_shikigami is None:
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                title="Invalid selection",
+                description=f"this shikigami is not in your possession"
+            )
+            await ctx.channel.send(embed=embed)
+
+        else:
+            await self.shikigami_show_post_shiki_user(user, user_shikigami, shiki, ctx)
+
+    async def shikigami_show_post_shiki_user(self, user, user_shikigami, shiki, ctx):
+
+        evolve = "pre"
+        if user_shikigami[0]["evolved"] is True:
+            evolve = "evo"
+
+        thumbnail = get_thumbnail_shikigami(shiki, evolve)
+
+        embed = discord.Embed(
+            colour=user.colour,
+            description=f"```"
+                        f"Level    ::   {user_shikigami[0]['level']}\n"
+                        f"Exp      ::   {user_shikigami[0]['exp']}/{user_shikigami[0]['level_exp_next']}\n"
+                        f"Grade    ::   {user_shikigami[0]['grade']}\n"
+                        f"Owned    ::   {user_shikigami[0]['owned']}\n"
+                        f"Shards   ::   {user_shikigami[0]['shards']}\n"
+                        f"```",
+            timestamp=get_timestamp()
+        )
+        embed.set_thumbnail(url=thumbnail)
+        embed.set_author(
+            name=f"{user.display_name}'s {shiki.title()}",
+            icon_url=user.avatar_url
+        )
+        embed.set_footer(text=f"Rarity: {user_shikigami[0]['rarity']}")
+        await ctx.channel.send(embed=embed)
+
+    @commands.command(aliases=["shikis", "shikigamis"])
     @commands.guild_only()
     async def shikigami_show_post_shikis(self, ctx, arg1, *, member: discord.Member = None):
 
@@ -3734,8 +3785,6 @@ class Economy(commands.Cog):
                 description=f"that is not a valid chapter, < {zones.count()}",
             )
             await ctx.channel.send(embed=embed)
-            self.client.get_command("perform_exploration").reset_cooldown(ctx)
-            return
 
         elif chapter > user_profile["exploration"]:
             embed = discord.Embed(
@@ -3745,202 +3794,236 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
             self.client.get_command("perform_exploration").reset_cooldown(ctx)
-            return
 
-        spirits = zone["spirits"]
-        sushi_required = zone["sushi_required"]
-        user_level = user_profile["level"]
-        shikigami_set = user_profile["display"]
-        shikigami_level = get_shikigami_level(user_id, shikigami_set)
-        total_chance = user_level + shikigami_level - chapter
-        adjusted_chance = random.uniform(total_chance * 0.95, total_chance)
+        else:
+            spirits = zone["spirits"]
+            sushi_required = zone["sushi_required"]
+            user_level = user_profile["level"]
+            shikigami_set = user_profile["display"]
+            shikigami_level, shikigami_evolved = get_shikigami_stats(user_id, shikigami_set)
 
-        def create_embed_exploration(x, progress, strike):
+            evo_adjustment = 1
+            if shikigami_evolved is True:
+                evo_adjustment = 0.75
 
-            description2 = ""
-            for log in progress:
-                description2 += log
+            total_chance = user_level + shikigami_level - chapter * evo_adjustment
+            adjusted_chance = random.uniform(total_chance * 0.95, total_chance)
 
-            num = x + 1
-            if num > spirits:
-                num = spirits
+            def create_embed_exploration(x, progress, strike):
 
-            user_profile_new = users.find_one({
-                "user_id": str(user_id), "shikigami.name": user_profile["display"]
-            }, {
-                "_id": 0,
-                "shikigami.$": 1,
-                "sushi": 1
-            })
-            exp = user_profile_new["shikigami"][0]['exp']
-            level_exp_next = user_profile_new["shikigami"][0]['level_exp_next']
-            shiki_level = user_profile_new["shikigami"][0]['level']
+                description2 = ""
+                for log in progress:
+                    description2 += log
 
-            evo = users.find_one({
-                "user_id": str(user_id), "shikigami.name": shikigami_set}, {
-                "shikigami.$.name": 1
-            })["shikigami"][0]["evolved"]
-            thumbnail = get_thumbnail_shikigami(shikigami_set.lower(), get_evo_link(evo))
+                num = x + 1
+                if num > spirits:
+                    num = spirits
 
-            embed_explore = discord.Embed(
-                color=ctx.author.colour,
-                title=f"{strike}Exploration stage: {num}/{spirits}{strike}",
-                description=f"Chapter {arg}: {zone['name']}\n{description2}",
-                timestamp=get_timestamp()
-            )
-            embed_explore.add_field(
-                name=f"Shikigami: {user_profile['display'].title()} | {user_profile_new['sushi']} {e_s}",
-                value=f"Level: {shiki_level} | Experience: {exp}/{level_exp_next}"
-            )
-            embed_explore.set_footer(
-                text=f"{ctx.author.display_name}",
-                icon_url=ctx.author.avatar_url
-            )
-            embed_explore.set_thumbnail(url=thumbnail)
+                user_profile_new = users.find_one({
+                    "user_id": str(user_id), "shikigami.name": user_profile["display"]
+                }, {
+                    "_id": 0,
+                    "shikigami.$": 1,
+                    "sushi": 1
+                })
+                exp = user_profile_new["shikigami"][0]['exp']
+                level_exp_next = user_profile_new["shikigami"][0]['level_exp_next']
+                shiki_level = user_profile_new["shikigami"][0]['level']
 
-            return embed_explore
+                evo = users.find_one({
+                    "user_id": str(user_id), "shikigami.name": shikigami_set}, {
+                    "shikigami.$.name": 1
+                })["shikigami"][0]["evolved"]
+                thumbnail = get_thumbnail_shikigami(shikigami_set.lower(), get_evo_link(evo))
 
-        if explores.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-            profile = {
+                embed_explore = discord.Embed(
+                    color=ctx.author.colour,
+                    title=f"{strike}Exploration stage: {num}/{spirits}{strike}",
+                    description=f"Chapter {arg}: {zone['name']}\n{description2}",
+                    timestamp=get_timestamp()
+                )
+                embed_explore.add_field(
+                    name=f"Shikigami: {user_profile['display'].title()} | {user_profile_new['sushi']} {e_s}",
+                    value=f"Level: {shiki_level} | Experience: {exp}/{level_exp_next}\n"
+                          f"Clear Chance: ~{round(total_chance, 2)}%"
+                )
+                embed_explore.set_footer(
+                    text=f"{ctx.author.display_name}",
+                    icon_url=ctx.author.avatar_url
+                )
+                embed_explore.set_thumbnail(url=thumbnail)
+
+                return embed_explore
+
+            if explores.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
+                profile = {
+                    "user_id": str(user_id),
+                    "explores": []
+                }
+                explores.insert_one(profile)
+
+            exploration_continuation = explores.find_one({
                 "user_id": str(user_id),
-                "explores": []
-            }
-            explores.insert_one(profile)
-
-        if explores.find_one({"user_id": str(user_id), "explores.completion": False}, {"_id": 0}) is None:
-            explores.update_one({
-                "user_id": str(user_id)
-            }, {
-                "$push": {
-                    "explores": {
-                        "$each": [{
-                            "attempts": 0,
-                            "logs": [],
-                            "required": spirits,
-                            "chapter": chapter,
-                            "completion": False,
-                            "date": get_time(),
-                        }],
-                        "$position": 0
+                "explores.completion": False,
+                "explores": {
+                    "$elemMatch": {
+                        "completion": False,
+                        "chapter": chapter
                     }
                 }
+            }, {
+                "_id": 0,
+                "explores.$": 1
             })
 
-        new_explore = explores.find_one({
-            "user_id": str(user_id), "explores.completion": False}, {
-            "_id": 0,
-            "explores.$": 1,
-        })
-
-        msg = await ctx.channel.send(embed=create_embed_exploration(new_explore['explores'][0]['attempts'], [], ""))
-        await msg.add_reaction("🏹")
-
-        def check(r, u):
-            return \
-                msg.id == r.message.id and \
-                str(r.emoji) == "🏹" and \
-                u.id == ctx.author.id and \
-                check_if_user_has_sushi_2(ctx, sushi_required)
-
-        while True:
-            try:
-                await self.client.wait_for("reaction_add", timeout=60, check=check)
-            except asyncio.TimeoutError:
-                await msg.clear_reactions()
-                break
-            else:
-                users.update_one({
+            if exploration_continuation is None:
+                explores.update_one({
                     "user_id": str(user_id)
                 }, {
-                    "$inc": {
-                        "sushi": - sushi_required
+                    "$push": {
+                        "explores": {
+                            "$each": [{
+                                "attempts": 0,
+                                "logs": [],
+                                "required": spirits,
+                                "chapter": chapter,
+                                "completion": False,
+                                "date": get_time(),
+                            }],
+                            "$position": 0
+                        }
                     }
                 })
-                await logs_add_line("sushi", sushi_required, ctx.author.id)
-                roll = random.uniform(0, 100)
-                if roll < adjusted_chance:
-                    explores.update_one({
-                        "user_id": str(user_id), "explores.completion": False}, {
-                        "$inc": {
-                            "explores.$.attempts": 1
-                        }
-                    })
 
-                    explores.update_one({
-                        "user_id": str(user_id), "explores.completion": False}, {
-                        "$push": {
-                            "explores.$.logs": "✅"
-                        }
-                    })
-                    new_explore = explores.find_one({
-                        "user_id": str(user_id), "explores.completion": False}, {
-                        "_id": 0,
-                        "explores.$": 1,
-                    })
-                    shikigami_add_exp = users.update_one({
-                        "user_id": str(user_id),
-                        "$and": [{
-                            "shikigami": {
-                                "$elemMatch": {
-                                    "name": user_profile["display"],
-                                    "level": {"$lt": 40}}
-                            }}]
+            new_explore = explores.find_one({
+                "user_id": str(user_id),
+                "explores.completion": False,
+                "explores": {
+                    "$elemMatch": {
+                        "completion": False,
+                        "chapter": chapter
+                    }
+                }
+            }, {
+                "_id": 0,
+                "explores.$": 1
+            })
+
+            msg = await ctx.channel.send(
+                embed=create_embed_exploration(new_explore['explores'][0]['attempts'], [], "")
+            )
+            await msg.add_reaction("🏹")
+
+            def check(r, u):
+                return \
+                    msg.id == r.message.id and \
+                    str(r.emoji) == "🏹" and \
+                    u.id == ctx.author.id and \
+                    check_if_user_has_sushi_2(ctx, sushi_required)
+
+            while True:
+                try:
+                    await self.client.wait_for("reaction_add", timeout=60, check=check)
+                except asyncio.TimeoutError:
+                    await msg.clear_reactions()
+                    break
+                else:
+                    users.update_one({
+                        "user_id": str(user_id)
                     }, {
                         "$inc": {
-                            "shikigami.$.exp": 5 * round((chapter + 1) / 2)
+                            "sushi": - sushi_required
                         }
                     })
-
-                    if shikigami_add_exp.modified_count > 0:
-                        await self.shikigami_process_levelup(user_id, user_profile["display"])
-
-                    report = new_explore["explores"][0]["logs"]
-                    await msg.edit(embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, ""))
-
-                    if new_explore["explores"][0]["attempts"] == spirits:
+                    await logs_add_line("sushi", -sushi_required, ctx.author.id)
+                    roll = random.uniform(0, 100)
+                    if roll < adjusted_chance:
                         explores.update_one({
                             "user_id": str(user_id), "explores.completion": False}, {
-                            "$set": {
-                                "explores.$.completion": True
+                            "$inc": {
+                                "explores.$.attempts": 1
+                            }
+                        })
+
+                        explores.update_one({
+                            "user_id": str(user_id), "explores.completion": False}, {
+                            "$push": {
+                                "explores.$.logs": "✅"
                             }
                         })
                         new_explore = explores.find_one({
-                            "user_id": str(user_id), "explores.completion": True}, {
+                            "user_id": str(user_id), "explores.completion": False}, {
+                            "_id": 0,
+                            "explores.$": 1,
+                        })
+                        shikigami_add_exp = users.update_one({
+                            "user_id": str(user_id),
+                            "$and": [{
+                                "shikigami": {
+                                    "$elemMatch": {
+                                        "name": user_profile["display"],
+                                        "level": {"$lt": 40}}
+                                }}]
+                        }, {
+                            "$inc": {
+                                "shikigami.$.exp": 5 * round((chapter + 1) / 2)
+                            }
+                        })
+
+                        if shikigami_add_exp.modified_count > 0:
+                            await self.shikigami_process_levelup(user_id, user_profile["display"])
+
+                        report = new_explore["explores"][0]["logs"]
+                        await msg.edit(
+                            embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, "")
+                        )
+
+                        if new_explore["explores"][0]["attempts"] == spirits:
+                            explores.update_one({
+                                "user_id": str(user_id), "explores.completion": False}, {
+                                "$set": {
+                                    "explores.$.completion": True
+                                }
+                            })
+                            new_explore = explores.find_one({
+                                "user_id": str(user_id), "explores.completion": True}, {
+                                "_id": 0,
+                                "explores.$": 1,
+                            })
+                            report = new_explore["explores"][0]["logs"]
+                            await msg.edit(embed=create_embed_exploration(spirits, report, "~~"))
+                            await msg.clear_reactions()
+
+                            embed_new = create_embed_exploration(spirits, report, "~~")
+                            await self.perform_exploration_process_rewards(user_id, msg, embed_new, chapter)
+                            users.update_one({
+                                "user_id": str(user_id),
+                                "exploration": {
+                                    "$lt": 28
+                                }
+                            }, {
+                                "$inc": {
+                                    "exploration": 1
+                                }
+                            })
+                            break
+
+                    else:
+                        explores.update_one({
+                            "user_id": str(user_id), "explores.completion": False}, {
+                            "$push": {
+                                "explores.$.logs": "❌"
+                            }
+                        })
+                        new_explore = explores.find_one({
+                            "user_id": str(user_id), "explores.completion": False}, {
                             "_id": 0,
                             "explores.$": 1,
                         })
                         report = new_explore["explores"][0]["logs"]
-                        await msg.edit(embed=create_embed_exploration(spirits, report, "~~"))
-                        await msg.clear_reactions()
-
-                        embed_new = create_embed_exploration(spirits, report, "~~")
-                        await self.perform_exploration_process_rewards(user_id, msg, embed_new, chapter)
-                        users.update_one({
-                            "user_id": str(user_id),
-                            "exploration": {
-                                "$lt": 28
-                            }
-                        }, {
-                            "$inc": {
-                                "exploration": 1
-                            }
-                        })
-                        break
-
-                else:
-                    explores.update_one({
-                        "user_id": str(user_id), "explores.completion": False}, {
-                        "$push": {
-                            "explores.$.logs": "❌"
-                        }
-                    })
-                    new_explore = explores.find_one({
-                        "user_id": str(user_id), "explores.completion": False}, {
-                        "_id": 0,
-                        "explores.$": 1,
-                    })
-                    report = new_explore["explores"][0]["logs"]
-                    await msg.edit(embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, ""))
+                        await msg.edit(
+                            embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, "")
+                        )
 
         self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
@@ -4134,9 +4217,9 @@ class Economy(commands.Cog):
                 "exploration": 1
             })
             embed = discord.Embed(
-                title=f"Unlocked chapters",
                 color=ctx.author.colour,
-                description=f"You have access up to chapter {profile['exploration']}"
+                description=f"You have access up to chapter {profile['exploration']}",
+                timestamp=get_timestamp()
             )
             embed.set_footer(
                 text=f"{ctx.author.display_name}",

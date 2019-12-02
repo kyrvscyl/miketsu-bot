@@ -92,7 +92,7 @@ class Startup(commands.Cog):
             name="fake Onmyoji",
             value="*"
                   "daily, weekly, profile, set, buy, summon, explore, explores, chapter, "
-                  "evolve, friendship, ships, leaderboard, shikigamis, shrine, sail, pray, stat, "
+                  "evolve, friendship, ships, leaderboard, shikigami, shikigamis, shrine, sail, pray, stat, "
                   "frames, wish, wishlist, fulfill, parade, collections, shards, "
                   "raid, raidc, encounter, bossinfo"
                   "*",
@@ -102,7 +102,7 @@ class Startup(commands.Cog):
             name="Others",
             value="*"
                   "changelog, bounty, suggest, stickers, newsticker, wander, portrait, "
-                  "stats, duel*\\*\\*, memo*\\*, *manage*\\*, *events*\\"
+                  "stats, duel\\*\\*, memo\\*, manage\\*, events\\*"
                   "*",
             inline=False
         )

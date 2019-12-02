@@ -169,6 +169,18 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "shikigami_show_post_shiki":
+                embed = discord.Embed(
+                    title="shikigami, shiki", colour=discord.Colour(embed_color),
+                    description="shows your shikigami profile stats"
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}shikigami <shikigami>`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "raid_perform_calculation":
                 embed = discord.Embed(
                     title="raidcalc, raidc, rc", colour=discord.Colour(embed_color),

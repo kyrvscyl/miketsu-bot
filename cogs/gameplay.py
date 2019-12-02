@@ -169,7 +169,7 @@ class Gameplay(commands.Cog):
     async def raid_perform(self, ctx, *, victim: discord.Member = None):
 
         if victim is None:
-            raise discord.ext.commands.MissingRequiredArgument
+            raise discord.ext.commands.MissingRequiredArgument(ctx.author)
 
         elif victim.bot or victim.id == ctx.author.id:
             return
@@ -211,7 +211,7 @@ class Gameplay(commands.Cog):
                         await ctx.channel.send(embed=embed)
 
             except TypeError:
-                raise discord.ext.commands.BadArgument
+                raise discord.ext.commands.BadArgument(ctx.author)
 
     async def raid_perform_attack(self, victim, raider, ctx):
         try:
@@ -266,7 +266,7 @@ class Gameplay(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
         except KeyError:
-            raise discord.ext.commands.BadArgument
+            raise discord.ext.commands.BadArgument(ctx.author)
 
         except TypeError:
             return
@@ -292,7 +292,7 @@ class Gameplay(commands.Cog):
     async def raid_perform_calculation(self, ctx, *, victim: discord.Member = None):
 
         if victim is None:
-            raise discord.ext.commands.MissingRequiredArgument
+            raise discord.ext.commands.MissingRequiredArgument(ctx.author)
 
         elif victim == ctx.author or victim.bot is True:
             return
@@ -326,7 +326,7 @@ class Gameplay(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         except KeyError:
-            raise discord.ext.commands.BadArgument
+            raise discord.ext.commands.BadArgument(ctx.author)
 
         except TypeError:
             return
@@ -507,8 +507,8 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"You acquired {offer_amount:,d}{get_emoji(offer_item)} in exchange for "
-                                f"{cost_amount:,d}{get_emoji(cost_item)}",
+                    description=f"You acquired `{offer_amount:,d}`{get_emoji(offer_item)} in exchange for "
+                                f"`{cost_amount:,d}`{get_emoji(cost_item)}",
                     timestamp=get_timestamp()
                 )
                 embed.add_field(
