@@ -227,7 +227,7 @@ class Clock(commands.Cog):
     async def events_activate_reminder_submit(self):
 
         for reminder in events.find({"status": True}, {"_id": 0}):
-            if reminder["next"].strftime("%Y-%m-%d") == get_time().strftime("%Y-%m-%d"):
+            if reminder["next"].strftime("%Y-%m-%d %H:%M") == get_time().strftime("%Y-%m-%d %H:%M"):
 
                 events.update_one({
                     "code": reminder["code"],

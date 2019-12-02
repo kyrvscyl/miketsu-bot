@@ -1645,7 +1645,7 @@ class Economy(commands.Cog):
         async def generate_embed(page_new):
             embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
             embed_new.set_author(
-                name=f"{member.display_name}'s achievements [{achievements_count}]",
+                name=f"{member.display_name}'s achievements [{len(achievements)}]",
                 icon_url=member.avatar_url
             )
             embed_new.set_image(url=await self.profile_generate_frame_image_new(member, achievements, page_new))
@@ -2901,8 +2901,8 @@ class Economy(commands.Cog):
             if amulet_have >= 5:
                 await self.summon_perform_broken_pull(ctx, user, 5)
 
-            else:
-                await self.summon_perform_broken_pull(ctx, user, 5 - amulet_have)
+            elif 0 < amulet_have < 5:
+                await self.summon_perform_broken_pull(ctx, user, amulet_have)
 
         self.client.get_command("summon_perform_broken").reset_cooldown(ctx)
 
@@ -3667,7 +3667,7 @@ class Economy(commands.Cog):
     async def perform_exploration_check_clears(self, ctx, *, member: discord.Member = None):
         
         if member is None:
-            await self.perform_exploration_check_clears_post(member, ctx)
+            await self.perform_exploration_check_clears_post(ctx.author, ctx)
         else:
             await self.perform_exploration_check_clears_post(member, ctx)
 
@@ -3684,6 +3684,10 @@ class Economy(commands.Cog):
                     'path': '$explores'
                 }
             }, {
+                '$match': {
+                    'explores.completion': True
+                }
+            }, {
                 '$count': 'count'
             }
         ]):
@@ -3691,8 +3695,8 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(
             colour=ctx.author.colour,
-            title="Exploration stats",
-            description=f"Total clears: {total_explorations}"
+            description=f"Your total exploration clears: {total_explorations}",
+            timestamp=get_timestamp()
         )
         embed.set_footer(
             text=f"{member.display_name}",
@@ -3878,7 +3882,7 @@ class Economy(commands.Cog):
                         "$and": [{
                             "shikigami": {
                                 "$elemMatch": {
-                                    "name": "miketsu",
+                                    "name": user_profile["display"],
                                     "level": {"$lt": 40}}
                             }}]
                     }, {

@@ -507,7 +507,7 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"acquired {offer_amount:,d}{get_emoji(offer_item)} in exchange for "
+                    description=f"You acquired {offer_amount:,d}{get_emoji(offer_item)} in exchange for "
                                 f"{cost_amount:,d}{get_emoji(cost_item)}",
                     timestamp=get_timestamp()
                 )
