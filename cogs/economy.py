@@ -3543,7 +3543,7 @@ class Economy(commands.Cog):
             "_id": 0, "shikigami.$": 1
         })
 
-        if shiki not in pool_all_mystery or shiki not in pool_all_broken:
+        if shiki not in pool_all_mystery and shiki not in pool_all_broken:
             await shikigami_post_approximate_results(ctx, shiki)
 
         elif user_shikigami is None:
@@ -3559,8 +3559,9 @@ class Economy(commands.Cog):
 
     async def shikigami_show_post_shiki_user(self, user, user_shikigami, shiki, ctx):
 
+        shiki_profile = user_shikigami["shikigami"]
         evolve = "pre"
-        if user_shikigami[0]["evolved"] is True:
+        if shiki_profile[0]["evolved"] is True:
             evolve = "evo"
 
         thumbnail = get_thumbnail_shikigami(shiki, evolve)
@@ -3568,11 +3569,11 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             colour=user.colour,
             description=f"```"
-                        f"Level    ::   {user_shikigami[0]['level']}\n"
-                        f"Exp      ::   {user_shikigami[0]['exp']}/{user_shikigami[0]['level_exp_next']}\n"
-                        f"Grade    ::   {user_shikigami[0]['grade']}\n"
-                        f"Owned    ::   {user_shikigami[0]['owned']}\n"
-                        f"Shards   ::   {user_shikigami[0]['shards']}\n"
+                        f"Level    ::   {shiki_profile[0]['level']}\n"
+                        f"Exp      ::   {shiki_profile[0]['exp']}/{shiki_profile[0]['level_exp_next']}\n"
+                        f"Grade    ::   {shiki_profile[0]['grade']}\n"
+                        f"Owned    ::   {shiki_profile[0]['owned']}\n"
+                        f"Shards   ::   {shiki_profile[0]['shards']}\n"
                         f"```",
             timestamp=get_timestamp()
         )
@@ -3581,7 +3582,7 @@ class Economy(commands.Cog):
             name=f"{user.display_name}'s {shiki.title()}",
             icon_url=user.avatar_url
         )
-        embed.set_footer(text=f"Rarity: {user_shikigami[0]['rarity']}")
+        embed.set_footer(text=f"Rarity: {shiki_profile[0]['rarity']}")
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["shikis", "shikigamis"])
@@ -4183,12 +4184,22 @@ class Economy(commands.Cog):
         if level < level_end:
             level_next = 5 * (round(((level + 2) ** (1 / 0.400515000062462)) / 5))
             users.update_one({
-                "user_id": str(user_id), "shikigami.name": shiki}, {
+                "user_id": str(user_id), "shikigami.name": shiki
+            }, {
                 "$set": {
                     "shikigami.$.level_exp_next": level_next,
                     "shikigami.$.level": level_end
                 }
             })
+            if level_end == 40:
+                users.update_one({
+                    "user_id": str(user_id), "shikigami.name": shiki
+                }, {
+                    "$set": {
+                        "shikigami.$.level_exp_next": 10000,
+                        "shikigami.$.exp": 10000
+                    }
+                })
 
     @commands.command(aliases=["chapter", "ch"])
     @commands.guild_only()
