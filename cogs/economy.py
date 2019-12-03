@@ -70,6 +70,7 @@ pool_n = []
 pool_ssn = []
 
 pool_shrine = []
+pool_all = []
 pool_all_mystery = []
 pool_all_broken = []
 
@@ -116,6 +117,8 @@ pool_all_mystery.extend(pool_r)
 pool_all_mystery.extend(pool_shrine)
 pool_all_broken.extend(pool_n)
 pool_all_broken.extend(pool_ssn)
+pool_all.extend(pool_all_mystery)
+pool_all.extend(pool_all_broken)
 
 
 def check_if_user_has_development_role(ctx):
@@ -649,32 +652,6 @@ async def frame_automate_penalize():
     })
 
 
-async def perform_exploration_issue_shard_rewards(user_id, shards_reward):
-    trimmed = []
-    for entry in shards_reward:
-        if entry[1] != 0:
-            trimmed.append(entry)
-        else:
-            continue
-
-    for shikigami_shard in trimmed:
-
-        query = users.find_one({
-            "user_id": str(user_id),
-            "shikigami.name": shikigami_shard[0]}, {
-            "_id": 0, "shikigami.$": 1
-        })
-
-        if query is None:
-            push_new_shikigami(user_id, shikigami_shard[0], False, 0)
-
-        users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
-            "$inc": {
-                "shikigami.$.shards": 1
-            }
-        })
-
-
 class Economy(commands.Cog):
 
     def __init__(self, client):
@@ -713,7 +690,7 @@ class Economy(commands.Cog):
         elif profile["wish"] is False:
             embed = discord.Embed(
                 color=user.colour,
-                description=f"Their wish has been fulfilled already today",
+                description=f"Your wish has been fulfilled already today",
             )
             await ctx.channel.send(embed=embed)
 
@@ -1057,10 +1034,10 @@ class Economy(commands.Cog):
             embed.add_field(name="Total Amulets Spent", value=f"{count_total:,d}")
             await ctx.channel.send(embed=embed)
 
-        elif name.lower() not in pool_all_mystery or name.lower() not in pool_all_broken:
+        elif name.lower() not in pool_all:
             await shikigami_post_approximate_results(ctx, name.lower())
 
-        elif name.lower() in pool_all_mystery or name.lower() not in pool_all_broken:
+        elif name.lower() in pool_all:
 
             listings = []
             for entry in users.aggregate([
@@ -3226,6 +3203,10 @@ class Economy(commands.Cog):
             query = users.find({}, {"_id": 0, "user_id": 1, "SR": 1})
             await self.leaderboard_post_record_users(ctx, query, f"{e_3} LeaderBoard", "SR")
 
+        elif args.lower() in ["ssn"]:
+            query = users.find({}, {"_id": 0, "user_id": 1, "SSN": 1})
+            await self.leaderboard_post_record_users(ctx, query, f"{e_5} LeaderBoard", "SSN")
+
         elif args.lower() in ["medal", "medals"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})
             await self.leaderboard_post_record_users(ctx, query, f"{e_m} Medal LeaderBoard", "medals")
@@ -4091,7 +4072,7 @@ class Economy(commands.Cog):
             i += 1
 
         shards_reward = list(shikigami_pool.items())
-        await perform_exploration_issue_shard_rewards(user_id, shards_reward)
+        await self.perform_exploration_issue_shard_rewards(user_id, shards_reward)
 
         link = await self.perform_exploration_generate_shards(user_id, shards_reward)
         embed.set_image(url=link)
@@ -4104,7 +4085,6 @@ class Economy(commands.Cog):
                   f"{amulets_b:,d}{emojify('amulets_b')}",
             inline=False
         )
-
         await msg.edit(embed=embed)
 
     async def perform_exploration_generate_shards(self, user_id, shards_reward):
@@ -4162,6 +4142,31 @@ class Economy(commands.Cog):
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
+
+    async def perform_exploration_issue_shard_rewards(self, user_id, shards_reward):
+        trimmed = []
+        for entry in shards_reward:
+            if entry[1] != 0:
+                trimmed.append(entry)
+            else:
+                continue
+
+        for shikigami_shard in trimmed:
+
+            query = users.find_one({
+                "user_id": str(user_id),
+                "shikigami.name": shikigami_shard[0]}, {
+                "_id": 0, "shikigami.$": 1
+            })
+
+            if query is None:
+                push_new_shikigami(user_id, shikigami_shard[0], False, 0)
+
+            users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
+                "$inc": {
+                    "shikigami.$.shards": 1
+                }
+            })
 
     async def shikigami_process_levelup(self, user_id, shiki):
         profile = users.find_one({

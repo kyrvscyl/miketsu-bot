@@ -115,7 +115,7 @@ class Error(commands.Cog):
                     colour=discord.Colour(embed_color),
                     description=f"explore unlocked chapters\n"
                                 f"consumes sushi, set a shikigami first `{self.prefix}set`\n"
-                                f"clear success:  `Onmoyji level + shikigami level - chapter level`"
+                                f"clear chance parameters: Onmyoji, shikigami, and chapter level, shikigami evolution"
                 )
                 embed.add_field(
                     name="Format",
@@ -147,7 +147,8 @@ class Error(commands.Cog):
                 "friendship_give",
                 "perform_parade",
                 "pray_use",
-                "perform_exploration"
+                "perform_exploration",
+                "summon_perform_broken"
             ]:
                 return
 
@@ -305,23 +306,48 @@ class Error(commands.Cog):
                 )
                 embed.add_field(
                     name="Arguments",
-                    value=f"*SP, SSR, SR, level, medals, amulets, friendship, ships, streak, frames*",
+                    value=f"*SP, SSR, SR, SSN, level, medals, amulets, friendship, ships, streak, frames*",
                     inline=False
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}leaderboard friendship`*", inline=False)
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) in [
-                "shikigami_list_show_collected", "shikigami_image_show_collected"
+                "shikigami_image_show_collected"
             ]:
                 embed = discord.Embed(
-                    title="shikigamis, shikis, collections, col", colour=discord.Colour(embed_color),
+                    title="collection, col", colour=discord.Colour(embed_color),
+                    description="shows your or tagged member's shikigami pulls by rarity without the count"
+                )
+                embed.add_field(
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}collection <rarity> <optional: @member>`*"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in [
+                "shikigami_show_post_shiki"
+            ]:
+                embed = discord.Embed(
+                    title="shikigami, shiki", colour=discord.Colour(embed_color),
+                    description="shows your owned shikigami stats"
+                )
+                embed.add_field(
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}shiki <shikigami>`*"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in [
+                "shikigami_show_post_shikis"
+            ]:
+                embed = discord.Embed(
+                    title="shikigamis, shikis", colour=discord.Colour(embed_color),
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
                 embed.add_field(
                     name="Format", inline=False,
-                    value=f"*`{self.prefix}shikis <rarity> <optional: @member>`*\n"
-                          f"*`{self.prefix}unc <rarity> <optional: @member>`*"
+                    value=f"*`{self.prefix}shikis <rarity> <optional: @member>`*"
                 )
                 await ctx.channel.send(embed=embed)
 

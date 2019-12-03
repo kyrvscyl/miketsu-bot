@@ -429,11 +429,6 @@ class Clock(commands.Cog):
         )
         await ctx.channel.send(embed=embed)
 
-    @commands.command(aliases=["test"])
-    @commands.is_owner()
-    async def events_manipulate_manual_post(self, ctx):
-        await self.spawn_random_sushi()
-
     async def reminders_bidding_process(self, date_time):
 
         request = guilds.find_one({"server": str(guild_id)}, {"_id": 0})
@@ -456,6 +451,11 @@ class Clock(commands.Cog):
 
         except ValueError:
             pass
+
+    @commands.command(aliases=["spawn"])
+    @commands.is_owner()
+    async def spawn_random_sushi_manual(self, ctx):
+        await self.spawn_random_sushi()
 
     async def spawn_random_sushi(self):
 
@@ -503,6 +503,12 @@ class Clock(commands.Cog):
                 sushi_claimers.append(str(user.id))
                 await msg.edit(embed=create_embed(sushi_claimers, ""))
                 await logs_add_line("sushi", sushi, user.id)
+
+    @commands.command(aliases=["test"])
+    @commands.is_owner()
+    async def achievements_process_hourly_manual(self, ctx):
+        await Frames(self.client).achievements_process_hourly()
+        await ctx.message.add_reaction("✅")
 
 
 def setup(client):
