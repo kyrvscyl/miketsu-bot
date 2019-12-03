@@ -8,9 +8,11 @@ import os
 import random
 from datetime import datetime, timedelta
 from itertools import cycle
+from math import floor, ceil
 
 import discord
 import pytz
+from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 
 from cogs.economy import reset_boss
@@ -30,8 +32,16 @@ emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
 get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
 
 # Lists
+pool_sp = []
+pool_ssr = []
+pool_ssn = []
+
 demons = []
 quizzes = []
+pool_all = []
+description_nether = []
+actual_rewards = []
+rewards_nether = config.find_one({"list": 1}, {"_id": 0, "rewards_nether": 1})["rewards_nether"]
 boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
 assemble_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "assemble_captions": 1})["assemble_captions"])
 
@@ -39,6 +49,7 @@ assemble_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "assemble_capt
 guild_id = int(os.environ.get("SERVER"))
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 e_m = emojis["m"]
@@ -47,7 +58,12 @@ e_c = emojis["c"]
 e_f = emojis["f"]
 e_a = emojis["a"]
 e_t = emojis["t"]
+e_1 = emojis["1"]
+e_2 = emojis["2"]
+e_6 = emojis["6"]
 
+for shiki in shikigamis.find({}, {"_id": 0, "name": 1}):
+    pool_all.append(shiki["name"])
 
 for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
     quizzes.append(quiz)
@@ -55,10 +71,78 @@ for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_qui
 for document in bosses.find({}, {"_id": 0, "boss": 1}):
     demons.append(document["boss"])
 
+for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1}):
+    if shikigami["rarity"] == "SP":
+        pool_sp.append(shikigami["name"])
+    elif shikigami["rarity"] == "SSR":
+        pool_ssr.append(shikigami["name"])
+    elif shikigami["rarity"] == "SSN":
+        pool_ssn.append(shikigami["name"])
+
+
+def generate_nether_information():
+    for index, reward in enumerate(range(1, 9)):
+        lvl = index + 1
+        first = lvl * 9 + (lvl - 1) - 9
+        last = lvl * 9 + (lvl - 1)
+
+        if first == 0:
+            first = "00"
+        if last == 9:
+            last = "09"
+        if last == 79:
+            last = "70"
+
+        jades = rewards_nether[0] * lvl
+        coins = rewards_nether[1] * lvl
+        exp = rewards_nether[2] * lvl
+        medals = rewards_nether[3] * lvl
+        shards_sp = int(rewards_nether[4] * lvl) + floor(lvl/8)
+        shards_ssr = int(rewards_nether[5] * lvl) + floor(lvl/8)
+        shards_ssn = int(rewards_nether[6] * lvl) + floor(lvl/8)
+
+        entry = f"`{first} - {last}:` {jades:,d}{e_j} | {coins:,d}{e_c} | {exp:,d}⤴ | {medals:,d}{e_m} | " \
+                f"{shards_sp}{e_1} | {shards_ssr}{e_2} | {shards_ssn}{e_6}\n"
+        description_nether.append(entry)
+        actual_rewards.append([jades, coins, exp, medals, shards_sp, shards_ssr, shards_ssn])
+
 
 boss_spawn = False
 quizzes_shuffle = random.shuffle(quizzes)
 quizzes_cycle = cycle(quizzes)
+generate_nether_information()
+
+
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
+
+
+def get_rarity_shikigami(s):
+    return shikigamis.find_one({"name": s}, {"_id": 0, "rarity": 1})["rarity"]
+
+
+def push_new_shikigami(user_id, s, evolve, shards):
+    users.update_one({
+        "user_id": str(user_id)}, {
+        "$push": {
+            "shikigami": {
+                "name": s,
+                "rarity": get_rarity_shikigami(s),
+                "grade": 1,
+                "owned": 0,
+                "evolved": evolve,
+                "shards": shards,
+                "level": 1,
+                "exp": 0,
+                "level_exp_next": 6
+            }
+        }
+    })
 
 
 async def boss_daily_reset_check():
@@ -96,6 +180,10 @@ def check_if_user_has_raid_tickets(ctx):
     return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "realm_ticket": 1})["realm_ticket"] > 0
 
 
+def check_if_user_has_nether_pass(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "nether_pass": 1})["nether_pass"] is True
+
+
 def emojify(item):
     emoji_dict = {
         "jades": e_j, "coins": e_c, "realm_ticket": "🎟", "amulets": e_a,
@@ -119,15 +207,6 @@ def get_time():
 
 def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
 
 
 def status_set(x):
@@ -162,6 +241,381 @@ class Gameplay(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
+
+    async def encounter_roll_netherworld(self, user, channel, search_msg):
+
+        user_shikigamis, top_shikigamis, dead_shikigamis, placed_shikigamis, clear_chances = [], [], [], [], []
+        clear_chances, cleared_waves, total_attempts = [], 0, 4
+
+        for result in users.aggregate([
+            {
+                '$match': {
+                    'user_id': str(user.id)
+                }
+            }, {
+                '$unwind': {
+                    'path': '$shikigami'
+                }
+            }, {
+                '$match': {
+                    'shikigami.owned': {
+                        '$gt': 0
+                    }
+                }
+            }, {
+                '$project': {
+                    'shikigami': 1
+                }
+            }
+        ]):
+            user_shikigamis.append(f"{result['shikigami']['name']}")
+
+        for result in users.aggregate([
+            {
+                '$match': {
+                    'user_id': str(user.id)
+                }
+            }, {
+                '$unwind': {
+                    'path': '$shikigami'
+                }
+            }, {
+                '$match': {
+                    'shikigami.owned': {
+                        '$gt': 0
+                    }
+                }
+            }, {
+                '$sort': {
+                    'shikigami.grade': -1,
+                    'shikigami.level': -1
+                }
+            }, {
+                '$match': {
+                    'shikigami.level': {
+                        '$gte': 2
+                    }
+                }
+            }, {
+                '$project': {
+                    'shikigami': 1
+                }
+            }
+        ]):
+            top_shikigamis.append([result['shikigami']['name'], result['shikigami']['level']])
+
+        def create_embed(t, d, s, b, c, u, r):
+            embed = discord.Embed(
+                color=user.colour, title=f"Encounter Netherworld",
+                description=f"react below and place your shikigamis to start clearing waves"
+            )
+
+            formatted_shikigamis = []
+            for e in t:
+                if e[0] in d:
+                    formatted_shikigamis.append(f"~~{e[0].title()}/{e[1]}~~")
+                else:
+                    formatted_shikigamis.append(f"{e[0].title()}/{e[1]}")
+
+            embed.add_field(
+                name=f"Top {len(top_shikigamis)} {pluralize('shikigami', len(top_shikigamis))}",
+                value=f"*{', '.join(formatted_shikigamis[:10])}*",
+                inline=False
+            )
+
+            if s in ["accepted", "end"]:
+                caption_list = []
+                if b is not None:
+                    for index2, x in enumerate(placed_shikigamis):
+                        caption_list.append(
+                            f"`Attempt#{index2 + 1}` :: {x[0].title()} | ~{round(x[1], 2)}% | "
+                            f"{x[2]} {pluralize('clear', x[2])}\n"
+                        )
+
+                caption = ''.join(caption_list)
+                if len(caption_list) == 0:
+                    caption = "enter a shikigami name"
+
+                embed.add_field(name=f"Cleared waves: {c}/70", value=f"{caption}", inline=False)
+
+                if s == "end":
+                    embed.set_image(url=u)
+                    if len(r) > 0:
+                        embed.add_field(
+                            name="Rewards", inline=False,
+                            value=f"{r[0]:,d}{e_j} | {r[1]:,d}{e_c} | {r[2]:,d}⤴ | {r[3]:,d}{e_m}",
+                        )
+            return embed
+
+        await search_msg.edit(
+            embed=create_embed(top_shikigamis, dead_shikigamis, None, None, cleared_waves, "", [])
+        )
+        await search_msg.add_reaction("🌌")
+
+        def check(r, u):
+            return user.id == u.id and str(r.emoji) == "🌌" and r.message.id == search_msg.id
+
+        while True:
+            try:
+                await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                return
+            else:
+                await search_msg.edit(
+                    embed=create_embed(top_shikigamis, dead_shikigamis, "accepted", None, cleared_waves, "", [])
+                )
+                break
+
+        def check_if_valid_shikigami(m):
+            if m.content.lower() in dead_shikigamis and m.author.id == user.id:
+                raise KeyError
+            elif m.content.lower() not in user_shikigamis and m.author.id == user.id:
+                raise KeyError
+
+            return m.author.id == user.id and \
+                   m.content.lower() in user_shikigamis and \
+                   m.channel.id == channel.id and \
+                   m.content.lower() not in dead_shikigamis
+
+        while True:
+            if total_attempts == 0:
+                ranges = [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69], [70, 79]]
+
+                for g, covered in enumerate(ranges):
+                    if cleared_waves <= covered[1]:
+                        rewards_select = actual_rewards[g]
+
+                        jades, coins, exp = rewards_select[0], rewards_select[1], rewards_select[2]
+                        medals = rewards_select[3]
+                        shards_sp = rewards_select[4]
+                        shards_ssr = rewards_select[5]
+                        shards_ssn = rewards_select[6]
+
+                        users.update_one({
+                            "user_id": str(user.id)
+                        }, {
+                            "$inc": {
+                                "jades": jades,
+                                "coins": coins,
+                                "medals": medals
+                            },
+                            "$set": {
+                                "nether_pass": False
+                            }
+                        })
+                        users.update_one({
+                            "user_id": str(user.id),
+                            "level": {
+                                "$lt": 60
+                            }
+                        }, {
+                            "$inc": {
+                                "experience": exp
+                            }
+                        })
+
+                        shikigami_pool = {shiki_iterate: 0 for shiki_iterate in pool_ssr + pool_sp + pool_ssn}
+
+                        i = 0
+                        while i < shards_sp:
+                            shikigami_shard = random.choice(pool_sp)
+                            shikigami_pool[shikigami_shard] += 1
+                            i += 1
+
+                        i = 0
+                        while i < shards_ssr:
+                            shikigami_shard = random.choice(pool_ssr)
+                            shikigami_pool[shikigami_shard] += 1
+                            i += 1
+
+                        i = 0
+                        while i < shards_ssn:
+                            shikigami_shard = random.choice(pool_ssn)
+                            shikigami_pool[shikigami_shard] += 1
+                            i += 1
+
+                        shards_reward = list(shikigami_pool.items())
+
+                        await self.encounter_roll_netherworld_issue_shards(user.id, shards_reward)
+                        link = await self.encounter_roll_netherworld_generate_shards(user.id, shards_reward)
+
+                        rewards = [jades, coins, exp, medals]
+                        await search_msg.edit(
+                            embed=create_embed(
+                                top_shikigamis, dead_shikigamis, "end", True, cleared_waves, link, rewards
+                            )
+                        )
+
+                        await logs_add_line("jades", jades, user.id)
+                        await logs_add_line("coins", coins, user.id)
+                        await logs_add_line("medals", medals, user.id)
+                        break
+                    continue
+                break
+
+            try:
+                answer = await self.client.wait_for("message", timeout=60, check=check_if_valid_shikigami)
+            except asyncio.TimeoutError:
+                return
+            except KeyError:
+                embed1 = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    title="Invalid selection",
+                    description=f"this shikigami is not in your possession, already dead, or does not exist"
+                )
+                msg2 = await channel.send(embed=embed1)
+                await msg2.delete(delay=4)
+            else:
+                shikigami_bet = answer.content.lower()
+
+                user_profile_new = users.find_one({
+                    "user_id": str(user.id), "shikigami.name": shikigami_bet
+                }, {
+                    "_id": 0,
+                    "shikigami.$": 1,
+                    "level": 1
+                })
+
+                shiki_level = user_profile_new["shikigami"][0]['level']
+                user_level = user_profile_new["level"]
+                shikigami_evolved = user_profile_new["shikigami"][0]['evolved']
+
+                evo_adjustment = 0.4
+                if shikigami_evolved is True:
+                    evo_adjustment = 0.2
+
+                total_chance = 0
+                shiki_clears = 0
+                for i in range(cleared_waves + 1, 71):
+                    total_chance = shiki_level + user_level - i * evo_adjustment
+                    adjusted_chance = random.uniform(total_chance * 0.98, total_chance)
+
+                    roll = random.uniform(0, 100)
+                    if roll < adjusted_chance:
+                        cleared_waves += 1
+                        shiki_clears += 1
+                    else:
+                        dead_shikigamis.append(shikigami_bet)
+                        clear_chances.append(total_chance)
+                        total_attempts -= 1
+                        break
+
+                placed_shikigamis.append([shikigami_bet, total_chance, shiki_clears])
+
+                await search_msg.edit(
+                    embed=create_embed(
+                        top_shikigamis, dead_shikigamis, "end", shikigami_bet, cleared_waves, "", []
+                    )
+                )
+
+    async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
+
+        if len(shards_reward) == 0:
+            return ""
+
+        images = []
+
+        font = ImageFont.truetype('data/marker_felt_wide.ttf', 30)
+        x, y = 1, 60
+
+        def generate_shikigami_with_shard(shikigami_thumbnail_select, shards_count):
+
+            outline = ImageDraw.Draw(shikigami_thumbnail_select)
+            outline.text((x - 1, y - 1), str(shards_count), font=font, fill="black")
+            outline.text((x + 1, y - 1), str(shards_count), font=font, fill="black")
+            outline.text((x - 1, y + 1), str(shards_count), font=font, fill="black")
+            outline.text((x + 1, y + 1), str(shards_count), font=font, fill="black")
+            outline.text((x, y), str(shards_count), font=font)
+
+            return shikigami_thumbnail_select
+
+        for entry in shards_reward:
+            if entry[1] != 0:
+                address = f"data/shikigamis/{entry[0]}_pre.jpg"
+
+                shikigami_thumbnail = Image.open(address)
+                shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1])
+                images.append(shikigami_image_final)
+            else:
+                continue
+
+        dimensions = 90
+        max_c = 8
+        w = 90 * max_c
+
+        def get_image_variables(h):
+            total_frames = len(h)
+            h = ceil(total_frames / max_c) * dimensions
+            return w, h
+
+        width, height = get_image_variables(images)
+        new_im = Image.new("RGBA", (width, height))
+
+        def get_coordinates(c):
+            a = (c * dimensions - (ceil(c / max_c) - 1) * (dimensions * max_c)) - dimensions
+            b = (ceil(c / max_c) * dimensions) - dimensions
+            return a, b
+
+        for index, item in enumerate(images):
+            new_im.paste(images[index], (get_coordinates(index + 1)))
+
+        address = f"temp/{user_id}.png"
+        new_im.save(address)
+        new_photo = discord.File(address, filename=f"{user_id}.png")
+        hosting_channel = self.client.get_channel(int(hosting_id))
+        msg = await hosting_channel.send(file=new_photo)
+        attachment_link = msg.attachments[0].url
+        return attachment_link
+
+    async def encounter_roll_netherworld_issue_shards(self, user_id, shards_reward):
+        trimmed = []
+        for entry in shards_reward:
+            if entry[1] != 0:
+                trimmed.append(entry)
+            else:
+                continue
+
+        for shikigami_shard in trimmed:
+
+            query = users.find_one({
+                "user_id": str(user_id),
+                "shikigami.name": shikigami_shard[0]}, {
+                "_id": 0, "shikigami.$": 1
+            })
+
+            if query is None:
+                push_new_shikigami(user_id, shikigami_shard[0], False, 0)
+
+            users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
+                "$inc": {
+                    "shikigami.$.shards": 1
+                }
+            })
+
+    @commands.command(aliases=["netherworld", "nw"])
+    @commands.guild_only()
+    async def netherworld_show_information(self, ctx):
+
+        embed = discord.Embed(
+            color=embed_color,
+            title=f"netherworld, nw",
+            description=f"fights and clears unwanted forces and earn rich rewards\n\n"
+                        f"{''.join(description_nether)}"
+        )
+        embed.add_field(
+            name="Mechanics",
+            value="`1.` Spawns `20%` chance during opening times\n"
+                  "`2.` Upon discovering, enter the name of your shikigami to fight the forces\n"
+                  "`3.` Fight and clear all the waves up to 70 or until it timeouts\n"
+                  "`4.` Losing strikes out the shikigami, enter a new one then repeat\n"
+                  "`5.` Each encounter has 4 attempts to max out your rewards"
+        )
+        embed.add_field(
+            name="Format",
+            value=f"*`{self.prefix}encounter`*",
+            inline=False
+        )
+        await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["raid", "r"])
     @commands.check(check_if_user_has_raid_tickets)
@@ -363,25 +817,33 @@ class Gameplay(commands.Cog):
         if (survivability > 0 or discoverability > 0) and boss_spawn is False:
             roll_1 = random.randint(0, 100)
 
-            if roll_1 <= 27:
+            if roll_1 <= 20:
                 status_set(True)
                 await self.encounter_roll_boss(user, ctx, search_msg)
             else:
                 roll_2 = random.randint(0, 100)
                 await asyncio.sleep(1)
 
-                if roll_2 > 30:
-                    await self.encounter_roll_treasure(user, ctx, search_msg)
+                if 0 <= roll_2 <= 100 and check_if_user_has_nether_pass(ctx):
+                    await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
                 else:
-                    await self.encounter_roll_quiz(user, ctx, search_msg)
+                    roll_3 = random.randint(0, 100)
+                    if roll_3 < 30:
+                        await self.encounter_roll_quiz(user, ctx, search_msg)
+                    else:
+                        await self.encounter_roll_treasure(user, ctx, search_msg)
         else:
             roll_2 = random.randint(0, 100)
             await asyncio.sleep(1)
 
-            if roll_2 > 30:
-                await self.encounter_roll_treasure(user, ctx, search_msg)
+            if 0 <= roll_2 <= 100 and check_if_user_has_nether_pass(ctx):
+                await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
             else:
-                await self.encounter_roll_quiz(user, ctx, search_msg)
+                roll_3 = random.randint(0, 100)
+                if roll_3 < 30:
+                    await self.encounter_roll_quiz(user, ctx, search_msg)
+                else:
+                    await self.encounter_roll_treasure(user, ctx, search_msg)
 
     async def encounter_roll_quiz(self, user, ctx, search_msg):
 

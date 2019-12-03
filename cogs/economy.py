@@ -94,7 +94,7 @@ summon_captions_a = cycle(config.find_one({"list": 1}, {"_id": 0, "summon_captio
 for document in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
     purchasable_frames.append(document["name"].lower())
 
-for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1, "amulet": "mystery"}):
+for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
     if shikigami["shrine"] is True:
         pool_shrine.append(shikigami["name"])
     elif shikigami["rarity"] == "SP":
@@ -109,6 +109,7 @@ for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine"
         pool_n.append(shikigami["name"])
     elif shikigami["rarity"] == "SSN":
         pool_ssn.append(shikigami["name"])
+
 
 pool_all_mystery.extend(pool_sp)
 pool_all_mystery.extend(pool_ssr)
@@ -583,7 +584,8 @@ async def level_create_user(user):
             "exploration": 1,
             "stickers": 0,
             "SSN": 0,
-            "frames": []
+            "frames": [],
+            "nether_pass": True
         }
         users.insert_one(profile)
 

@@ -59,7 +59,10 @@ class Startup(commands.Cog):
         print("Hi! {}!".format(self.client.get_user(owner_id.owner.id)))
         print("Time now: {}".format(time_now.strftime("%d.%b %Y %H:%M:%S")))
         print("-------")
-        self.change_status.start()
+        try:
+            self.change_status.start()
+        except RuntimeError:
+            pass
         print("-------")
 
     @tasks.loop(seconds=1200)
@@ -94,7 +97,7 @@ class Startup(commands.Cog):
                   "daily, weekly, profile, set, buy, summon, explore, explores, chapter, "
                   "evolve, friendship, ships, leaderboard, shikigami, shikigamis, shrine, sail, pray, stat, "
                   "frames, wish, wishlist, fulfill, parade, collections, shards, "
-                  "raid, raidc, encounter, bossinfo"
+                  "raid, raidc, encounter, netherworld, bossinfo"
                   "*",
             inline=False
         )

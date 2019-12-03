@@ -164,6 +164,7 @@ class Clock(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+        self.prefix = self.client.command_prefix
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -221,11 +222,11 @@ class Clock(commands.Cog):
                 await self.events_activate_reminder_submit()
                 await Frames(self.client).achievements_process_hourly()
 
-            if minute == "30":
-                await self.spawn_random_sushi()
-
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
+
+            if hour_minute in ["06:00", "18:00"]:
+                await self.perform_netherworld_announcement()
 
             if hour_minute == "00:00":
                 await boss_daily_reset_check()
@@ -238,9 +239,31 @@ class Clock(commands.Cog):
                 await frame_automate_penalize()
                 await Frames(self.client).achievements_process_daily()
 
+            try:
+                if minute == "30":
+                    await self.spawn_random_sushi()
+            except RuntimeError:
+                pass
+
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
+
+    async def perform_netherworld_announcement(self):
+        users.update_many({}, {"$set": {"nether_pass": True}})
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+
+        embed = discord.Embed(
+            color=embed_color,
+            title="Netherworld gates update",
+            description=f"The gates of Netherworld have been opened\n"
+                        f"use `{self.prefix}enc` to explore them by chance",
+            timestamp=get_timestamp()
+        )
+        await spell_spam_channel.send(embed=embed)
+
+
+
 
     async def perform_delete_secret_channels(self):
         query = guilds.find({}, {
