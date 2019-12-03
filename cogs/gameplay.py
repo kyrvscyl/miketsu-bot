@@ -824,7 +824,7 @@ class Gameplay(commands.Cog):
                 roll_2 = random.randint(0, 100)
                 await asyncio.sleep(1)
 
-                if 0 <= roll_2 <= 100 and check_if_user_has_nether_pass(ctx):
+                if 0 <= roll_2 <= 20 and check_if_user_has_nether_pass(ctx):
                     await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
                 else:
                     roll_3 = random.randint(0, 100)
@@ -836,7 +836,7 @@ class Gameplay(commands.Cog):
             roll_2 = random.randint(0, 100)
             await asyncio.sleep(1)
 
-            if 0 <= roll_2 <= 100 and check_if_user_has_nether_pass(ctx):
+            if 0 <= roll_2 <= 20 and check_if_user_has_nether_pass(ctx):
                 await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
             else:
                 roll_3 = random.randint(0, 100)
