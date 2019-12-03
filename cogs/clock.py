@@ -452,7 +452,7 @@ class Clock(commands.Cog):
         except ValueError:
             pass
 
-    @commands.command(aliases=["spawn"])
+    @commands.command(aliases=["test1"])
     @commands.is_owner()
     async def spawn_random_sushi_manual(self, ctx):
         await self.spawn_random_sushi()
@@ -504,11 +504,18 @@ class Clock(commands.Cog):
                 await msg.edit(embed=create_embed(sushi_claimers, ""))
                 await logs_add_line("sushi", sushi, user.id)
 
-    @commands.command(aliases=["test"])
+    @commands.command(aliases=["test2"])
     @commands.is_owner()
     async def achievements_process_hourly_manual(self, ctx):
-        await Frames(self.client).achievements_process_hourly()
         await ctx.message.add_reaction("✅")
+        await Frames(self.client).achievements_process_hourly()
+
+    @commands.command(aliases=["test3"])
+    @commands.is_owner()
+    async def frame_automate_manual(self, ctx):
+        await ctx.message.add_reaction("✅")
+        await Economy(self.client).frame_automate()
+        await frame_automate_penalize()
 
 
 def setup(client):
