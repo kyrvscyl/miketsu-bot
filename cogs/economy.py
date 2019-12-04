@@ -2434,6 +2434,8 @@ class Economy(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+        self.client.get_command("shrine_shikigami").reset_cooldown(ctx)
+
     async def friendship_check_levelup(self, ctx, code, giver):
         ship = ships.find_one({
             "code": code}, {
