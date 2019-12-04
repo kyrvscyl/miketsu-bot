@@ -14,7 +14,7 @@ from math import ceil
 import discord
 import pytz
 from PIL import Image, ImageFont, ImageDraw, ImageOps
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from cogs.frames import Frames
 from cogs.mongo.database import get_collections
@@ -661,6 +661,63 @@ class Economy(commands.Cog):
         self.prefix = self.client.command_prefix
 
     @commands.Cog.listener()
+    async def on_ready(self):
+        self.spawn_random_sushi.start()
+
+    @tasks.loop(seconds=60*60)
+    async def spawn_random_sushi(self):
+
+        if config.find_one({"var": 1}, {"_id": 0, "serving": 1})["serving"] is False:
+            return
+
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+        sushi_claimers = []
+        minutes = 10
+        timestamp = get_timestamp()
+        role = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles.sushchefs": 1})["roles"]["sushchefs"]
+
+        def create_embed(listings, strike):
+            embed = discord.Embed(
+                title=f"{strike}Free sushi!{strike} 🍣",
+                description=f"claim your free sushi randomly every hour! 🎉\n"
+                            f"served {len(listings)} hungry {pluralize('Onmyoji', len(listings))}",
+                color=embed_color,
+                timestamp=timestamp
+            )
+            embed.set_footer(text=f"lasts {minutes} minutes", icon_url=self.client.user.avatar_url)
+            return embed
+
+        content = f"<@&{role}>!"
+        msg = await spell_spam_channel.send(content=content, embed=create_embed(sushi_claimers, ""))
+        await msg.add_reaction("🍽️")
+
+        def check(r, u):
+            return u != self.client.user and \
+                   r.message.id == msg.id and \
+                   str(r.emoji) == "🍽️" and \
+                   str(u.id) not in sushi_claimers
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60*minutes, check=check)
+            except asyncio.TimeoutError:
+                await msg.edit(embed=create_embed(sushi_claimers, "~~"))
+                await msg.clear_reactions()
+                return
+            else:
+                sushi = 25
+                users.update_one({
+                    "user_id": str(user.id)
+                }, {
+                    "$inc": {
+                        "sushi": sushi
+                    }
+                })
+                sushi_claimers.append(str(user.id))
+                await msg.edit(embed=create_embed(sushi_claimers, ""))
+                await logs_add_line("sushi", sushi, user.id)
+
+    @commands.Cog.listener()
     async def on_message(self, message):
 
         if message.author == self.client.user:
@@ -840,6 +897,9 @@ class Economy(commands.Cog):
                 description=f"this member has their wish fulfilled already",
             )
             await ctx.channel.send(embed=embed)
+
+        elif user.name == member.name:
+            await ctx.message.add_reaction("❌")
 
         else:
             profile = users.find_one({
@@ -2163,6 +2223,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["shrine", "shr"])
     @commands.guild_only()
+    @commands.cooldown(1, 15, commands.BucketType.user)
     async def shrine_shikigami(self, ctx, arg1="", *, args=""):
 
         user = ctx.author
@@ -2597,6 +2658,9 @@ class Economy(commands.Cog):
         elif receiver.bot is True or receiver == ctx.author:
             return
 
+        elif receiver.name == giver.name:
+            await ctx.message.add_reaction("❌")
+
         elif profile["friendship_pass"] < 1:
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
@@ -2861,7 +2925,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["sb"])
     @commands.guild_only()
-    @commands.cooldown(1, 180, commands.BucketType.user)
+    @commands.cooldown(1, 15, commands.BucketType.user)
     async def summon_perform_broken(self, ctx):
 
         user = ctx.author
@@ -2954,7 +3018,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["sm"])
     @commands.guild_only()
-    @commands.cooldown(1, 180, commands.BucketType.user)
+    @commands.cooldown(1, 15, commands.BucketType.user)
     async def summon_perform_mystery(self, ctx, *, args=None):
 
         user = ctx.author
@@ -3207,7 +3271,7 @@ class Economy(commands.Cog):
 
         elif args.lower() in ["ssn"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SSN": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_5} LeaderBoard", "SSN")
+            await self.leaderboard_post_record_users(ctx, query, f"{e_6} LeaderBoard", "SSN")
 
         elif args.lower() in ["medal", "medals"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})

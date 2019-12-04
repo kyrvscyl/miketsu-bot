@@ -731,7 +731,7 @@ class Frames(commands.Cog):
                     levels.append(result["shikigami"]["level"])
 
                 if 40 in levels:
-                    await self.achievements_process_announce(member, "Fortune Kitty", jades)
+                    await self.achievements_process_announce(member, "Fortune Kitties", jades)
 
             if "Spring Rabbit" not in user_frames:
                 profile = users.find_one({

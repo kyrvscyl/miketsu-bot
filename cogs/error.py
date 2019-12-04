@@ -170,6 +170,18 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "shikigami_list_show_collected":
+                embed = discord.Embed(
+                    title="shikilist, sl", colour=discord.Colour(embed_color),
+                    description="shows your shikigami listings by rarity "
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}shikilist <rarity>`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "shikigami_show_post_shiki":
                 embed = discord.Embed(
                     title="shikigami, shiki", colour=discord.Colour(embed_color),

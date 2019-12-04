@@ -456,7 +456,7 @@ class Gameplay(commands.Cog):
             try:
                 answer = await self.client.wait_for("message", timeout=60, check=check_if_valid_shikigami)
             except asyncio.TimeoutError:
-                return
+                await search_msg.clear_reactions()
             except KeyError:
                 embed1 = discord.Embed(
                     colour=discord.Colour(embed_color),
@@ -509,63 +509,66 @@ class Gameplay(commands.Cog):
                 )
 
     async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
+        try:
+            if len(shards_reward) == 0:
+                return ""
 
-        if len(shards_reward) == 0:
+            images = []
+
+            font = ImageFont.truetype('data/marker_felt_wide.ttf', 30)
+            x, y = 1, 60
+
+            def generate_shikigami_with_shard(shikigami_thumbnail_select, shards_count):
+
+                outline = ImageDraw.Draw(shikigami_thumbnail_select)
+                outline.text((x - 1, y - 1), str(shards_count), font=font, fill="black")
+                outline.text((x + 1, y - 1), str(shards_count), font=font, fill="black")
+                outline.text((x - 1, y + 1), str(shards_count), font=font, fill="black")
+                outline.text((x + 1, y + 1), str(shards_count), font=font, fill="black")
+                outline.text((x, y), str(shards_count), font=font)
+
+                return shikigami_thumbnail_select
+
+            for entry in shards_reward:
+                if entry[1] != 0:
+                    address = f"data/shikigamis/{entry[0]}_pre.jpg"
+
+                    shikigami_thumbnail = Image.open(address)
+                    shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1])
+                    images.append(shikigami_image_final)
+                else:
+                    continue
+
+            dimensions = 90
+            max_c = 8
+            w = 90 * max_c
+
+            def get_image_variables(h):
+                total_frames = len(h)
+                h = ceil(total_frames / max_c) * dimensions
+                return w, h
+
+            width, height = get_image_variables(images)
+            new_im = Image.new("RGBA", (width, height))
+
+            def get_coordinates(c):
+                a = (c * dimensions - (ceil(c / max_c) - 1) * (dimensions * max_c)) - dimensions
+                b = (ceil(c / max_c) * dimensions) - dimensions
+                return a, b
+
+            for index, item in enumerate(images):
+                new_im.paste(images[index], (get_coordinates(index + 1)))
+
+            address = f"temp/{user_id}.png"
+            new_im.save(address)
+            new_photo = discord.File(address, filename=f"{user_id}.png")
+            hosting_channel = self.client.get_channel(int(hosting_id))
+            msg = await hosting_channel.send(file=new_photo)
+            attachment_link = msg.attachments[0].url
+            return attachment_link
+
+        except SystemError:
             return ""
-
-        images = []
-
-        font = ImageFont.truetype('data/marker_felt_wide.ttf', 30)
-        x, y = 1, 60
-
-        def generate_shikigami_with_shard(shikigami_thumbnail_select, shards_count):
-
-            outline = ImageDraw.Draw(shikigami_thumbnail_select)
-            outline.text((x - 1, y - 1), str(shards_count), font=font, fill="black")
-            outline.text((x + 1, y - 1), str(shards_count), font=font, fill="black")
-            outline.text((x - 1, y + 1), str(shards_count), font=font, fill="black")
-            outline.text((x + 1, y + 1), str(shards_count), font=font, fill="black")
-            outline.text((x, y), str(shards_count), font=font)
-
-            return shikigami_thumbnail_select
-
-        for entry in shards_reward:
-            if entry[1] != 0:
-                address = f"data/shikigamis/{entry[0]}_pre.jpg"
-
-                shikigami_thumbnail = Image.open(address)
-                shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1])
-                images.append(shikigami_image_final)
-            else:
-                continue
-
-        dimensions = 90
-        max_c = 8
-        w = 90 * max_c
-
-        def get_image_variables(h):
-            total_frames = len(h)
-            h = ceil(total_frames / max_c) * dimensions
-            return w, h
-
-        width, height = get_image_variables(images)
-        new_im = Image.new("RGBA", (width, height))
-
-        def get_coordinates(c):
-            a = (c * dimensions - (ceil(c / max_c) - 1) * (dimensions * max_c)) - dimensions
-            b = (ceil(c / max_c) * dimensions) - dimensions
-            return a, b
-
-        for index, item in enumerate(images):
-            new_im.paste(images[index], (get_coordinates(index + 1)))
-
-        address = f"temp/{user_id}.png"
-        new_im.save(address)
-        new_photo = discord.File(address, filename=f"{user_id}.png")
-        hosting_channel = self.client.get_channel(int(hosting_id))
-        msg = await hosting_channel.send(file=new_photo)
-        attachment_link = msg.attachments[0].url
-        return attachment_link
 
     async def encounter_roll_netherworld_issue_shards(self, user_id, shards_reward):
         trimmed = []
@@ -599,8 +602,7 @@ class Gameplay(commands.Cog):
         embed = discord.Embed(
             color=embed_color,
             title=f"netherworld, nw",
-            description=f"fights and clears unwanted forces and earn rich rewards\n\n"
-                        f"{''.join(description_nether)}"
+            description=f"fights and clears unwanted forces and earn rich rewards"
         )
         embed.add_field(
             name="Mechanics",
@@ -624,6 +626,9 @@ class Gameplay(commands.Cog):
 
         if victim is None:
             raise discord.ext.commands.MissingRequiredArgument(ctx.author)
+
+        elif victim.name == ctx.author.name:
+            await ctx.message.add_reaction("❌")
 
         elif victim.bot or victim.id == ctx.author.id:
             return
@@ -1030,6 +1035,7 @@ class Gameplay(commands.Cog):
         timeout = 180
         count_players = 0
         assembly_players = []
+        assembly_players2 = []
         assembly_players_name = []
         boss_busters_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["boss_busters"]
 
@@ -1101,6 +1107,9 @@ class Gameplay(commands.Cog):
                 if str(user.id) in assembly_players:
                     pass
 
+                elif str(user.name) in assembly_players2:
+                    pass
+
                 elif str(user.id) not in assembly_players:
                     query = bosses.find_one({"boss": boss_select, "challengers.user_id": str(user.id)}, {"_id": 1})
 
@@ -1122,6 +1131,7 @@ class Gameplay(commands.Cog):
                         })
 
                     assembly_players.append(str(user.id))
+                    assembly_players2.append(str(user.name))
                     assembly_players_name.append(user.display_name)
                     timeout_new = ((time_discovered + timedelta(seconds=180)) - get_time()).total_seconds()
                     await search_msg.edit(embed=generate_embed_boss(timeout_new, assembly_players_name))

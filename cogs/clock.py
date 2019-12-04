@@ -27,6 +27,7 @@ guilds = get_collections("guilds")
 logs = get_collections("logs")
 quests = get_collections("quests")
 reminders = get_collections("reminders")
+ships = get_collections("ships")
 streaks = get_collections("streaks")
 users = get_collections("users")
 weathers = get_collections("weathers")
@@ -166,6 +167,24 @@ class Clock(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+    async def ships_demolish_slowly(self):
+        guild = self.client.get_guild(int(guild_id))
+
+        for ship in ships.find({}, {"_id": 0}):
+            shipper1 = guild.get_member(int(ship['shipper1']))
+            shipper2 = guild.get_member(int(ship['shipper2']))
+            try:
+                if shipper1 is None or shipper2 is None:
+                    continue
+
+                elif shipper1.name == shipper2.name:
+                    x = ships.update_one({"code": ship["code"], "points": {"$gte": 50}}, {"$inc": {"points": -50}})
+                    if x.modified_count == 0:
+                        ships.update_one({"code": ship["code"], "points": {"$lt": 50}}, {"$set": {"points": 0}})
+
+            except AttributeError:
+                continue
+
     @commands.Cog.listener()
     async def on_ready(self):
         await self.clock_start()
@@ -221,12 +240,14 @@ class Clock(commands.Cog):
                 await self.reminders_bidding_process(bidding_format)
                 await self.events_activate_reminder_submit()
                 await Frames(self.client).achievements_process_hourly()
+                config.update_one({"var": 1}, {"$set": {"serving": True}})
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
 
             if hour_minute in ["06:00", "18:00"]:
                 await self.perform_netherworld_announcement()
+                await self.ships_demolish_slowly()
 
             if hour_minute == "00:00":
                 await boss_daily_reset_check()
@@ -238,12 +259,6 @@ class Clock(commands.Cog):
                 await Economy(self.client).frame_automate()
                 await frame_automate_penalize()
                 await Frames(self.client).achievements_process_daily()
-
-            try:
-                if minute == "30":
-                    await self.spawn_random_sushi()
-            except RuntimeError:
-                pass
 
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -261,9 +276,6 @@ class Clock(commands.Cog):
             timestamp=get_timestamp()
         )
         await spell_spam_channel.send(embed=embed)
-
-
-
 
     async def perform_delete_secret_channels(self):
         query = guilds.find({}, {
@@ -474,58 +486,6 @@ class Clock(commands.Cog):
 
         except ValueError:
             pass
-
-    @commands.command(aliases=["test1"])
-    @commands.is_owner()
-    async def spawn_random_sushi_manual(self, ctx):
-        await self.spawn_random_sushi()
-
-    async def spawn_random_sushi(self):
-
-        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
-        sushi_claimers = []
-        minutes = 10
-        timestamp = get_timestamp()
-
-        def create_embed(listings, strike):
-            embed = discord.Embed(
-                title=f"{strike}Free sushi!{strike} 🍣",
-                description=f"claim your free sushi every hour! 🎉\n"
-                            f"served {len(listings)} hungry {pluralize('Onmyoji', len(listings))}",
-                color=embed_color,
-                timestamp=timestamp
-            )
-            embed.set_footer(text=f"lasts {minutes} minutes", icon_url=self.client.user.avatar_url)
-            return embed
-
-        msg = await spell_spam_channel.send(embed=create_embed(sushi_claimers, ""))
-        await msg.add_reaction("🍽️")
-
-        def check(r, u):
-            return u != self.client.user and \
-                   r.message.id == msg.id and \
-                   str(r.emoji) == "🍽️" and \
-                   str(u.id) not in sushi_claimers
-
-        while True:
-            try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=60*minutes, check=check)
-            except asyncio.TimeoutError:
-                await msg.edit(embed=create_embed(sushi_claimers, "~~"))
-                await msg.clear_reactions()
-                break
-            else:
-                sushi = 25
-                users.update_one({
-                    "user_id": str(user.id)
-                }, {
-                    "$inc": {
-                        "sushi": sushi
-                    }
-                })
-                sushi_claimers.append(str(user.id))
-                await msg.edit(embed=create_embed(sushi_claimers, ""))
-                await logs_add_line("sushi", sushi, user.id)
 
     @commands.command(aliases=["test2"])
     @commands.is_owner()

@@ -462,7 +462,7 @@ class Embeds(commands.Cog):
         await quests_msg.edit(embed=embed)
 
     @commands.command(aliases=["special"])
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.is_owner()
     async def edit_special_roles(self, ctx):
 
         request = guilds.find_one({
@@ -652,19 +652,28 @@ class Embeds(commands.Cog):
             else:
                 embed.set_footer(text=f"{sum(members_count)} special roles issued")
 
-            msg = await sorting_channel.send(embed=embed)
+            query = sortings.find_one({"title": document["title"]}, {"_id": 0})
+            msg = sorting_channel.fetch_message(int(query["msg_id"]))
 
-            sortings.update_one({"title": document["title"]}, {"$set": {"msg_id": str(msg.id)}})
+            emoji_existing = []
+            for emoji1 in msg.reactions:
+                emoji_existing.append(emoji1)
 
-            if document["title"] == "Quest Selection & Acceptance":
-                guilds.update_one({"server": str(guild_id)}, {"$set": {"messages.quests": str(msg.id)}})
+            for emoji2 in role_emojis:
+                if emoji2 not in emoji_existing:
+                    await msg.add_reaction(emoji2)
 
-            for emoji in role_emojis:
-                await msg.add_reaction(emoji)
-
+            await msg.edit(embed=embed)
             await asyncio.sleep(2)
 
         await ctx.message.delete()
+
+    @commands.command(aliases=["1"])
+    @commands.is_owner()
+    async def test(self, ctx):
+        await ctx.message.add_reaction("🍣")
+        for react in ctx.message.reactions:
+            print(react)
 
 
 def setup(client):
