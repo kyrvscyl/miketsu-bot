@@ -441,7 +441,7 @@ class Embeds(commands.Cog):
         })
 
         sorting = self.client.get_channel(int(request["channels"]["sorting-hat"]))
-        quests_msg = sorting.fetch_message(int(request['messages']["quests"]))
+        quests_msg = await sorting.fetch_message(int(request['messages']["quests"]))
 
         embed = discord.Embed(
             colour=discord.Colour(0xa661da),
@@ -653,7 +653,7 @@ class Embeds(commands.Cog):
                 embed.set_footer(text=f"{sum(members_count)} special roles issued")
 
             query = sortings.find_one({"title": document["title"]}, {"_id": 0})
-            msg = sorting_channel.fetch_message(int(query["msg_id"]))
+            msg = await sorting_channel.fetch_message(int(query["msg_id"]))
 
             emoji_existing = []
             for emoji1 in msg.reactions:
@@ -671,9 +671,11 @@ class Embeds(commands.Cog):
     @commands.command(aliases=["1"])
     @commands.is_owner()
     async def test(self, ctx):
-        await ctx.message.add_reaction("🍣")
-        for react in ctx.message.reactions:
-            print(react)
+
+        sorting_channel = self.client.get_channel(int(606688376648761380))
+        msg = await sorting_channel.fetch_message(651798001983160320)
+        print(msg)
+        print(msg.reactions)
 
 
 def setup(client):
