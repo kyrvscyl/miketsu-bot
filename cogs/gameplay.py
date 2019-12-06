@@ -83,16 +83,6 @@ for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1}):
 def generate_nether_information():
     for index, reward in enumerate(range(1, 9)):
         lvl = index + 1
-        first = lvl * 9 + (lvl - 1) - 9
-        last = lvl * 9 + (lvl - 1)
-
-        if first == 0:
-            first = "00"
-        if last == 9:
-            last = "09"
-        if last == 79:
-            last = "70"
-
         jades = rewards_nether[0] * lvl
         coins = rewards_nether[1] * lvl
         exp = rewards_nether[2] * lvl
@@ -100,10 +90,6 @@ def generate_nether_information():
         shards_sp = int(rewards_nether[4] * lvl) + floor(lvl/8)
         shards_ssr = int(rewards_nether[5] * lvl) + floor(lvl/8)
         shards_ssn = int(rewards_nether[6] * lvl) + floor(lvl/8)
-
-        entry = f"`{first} - {last}:` {jades:,d}{e_j} | {coins:,d}{e_c} | {exp:,d}⤴ | {medals:,d}{e_m} | " \
-                f"{shards_sp}{e_1} | {shards_ssr}{e_2} | {shards_ssn}{e_6}\n"
-        description_nether.append(entry)
         actual_rewards.append([jades, coins, exp, medals, shards_sp, shards_ssr, shards_ssn])
 
 
@@ -224,13 +210,14 @@ async def logs_add_line(currency, amount, user_id):
         "user_id": str(user_id)
     }, {
         "$push": {
-            f"logs": {
+            "logs": {
                 "$each": [{
                     "currency": currency,
                     "amount": amount,
                     "date": get_time(),
                 }],
-                "$position": 0
+                "$position": 0,
+                "$slice": 200
             }
         }
     })
@@ -663,8 +650,8 @@ class Gameplay(commands.Cog):
                     if abs(level_diff) <= range_diff:
                         users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
                         users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
-                        await logs_add_line("realm_ticket", -1, raider.id)
                         await self.raid_perform_attack(victim, raider, ctx)
+                        await logs_add_line("realm_ticket", -1, raider.id)
 
                     else:
                         embed = discord.Embed(
@@ -810,8 +797,8 @@ class Gameplay(commands.Cog):
     async def encounter_search(self, ctx):
 
         users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"encounter_ticket": -1}})
-        await logs_add_line("encounter_ticket", -1, ctx.author.id)
         await self.encounter_roll(ctx.author, ctx)
+        await logs_add_line("encounter_ticket", -1, ctx.author.id)
         self.client.get_command("encounter_search").reset_cooldown(ctx)
 
     async def encounter_roll(self, user, ctx):

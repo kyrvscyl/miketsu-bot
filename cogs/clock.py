@@ -139,11 +139,9 @@ async def reset_purchase():
 
 
 async def logs_add_line(currency, amount, user_id):
+
     if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-        profile = {
-            "user_id": str(user_id),
-            "logs": []
-        }
+        profile = {"user_id": str(user_id), "logs": []}
         logs.insert_one(profile)
 
     logs.update_one({
@@ -154,9 +152,10 @@ async def logs_add_line(currency, amount, user_id):
                 "$each": [{
                     "currency": currency,
                     "amount": amount,
-                    "date": get_timestamp(),
+                    "date": get_time(),
                 }],
-                "$position": 0
+                "$position": 0,
+                "$slice": 200
             }
         }
     })
