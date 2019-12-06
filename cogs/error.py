@@ -23,13 +23,22 @@ def get_timestamp():
     return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
 
+def pluralize(singular, count):
+    if count > 1:
+        if singular[-1:] == "s":
+            return singular + "es"
+        return singular + "s"
+    else:
+        return singular
+
+
 class Error(commands.Cog):
 
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
 
-    async def submit_error(self, ctx, error):
+    async def submit_error(self, ctx, error, exception):
 
         channel = self.client.get_channel(int(scroll_id))
 
@@ -38,7 +47,7 @@ class Error(commands.Cog):
             title=f"Command Error Report",
             timestamp=get_timestamp()
         )
-        embed.add_field(name=f"function call: {ctx.command}", value=error, inline=False)
+        embed.add_field(name=f"function call: {ctx.command} | {exception}", value=error, inline=False)
 
         try:
             link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
@@ -60,102 +69,7 @@ class Error(commands.Cog):
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
 
-        if isinstance(error, commands.CheckFailure):
-
-            if str(ctx.command) == "pray_use":
-                embed = discord.Embed(
-                    colour=embed_color,
-                    title=f"Insufficient prayers",
-                    description=f"You have used up all your prayers today 🙏",
-                    timestamp=get_timestamp()
-                )
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "raid_perform":
-                embed = discord.Embed(
-                    title=f"Insufficient realm tickets", colour=discord.Colour(embed_color),
-                    description="purchase at the shop or get your daily rewards"
-                )
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "perform_parade":
-                embed = discord.Embed(
-                    title="Insufficient parade tickets", colour=discord.Colour(embed_color),
-                    description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
-                )
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "encounter_search":
-                embed = discord.Embed(
-                    colour=ctx.author.colour,
-                    title="Insufficient tickets",
-                    description=f"purchase at the shop to obtain more"
-                )
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "announcement_post_message":
-                embed = discord.Embed(
-                    colour=ctx.author.colour,
-                    description=f"Missing required roles"
-                )
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "castle_wander":
-                embed = discord.Embed(
-                    title="wander, w",
-                    colour=discord.Colour(embed_color),
-                    description="usable only at the castle's channels with valid floors\n"
-                                "check the channel topics for the floor number\n"
-                )
-                await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) in ["perform_exploration"]:
-                embed = discord.Embed(
-                    title="explore, exp",
-                    colour=discord.Colour(embed_color),
-                    description=f"explore unlocked chapters\n"
-                                f"consumes sushi, set a shikigami first `{self.prefix}set`\n"
-                                f"clear chance parameters: Onmyoji, shikigami, and chapter level, shikigami evolution"
-                )
-                embed.add_field(
-                    name="Format",
-                    value=f"*`{self.prefix}exp <unlocked chapter#>`*\n"
-                          f"*`{self.prefix}explore unlocked`*\n",
-                    inline=False
-                )
-                await ctx.channel.send(embed=embed)
-                self.client.get_command("perform_exploration").reset_cooldown(ctx)
-
-            elif str(ctx.command) in ["management_guild", "encounter_add_quiz"]:
-                return
-
-            elif isinstance(error, commands.NoPrivateMessage):
-                embed = discord.Embed(
-                    title="Invalid channel", colour=discord.Colour(embed_color),
-                    description="This command can only be used inside the guild"
-                )
-                await ctx.channel.send(embed=embed)
-
-            else:
-                await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.CommandOnCooldown):
-
-            if str(ctx.command) in [
-                "encounter_search",
-                "summon_perform_mystery",
-                "friendship_give",
-                "perform_parade",
-                "pray_use",
-                "perform_exploration",
-                "summon_perform_broken"
-            ]:
-                return
-
-            else:
-                await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.MissingRequiredArgument):
+        if isinstance(error, commands.MissingRequiredArgument):
 
             if str(ctx.command) == "raid_perform":
                 embed = discord.Embed(
@@ -255,13 +169,17 @@ class Error(commands.Cog):
                     title="explore, exp",
                     colour=discord.Colour(embed_color),
                     description=f"explore unlocked chapters\n"
-                                f"consumes sushi, set a shikigami first `{self.prefix}set`\n"
-                                f"clear success:  `Onmoyji level + shikigami level - chapter level`"
+                                f"consumes sushi, set a shikigami first via `{self.prefix}set`\n"
                 )
                 embed.add_field(
-                    name="Format",
+                    name="Clear chance parameters",
+                    value="Onmyoji, shikigami, and chapter level, shikigami evolution",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Formats",
                     value=f"*`{self.prefix}exp <unlocked chapter#>`*\n"
-                          f"*`{self.prefix}explore unlocked`*\n",
+                          f"*`{self.prefix}explore <last | unfinished | unf>`*\n",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -408,7 +326,11 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) in ["bounty_query", "bounty_add_location", "bounty_add_alias"]:
+            elif str(ctx.command) in [
+                "bounty_query",
+                "bounty_add_location",
+                "bounty_add_alias"
+            ]:
                 embed = discord.Embed(
                     title="bounty, b",
                     colour=discord.Colour(embed_color),
@@ -424,9 +346,6 @@ class Error(commands.Cog):
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
-
-            elif str(ctx.command) == "post_book_reference":
-                await ctx.message.add_reaction("❌")
 
             elif str(ctx.command) == "castle_portrait_customize":
                 embed = discord.Embed(
@@ -481,23 +400,17 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value=f"*`{self.prefix}cycle 1`*")
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "post_book_reference":
+                await ctx.message.add_reaction("❌")
+
             elif str(ctx.command) in ["post_patch_notes"]:
                 await ctx.message.add_reaction("❌")
 
             else:
-                await self.submit_error(ctx, error)
+                await self.submit_error(ctx, error, "MissingRequiredArgument")
 
-        elif isinstance(error, commands.CommandNotFound):
-
-            if isinstance(ctx.channel, discord.DMChannel):
-
-                embed = discord.Embed(
-                    title="Invalid channel",
-                    colour=discord.Colour(embed_color),
-                    description=f"Certain commands are not available through direct message channels.\n"
-                                f"Use them at the <#{spell_spam_id}>"
-                )
-                await ctx.author.send(embed=embed)
+        elif isinstance(error, commands.UserInputError):
+            await self.submit_error(ctx, error, "UserInputError")
 
         elif isinstance(error, commands.BadArgument):
 
@@ -511,7 +424,9 @@ class Error(commands.Cog):
                 "friendship_ship",
                 "shikigami_list_show_collected",
                 "logs_show",
-                "perform_exploration_check_clears"
+                "perform_exploration_check_clears",
+                "friendship_check_sail",
+                "shikigami_show_post_shikis"
             ]:
                 embed = discord.Embed(
                     title="Invalid member", colour=discord.Colour(embed_color),
@@ -520,7 +435,137 @@ class Error(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
             else:
-                await self.submit_error(ctx, error)
+                await self.submit_error(ctx, error, "BadArgument")
+
+        elif isinstance(error, commands.CheckFailure):
+
+            if str(ctx.command) == "pray_use":
+                embed = discord.Embed(
+                    colour=embed_color,
+                    title=f"Insufficient prayers",
+                    description=f"You have used up all your prayers today 🙏",
+                    timestamp=get_timestamp()
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "raid_perform":
+                embed = discord.Embed(
+                    title=f"Insufficient realm tickets", colour=discord.Colour(embed_color),
+                    description="purchase at the shop or get your daily rewards"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "perform_parade":
+                embed = discord.Embed(
+                    title="Insufficient parade tickets", colour=discord.Colour(embed_color),
+                    description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "encounter_search":
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    title="Insufficient tickets",
+                    description=f"purchase at the shop to obtain more"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "announcement_post_message":
+                embed = discord.Embed(
+                    colour=ctx.author.colour,
+                    description=f"Missing required roles"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) == "castle_wander":
+                embed = discord.Embed(
+                    title="wander, w",
+                    colour=discord.Colour(embed_color),
+                    description="usable only at the castle's channels with valid floors\n"
+                                "check the channel topics for the floor number\n"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in ["perform_exploration"]:
+                embed = discord.Embed(
+                    title="explore, exp",
+                    colour=discord.Colour(embed_color),
+                    description=f"explore unlocked chapters\n"
+                                f"consumes sushi, set a shikigami first via `{self.prefix}set`\n"
+                )
+                embed.add_field(
+                    name="Clear chance parameters",
+                    value="Onmyoji, shikigami, and chapter level, shikigami evolution",
+                    inline=False
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}exp <unlocked chapter#>`*\n"
+                          f"*`{self.prefix}explore <last | unfinished | unf>`*\n",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+                self.client.get_command("perform_exploration").reset_cooldown(ctx)
+
+            elif str(ctx.command) in ["management_guild", "encounter_add_quiz"]:
+                return
+
+            elif isinstance(error, commands.NoPrivateMessage):
+                embed = discord.Embed(
+                    title="Invalid channel", colour=discord.Colour(embed_color),
+                    description="This command can only be used inside the guild"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                await self.submit_error(ctx, error, "CheckFailure")
+
+        elif isinstance(error, commands.CommandOnCooldown):
+
+            if str(ctx.command) in [
+                "encounter_search",
+                "summon_perform_mystery",
+                "friendship_give",
+                "perform_parade",
+                "pray_use",
+                "perform_exploration",
+                "summon_perform_broken",
+                "shrine_shikigami"
+            ]:
+                return
+
+            if str(ctx.command) == "spawn_random_sushi":
+
+                role = guilds.find_one({"server": str(guild_id)}, {
+                    "_id": 0, "roles.sushchefs": 1
+                })["roles"]["sushchefs"]
+
+                embed = discord.Embed(
+                    title="sushi, food, hungry, ap",
+                    colour=discord.Colour(embed_color),
+                    description=f"request for hourly free food servings\n"
+                                f"pings the <@&{role}> role"
+                )
+                embed.add_field(
+                    name="Next serving",
+                    value=f"In {int(error.retry_after / 60)} {pluralize('minute', int(error.retry_after / 60))}"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                await self.submit_error(ctx, error, "CommandOnCooldown")
+
+        elif isinstance(error, commands.CommandNotFound):
+
+            if isinstance(ctx.channel, discord.DMChannel):
+
+                embed = discord.Embed(
+                    title="Invalid channel",
+                    colour=discord.Colour(embed_color),
+                    description=f"Certain commands are not available through direct message channels.\n"
+                                f"Use them at the <#{spell_spam_id}>"
+                )
+                await ctx.author.send(embed=embed)
 
         elif isinstance(error, commands.CommandInvokeError):
 
@@ -532,19 +577,16 @@ class Error(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
             else:
-                await self.submit_error(ctx, error)
+                await self.submit_error(ctx, error, "CommandInvokeError")
 
         elif isinstance(error, commands.NotOwner):
-            await self.submit_error(ctx, error)
-
-        elif isinstance(error, commands.UserInputError):
-            await self.submit_error(ctx, error)
+            await self.submit_error(ctx, error, "NotOwner")
 
         elif isinstance(error, commands.ExtensionError):
-            await self.submit_error(ctx, error)
+            await self.submit_error(ctx, error, "ExtensionError")
 
         else:
-            await self.submit_error(ctx, error)
+            await self.submit_error(ctx, error, None)
 
 
 def setup(client):

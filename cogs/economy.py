@@ -14,7 +14,7 @@ from math import ceil
 import discord
 import pytz
 from PIL import Image, ImageFont, ImageDraw, ImageOps
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 from cogs.frames import Frames
 from cogs.mongo.database import get_collections
@@ -58,7 +58,7 @@ e_c = emojis["c"]
 e_f = emojis["f"]
 e_j = emojis["j"]
 e_m = emojis["m"]
-e_s = "🍣"
+e_s = emojis["s"]
 e_t = emojis["t"]
 
 # Lists
@@ -660,17 +660,11 @@ class Economy(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.spawn_random_sushi.start()
+    @commands.command(aliases=["sushi", "food", "ap", "hungry"])
+    @commands.guild_only()
+    @commands.cooldown(1, 60 * 60, commands.BucketType.guild)
+    async def spawn_random_sushi(self, ctx):
 
-    @tasks.loop(seconds=60*60)
-    async def spawn_random_sushi(self):
-
-        if config.find_one({"var": 1}, {"_id": 0, "serving": 1})["serving"] is False:
-            return
-
-        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         sushi_claimers = []
         minutes = 10
         timestamp = get_timestamp()
@@ -688,7 +682,7 @@ class Economy(commands.Cog):
             return embed
 
         content = f"<@&{role}>!"
-        msg = await spell_spam_channel.send(content=content, embed=create_embed(sushi_claimers, ""))
+        msg = await ctx.channel.send(content=content, embed=create_embed(sushi_claimers, ""))
         await msg.add_reaction("🍽️")
 
         def check(r, u):
@@ -2223,7 +2217,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["shrine", "shr"])
     @commands.guild_only()
-    @commands.cooldown(1, 15, commands.BucketType.user)
+    @commands.cooldown(1, 3, commands.BucketType.user)
     async def shrine_shikigami(self, ctx, arg1="", *, args=""):
 
         user = ctx.author
@@ -2435,28 +2429,6 @@ class Economy(commands.Cog):
                 await ctx.channel.send(embed=embed)
 
         self.client.get_command("shrine_shikigami").reset_cooldown(ctx)
-
-    async def friendship_check_levelup(self, ctx, code, giver):
-        ship = ships.find_one({
-            "code": code}, {
-            "_id": 0, "level": 1, "points": 1, "points_required": 1, "ship_name": 1
-        })
-        bond_current = ship["points"]
-        level = ship["level"]
-
-        if level < 5:
-            if bond_current >= ship["points_required"]:
-                ships.update_one({"code": code}, {"$inc": {"level": 1}})
-                level_next = level + 1
-                points_required = \
-                    round(-1.875 * (level_next ** 4) + 38.75 * (level_next ** 3) - 170.63 * (level_next ** 2)
-                          + 313.75 * level_next - 175)
-                ships.update_one({"code": code}, {"$inc": {"points_required": points_required}})
-
-                if level_next == 5:
-                    ships.update_one({"code": code}, {"$set": {"points": 575, "points_required": 575}})
-
-                await self.friendship_post_ship(code, giver, ctx)
 
     async def friendship_post_ship(self, code, query1, ctx):
 
@@ -2694,7 +2666,7 @@ class Economy(commands.Cog):
                 ships.insert_one(profile)
 
             ships.update_one({"code": code}, {"$inc": {"points": 5}})
-            await self.friendship_check_levelup(ctx, code, giver)
+            await self.friendship_give_check_levelup(ctx, code, giver)
             users.update_one({"user_id": str(giver.id)}, {"$inc": {"friendship": 5}})
             await logs_add_line("friendship", 5, giver)
             await ctx.message.add_reaction(f"{e_f.replace('<', '').replace('>', '')}")
@@ -2705,15 +2677,37 @@ class Economy(commands.Cog):
             try:
                 await self.client.wait_for("reaction_add", timeout=120, check=check)
             except asyncio.TimeoutError:
-                await self.friendship_check_levelup(ctx, code, giver)
+                await self.friendship_give_check_levelup(ctx, code, giver)
                 await ctx.message.clear_reactions()
             else:
                 ships.update_one({"code": code, "level": {"$lt": 5}}, {"$inc": {"points": 3}})
-                await self.friendship_check_levelup(ctx, code, giver)
+                await self.friendship_give_check_levelup(ctx, code, giver)
                 users.update_one({"user_id": str(receiver.id)}, {"$inc": {"friendship": 3}})
                 await logs_add_line("friendship", 3, receiver)
                 await ctx.message.clear_reactions()
                 await ctx.message.add_reaction("✅")
+
+    async def friendship_give_check_levelup(self, ctx, code, giver):
+        ship = ships.find_one({
+            "code": code}, {
+            "_id": 0, "level": 1, "points": 1, "points_required": 1, "ship_name": 1
+        })
+        bond_current = ship["points"]
+        level = ship["level"]
+
+        if level < 5:
+            if bond_current >= ship["points_required"]:
+                ships.update_one({"code": code}, {"$inc": {"level": 1}})
+                level_next = level + 1
+                points_required = \
+                    round(-1.875 * (level_next ** 4) + 38.75 * (level_next ** 3) - 170.63 * (level_next ** 2)
+                          + 313.75 * level_next - 175)
+                ships.update_one({"code": code}, {"$inc": {"points_required": points_required}})
+
+                if level_next == 5:
+                    ships.update_one({"code": code}, {"$set": {"points": 575, "points_required": 575}})
+
+                await self.friendship_post_ship(code, giver, ctx)
 
     @commands.command(aliases=["fpchange", "fpc"])
     @commands.guild_only()
@@ -3811,22 +3805,37 @@ class Economy(commands.Cog):
     @commands.check(check_if_user_has_shiki_set)
     @commands.cooldown(1, 500, commands.BucketType.user)
     async def perform_exploration(self, ctx, *, arg):
+        user = ctx.author
 
         try:
             chapter = int(arg)
+            await self.perform_exploration_by_chapter(chapter, user, ctx)
         except ValueError:
-            embed = discord.Embed(
-                color=ctx.author.colour,
-                title="Invalid chapter",
-                description=f"that is not a valid chapter",
-            )
-            await ctx.channel.send(embed=embed)
-            self.client.get_command("perform_exploration").reset_cooldown(ctx)
-            return
+            if arg.lower() in ["last", "unf", "unfinished"]:
+                query = explores.find_one({
+                    "user_id": str(user.id),
+                    "explores.completion": False
+                }, {
+                    "_id": 0,
+                    "shikigami.$": 1
+                })
+                chapter = query["chapter"]
+                await self.perform_exploration_by_chapter(chapter, user, ctx)
 
-        user_id = ctx.author.id
+            else:
+                embed = discord.Embed(
+                    color=ctx.author.colour,
+                    title="Invalid chapter",
+                    description=f"that is not a valid chapter",
+                )
+                await ctx.channel.send(embed=embed)
+
+        self.client.get_command("perform_exploration").reset_cooldown(ctx)
+
+    async def perform_exploration_by_chapter(self, chapter, user, ctx):
+
         zone = zones.find_one({"chapter": chapter}, {"_id": 0})
-        user_profile = users.find_one({"user_id": str(user_id)}, {"_id": 0, "level": 1, "display": 1, "exploration": 1})
+        user_profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1, "exploration": 1})
 
         if chapter > zones.count():
             embed = discord.Embed(
@@ -3838,7 +3847,7 @@ class Economy(commands.Cog):
 
         elif chapter > user_profile["exploration"]:
             embed = discord.Embed(
-                color=ctx.author.colour,
+                color=user.colour,
                 title="Invalid chapter",
                 description=f"you have not yet unlocked this chapter",
             )
@@ -3850,7 +3859,7 @@ class Economy(commands.Cog):
             sushi_required = zone["sushi_required"]
             user_level = user_profile["level"]
             shikigami_set = user_profile["display"]
-            shikigami_level, shikigami_evolved = get_shikigami_stats(user_id, shikigami_set)
+            shikigami_level, shikigami_evolved = get_shikigami_stats(user.id, shikigami_set)
 
             evo_adjustment = 1
             if shikigami_evolved is True:
@@ -3870,7 +3879,7 @@ class Economy(commands.Cog):
                     num = spirits
 
                 user_profile_new = users.find_one({
-                    "user_id": str(user_id), "shikigami.name": user_profile["display"]
+                    "user_id": str(user.id), "shikigami.name": user_profile["display"]
                 }, {
                     "_id": 0,
                     "shikigami.$": 1,
@@ -3881,7 +3890,7 @@ class Economy(commands.Cog):
                 shiki_level = user_profile_new["shikigami"][0]['level']
 
                 evo = users.find_one({
-                    "user_id": str(user_id), "shikigami.name": shikigami_set}, {
+                    "user_id": str(user.id), "shikigami.name": shikigami_set}, {
                     "shikigami.$.name": 1
                 })["shikigami"][0]["evolved"]
                 thumbnail = get_thumbnail_shikigami(shikigami_set.lower(), get_evo_link(evo))
@@ -3889,7 +3898,7 @@ class Economy(commands.Cog):
                 embed_explore = discord.Embed(
                     color=ctx.author.colour,
                     title=f"{strike}Exploration stage: {num}/{spirits}{strike}",
-                    description=f"Chapter {arg}: {zone['name']}\n{description2}",
+                    description=f"Chapter {chapter}: {zone['name']}\n{description2}",
                     timestamp=get_timestamp()
                 )
                 embed_explore.add_field(
@@ -3905,15 +3914,15 @@ class Economy(commands.Cog):
 
                 return embed_explore
 
-            if explores.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
+            if explores.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
                 profile = {
-                    "user_id": str(user_id),
+                    "user_id": str(user.id),
                     "explores": []
                 }
                 explores.insert_one(profile)
 
             exploration_continuation = explores.find_one({
-                "user_id": str(user_id),
+                "user_id": str(user.id),
                 "explores.completion": False,
                 "explores": {
                     "$elemMatch": {
@@ -3928,7 +3937,7 @@ class Economy(commands.Cog):
 
             if exploration_continuation is None:
                 explores.update_one({
-                    "user_id": str(user_id)
+                    "user_id": str(user.id)
                 }, {
                     "$push": {
                         "explores": {
@@ -3946,7 +3955,7 @@ class Economy(commands.Cog):
                 })
 
             new_explore = explores.find_one({
-                "user_id": str(user_id),
+                "user_id": str(user.id),
                 "explores.completion": False,
                 "explores": {
                     "$elemMatch": {
@@ -3979,7 +3988,7 @@ class Economy(commands.Cog):
                     break
                 else:
                     users.update_one({
-                        "user_id": str(user_id)
+                        "user_id": str(user.id)
                     }, {
                         "$inc": {
                             "sushi": - sushi_required
@@ -3989,25 +3998,25 @@ class Economy(commands.Cog):
                     roll = random.uniform(0, 100)
                     if roll < adjusted_chance:
                         explores.update_one({
-                            "user_id": str(user_id), "explores.completion": False}, {
+                            "user_id": str(user.id), "explores.completion": False}, {
                             "$inc": {
                                 "explores.$.attempts": 1
                             }
                         })
 
                         explores.update_one({
-                            "user_id": str(user_id), "explores.completion": False}, {
+                            "user_id": str(user.id), "explores.completion": False}, {
                             "$push": {
                                 "explores.$.logs": "✅"
                             }
                         })
                         new_explore = explores.find_one({
-                            "user_id": str(user_id), "explores.completion": False}, {
+                            "user_id": str(user.id), "explores.completion": False}, {
                             "_id": 0,
                             "explores.$": 1,
                         })
                         shikigami_add_exp = users.update_one({
-                            "user_id": str(user_id),
+                            "user_id": str(user.id),
                             "$and": [{
                                 "shikigami": {
                                     "$elemMatch": {
@@ -4021,7 +4030,7 @@ class Economy(commands.Cog):
                         })
 
                         if shikigami_add_exp.modified_count > 0:
-                            await self.shikigami_process_levelup(user_id, user_profile["display"])
+                            await self.shikigami_process_levelup(user.id, user_profile["display"])
 
                         report = new_explore["explores"][0]["logs"]
                         await msg.edit(
@@ -4030,13 +4039,13 @@ class Economy(commands.Cog):
 
                         if new_explore["explores"][0]["attempts"] == spirits:
                             explores.update_one({
-                                "user_id": str(user_id), "explores.completion": False}, {
+                                "user_id": str(user.id), "explores.completion": False}, {
                                 "$set": {
                                     "explores.$.completion": True
                                 }
                             })
                             new_explore = explores.find_one({
-                                "user_id": str(user_id), "explores.completion": True}, {
+                                "user_id": str(user.id), "explores.completion": True}, {
                                 "_id": 0,
                                 "explores.$": 1,
                             })
@@ -4045,9 +4054,9 @@ class Economy(commands.Cog):
                             await msg.clear_reactions()
 
                             embed_new = create_embed_exploration(spirits, report, "~~")
-                            await self.perform_exploration_process_rewards(user_id, msg, embed_new, chapter)
+                            await self.perform_exploration_process_rewards(user.id, msg, embed_new, chapter)
                             users.update_one({
-                                "user_id": str(user_id),
+                                "user_id": str(user.id),
                                 "exploration": {
                                     "$lt": 28
                                 }
@@ -4060,13 +4069,13 @@ class Economy(commands.Cog):
 
                     else:
                         explores.update_one({
-                            "user_id": str(user_id), "explores.completion": False}, {
+                            "user_id": str(user.id), "explores.completion": False}, {
                             "$push": {
                                 "explores.$.logs": "❌"
                             }
                         })
                         new_explore = explores.find_one({
-                            "user_id": str(user_id), "explores.completion": False}, {
+                            "user_id": str(user.id), "explores.completion": False}, {
                             "_id": 0,
                             "explores.$": 1,
                         })

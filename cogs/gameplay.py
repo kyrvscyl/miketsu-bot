@@ -385,8 +385,10 @@ class Gameplay(commands.Cog):
                     if cleared_waves <= covered[1]:
                         rewards_select = actual_rewards[g]
 
-                        jades, coins, exp = rewards_select[0], rewards_select[1], rewards_select[2]
-                        medals = rewards_select[3]
+                        jades = random.randint(rewards_select[0] * 0.95, rewards_select[0] * 1.05)
+                        coins = random.randint(rewards_select[1] * 0.95, rewards_select[1] * 1.05)
+                        exp = random.randint(rewards_select[2] * 0.95, rewards_select[2] * 1.05)
+                        medals = random.randint(rewards_select[3] * 0.95, rewards_select[3] * 1.05)
                         shards_sp = rewards_select[4]
                         shards_ssr = rewards_select[5]
                         shards_ssn = rewards_select[6]

@@ -39,6 +39,7 @@ clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["cloc
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
+boss_busters_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["boss_busters"]
 clock_channel = guilds.find_one({"server": str(guild_id)}, {"channels.clock": 1, "_id": 0})["channels"]["clock"]
 embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
@@ -185,6 +186,8 @@ class Clock(commands.Cog):
             except AttributeError:
                 continue
 
+        ships.update_one({"points": 0, "level": {"$gte": 2}}, {"$inc": {"level": -1}})
+
     @commands.Cog.listener()
     async def on_ready(self):
         await self.clock_start()
@@ -205,7 +208,7 @@ class Clock(commands.Cog):
         try:
             time = get_time().strftime("%H:%M EST | %a")
             hour_minute = get_time().strftime("%H:%M")
-            minute = get_time().strftime("%M")
+            minute_hand = get_time().strftime("%M")
             hour_24 = get_time().strftime("%H")
             hour_12 = get_time().strftime("%I")
             day_week = get_time().strftime("%a")
@@ -213,12 +216,12 @@ class Clock(commands.Cog):
             weather1 = weathers.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
             weather2 = weathers.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
-            if minute == "00":
+            if minute_hand == "00":
                 weather1, weather2 = generate_weather(int(hour_24))
 
             try:
                 clock = self.client.get_channel(int(clock_channel))
-                await clock.edit(name=f"{get_emoji(hour_12, minute)} {time} {weather1} {weather2}")
+                await clock.edit(name=f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
             except RuntimeError:
                 pass
             except AttributeError:
@@ -230,7 +233,7 @@ class Clock(commands.Cog):
             except discord.errors.HTTPException:
                 pass
 
-            if minute == "00":
+            if minute_hand == "00":
                 await penalty_hour()
                 await actions_reset()
                 await reset_purchase()
@@ -240,7 +243,6 @@ class Clock(commands.Cog):
                 await self.reminders_bidding_process(bidding_format)
                 await self.events_activate_reminder_submit()
                 await Frames(self.client).achievements_process_hourly()
-                config.update_one({"var": 1}, {"$set": {"serving": True}})
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
@@ -267,6 +269,7 @@ class Clock(commands.Cog):
     async def perform_netherworld_announcement(self):
         users.update_many({}, {"$set": {"nether_pass": True}})
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+        content = f"<&{boss_busters_id}>"
 
         embed = discord.Embed(
             color=embed_color,
@@ -275,7 +278,7 @@ class Clock(commands.Cog):
                         f"use `{self.prefix}enc` to explore them by chance",
             timestamp=get_timestamp()
         )
-        await spell_spam_channel.send(embed=embed)
+        await spell_spam_channel.send(content=content, embed=embed)
 
     async def perform_delete_secret_channels(self):
         query = guilds.find({}, {
