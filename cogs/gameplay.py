@@ -322,6 +322,7 @@ class Gameplay(commands.Cog):
                 value=f"*{', '.join(formatted_shikigamis[:10])}*",
                 inline=False
             )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
 
             if s in ["accepted", "end"]:
                 caption_list = []
@@ -459,6 +460,7 @@ class Gameplay(commands.Cog):
                 answer = await self.client.wait_for("message", timeout=60, check=check_if_valid_shikigami)
             except asyncio.TimeoutError:
                 await search_msg.clear_reactions()
+                return
             except KeyError:
                 embed1 = discord.Embed(
                     colour=discord.Colour(embed_color),

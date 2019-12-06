@@ -1495,7 +1495,7 @@ class Economy(commands.Cog):
         bounties.update_one({"aliases": name.lower()}, {"$push": {"location": location}})
         embed = discord.Embed(
             colour=discord.Colour(embed_color),
-            title=f"successfully added new location to {name}",
+            title=f"Successfully added new location to {name.title()}",
             description=f"{location}",
             timestamp=get_timestamp()
         )
@@ -2391,7 +2391,8 @@ class Economy(commands.Cog):
                         title="Timeout!", colour=discord.Colour(embed_color),
                         description=f"no confirmation received for {e_t} exchange",
                     )
-                    await ctx.channel.send(embed=embed)
+                    embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+                    await confirm_.edit(embed=embed)
                     await confirm_.clear_reactions()
 
                 else:
@@ -2419,13 +2420,15 @@ class Economy(commands.Cog):
                         description=f"You acquired {shiki.title()} for {required_talisman:,d}{e_t}",
                         timestamp=get_timestamp()
                     )
-                    await ctx.channel.send(embed=embed)
+                    embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+                    await confirm_.edit(embed=embed)
 
             elif talisman < required_talisman:
                 embed = discord.Embed(
                     title="Insufficient talismans", colour=discord.Colour(embed_color),
                     description=f"You lack {required_talisman - talisman:,d}{e_t}",
                 )
+                embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
                 await ctx.channel.send(embed=embed)
 
         self.client.get_command("shrine_shikigami").reset_cooldown(ctx)
