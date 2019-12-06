@@ -3819,10 +3819,11 @@ class Economy(commands.Cog):
                     "explores.completion": False
                 }, {
                     "_id": 0,
-                    "shikigami.$": 1
+                    "explores.$": 1
                 })
-                chapter = query["chapter"]
+                chapter = query["explores"][0]["chapter"]
                 await self.perform_exploration_by_chapter(chapter, user, ctx)
+                self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
             else:
                 embed = discord.Embed(
@@ -3831,8 +3832,7 @@ class Economy(commands.Cog):
                     description=f"that is not a valid chapter",
                 )
                 await ctx.channel.send(embed=embed)
-
-        self.client.get_command("perform_exploration").reset_cooldown(ctx)
+                self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
     async def perform_exploration_by_chapter(self, chapter, user, ctx):
 
