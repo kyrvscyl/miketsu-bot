@@ -385,9 +385,9 @@ class Gameplay(commands.Cog):
                             "user_id": str(user.id)
                         }, {
                             "$inc": {
-                                "jades": jades,
-                                "coins": coins,
-                                "medals": medals
+                                "jades": int(jades),
+                                "coins": int(coins),
+                                "medals": int(medals)
                             },
                             "$set": {
                                 "nether_pass": False
@@ -400,7 +400,7 @@ class Gameplay(commands.Cog):
                             }
                         }, {
                             "$inc": {
-                                "experience": exp
+                                "experience": int(exp)
                             }
                         })
 
@@ -429,16 +429,16 @@ class Gameplay(commands.Cog):
                         await self.encounter_roll_netherworld_issue_shards(user.id, shards_reward)
                         link = await self.encounter_roll_netherworld_generate_shards(user.id, shards_reward)
 
-                        rewards = [jades, coins, exp, medals]
+                        rewards = [int(jades), int(coins), int(exp), int(medals)]
                         await search_msg.edit(
                             embed=create_embed(
                                 top_shikigamis, dead_shikigamis, "end", True, cleared_waves, link, rewards
                             )
                         )
 
-                        await logs_add_line("jades", jades, user.id)
-                        await logs_add_line("coins", coins, user.id)
-                        await logs_add_line("medals", medals, user.id)
+                        await logs_add_line("jades", int(jades), user.id)
+                        await logs_add_line("coins", int(coins), user.id)
+                        await logs_add_line("medals", int(medals), user.id)
                         break
                     continue
                 break
