@@ -220,6 +220,7 @@ class Clock(commands.Cog):
 
             try:
                 clock = self.client.get_channel(int(clock_channel))
+                print(f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
                 await clock.edit(name=f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
             except RuntimeError:
                 pass
@@ -241,7 +242,6 @@ class Clock(commands.Cog):
                 await self.perform_delete_secret_channels()
                 await self.reminders_bidding_process(bidding_format)
                 await self.events_activate_reminder_submit()
-                await Frames(self.client).achievements_process_hourly()
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
@@ -260,6 +260,9 @@ class Clock(commands.Cog):
                 await Economy(self.client).frame_automate()
                 await frame_automate_penalize()
                 await Frames(self.client).achievements_process_daily()
+
+            if minute_hand == "00":
+                await Frames(self.client).achievements_process_hourly()
 
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()

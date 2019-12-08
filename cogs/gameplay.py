@@ -131,6 +131,27 @@ def push_new_shikigami(user_id, s, evolve, shards):
     })
 
 
+async def shikigami_post_approximate_results(ctx, query):
+    shikigamis_search = shikigamis.find({
+        "name": {"$regex": f"^{query[:2].lower()}"}
+    }, {"_id": 0, "name": 1})
+
+    approximate_results = []
+    for result in shikigamis_search:
+        approximate_results.append(f"{result['name'].title()}")
+
+    embed = discord.Embed(
+        title="Invalid shikigami", colour=discord.Colour(embed_color),
+        description=f"check the spelling of the shikigami"
+    )
+    embed.add_field(
+        name="Possible matches",
+        value="*{}*".format(", ".join(approximate_results)),
+        inline=False
+    )
+    await ctx.channel.send(embed=embed)
+
+
 async def boss_daily_reset_check():
     survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
     discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
@@ -294,7 +315,8 @@ class Gameplay(commands.Cog):
         def create_embed(t, d, s, b, c, u, r):
             embed = discord.Embed(
                 color=user.colour, title=f"Encounter Netherworld",
-                description=f"react below and place your shikigamis to start clearing waves"
+                description=f"react below and place your shikigamis to start clearing waves",
+                timestamp=get_timestamp()
             )
 
             formatted_shikigamis = []
@@ -349,6 +371,7 @@ class Gameplay(commands.Cog):
             except asyncio.TimeoutError:
                 return
             else:
+                await search_msg.clear_reactions()
                 await search_msg.edit(
                     embed=create_embed(top_shikigamis, dead_shikigamis, "accepted", None, cleared_waves, "", [])
                 )
@@ -783,12 +806,24 @@ class Gameplay(commands.Cog):
 
     @commands.command(aliases=["qz"])
     @commands.check(check_if_user_has_any_admin_roles)
-    async def encounter_add_quiz(self, ctx, arg1, *, emoji):
+    async def encounter_add_quiz(self, ctx, arg1, *, emoji=None):
 
         name = arg1.replace("_", " ").lower()
-        x = shikigamis.update_one({"name": name}, {"$set": {"demon_quiz": emoji}})
-        if x.modified_count != 0:
-            await ctx.message.add_reaction("✅")
+        if name not in pool_all:
+            await shikigami_post_approximate_results(ctx, name)
+
+        elif emoji is None:
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                title="No emojis provided",
+                description="specify emojis to change the shikigami's identity"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif emoji is not None:
+            x = shikigamis.update_one({"name": name}, {"$set": {"demon_quiz": emoji}})
+            if x.modified_count != 0:
+                await ctx.message.add_reaction("✅")
 
     @commands.command(aliases=["encounter", "enc"])
     @commands.check(check_if_user_has_encounter_tickets)
