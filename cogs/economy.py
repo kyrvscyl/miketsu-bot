@@ -126,6 +126,13 @@ def check_if_user_has_development_role(ctx):
     return str(ctx.author.id) in developer_team
 
 
+def check_if_user_has_any_alt_roles(user):
+    for role in reversed(user.roles):
+        if role.name in ["Geminio"]:
+            return True
+    return False
+
+
 def check_if_user_has_prayers(ctx):
     return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "prayers": 1})["prayers"] > 0
 
@@ -891,7 +898,7 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif user.name == member.name:
+        elif check_if_user_has_any_alt_roles(member):
             await ctx.message.add_reaction("❌")
 
         else:
@@ -2635,6 +2642,9 @@ class Economy(commands.Cog):
             return
 
         elif receiver.name == giver.name:
+            await ctx.message.add_reaction("❌")
+
+        elif check_if_user_has_any_alt_roles(receiver):
             await ctx.message.add_reaction("❌")
 
         elif profile["friendship_pass"] < 1:

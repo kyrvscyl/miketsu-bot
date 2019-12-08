@@ -99,6 +99,13 @@ quizzes_cycle = cycle(quizzes)
 generate_nether_information()
 
 
+def check_if_user_has_any_alt_roles(user):
+    for role in reversed(user.roles):
+        if role.name in ["Geminio"]:
+            return True
+    return False
+
+
 def pluralize(singular, count):
     if count > 1:
         if singular[-1:] == "s":
@@ -641,7 +648,7 @@ class Gameplay(commands.Cog):
         if victim is None:
             raise discord.ext.commands.MissingRequiredArgument(ctx.author)
 
-        elif victim.name == ctx.author.name:
+        elif victim.name in ctx.author.name:
             await ctx.message.add_reaction("❌")
 
         elif victim.bot or victim.id == ctx.author.id:
@@ -1117,7 +1124,7 @@ class Gameplay(commands.Cog):
         def check(r, u):
             return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == search_msg.id
 
-        while count_players < 20:
+        while count_players < 10:
             try:
                 await asyncio.sleep(1)
                 timeout = ((time_discovered + timedelta(seconds=180)) - get_time()).total_seconds()
@@ -1133,7 +1140,7 @@ class Gameplay(commands.Cog):
                 if str(user.id) in assembly_players:
                     pass
 
-                elif str(user.name) in assembly_players2:
+                elif check_if_user_has_any_alt_roles(user):
                     pass
 
                 elif str(user.id) not in assembly_players:
@@ -1161,8 +1168,7 @@ class Gameplay(commands.Cog):
                     assembly_players_name.append(user.display_name)
                     timeout_new = ((time_discovered + timedelta(seconds=180)) - get_time()).total_seconds()
                     await search_msg.edit(embed=generate_embed_boss(timeout_new, assembly_players_name))
-
-                count_players += 1
+                    count_players += 1
 
         if len(assembly_players) == 0:
             await asyncio.sleep(3)
