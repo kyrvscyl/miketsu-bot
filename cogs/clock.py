@@ -220,6 +220,9 @@ class Clock(commands.Cog):
 
             try:
                 clock = self.client.get_channel(int(clock_channel))
+                if clock.name == f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}":
+                     return
+
                 print(f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
                 await clock.edit(name=f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
             except RuntimeError:
