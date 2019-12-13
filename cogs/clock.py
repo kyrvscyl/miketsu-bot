@@ -74,6 +74,8 @@ def get_emoji(hours, minutes):
 
 
 def generate_weather(hour):
+    print(f"Generating new weather")
+
     if 18 > hour >= 6:
         day = weathers.find_one({"type": "day"}, {"_id": 0, "type": 0})
         weather1 = random.choice(list(day.values()))
@@ -102,6 +104,7 @@ def pluralize(singular, count):
 
 
 async def frame_automate_penalize():
+    print("Penalizing all summon streaks")
 
     for streak in streaks.find({}, {"_id": 0}):
         current_streak = streak["SSR_current"]
@@ -128,14 +131,17 @@ async def frame_automate_penalize():
 
 async def penalty_hour():
     quests.update_many({"quest1.status": "ongoing"}, {"$inc": {"quest1.$.score": -5}})
+    print(f"Penalizing all ongoing quest1 users")
 
 
 async def actions_reset():
     quests.update_many({"quest1.status": "ongoing"}, {"$set": {"quest1.$.actions": 0}})
+    print(f"Resetting all quest1 actions to 0")
 
 
 async def reset_purchase():
     quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
+    print(f"Resetting all quest1 purchases to True")
 
 
 async def logs_add_line(currency, amount, user_id):
@@ -168,6 +174,7 @@ class Clock(commands.Cog):
         self.prefix = self.client.command_prefix
 
     async def ships_demolish_slowly(self):
+        print("Demolishing certain ships")
         guild = self.client.get_guild(int(guild_id))
 
         for ship in ships.find({}, {"_id": 0}):
@@ -192,6 +199,8 @@ class Clock(commands.Cog):
         await self.clock_start()
 
     async def clock_start(self):
+        print("Initializing a clock instance")
+
         while True:
             try:
                 if get_time().strftime("%S") == "00":
@@ -220,11 +229,16 @@ class Clock(commands.Cog):
 
             try:
                 clock = self.client.get_channel(int(clock_channel))
-                if clock.name == f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}":
-                     return
+                clock_name = f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}"
+                print(f"{clock.name} | {clock_name}")
 
-                print(f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
-                await clock.edit(name=f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}")
+                if clock.name == clock_name:
+                    print("Killing the function")
+                    return
+
+                print(clock_name)
+                await clock.edit(name=clock_name)
+
             except RuntimeError:
                 pass
             except AttributeError:
@@ -272,6 +286,8 @@ class Clock(commands.Cog):
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
     async def perform_netherworld_announcement(self):
+
+        print("Opening the netherworld gates")
         users.update_many({}, {"$set": {"nether_pass": True}})
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         content = f"<&{boss_busters_id}>"
@@ -286,9 +302,8 @@ class Clock(commands.Cog):
         await spell_spam_channel.send(content=content, embed=embed)
 
     async def perform_delete_secret_channels(self):
-        query = guilds.find({}, {
-            "_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1
-        })
+        query = guilds.find({}, {"_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1})
+        print("Deleting exposed secret channels")
 
         for entry in query:
             for secret in entry:
@@ -308,6 +323,7 @@ class Clock(commands.Cog):
 
     async def events_activate_reminder_submit(self):
 
+        print("Processing event reminders")
         for reminder in events.find({"status": True}, {"_id": 0}):
             if reminder["next"].strftime("%Y-%m-%d %H:%M") == get_time().strftime("%Y-%m-%d %H:%M"):
 
@@ -474,6 +490,7 @@ class Clock(commands.Cog):
 
     async def reminders_bidding_process(self, date_time):
 
+        print(f"Processing bidding reminders")
         request = guilds.find_one({"server": str(guild_id)}, {"_id": 0})
         headlines_channel = self.client.get_channel(int(request["channels"]["headlines"]))
         reminders_date_list = events.find_one({"event": "showdown bidding"}, {"_id": 1, "dates": 1})["dates"]

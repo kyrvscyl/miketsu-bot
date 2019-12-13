@@ -373,27 +373,29 @@ async def claim_rewards_daily_give(user, ctx):
 
 
 async def claim_rewards_weekly_give(user, ctx):
-    jades, coins, amulets = 750, 250000, 10
+    jades, coins, amulets, sushi = 750, 250000, 10, 150
 
     users.update_one({"user_id": str(user.id)}, {
         "$inc": {
             "jades": jades,
             "coins": coins,
-            "amulets": amulets
+            "amulets": amulets,
+            "sushi": sushi
         },
         "$set": {
             "weekly": True
         }
     })
-
     await logs_add_line("jades", jades, user.id)
     await logs_add_line("coins", coins, user.id)
     await logs_add_line("amulets", amulets, user.id)
+    await logs_add_line("sushi", sushi, user.id)
 
     embed = discord.Embed(
         color=ctx.author.colour,
         title="💝 Weekly rewards",
-        description=f"A mythical box containing {jades:,d}{e_j}, {coins:,d}{e_c}, and {amulets:,d}{e_a}",
+        description=f"A mythical box containing {jades:,d}{e_j}, {coins:,d}{e_c}, and {amulets:,d}{e_a}, & "
+                    f"{sushi:,d}{e_s}",
         timestamp=get_timestamp()
     )
     embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
@@ -671,9 +673,7 @@ class Economy(commands.Cog):
     @commands.cooldown(1, 60 * 60, commands.BucketType.guild)
     async def spawn_random_sushi(self, ctx):
 
-        sushi_claimers = []
-        minutes = 10
-        timestamp = get_timestamp()
+        minutes, sushi_claimers, timestamp = 10, [], get_timestamp()
         role = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles.sushchefs": 1})["roles"]["sushchefs"]
 
         def create_embed(listings, strike):
@@ -703,19 +703,14 @@ class Economy(commands.Cog):
             except asyncio.TimeoutError:
                 await msg.edit(embed=create_embed(sushi_claimers, "~~"))
                 await msg.clear_reactions()
-                return
+                break
             else:
                 sushi = 25
-                users.update_one({
-                    "user_id": str(user.id)
-                }, {
-                    "$inc": {
-                        "sushi": sushi
-                    }
-                })
+                users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": sushi}})
                 sushi_claimers.append(str(user.id))
                 await msg.edit(embed=create_embed(sushi_claimers, ""))
                 await logs_add_line("sushi", sushi, user.id)
+                continue
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -976,6 +971,7 @@ class Economy(commands.Cog):
 
     async def reset_rewards_daily(self):
 
+        print("Resetting daily rewards")
         users.update_many({}, {"$set": {"daily": False, "raided_count": 0, "prayers": 3, "wish": True}})
         query = {"level": {"$gt": 1}}
         project = {"ship_name": 1, "shipper1": 1, "shipper2": 1, "level": 1}
@@ -997,7 +993,7 @@ class Economy(commands.Cog):
         await spell_spam_channel.send(embed=embed1)
 
     async def reset_rewards_weekly(self):
-
+        print("Resetting weekly rewards")
         users.update_many({}, {"$set": {"weekly": False}})
 
         embed = discord.Embed(
@@ -1472,6 +1468,7 @@ class Economy(commands.Cog):
 
     async def frame_automate(self):
 
+        print("Recalculating frames distribution")
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
         guild = spell_spam_channel.guild
 
@@ -1602,7 +1599,7 @@ class Economy(commands.Cog):
             "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
             "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1, "achievements": 1, "frame": 1,
             "achievements_count": 1, "parade_tickets": 1, "N": 1, "amulets_spent_b": 1, "amulets_b": 1, "SSN": 1,
-            "sushi": 1
+            "sushi": 1, "nether_pass": 1
         })
 
         ships_count = ships.find({"code": {"$regex": f".*{ctx.author.id}.*"}}).count()
@@ -1626,6 +1623,7 @@ class Economy(commands.Cog):
         achievements = profile["achievements"]
         parade = profile["parade_tickets"]
         sushi = profile["sushi"]
+        nether_pass = profile["nether_pass"]
 
         embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
 
@@ -1640,13 +1638,18 @@ class Economy(commands.Cog):
         else:
             embed.set_thumbnail(url=member.avatar_url)
 
+        def get_emoji_nether(x):
+            if nether_pass is False:
+                return "❌"
+            return "✅"
+
         embed.set_author(
             name=f"{member.display_name}'s profile",
             icon_url=member.avatar_url
         )
         embed.add_field(
-            name="⤴ Experience",
-            value=f"Level: {level} ({exp:,d}/{level_exp_next:,d})"
+            name="⤴ Experience | Nether Pass",
+            value=f"Level: {level} ({exp:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
         )
         embed.add_field(
             name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
@@ -1949,7 +1952,6 @@ class Economy(commands.Cog):
         msg = await ctx.channel.send(embed=create_new_embed_page(1))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
-        await msg.add_reaction("🖼️")
 
         def check(r, m):
             return m != self.client.user and r.message.id == msg.id
@@ -2785,7 +2787,7 @@ class Economy(commands.Cog):
                     value=f"Acquire for {frame['amount']:,d}{emojify(frame['currency'])}",
                     inline=False
                 )
-            embed.add_field(name=f"Format", value=f"*`{self.prefix}buy frame <frame_name>`*", inline=False)
+            embed.add_field(name=f"Format", value=f"*`{self.prefix}buy frame <name>`*", inline=False)
             await msg.edit(embed=embed)
 
     @commands.command(aliases=["buy"])
@@ -3132,42 +3134,22 @@ class Economy(commands.Cog):
         await logs_add_line("amulets", -amulet_pull, user.id)
 
         for summon in summon_pull:
-
-            query = users.find_one({
-                "user_id": str(user.id),
-                "shikigami.name": summon[1].replace("||", "")}, {
-                "_id": 0, "shikigami.$": 1
-            })
+            shiki = summon[1].replace("||", "")
+            query = users.find_one({"user_id": str(user.id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
 
             if query is None:
                 evolve, shards = False, 0
                 if summon[0] == "SP":
                     evolve, shards = True, 5
 
-                users.update_one({
-                    "user_id": str(user.id)}, {
-                    "$push": {
-                        "shikigami": {
-                            "name": summon[1].replace("||", ""),
-                            "rarity": summon[0],
-                            "grade": 1,
-                            "owned": 0,
-                            "evolved": evolve,
-                            "shards": shards,
-                            "level": 1,
-                            "exp": 0,
-                            "level_exp_next": 6
-                        }
-                    }
+                push_new_shikigami(user.id, shiki, evolve, shards)
+
+            if summon[0] == "SP":
+                users.update_one({"user_id": str(user.id), "shikigami.name": shiki}, {
+                    "$inc": {"shikigami.$.shards": 5}
                 })
 
-            users.update_one({
-                "user_id": str(user.id),
-                "shikigami.name": summon[1].replace("||", "")}, {
-                "$inc": {
-                    "shikigami.$.owned": 1
-                }
-            })
+            users.update_one({"user_id": str(user.id), "shikigami.name": shiki}, {"$inc": {"shikigami.$.owned": 1}})
 
     async def summon_perform_mystery_pull_update_streak(self, user, summon_pull):
 
@@ -3840,6 +3822,7 @@ class Economy(commands.Cog):
                         color=ctx.author.colour,
                         description=f"you have no pending explorations",
                     )
+                    embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
                     await ctx.channel.send(embed=embed)
                     self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
@@ -3901,9 +3884,7 @@ class Economy(commands.Cog):
                 user_profile_new = users.find_one({
                     "user_id": str(user.id), "shikigami.name": user_profile["display"]
                 }, {
-                    "_id": 0,
-                    "shikigami.$": 1,
-                    "sushi": 1
+                    "_id": 0, "shikigami.$": 1, "sushi": 1
                 })
                 exp = user_profile_new["shikigami"][0]['exp']
                 level_exp_next = user_profile_new["shikigami"][0]['level_exp_next']
@@ -4075,16 +4056,20 @@ class Economy(commands.Cog):
 
                             embed_new = create_embed_exploration(spirits, report, "~~")
                             await self.perform_exploration_process_rewards(user.id, msg, embed_new, chapter)
-                            users.update_one({
-                                "user_id": str(user.id),
-                                "exploration": {
-                                    "$lt": 28
-                                }
-                            }, {
-                                "$inc": {
-                                    "exploration": 1
-                                }
-                            })
+
+                            explorations = users.find_one({"user_id": str(user.id)}, {"_id": 0, "exploration": 1})
+
+                            if chapter == explorations["exploration"]:
+                                users.update_one({
+                                    "user_id": str(user.id),
+                                    "exploration": {
+                                        "$lt": 28
+                                    }
+                                }, {
+                                    "$inc": {
+                                        "exploration": 1
+                                    }
+                                })
                             break
 
                     else:

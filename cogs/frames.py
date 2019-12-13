@@ -277,6 +277,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_hourly(self):
 
+        print("Processing hourly achievements")
         jades = 3500
         guild = self.client.get_guild(int(guild_id))
         query = users.find({}, {
@@ -838,6 +839,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_weekly(self):
 
+        print("Processing weekly achievements")
         jades = 750
         users.update_many({"achievements.name": "Eboshi"}, {"$pull": {"achievements": {"name": "Eboshi"}}})
 
@@ -863,6 +865,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_daily(self):
 
+        print("Processing daily achievements")
         jades = 5000
         guild = self.client.get_guild(int(guild_id))
         guild_1st_anniversary = datetime.strptime("2019-Feb-01", "%Y-%b-%d")

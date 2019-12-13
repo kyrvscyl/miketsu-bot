@@ -229,6 +229,7 @@ async def secret_response(channel_name, description):
 
 async def owls_restock():
     owls.update_many({}, {"$set": {"purchaser": "None"}})
+    print("Restocking all owls in the emporium")
 
 
 async def penalize_quest1(user, cycle, points):
@@ -743,6 +744,7 @@ class Expecto(commands.Cog):
         self.prefix = self.client.command_prefix
 
     async def send_off_complete_quest1(self):
+        print("Sending off completed reports for quest1")
         for entry in sendoffs.find({"timestamp_complete": get_time().strftime("%Y-%b-%d %HH")}, {"_id": 0}):
             try:
                 user = self.client.get_user(int(entry["user_id"]))
@@ -805,6 +807,7 @@ class Expecto(commands.Cog):
             "timestamp_update": get_time().strftime("%Y-%b-%d %HH")}, {
             "_id": 0
         })
+        print(f"Sending off pending reports for quest1")
 
         for entry in query:
             user = self.client.get_user(int(entry["user_id"]))

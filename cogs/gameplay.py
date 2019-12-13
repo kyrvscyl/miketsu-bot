@@ -160,6 +160,7 @@ async def shikigami_post_approximate_results(ctx, query):
 
 
 async def boss_daily_reset_check():
+    print("Checking if boss will be reset")
     survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
     discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
 
@@ -423,6 +424,10 @@ class Gameplay(commands.Cog):
                                 "nether_pass": False
                             }
                         })
+                        await logs_add_line("jades", int(jades), user.id)
+                        await logs_add_line("coins", int(coins), user.id)
+                        await logs_add_line("medals", int(medals), user.id)
+
                         users.update_one({
                             "user_id": str(user.id),
                             "level": {
@@ -465,10 +470,6 @@ class Gameplay(commands.Cog):
                                 top_shikigamis, dead_shikigamis, "end", True, cleared_waves, link, rewards
                             )
                         )
-
-                        await logs_add_line("jades", int(jades), user.id)
-                        await logs_add_line("coins", int(coins), user.id)
-                        await logs_add_line("medals", int(medals), user.id)
                         break
                     continue
                 break
@@ -891,7 +892,7 @@ class Gameplay(commands.Cog):
         timeout = 10
         guesses = 3
 
-        embed = discord.Embed(title=f"Demon Quiz", color=user.colour)
+        embed = discord.Embed(title=f"Demon Quiz", color=user.colour, timestamp=get_timestamp())
         embed.description = f"Time Limit: {timeout} sec"
         embed.add_field(name="Who is this shikigami?", value=f"{question}")
         embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
@@ -924,7 +925,6 @@ class Gameplay(commands.Cog):
                     guesses -= 1
                     embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
                     await search_msg.edit(embed=embed)
-
 
                 elif guesses == 2:
                     guesses -= 1
@@ -1116,8 +1116,7 @@ class Gameplay(commands.Cog):
 
         link = f"https://discordapp.com/channels/{search_msg.guild.id}/{search_msg.channel.id}/{search_msg.id}"
         embed = discord.Embed(
-            title=f"🏁 Assemble here!",
-            url=link
+            description=f"🏁 [Assemble here!]({link})"
         )
         await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(assemble_captions)}", embed=embed)
 

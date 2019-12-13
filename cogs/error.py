@@ -410,7 +410,23 @@ class Error(commands.Cog):
                 await self.submit_error(ctx, error, "MissingRequiredArgument")
 
         elif isinstance(error, commands.UserInputError):
-            await self.submit_error(ctx, error, "UserInputError")
+            if str(ctx.command) in [
+                "wish_grant",
+                "friendship_change_name",
+                "friendship_check_sail"
+            ]:
+                return
+
+            elif str(ctx.command) in ["announcement_post_memorandum "]:
+                embed = discord.Embed(
+                    colour=discord.Colour(embed_color),
+                    title="Invalid input",
+                    description="tag a valid channel"
+                )
+                await ctx.channel.send(embed=embed)
+
+            else:
+                await self.submit_error(ctx, error, "UserInputError")
 
         elif isinstance(error, commands.BadArgument):
 
@@ -491,7 +507,7 @@ class Error(commands.Cog):
                     title="explore, exp",
                     colour=discord.Colour(embed_color),
                     description=f"explore unlocked chapters\n"
-                                f"consumes sushi, set a shikigami first via `{self.prefix}set`\n"
+                                f"requires sushi, set a shikigami first via `{self.prefix}set`\n"
                 )
                 embed.add_field(
                     name="Clear chance parameters",
@@ -575,6 +591,9 @@ class Error(commands.Cog):
                     description="Provide a valid channel"
                 )
                 await ctx.channel.send(embed=embed)
+
+            elif str(ctx.command) in ["perform_parade"]:
+                return
 
             else:
                 await self.submit_error(ctx, error, "CommandInvokeError")
