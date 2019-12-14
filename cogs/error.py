@@ -410,6 +410,7 @@ class Error(commands.Cog):
                 await self.submit_error(ctx, error, "MissingRequiredArgument")
 
         elif isinstance(error, commands.UserInputError):
+
             if str(ctx.command) in [
                 "wish_grant",
                 "friendship_change_name",
@@ -425,33 +426,33 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif isinstance(error, commands.BadArgument):
+
+                if str(ctx.command) in [
+                    "raid_perform",
+                    "raid_perform_calculation",
+                    "profile_show",
+                    "friendship_give",
+                    "wish_grant",
+                    "friendship_change_name",
+                    "friendship_ship",
+                    "shikigami_list_show_collected",
+                    "logs_show",
+                    "perform_exploration_check_clears",
+                    "friendship_check_sail",
+                    "shikigami_show_post_shikis"
+                ]:
+                    embed = discord.Embed(
+                        title="Invalid member", colour=discord.Colour(embed_color),
+                        description="That member does not exist or does not have a profile in this guild"
+                    )
+                    await ctx.channel.send(embed=embed)
+
+                else:
+                    await self.submit_error(ctx, error, "BadArgument")
+
             else:
                 await self.submit_error(ctx, error, "UserInputError")
-
-        elif isinstance(error, commands.BadArgument):
-
-            if str(ctx.command) in [
-                "raid_perform",
-                "raid_perform_calculation",
-                "profile_show",
-                "friendship_give",
-                "wish_grant",
-                "friendship_change_name",
-                "friendship_ship",
-                "shikigami_list_show_collected",
-                "logs_show",
-                "perform_exploration_check_clears",
-                "friendship_check_sail",
-                "shikigami_show_post_shikis"
-            ]:
-                embed = discord.Embed(
-                    title="Invalid member", colour=discord.Colour(embed_color),
-                    description="That member does not exist or does not have a profile in this guild"
-                )
-                await ctx.channel.send(embed=embed)
-
-            else:
-                await self.submit_error(ctx, error, "BadArgument")
 
         elif isinstance(error, commands.CheckFailure):
 
