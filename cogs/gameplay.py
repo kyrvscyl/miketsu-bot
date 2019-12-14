@@ -397,84 +397,83 @@ class Gameplay(commands.Cog):
                    m.content.lower() not in dead_shikigamis
 
         while True:
-            if total_attempts == 0:
-                ranges = [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69], [70, 79]]
-
-                for g, covered in enumerate(ranges):
-                    if cleared_waves <= covered[1]:
-                        rewards_select = actual_rewards[g]
-
-                        jades = random.uniform(rewards_select[0] * 0.95, rewards_select[0] * 1.05)
-                        coins = random.uniform(rewards_select[1] * 0.95, rewards_select[1] * 1.05)
-                        exp = random.uniform(rewards_select[2] * 0.95, rewards_select[2] * 1.05)
-                        medals = random.uniform(rewards_select[3] * 0.95, rewards_select[3] * 1.05)
-                        shards_sp = rewards_select[4]
-                        shards_ssr = rewards_select[5]
-                        shards_ssn = rewards_select[6]
-
-                        users.update_one({
-                            "user_id": str(user.id)
-                        }, {
-                            "$inc": {
-                                "jades": int(jades),
-                                "coins": int(coins),
-                                "medals": int(medals)
-                            },
-                            "$set": {
-                                "nether_pass": False
-                            }
-                        })
-                        await logs_add_line("jades", int(jades), user.id)
-                        await logs_add_line("coins", int(coins), user.id)
-                        await logs_add_line("medals", int(medals), user.id)
-
-                        users.update_one({
-                            "user_id": str(user.id),
-                            "level": {
-                                "$lt": 60
-                            }
-                        }, {
-                            "$inc": {
-                                "experience": int(exp)
-                            }
-                        })
-
-                        shikigami_pool = {shiki_iterate: 0 for shiki_iterate in pool_ssr + pool_sp + pool_ssn}
-
-                        i = 0
-                        while i < shards_sp:
-                            shikigami_shard = random.choice(pool_sp)
-                            shikigami_pool[shikigami_shard] += 1
-                            i += 1
-
-                        i = 0
-                        while i < shards_ssr:
-                            shikigami_shard = random.choice(pool_ssr)
-                            shikigami_pool[shikigami_shard] += 1
-                            i += 1
-
-                        i = 0
-                        while i < shards_ssn:
-                            shikigami_shard = random.choice(pool_ssn)
-                            shikigami_pool[shikigami_shard] += 1
-                            i += 1
-
-                        shards_reward = list(shikigami_pool.items())
-
-                        await self.encounter_roll_netherworld_issue_shards(user.id, shards_reward)
-                        link = await self.encounter_roll_netherworld_generate_shards(user.id, shards_reward)
-
-                        rewards = [int(jades), int(coins), int(exp), int(medals)]
-                        await search_msg.edit(
-                            embed=create_embed(
-                                top_shikigamis, dead_shikigamis, "end", True, cleared_waves, link, rewards
-                            )
-                        )
-                        break
-                    continue
-                break
-
             try:
+                if total_attempts == 0:
+                    ranges = [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69], [70, 79]]
+                    for g, covered in enumerate(ranges):
+                        if cleared_waves <= covered[1]:
+                            rewards_select = actual_rewards[g]
+
+                            jades = random.uniform(rewards_select[0] * 0.95, rewards_select[0] * 1.05)
+                            coins = random.uniform(rewards_select[1] * 0.95, rewards_select[1] * 1.05)
+                            exp = random.uniform(rewards_select[2] * 0.95, rewards_select[2] * 1.05)
+                            medals = random.uniform(rewards_select[3] * 0.95, rewards_select[3] * 1.05)
+                            shards_sp = rewards_select[4]
+                            shards_ssr = rewards_select[5]
+                            shards_ssn = rewards_select[6]
+
+                            users.update_one({
+                                "user_id": str(user.id)
+                            }, {
+                                "$inc": {
+                                    "jades": int(jades),
+                                    "coins": int(coins),
+                                    "medals": int(medals)
+                                },
+                                "$set": {
+                                    "nether_pass": False
+                                }
+                            })
+                            await logs_add_line("jades", int(jades), user.id)
+                            await logs_add_line("coins", int(coins), user.id)
+                            await logs_add_line("medals", int(medals), user.id)
+
+                            users.update_one({
+                                "user_id": str(user.id),
+                                "level": {
+                                    "$lt": 60
+                                }
+                            }, {
+                                "$inc": {
+                                    "experience": int(exp)
+                                }
+                            })
+
+                            shikigami_pool = {shiki_iterate: 0 for shiki_iterate in pool_ssr + pool_sp + pool_ssn}
+
+                            i = 0
+                            while i < shards_sp:
+                                shikigami_shard = random.choice(pool_sp)
+                                shikigami_pool[shikigami_shard] += 1
+                                i += 1
+
+                            i = 0
+                            while i < shards_ssr:
+                                shikigami_shard = random.choice(pool_ssr)
+                                shikigami_pool[shikigami_shard] += 1
+                                i += 1
+
+                            i = 0
+                            while i < shards_ssn:
+                                shikigami_shard = random.choice(pool_ssn)
+                                shikigami_pool[shikigami_shard] += 1
+                                i += 1
+
+                            shards_reward = list(shikigami_pool.items())
+
+                            await self.encounter_roll_netherworld_issue_shards(user.id, shards_reward)
+                            link = await self.encounter_roll_netherworld_generate_shards(user.id, shards_reward)
+
+                            rewards = [int(jades), int(coins), int(exp), int(medals)]
+                            await search_msg.edit(
+                                embed=create_embed(
+                                    top_shikigamis, dead_shikigamis, "end", True, cleared_waves, link, rewards
+                                )
+                            )
+                            break
+                        continue
+                    break
+
                 answer = await self.client.wait_for("message", timeout=60, check=check_if_valid_shikigami)
             except asyncio.TimeoutError:
                 await search_msg.clear_reactions()
@@ -517,7 +516,8 @@ class Gameplay(commands.Cog):
                         cleared_waves += 1
                         shiki_clears += 1
                         if cleared_waves == 70:
-                            total_attempts -= 1
+                            total_attempts = 0
+                            break
 
                     else:
                         dead_shikigamis.append(shikigami_bet)
@@ -532,6 +532,7 @@ class Gameplay(commands.Cog):
                         top_shikigamis, dead_shikigamis, "end", shikigami_bet, cleared_waves, "", []
                     )
                 )
+
 
     async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
         try:
