@@ -201,24 +201,33 @@ class Clock(commands.Cog):
     async def on_ready(self):
         await self.clock_start()
 
+    @commands.command(aliases=["tick"])
+    @commands.is_owner()
+    async def clock_start_manual(self, ctx):
+        config.update_one({"var": 1}, {"$set": {"clock": False}})
+        await self.clock_start()
+
     async def clock_start(self):
-        print("Initializing a clock instance")
-        pb.push_note("Miketsu Bot", "Initializing a clock instance")
 
-        while True:
-            try:
-                if get_time().strftime("%S") == "00":
-                    await self.clock_update()
-                    await asyncio.sleep(1)
-                else:
-                    await asyncio.sleep(1)
+        if config.find_one({"var": 1}, {"_id": 0, "clock": 1})["clock"] is False:
+            config.update_one({"var": 1}, {"$set": {"clock": True}})
+            print("Initializing a clock instance")
+            pb.push_note("Miketsu Bot", "Initializing a clock instance")
 
-            except KeyboardInterrupt:
-                pb.push_note("Miketsu Bot", "Stopping a concurrent function")
-                break
-            except:
-                pb.push_note("Miketsu Bot", "Ignoring exception on clock processing")
-                continue
+            while True:
+                try:
+                    if get_time().strftime("%S") == "00":
+                        await self.clock_update()
+                        await asyncio.sleep(1)
+                    else:
+                        await asyncio.sleep(1)
+
+                except KeyboardInterrupt:
+                    pb.push_note("Miketsu Bot", "Stopping a concurrent function")
+                    break
+                except:
+                    pb.push_note("Miketsu Bot", "Ignoring exception on clock processing")
+                    continue
 
     async def clock_update(self):
 
