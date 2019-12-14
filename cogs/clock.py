@@ -13,12 +13,15 @@ from itertools import cycle
 import discord
 import pytz
 from discord.ext import commands
-
+from pushbullet import Pushbullet
 from cogs.economy import Economy
 from cogs.gameplay import boss_daily_reset_check
 from cogs.frames import Frames
 from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
+
+# Pushbullet
+pb = Pushbullet(api_key=os.environ.get("PUSHBULLET"))
 
 # Collections
 config = get_collections("config")
@@ -200,6 +203,7 @@ class Clock(commands.Cog):
 
     async def clock_start(self):
         print("Initializing a clock instance")
+        pb.push_note("Miketsu Bot", "Initializing a clock instance")
 
         while True:
             try:
@@ -208,7 +212,12 @@ class Clock(commands.Cog):
                     await asyncio.sleep(1)
                 else:
                     await asyncio.sleep(1)
+
+            except KeyboardInterrupt:
+                pb.push_note("Miketsu Bot", "Stopping a concurrent function")
+                break
             except:
+                pb.push_note("Miketsu Bot", "Ignoring exception on clock processing")
                 continue
 
     async def clock_update(self):
@@ -230,17 +239,16 @@ class Clock(commands.Cog):
             try:
                 clock = self.client.get_channel(int(clock_channel))
                 clock_name = f"{get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}"
-                print(f"{clock.name} | {clock_name}")
+                print(f"{clock.name} -> {clock_name}")
 
                 if clock.name == clock_name:
                     print("Killing the function")
-                    return
+                    raise KeyboardInterrupt
 
-                print(clock_name)
                 await clock.edit(name=clock_name)
 
-            except RuntimeError:
-                pass
+            except asyncio.CancelledError:
+                raise KeyboardInterrupt
             except AttributeError:
                 pass
             except discord.errors.InvalidArgument:
