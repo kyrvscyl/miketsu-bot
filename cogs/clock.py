@@ -21,7 +21,7 @@ from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
 
 # Pushbullet
-pb = Pushbullet(api_key=os.environ.get("PUSHBULLET"))
+pb = Pushbullet(api_key=str(os.environ.get("PUSHBULLET")))
 
 # Collections
 config = get_collections("config")
