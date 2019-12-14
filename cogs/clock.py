@@ -289,6 +289,8 @@ class Clock(commands.Cog):
             if minute_hand == "00":
                 await Frames(self.client).achievements_process_hourly()
 
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
