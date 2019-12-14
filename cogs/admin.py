@@ -768,11 +768,10 @@ class Admin(commands.Cog):
         content = f"I've got {len(formatted_list)} {noun} for members with status {args[2].lower()}"
         await self.management_guild_paginate_embeds(ctx, formatted_list, content)
 
-
     async def management_guild_show_current_members(self, ctx):
 
         formatted_list = []
-        find_query = {"role": {"$in": ["officer", "member", "leader"]}}
+        find_query = {"role": {"$in": ["officer", "member", "leader", "trader"]}}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort([("total_feats", -1)]):
@@ -804,32 +803,27 @@ class Admin(commands.Cog):
     async def management_guild_show_stats(self, ctx):
         guild_members_all = members.count({
             "role": {
-                "$in": ["officer", "member", "leader"]}
+                "$in": ["officer", "member", "leader", "trader"]}
         })
         guild_members_actv = members.count({
             "role": {
-                "$in": ["officer", "member", "leader"]},
+                "$in": ["officer", "member", "leader", "trader"]},
             "status": "active"
         })
         guild_members_inac = members.count({
             "role": {
-                "$in": ["officer", "member", "leader"]},
+                "$in": ["officer", "member", "leader", "trader"]},
             "status": "inactive"
         })
         guild_members_onlv = members.count({
             "role": {
-                "$in": ["officer", "member", "leader"]},
+                "$in": ["officer", "member", "leader", "trader"]},
             "status": "on-leave"
         })
         guild_members_smac = members.count({
             "role": {
-                "$in": ["officer", "member", "leader"]},
+                "$in": ["officer", "member", "leader", "trader"]},
             "status": "semi-active"
-        })
-        guild_members_trde = members.count({
-            "role": {
-                "$in": ["officer", "member", "leader"]},
-            "status": "trade"
         })
         guild_members_away = members.count({
             "role": "ex-member", "status": "away"
@@ -840,6 +834,9 @@ class Admin(commands.Cog):
         guild_blacklists = members.count({
             "role": "blacklist"
         })
+        guild_traders = members.count({
+            "role": "trader"
+        })
 
         description = \
             f"```" \
@@ -849,9 +846,9 @@ class Admin(commands.Cog):
             f"  • Semi-active     :: {guild_members_smac:,d}\n" \
             f"  • Inactive        :: {guild_members_inac:,d}\n" \
             f"  • On-leave        :: {guild_members_onlv:,d}\n" \
-            f"  • Trade           :: {guild_members_trde:,d}\n" \
             f"  • Away            :: {guild_members_away:,d}\n" \
             f"  • ~ GQ/week       :: {guild_members_actv * 90 + guild_members_smac * 30:,d}\n" \
+            f"• Traders           :: {guild_traders:,d}\n" \
             f"• Applicants        :: {guild_applicants:,d}\n" \
             f"• Blacklisted       :: {guild_blacklists:,d}" \
             f"```"
@@ -995,8 +992,7 @@ class Admin(commands.Cog):
 
     async def management_guild_paginate_embeds(self, ctx, formatted_list, content):
 
-        page = 1
-        max_lines = 20
+        page, max_lines = 1, 20
         page_total = ceil(len(formatted_list) / max_lines)
         if page_total == 0:
             page_total = 1

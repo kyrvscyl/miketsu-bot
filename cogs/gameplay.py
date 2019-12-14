@@ -533,7 +533,6 @@ class Gameplay(commands.Cog):
                     )
                 )
 
-
     async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
         try:
             if len(shards_reward) == 0:
