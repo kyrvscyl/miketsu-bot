@@ -516,6 +516,9 @@ class Gameplay(commands.Cog):
                     if roll < adjusted_chance:
                         cleared_waves += 1
                         shiki_clears += 1
+                        if cleared_waves == 70:
+                            total_attempts -= 1
+
                     else:
                         dead_shikigamis.append(shikigami_bet)
                         clear_chances.append(total_chance)
