@@ -68,6 +68,25 @@ class Frames(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+    @commands.command()
+    async def on_message(self, message):
+
+        if message.author.bot is True:
+            return
+
+        elif get_time().strftime("%b %d") != "Dec 25":
+            return
+
+        elif "<@571589801334276104>" in message.content.split(" "):
+
+            greet, match, jades = ["merry", "christmas"], 0, 3500
+            for x in greet:
+                if x in greet:
+                    match += 1
+
+            if match == len(greet):
+                await self.achievements_process_announce(message.author, "Tree in Winter", jades)
+
     @commands.command(aliases=["af"])
     @commands.check(check_if_developer_team)
     @commands.guild_only()
@@ -407,7 +426,10 @@ class Frames(commands.Cog):
                         }
                     }, {
                         "$match": {
-                            "shikigami.rarity": "SSR"
+                            "shikigami.rarity": "SSR",
+                            "shikigami.owned": {
+                                "$gt": 0
+                            }
                         }
                     }, {
                         "$count": "count"
@@ -836,6 +858,45 @@ class Frames(commands.Cog):
 
                 elif profile["shikigami"][0]["shards"] >= 40:
                     await self.achievements_process_announce(member, "The Seven Masks", jades)
+
+            if "Hannya of the Ghoul Mask" not in user_frames:
+                total_level = 0
+                for result in users.aggregate([
+                    {
+                        '$match': {
+                            'user_id': document["user_id"]
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$shikigami'
+                        }
+                    }, {
+                        '$match': {
+                            '$or': [
+                                {
+                                    'shikigami.name': 'vengeful hannya'
+                                }, {
+                                    'shikigami.name': 'hannya'
+                                }
+                            ]
+                        }
+                    }, {
+                        '$project': {
+                            'shikigami': 1
+                        }
+                    }, {
+                        '$group': {
+                            '_id': '',
+                            'total_level': {
+                                '$sum': '$shikigami.level'
+                            }
+                        }
+                    }
+                ]):
+                    total_level = result["total_level"]
+
+                if total_level == 80:
+                    await self.achievements_process_announce(member, "Hannya of the Ghoul Mask", jades)
 
     async def achievements_process_weekly(self):
 

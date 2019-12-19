@@ -404,9 +404,10 @@ async def claim_rewards_weekly_give(user, ctx):
 
 async def frame_blazing(guild, spell_spam_channel):
     blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
+    blazing_users = []
 
     for member in blazing_role.members:
-        msg = f"{member.mention} has earned 10{e_a} for wielding the Blazing Sun frame for a day!"
+        blazing_users.append(f"{member.display_name}")
 
         users.update_one({
             "user_id": str(member.id)
@@ -416,7 +417,18 @@ async def frame_blazing(guild, spell_spam_channel):
             }
         })
         await logs_add_line("amulets", 10, member.id)
-        await spell_spam_channel.send(msg)
+
+    embed = discord.Embed(
+        title="Blazing Sun Frame Update",
+        description=f"completed the SSR Shikigami Collection"
+                    f"earns 10{e_a} every reset",
+        timestamp=get_timestamp()
+    )
+    embed.add_field(
+        name="Frame Wielders",
+        value=f"{', '.join(blazing_users)}"
+    )
+    await spell_spam_channel.send(embed=embed)
 
 
 async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, cost_amount, msg):
@@ -1699,7 +1711,7 @@ class Economy(commands.Cog):
         try:
             await self.client.wait_for("reaction_add", timeout=15, check=check)
         except asyncio.TimeoutError:
-            return
+            await msg.clear_reactions()
         else:
             await msg.edit(embed=await generate_embed(page))
             await msg.clear_reactions()
@@ -1708,15 +1720,15 @@ class Economy(commands.Cog):
         try:
             reaction, user = await self.client.wait_for("reaction_add", timeout=15, check=check2)
         except asyncio.TimeoutError:
-            return
+            await msg.clear_reactions()
         else:
             if str(reaction.emoji) == "➡":
                 page += 1
 
             if page > page_total:
-                return
+                page = 1
             await msg.edit(embed=await generate_embed(page))
-            await msg.clear_reactions()
+
 
     async def profile_generate_frame_image_new(self, member, achievements, page_new):
 
@@ -3820,7 +3832,8 @@ class Economy(commands.Cog):
                 except TypeError:
                     embed = discord.Embed(
                         color=ctx.author.colour,
-                        description=f"you have no pending explorations",
+                        description=f"You have no pending explorations",
+                        timestamp=get_timestamp()
                     )
                     embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
                     await ctx.channel.send(embed=embed)

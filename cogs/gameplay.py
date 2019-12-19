@@ -21,6 +21,7 @@ from cogs.mongo.database import get_collections
 # Collections
 bosses = get_collections("bosses")
 config = get_collections("config")
+frames = get_collections("frames")
 guilds = get_collections("guilds")
 logs = get_collections("logs")
 shikigamis = get_collections("shikigamis")
@@ -50,6 +51,7 @@ guild_id = int(os.environ.get("SERVER"))
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
+spell_spam_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 e_m = emojis["m"]
@@ -113,6 +115,10 @@ def pluralize(singular, count):
         return singular + "s"
     else:
         return singular
+
+
+def get_frame_thumbnail(frame):
+    return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
 
 
 def get_rarity_shikigami(s):
@@ -257,6 +263,39 @@ class Gameplay(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
+
+    async def achievements_process_announce(self, member, frame_name, jades):
+
+        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+
+        users.update_one({
+            "user_id": str(member.id)}, {
+            "$push": {
+                "achievements": {
+                    "name": frame_name,
+                    "date_acquired": get_time()
+                }
+            },
+            "$inc": {
+                "jades": jades
+            }
+        })
+
+        intro_caption = " The "
+        if frame_name[:3] == "The":
+            intro_caption = " "
+
+        embed = discord.Embed(
+            color=member.colour,
+            title="Frame acquisition",
+            description=f"{member.mention} has acquired{intro_caption}{frame_name} frame!\n"
+                        f"Acquired {jades:,d}{e_j} as bonus rewards!",
+            timestamp=get_timestamp()
+        )
+        embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
+        embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+        await spell_spam_channel.send(embed=embed)
+        await asyncio.sleep(1)
 
     async def encounter_roll_netherworld(self, user, channel, search_msg):
 
@@ -517,6 +556,7 @@ class Gameplay(commands.Cog):
                         shiki_clears += 1
                         if cleared_waves == 70:
                             total_attempts = 0
+                            await self.achievements_process_announce(user, "Dignified Dance", 3500)
                             break
 
                     else:

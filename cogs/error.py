@@ -524,7 +524,11 @@ class Error(commands.Cog):
                 await ctx.channel.send(embed=embed)
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
-            elif str(ctx.command) in ["management_guild", "encounter_add_quiz"]:
+            elif str(ctx.command) in [
+                "management_guild",
+                "encounter_add_quiz",
+                "events_manipulate"
+            ]:
                 return
 
             elif isinstance(error, commands.NoPrivateMessage):
@@ -593,7 +597,10 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) in ["perform_parade"]:
+            elif str(ctx.command) in [
+                "perform_parade",
+                "spawn_random_sushi"
+            ]:
                 return
 
             else:
