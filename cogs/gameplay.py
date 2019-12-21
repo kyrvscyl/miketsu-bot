@@ -1538,13 +1538,17 @@ class Gameplay(commands.Cog):
                     )
 
                 bosses_formatted_lines = "\n".join(bosses_formatted)
+                boss_description = f"```" \
+                              f"  HP        Boss\n" \
+                              f"{bosses_formatted_lines}\n" \
+                              f"```"
+
+                if len(bosses_formatted) == 0:
+                    boss_description = "All rare bosses are currently dead"
 
                 embed = discord.Embed(
                     title=f"Boss survivability", colour=discord.Colour(embed_color),
-                    description=f"```"
-                                f"  HP        Boss\n"
-                                f"{bosses_formatted_lines}\n"
-                                f"```",
+                    description=boss_description,
                     timestamp=get_timestamp()
                 )
                 await ctx.channel.send(embed=embed)

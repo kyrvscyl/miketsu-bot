@@ -68,23 +68,24 @@ class Frames(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command()
+    @commands.Cog.listener()
     async def on_message(self, message):
 
         if message.author.bot is True:
             return
 
-        elif get_time().strftime("%b %d") != "Dec 25":
+        elif get_time().strftime("%b %d") != "Dec 21":
             return
 
-        elif "<@571589801334276104>" in message.content.split(" "):
+        elif f"<@!{self.client.user.id}>" in message.content.split(" "):
 
             greet, match, jades = ["merry", "christmas"], 0, 3500
             for x in greet:
-                if x in greet:
+                if x in message.content.lower().split(" "):
                     match += 1
 
             if match == len(greet):
+
                 await self.achievements_process_announce(message.author, "Tree in Winter", jades)
 
     @commands.command(aliases=["af"])
@@ -966,34 +967,42 @@ class Frames(commands.Cog):
 
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
 
-        users.update_one({
-            "user_id": str(member.id)}, {
-            "$push": {
-                "achievements": {
-                    "name": frame_name,
-                    "date_acquired": get_time()
+        if users.find_one({
+            "user_id": str(member.id), "achievements.name": f"{frame_name}"
+        }, {
+            "_id": 0, "achievements.$": 1
+        }) is None:
+
+            users.update_one({
+                "user_id": str(member.id)}, {
+                "$push": {
+                    "achievements": {
+                        "name": frame_name,
+                        "date_acquired": get_time()
+                    }
+                },
+                "$inc": {
+                    "jades": jades
                 }
-            },
-            "$inc": {
-                "jades": jades
-            }
-        })
+            })
 
-        intro_caption = " The "
-        if frame_name[:3] == "The":
-            intro_caption = " "
+            intro_caption = " The "
+            if frame_name[:3] == "The":
+                intro_caption = " "
 
-        embed = discord.Embed(
-            color=member.colour,
-            title="Frame acquisition",
-            description=f"{member.mention} has acquired{intro_caption}{frame_name} frame!\n"
-                        f"Acquired {jades:,d}{e_j} as bonus rewards!",
-            timestamp=get_timestamp()
-        )
-        embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
-        embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
-        await spell_spam_channel.send(embed=embed)
-        await asyncio.sleep(1)
+            embed = discord.Embed(
+                color=member.colour,
+                title="Frame acquisition",
+                description=f"{member.mention} has acquired{intro_caption}{frame_name} frame!\n"
+                            f"Acquired {jades:,d}{e_j} as bonus rewards!",
+                timestamp=get_timestamp()
+            )
+            embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
+            embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+            await spell_spam_channel.send(embed=embed)
+            await asyncio.sleep(1)
+        else:
+            print("already have the frame")
 
 
 def setup(client):

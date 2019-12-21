@@ -14,9 +14,10 @@ import discord
 import pytz
 from discord.ext import commands
 from pushbullet import Pushbullet
+
 from cogs.economy import Economy
-from cogs.gameplay import boss_daily_reset_check
 from cogs.frames import Frames
+from cogs.gameplay import boss_daily_reset_check
 from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
 
@@ -206,6 +207,7 @@ class Clock(commands.Cog):
     async def clock_start_manual(self, ctx):
         config.update_one({"var": 1}, {"$set": {"clock": False}})
         await self.clock_start()
+        await ctx.message.add_reaction("✅")
 
     async def clock_start(self):
 
@@ -309,12 +311,12 @@ class Clock(commands.Cog):
         print("Opening the netherworld gates")
         users.update_many({}, {"$set": {"nether_pass": True}})
         spell_spam_channel = self.client.get_channel(int(spell_spam_id))
-        content = f"<&{boss_busters_id}>"
+        content = f"<@&{boss_busters_id}>"
 
         embed = discord.Embed(
             color=embed_color,
             title="Netherworld gates update",
-            description=f"The gates of Netherworld have been opened\n"
+            description=f"The gates of Netherworld have been re-opened\n"
                         f"use `{self.prefix}enc` to explore them by chance",
             timestamp=get_timestamp()
         )

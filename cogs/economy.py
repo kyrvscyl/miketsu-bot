@@ -420,14 +420,16 @@ async def frame_blazing(guild, spell_spam_channel):
 
     embed = discord.Embed(
         title="Blazing Sun Frame Update",
-        description=f"completed the SSR Shikigami Collection"
+        description=f"completed the SSR shikigami collection\n"
                     f"earns 10{e_a} every reset",
+        color=embed_color,
         timestamp=get_timestamp()
     )
     embed.add_field(
         name="Frame Wielders",
         value=f"{', '.join(blazing_users)}"
     )
+    embed.set_thumbnail(url=get_frame_thumbnail("Blazing Sun"))
     await spell_spam_channel.send(embed=embed)
 
 
@@ -690,8 +692,8 @@ class Economy(commands.Cog):
 
         def create_embed(listings, strike):
             embed = discord.Embed(
-                title=f"{strike}Free sushi!{strike} 🍣",
-                description=f"claim your free sushi randomly every hour! 🎉\n"
+                title=f"{strike}Free sushi!{strike} 25🍣",
+                description=f"claim your free sushi every hour! 🎉\n"
                             f"served {len(listings)} hungry {pluralize('Onmyoji', len(listings))}",
                 color=embed_color,
                 timestamp=timestamp
@@ -1316,6 +1318,7 @@ class Economy(commands.Cog):
                     beaned_shikigamis.append(shikigami_beaned)
 
                 await msg.edit(embed=generate_parade_embed(beaned_shikigamis, beans))
+                await msg.remove_reaction(str(reaction.emoji), user)
                 x_init, y_init = bean_x, bean_y
                 beans -= 1
 
@@ -1651,7 +1654,7 @@ class Economy(commands.Cog):
             embed.set_thumbnail(url=member.avatar_url)
 
         def get_emoji_nether(x):
-            if nether_pass is False:
+            if x is False:
                 return "❌"
             return "✅"
 
