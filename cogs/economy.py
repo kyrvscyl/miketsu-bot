@@ -449,7 +449,7 @@ async def shop_process_purchase(user, ctx, offer_item, offer_amount, cost_item, 
         offer_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, offer_item: 1})[offer_item]
 
         embed = discord.Embed(
-            title="Purchase successful", colour=discord.Colour(embed_color),
+            title="Purchase successful", colour=user.color,
             timestamp=get_timestamp()
         )
         embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -575,40 +575,38 @@ async def level_create_user(user):
             "level_exp_next": 5,
             "amulets": 10,
             "amulets_spent": 0,
+            "amulets_b": 0,
+            "amulets_spent_b": 0,
             "SP": 0,
             "SSR": 0,
             "SR": 0,
             "R": 0,
+            "N": 0,
+            "SSN": 0,
+            "sushi": 100,
             "jades": 0,
             "coins": 0,
             "medals": 0,
             "realm_ticket": 3,
+            "encounter_ticket": 0,
+            "parade_tickets": 0,
             "honor": 0,
             "talisman": 0,
             "guild_medal": 0,
+            "display": None,
             "shikigami": [],
             "friendship": 0,
-            "display": None,
-            "encounter_ticket": 0,
-            "daily": False,
-            "weekly": False,
-            "raided_count": 0,
             "friendship_pass": 0,
             "prayers": 3,
-            "achievements": [],
-            "frame": "",
-            "achievements_count": 0,
+            "daily": False,
+            "weekly": False,
             "wish": True,
-            "parade_tickets": 0,
-            "N": 0,
-            "amulets_spent_b": 0,
-            "amulets_b": 0,
-            "sushi": 100,
-            "exploration": 1,
+            "nether_pass": True,
+            "raided_count": 0,
             "stickers": 0,
-            "SSN": 0,
-            "frames": [],
-            "nether_pass": True
+            "exploration": 1,
+            "achievements_count": 0,
+            "achievements": [],
         }
         users.insert_one(profile)
 
@@ -1612,7 +1610,7 @@ class Economy(commands.Cog):
             "_id": 0, "SP": 1, "SSR": 1, "SR": 1, "R": 1, "amulets": 1,
             "amulets_spent": 1, "experience": 1, "level": 1, "level_exp_next": 1,
             "jades": 1, "coins": 1, "medals": 1, "realm_ticket": 1, "display": 1, "friendship": 1,
-            "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1, "achievements": 1, "frame": 1,
+            "encounter_ticket": 1, "friendship_pass": 1, "talisman": 1, "prayers": 1, "achievements": 1,
             "achievements_count": 1, "parade_tickets": 1, "N": 1, "amulets_spent_b": 1, "amulets_b": 1, "SSN": 1,
             "sushi": 1, "nether_pass": 1
         })
@@ -3999,7 +3997,7 @@ class Economy(commands.Cog):
 
             while True:
                 try:
-                    await self.client.wait_for("reaction_add", timeout=60, check=check)
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
                 except asyncio.TimeoutError:
                     await msg.clear_reactions()
                     break
@@ -4104,6 +4102,8 @@ class Economy(commands.Cog):
                         await msg.edit(
                             embed=create_embed_exploration(new_explore['explores'][0]['attempts'], report, "")
                         )
+
+                    await msg.remove_reaction(str(reaction.emoji), user)
 
         self.client.get_command("perform_exploration").reset_cooldown(ctx)
 

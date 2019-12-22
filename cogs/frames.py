@@ -74,7 +74,7 @@ class Frames(commands.Cog):
         if message.author.bot is True:
             return
 
-        elif get_time().strftime("%b %d") != "Dec 21":
+        elif get_time().strftime("%b %d") != "Dec 25":
             return
 
         elif f"<@!{self.client.user.id}>" in message.content.split(" "):
@@ -85,7 +85,7 @@ class Frames(commands.Cog):
                     match += 1
 
             if match == len(greet):
-
+                await message.add_reaction("🎄")
                 await self.achievements_process_announce(message.author, "Tree in Winter", jades)
 
     @commands.command(aliases=["af"])
