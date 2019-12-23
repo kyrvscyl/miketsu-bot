@@ -17,7 +17,7 @@ from pushbullet import Pushbullet
 
 from cogs.economy import Economy
 from cogs.frames import Frames
-from cogs.gameplay import boss_daily_reset_check, summarize_medals
+from cogs.gameplay import boss_daily_reset_check
 from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
 
@@ -278,7 +278,6 @@ class Clock(commands.Cog):
                 await self.perform_delete_secret_channels()
                 await self.reminders_bidding_process(bidding_format)
                 await self.events_activate_reminder_submit()
-                summarize_medals()
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()
