@@ -4484,12 +4484,12 @@ class Economy(commands.Cog):
                     "user_id": str(member.id),
                     "shikigami.name": shiki}, {
                     "$set": {
-                        "shikigami.$.level": 40
+                        "shikigami.$.level": 40,
+                        "shikigami.$.exp": 10000,
+                        "shikigami.$.level_exp_next": 10000
                     }
                 })
                 await ctx.message.add_reaction("✅")
-
-
 
     @commands.command(aliases=["push"])
     @commands.is_owner()
