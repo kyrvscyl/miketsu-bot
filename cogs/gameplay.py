@@ -410,12 +410,11 @@ class Gameplay(commands.Cog):
                             name="Rewards", inline=False,
                             value=f"{r[0]:,d}{e_j} | {r[1]:,d}{e_c} | {r[2]:,d}{e_x} | {r[3]:,d}{e_m}",
                         )
-
-                    card_reward, card_grade = self.encounter_roll_netherworld_generate_cards(user, c)
-                    embed.add_field(
-                        name="Bonus Reward",
-                        value=f"Grade {card_grade} {card_reward.title()}"
-                    )
+                        card_reward, card_grade = self.encounter_roll_netherworld_generate_cards(user, c)
+                        embed.add_field(
+                            name="Bonus Reward",
+                            value=f"Grade {card_grade} {card_reward.title()}"
+                        )
 
             return embed
 
