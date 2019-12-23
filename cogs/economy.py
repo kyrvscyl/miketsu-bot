@@ -35,6 +35,7 @@ zones = get_collections("zones")
 
 # Dictionary
 emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
+emoji_dict = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
 evo_requirement = config.find_one({"dict": 1}, {"_id": 0, "evo_requirement": 1})["evo_requirement"]
 mystic_shop = config.find_one({"dict": 1}, {"_id": 0, "mystic_shop": 1})["mystic_shop"]
 shard_requirement = config.find_one({"dict": 1}, {"_id": 0, "shard_requirement": 1})["shard_requirement"]
@@ -60,6 +61,7 @@ e_j = emojis["j"]
 e_m = emojis["m"]
 e_s = emojis["s"]
 e_t = emojis["t"]
+e_x = emojis["x"]
 
 # Lists
 pool_sp = []
@@ -154,11 +156,6 @@ def check_if_user_has_sushi_2(ctx, required):
 
 
 def emojify(item):
-    emoji_dict = {
-        "jades": e_j, "coins": e_c, "realm_ticket": "🎟", "amulets": e_a,
-        "medals": e_m, "friendship": e_f, "encounter_ticket": "🎫", "talisman": e_t,
-        "prayers": "🙏", "friendship_pass": "💗", "parade_tickets": "🎏", "amulets_b": e_b, "sushi": "🍣"
-    }
     return emoji_dict[item]
 
 
@@ -319,6 +316,10 @@ def pluralize(singular, count):
         return singular + "s"
     else:
         return singular
+
+
+def hours_minutes(td):
+    return td.seconds // 3600, (td.seconds // 60) % 60
 
 
 async def reset_boss():
@@ -561,7 +562,7 @@ async def level_add_level(user, ctx):
             await logs_add_line("coins", 1000000, user.id)
 
         try:
-            await ctx.add_reaction("⤴")
+            await ctx.add_reaction(e_x)
         except discord.errors.HTTPException:
             return
 
@@ -607,6 +608,7 @@ async def level_create_user(user):
             "exploration": 1,
             "achievements_count": 0,
             "achievements": [],
+            "cards": []
         }
         users.insert_one(profile)
 
@@ -663,7 +665,7 @@ async def frame_automate_penalize():
     starlight_current_id = sorted(streak_list, key=lambda x: x[1], reverse=True)[0][0]
 
     query = streaks.find_one({"user_id": str(starlight_current_id)}, {"_id": 0})
-    new_streak = query["SSR_current"] / 2
+    new_streak = int(query["SSR_current"] / 4)
 
     streaks.update_one({
         "user_id": str(starlight_current_id)}, {
@@ -1661,7 +1663,7 @@ class Economy(commands.Cog):
             icon_url=member.avatar_url
         )
         embed.add_field(
-            name="⤴ Experience | Nether Pass",
+            name=f"{e_x} Experience | Nether Pass",
             value=f"Level: {level} ({exp:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
         )
         embed.add_field(
@@ -2075,7 +2077,7 @@ class Economy(commands.Cog):
             description = \
                 f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
                 f"earned themselves the Rare Starlight Sky Frame!\n\n" \
-                f"🍀 No SSR streak as of posting: {streak_list_new[0][1]} summons!"
+                f"🍀 No SSR streak record of {streak_list_new[0][1]} summons!"
 
             embed = discord.Embed(
                 color=0xac330f,
@@ -2088,9 +2090,10 @@ class Economy(commands.Cog):
             await self.frame_acquisition(starlight_new, "Starlight Sky", jades=2500)
 
         if starlight_current == starlight_new:
-            users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": 2000}})
-            await logs_add_line("jades", 2000, starlight_current.id)
-            msg = f"{starlight_current.mention} has earned 2,000{e_j} " \
+            jades = 2000
+            users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": jades}})
+            await logs_add_line("jades", jades, starlight_current.id)
+            msg = f"{starlight_current.mention} has earned {jades:,d}{e_j} " \
                   f"for wielding the Starlight Sky frame for a day!"
             await spell_spam_channel.send(msg)
 
@@ -2104,7 +2107,8 @@ class Economy(commands.Cog):
                 f"{starlight_new.mention} {random.choice(steal_adverb)} {random.choice(steal_verb)} " \
                 f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
                 f"{random.choice(steal_noun)}!! {random.choice(steal_comment)}\n\n" \
-                f"🍀 No SSR streak record as of posting: {streak_list_new[0][1]} summons! Cuts in half every reset!"
+                f"🍀 No SSR streak record of {streak_list_new[0][1]} summons! " \
+                f"Cuts in eight halves every reset!"
 
             embed = discord.Embed(
                 color=0xac330f,
@@ -2456,10 +2460,7 @@ class Economy(commands.Cog):
 
     async def friendship_post_ship(self, code, query1, ctx):
 
-        ship_profile = ships.find_one({
-            "code": code}, {
-            "_id": 0, "shipper1": 1, "shipper2": 1, "points": 1, "level": 1, "ship_name": 1, "points_required": 1
-        })
+        ship_profile = ships.find_one({"code": code}, {"_id": 0, })
 
         list_rank = []
         for entry in ships.find({}, {"code": 1, "points": 1}):
@@ -2480,6 +2481,15 @@ class Economy(commands.Cog):
                       f"```"
 
         embed = discord.Embed(color=query1.colour, description=description, timestamp=get_timestamp())
+
+        hours, minutes = hours_minutes(datetime.now() - ship_profile['cards']['timestamp'])
+        embed.add_field(
+            name=f"Equipped realm card",
+            value=f"{ship_profile['cards']['name'].title()} | "
+                  f"Grade {ship_profile['cards']['grade']} | "
+                  f"Collect in {hours}h, {minutes}m"
+        )
+
         embed.set_author(
             name=f"{ship_profile['ship_name']}",
             icon_url=self.client.get_user(int(ship_profile["shipper1"])).avatar_url
@@ -2688,7 +2698,14 @@ class Economy(commands.Cog):
                     "ship_name": f"{giver.name} and {receiver.name}'s ship",
                     "level": 1,
                     "points": 0,
-                    "points_required": 50
+                    "points_required": 50,
+                    "card": {
+                        "equipped": False,
+                        "name": None,
+                        "grade": None,
+                        "timestamp": None,
+                        "collected": None
+                    }
                 }
                 ships.insert_one(profile)
 
@@ -3294,7 +3311,7 @@ class Economy(commands.Cog):
 
         elif args.lower() in ["level"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "level": 1})
-            await self.leaderboard_post_record_users(ctx, query, "⤴ Level LeaderBoard", "level")
+            await self.leaderboard_post_record_users(ctx, query, f"{e_x} Level LeaderBoard", "level")
 
         elif args.lower() in ["achievements", "frames"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "achievements": 1})

@@ -24,6 +24,7 @@ config = get_collections("config")
 frames = get_collections("frames")
 guilds = get_collections("guilds")
 logs = get_collections("logs")
+realms = get_collections("realms")
 shikigamis = get_collections("shikigamis")
 users = get_collections("users")
 
@@ -42,6 +43,8 @@ quizzes = []
 pool_all = []
 description_nether = []
 actual_rewards = []
+realm_cards = []
+
 rewards_nether = config.find_one({"list": 1}, {"_id": 0, "rewards_nether": 1})["rewards_nether"]
 boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
 assemble_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "assemble_captions": 1})["assemble_captions"])
@@ -63,6 +66,11 @@ e_t = emojis["t"]
 e_1 = emojis["1"]
 e_2 = emojis["2"]
 e_6 = emojis["6"]
+e_x = emojis["x"]
+
+
+for card in realms.find({}, {"_id": 0}):
+    realm_cards.append(f"{card['name'].lower()}")
 
 for shiki in shikigamis.find({}, {"_id": 0, "name": 1}):
     pool_all.append(shiki["name"])
@@ -400,8 +408,15 @@ class Gameplay(commands.Cog):
                     if len(r) > 0:
                         embed.add_field(
                             name="Rewards", inline=False,
-                            value=f"{r[0]:,d}{e_j} | {r[1]:,d}{e_c} | {r[2]:,d}⤴ | {r[3]:,d}{e_m}",
+                            value=f"{r[0]:,d}{e_j} | {r[1]:,d}{e_c} | {r[2]:,d}{e_x} | {r[3]:,d}{e_m}",
                         )
+
+                    card_reward, card_grade = self.encounter_roll_netherworld_generate_cards(user, c)
+                    embed.add_field(
+                        name="Bonus Reward",
+                        value=f"Grade {card_grade} {card_reward.title()}"
+                    )
+
             return embed
 
         await search_msg.edit(
@@ -573,13 +588,38 @@ class Gameplay(commands.Cog):
                     )
                 )
 
+    def encounter_roll_netherworld_generate_cards(self, user, waves):
+
+        card_rewards = random.choice(realm_cards)
+        if waves >= 60:
+            grade = random.choice([5, 5, 6])
+        elif waves >= 50:
+            grade = random.choice([4, 4, 5])
+        elif waves >= 40:
+            grade = random.choice([3, 3, 4])
+        elif waves >= 30:
+            grade = random.choice([2, 2, 3])
+        elif waves >= 20:
+            grade = random.choice([1, 1, 2])
+        else:
+            grade = random.choice([1, 1, 2])
+
+        users.update_one({"user_id": str(user.id)}, {
+            "$push": {
+                "cards": {
+                    "name": card_rewards,
+                    "grade": int(grade)
+                }
+            }
+        })
+        return card_rewards, grade
+
     async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
         try:
             if len(shards_reward) == 0:
                 return ""
 
             images = []
-
             font = ImageFont.truetype('data/marker_felt_wide.ttf', 30)
             x, y = 1, 60
 
@@ -1388,7 +1428,7 @@ class Gameplay(commands.Cog):
 
                 embed.add_field(
                     name=f"{name}, {damage_contribution}%",
-                    value=f"{coins_r:,d}{e_c}, {jades_r:,d}{e_j}, {medal_r:,d}{e_m}, {exp_r:,d} ⤴",
+                    value=f"{coins_r:,d}{e_c}, {jades_r:,d}{e_j}, {medal_r:,d}{e_m}, {exp_r:,d} {e_x}",
                     inline=False
                 )
                 users.update_one({
@@ -1440,7 +1480,7 @@ class Gameplay(commands.Cog):
             await asyncio.sleep(2)
             user = ctx.guild.get_member(int(discoverer))
             description = f"{user.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
-                          f"{medals:,d}{e_m} and {exp:,d} ⤴ for initially discovering {boss_select}!"
+                          f"{medals:,d}{e_m} and {exp:,d} {e_x} for initially discovering {boss_select}!"
             embed = discord.Embed(
                 colour=discord.Colour(embed_color),
                 description=description, timestamp=get_timestamp()

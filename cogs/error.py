@@ -440,7 +440,8 @@ class Error(commands.Cog):
                     "logs_show",
                     "perform_exploration_check_clears",
                     "friendship_check_sail",
-                    "shikigami_show_post_shikis"
+                    "shikigami_show_post_shikis",
+                    "realm_card_use"
                 ]:
                     embed = discord.Embed(
                         title="Invalid member", colour=discord.Colour(embed_color),

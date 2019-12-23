@@ -72,7 +72,7 @@ class Startup(commands.Cog):
         except RuntimeError:
             pass
 
-    @commands.command(aliases=["info"])
+    @commands.command(aliases=["info", "i"])
     async def show_greeting_message(self, ctx):
 
         embed = discord.Embed(

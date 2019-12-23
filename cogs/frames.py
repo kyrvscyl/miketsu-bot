@@ -27,6 +27,8 @@ explores = get_collections("explores")
 # Dictionary
 emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
 
+
+
 # Variables
 embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 guild_id = int(os.environ.get("SERVER"))
@@ -45,6 +47,10 @@ e_j = emojis["j"]
 
 # Lists
 developer_team = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "developers": 1})["developers"]
+medal_achievements = []
+
+for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
+    medal_achievements.append([m['name'], m['required']])
 
 
 def check_if_developer_team(ctx):
@@ -444,7 +450,7 @@ class Frames(commands.Cog):
                     await member.add_roles(blazing_role)
 
             if "Limited Gold" not in user_frames:
-                if document["coins"] >= 30000000:
+                if document["coins"] >= 70000000:
                     await self.achievements_process_announce(member, "Limited Gold", jades)
 
             if "Red Maple Frost" not in user_frames:
@@ -519,17 +525,7 @@ class Frames(commands.Cog):
                 if len(user_frames) >= 15:
                     await self.achievements_process_announce(member, "Famous in Patronus", jades)
 
-            if document["medals"] >= 500:
-
-                medal_achievements = [
-                    ["Novice", 500],
-                    ["Practitioner", 1500],
-                    ["Achiever", 5000],
-                    ["Magic Practitioner", 10000],
-                    ["Privilege Wizard", 29000],
-                    ["Wizarding Master", 40000],
-                    ["The Imperishable", 100000]
-                ]
+            if document["medals"] >= 2000:
 
                 for reward in medal_achievements:
                     if document["medals"] >= reward[1] and reward[0] not in user_frames:

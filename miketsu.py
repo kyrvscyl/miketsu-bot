@@ -19,6 +19,7 @@ config = get_collections("config")
 # Variables
 prefix = ";"
 time_start = datetime.now()
+version = "1.6.beta"
 
 # Instantiation
 client = commands.Bot(command_prefix=prefix, case_insensitive=True)
@@ -69,7 +70,7 @@ async def show_bot_statistics(ctx):
     )
     embed.add_field(
         name="🛠 Statistics",
-        value=f"• Version: 1.5.beta\n"
+        value=f"• Version: {version}\n"
               f"• Servers Count: {len(guilds_list)}\n"
               f"• Servers: {' ,'.join(guilds_list)}\n"
               f"• Users: {len(client.users)}\n"
