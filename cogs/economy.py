@@ -4514,6 +4514,12 @@ class Economy(commands.Cog):
                     "shikigami.$.owned": 1
                 }
             })
+            users.update_one({
+                "user_id": str(member.id)}, {
+                "$inc": {
+                    f"{get_rarity_shikigami(shiki)}": 1
+                }
+            })
             await ctx.message.add_reaction("✅")
 
 
