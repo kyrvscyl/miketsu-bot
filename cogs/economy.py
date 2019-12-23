@@ -4471,23 +4471,25 @@ class Economy(commands.Cog):
     async def push_shikigami_manually(self, ctx, member: discord.Member = None, *, args):
 
         shiki = args.lower()
-        users.update_one({
-            "user_id": str(member.id)}, {
-            "$push": {
-                "shikigami": {
-                    "name": shiki,
-                    "rarity": get_rarity_shikigami(shiki),
-                    "grade": 1,
-                    "owned": 0,
-                    "evolved": True,
-                    "shards": 0,
-                    "level": 1,
-                    "exp": 0,
-                    "level_exp_next": 6
+        if shiki in pool_all:
+
+            query = users.find_one({
+                "user_id": str(member.id),
+                "shikigami.name": shiki}, {
+                "_id": 0, "shikigami.$": 1
+            })
+
+            if query is None:
+                push_new_shikigami(member.id, shiki, evolve=True, shards=0)
+
+            users.update_one({
+                "user_id": str(member.id),
+                "shikigami.name": shiki}, {
+                "$inc": {
+                    "shikigami.$.owned": 1
                 }
-            }
-        })
-        await ctx.message.add_reaction("✅")
+            })
+            await ctx.message.add_reaction("✅")
 
 
 def setup(client):
