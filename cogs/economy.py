@@ -2699,7 +2699,7 @@ class Economy(commands.Cog):
                     "level": 1,
                     "points": 0,
                     "points_required": 50,
-                    "card": {
+                    "cards": {
                         "equipped": False,
                         "name": None,
                         "grade": None,
@@ -3900,6 +3900,9 @@ class Economy(commands.Cog):
                 evo_adjustment = 0.75
 
             total_chance = user_level + shikigami_level - chapter * evo_adjustment
+            if total_chance <= 40:
+                total_chance = 40
+
             adjusted_chance = random.uniform(total_chance * 0.95, total_chance)
 
             def create_embed_exploration(x, progress, strike):

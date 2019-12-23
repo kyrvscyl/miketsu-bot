@@ -56,7 +56,6 @@ embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_c
 hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
 spell_spam_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-boss_spawn_2 = True
 
 e_m = emojis["m"]
 e_j = emojis["j"]
@@ -68,25 +67,6 @@ e_1 = emojis["1"]
 e_2 = emojis["2"]
 e_6 = emojis["6"]
 e_x = emojis["x"]
-
-
-def summarize_medals():
-    print("Checking overall medals")
-    total_base_medals = 0
-    for medal in users.aggregate([{
-        "$group": {
-            "_id": "",
-            "medals": {
-                "$sum": "$medals"}}}, {
-        "$project": {
-            "_id": 0
-        }
-    }]):
-        total_base_medals = medal["medals"]
-
-    if total_base_medals <= 20000:
-        global boss_spawn_2
-        boss_spawn_2 = False
 
 
 for card in realms.find({}, {"_id": 0}):
@@ -794,6 +774,8 @@ class Gameplay(commands.Cog):
                         )
                         await ctx.channel.send(embed=embed)
 
+            except AttributeError:
+                raise discord.ext.commands.BadArgument(ctx.author)
             except TypeError:
                 raise discord.ext.commands.BadArgument(ctx.author)
 
@@ -956,7 +938,7 @@ class Gameplay(commands.Cog):
         survivability = bosses.count({"current_hp": {"$gt": 0}})
         discoverability = bosses.count({"discoverer": {"$eq": 0}})
 
-        if (survivability > 0 or discoverability > 0) and boss_spawn is False and boss_spawn_2 is True:
+        if (survivability > 0 or discoverability > 0) and boss_spawn is False:
             roll_1 = random.randint(0, 100)
 
             if roll_1 <= 20:
