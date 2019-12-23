@@ -2482,13 +2482,16 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(color=query1.colour, description=description, timestamp=get_timestamp())
 
-        hours, minutes = hours_minutes(datetime.now() - ship_profile['cards']['timestamp'])
-        embed.add_field(
-            name=f"Equipped realm card",
-            value=f"{ship_profile['cards']['name'].title()} | "
-                  f"Grade {ship_profile['cards']['grade']} | "
-                  f"Collect in {hours}h, {minutes}m"
-        )
+        try:
+            hours, minutes = hours_minutes(datetime.now() - ship_profile['cards']['timestamp'])
+            embed.add_field(
+                name=f"Equipped realm card",
+                value=f"{ship_profile['cards']['name'].title()} | "
+                      f"Grade {ship_profile['cards']['grade']} | "
+                      f"Collect in {hours}h, {minutes}m"
+            )
+        except TypeError:
+            pass
 
         embed.set_author(
             name=f"{ship_profile['ship_name']}",
