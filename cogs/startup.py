@@ -94,7 +94,7 @@ class Startup(commands.Cog):
         embed.add_field(
             name="fake Onmyoji",
             value="*"
-                  "daily, weekly, profile, set, buy, summon, explore, explores, chapter, "
+                  "daily, weekly, profile, set, buy, summon, explore, explores, chapter, realm, realms, rcollect, "
                   "evolve, friendship, ships, leaderboard, shikigami, shikigamis, shrine, sail, pray, stat, "
                   "frames, wish, wishlist, fulfill, parade, collections, shards, "
                   "raid, raidc, encounter, netherworld, bossinfo"

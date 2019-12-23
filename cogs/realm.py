@@ -244,12 +244,25 @@ class Realm(commands.Cog):
                         })
                         await msg.add_reaction("✅")
 
-    @commands.command(aliases=["collect"])
+    @commands.command(aliases=["rcollect", "rcol"])
     @commands.guild_only()
     async def realm_card_collect_rewards(self, ctx, member: discord.Member = None):
 
-        code = get_bond(ctx.author, member)
-        ship_data = ships.find_one({"code": code}, {"_id": 0})
+        try:
+            code = get_bond(ctx.author, member)
+            ship_data = ships.find_one({"code": code}, {"_id": 0})
+        except TypeError:
+            embed = discord.Embed(
+                colour=discord.Colour(embed_color),
+                title="rcollect, rcol",
+                description=f"collect your cruising rewards"
+            )
+            embed.add_field(
+                name="Format",
+                value=f"*{self.prefix}rcollect <@member>*"
+            )
+            await ctx.channel.send(embed=embed)
+            return
 
         if ship_data is None:
             embed = discord.Embed(
