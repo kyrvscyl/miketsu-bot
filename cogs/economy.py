@@ -4466,6 +4466,31 @@ class Economy(commands.Cog):
         embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
         await spell_spam_channel.send(embed=embed)
 
+    @commands.command(aliases=["up"])
+    @commands.is_owner()
+    async def increase_shikigami_level(self, ctx, member: discord.Member = None, *, args):
+
+        shiki = args.lower()
+        if shiki in pool_all:
+
+            query = users.find_one({
+                "user_id": str(member.id),
+                "shikigami.name": shiki}, {
+                "_id": 0, "shikigami.$": 1
+            })
+
+            if query is not None:
+                users.update_one({
+                    "user_id": str(member.id),
+                    "shikigami.name": shiki}, {
+                    "$set": {
+                        "shikigami.$.level": 40
+                    }
+                })
+                await ctx.message.add_reaction("✅")
+
+
+
     @commands.command(aliases=["push"])
     @commands.is_owner()
     async def push_shikigami_manually(self, ctx, member: discord.Member = None, *, args):
