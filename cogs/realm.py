@@ -201,10 +201,10 @@ class Realm(commands.Cog):
             ship_data = ships.find_one({"code": code}, {"_id": 0})
             if ship_data is not None:
 
-                if ship_data["card"]["equipped"] is True:
+                if ship_data["cards"]["equipped"] is True:
                     return
 
-                elif ship_data["card"]["equipped"] is False:
+                elif ship_data["cards"]["equipped"] is False:
 
                     user_cards = []
                     for x in users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "cards": 1}):
@@ -235,11 +235,11 @@ class Realm(commands.Cog):
                             "code": code
                         }, {
                             "$set": {
-                                "card.equipped": True,
-                                "card.name": select_formatted[0],
-                                "card.grade": select_formatted[1],
-                                "card.timestamp": get_time(),
-                                "card.collected": False
+                                "cards.equipped": True,
+                                "cards.name": select_formatted[0],
+                                "cards.grade": select_formatted[1],
+                                "cards.timestamp": get_time(),
+                                "cards.collected": False
                             }
                         })
                         await msg.add_reaction("✅")
