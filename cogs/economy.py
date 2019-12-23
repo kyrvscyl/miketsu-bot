@@ -112,7 +112,6 @@ for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine"
     elif shikigami["rarity"] == "SSN":
         pool_ssn.append(shikigami["name"])
 
-
 pool_all_mystery.extend(pool_sp)
 pool_all_mystery.extend(pool_ssr)
 pool_all_mystery.extend(pool_sr)
@@ -253,7 +252,6 @@ for _offer in mystic_shop:
             mystic_shop[_offer][_amount]["cost"][1],
             _offer, _amount
         ])
-
 
 for trade in trading_list:
     trading_list_formatted.append(
@@ -614,7 +612,6 @@ async def level_create_user(user):
 
 
 async def logs_add_line(currency, amount, user_id):
-
     if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
         profile = {"user_id": str(user_id), "logs": []}
         logs.insert_one(profile)
@@ -713,7 +710,7 @@ class Economy(commands.Cog):
 
         while True:
             try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=60*minutes, check=check)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60 * minutes, check=check)
             except asyncio.TimeoutError:
                 await msg.edit(embed=create_embed(sushi_claimers, "~~"))
                 await msg.clear_reactions()
@@ -1697,7 +1694,7 @@ class Economy(commands.Cog):
 
         def check2(r, u):
             return str(r.emoji) in ["➡", "⬅"] and r.message.id == msg.id and u.bot is False and ctx.author.id == u.id
-        
+
         async def generate_embed(page_new):
             embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
             embed_new.set_author(
@@ -1710,7 +1707,7 @@ class Economy(commands.Cog):
 
         page = 1
         page_total = ceil(len(achievements) / 20)
-        
+
         try:
             await self.client.wait_for("reaction_add", timeout=15, check=check)
         except asyncio.TimeoutError:
@@ -1732,19 +1729,18 @@ class Economy(commands.Cog):
                 page = 1
             await msg.edit(embed=await generate_embed(page))
 
-
     async def profile_generate_frame_image_new(self, member, achievements, page_new):
 
         end = page_new * 20
         start = end - 20
-        
+
         achievements_address = []
         for entry in achievements:
             try:
                 achievements_address.append(f"data/achievements/{entry['name']}.png")
             except KeyError:
                 continue
-        
+
         images = list(map(Image.open, achievements_address[start:end]))
 
         width, height = 1000, 800
@@ -3787,7 +3783,7 @@ class Economy(commands.Cog):
     @commands.command(aliases=["explores", "exps"])
     @commands.guild_only()
     async def perform_exploration_check_clears(self, ctx, *, member: discord.Member = None):
-        
+
         if member is None:
             await self.perform_exploration_check_clears_post(ctx.author, ctx)
         else:
@@ -4469,6 +4465,29 @@ class Economy(commands.Cog):
         embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
         embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
         await spell_spam_channel.send(embed=embed)
+
+    @commands.command(aliases=["push"])
+    @commands.is_owner()
+    async def push_shikigami_manually(self, ctx, member: discord.Member = None, *, args):
+
+        shiki = args.lower()
+        users.update_one({
+            "user_id": str(member.id)}, {
+            "$push": {
+                "shikigami": {
+                    "name": shiki,
+                    "rarity": get_rarity_shikigami(shiki),
+                    "grade": 1,
+                    "owned": 0,
+                    "evolved": True,
+                    "shards": 0,
+                    "level": 1,
+                    "exp": 0,
+                    "level_exp_next": 6
+                }
+            }
+        })
+        await ctx.message.add_reaction("✅")
 
 
 def setup(client):

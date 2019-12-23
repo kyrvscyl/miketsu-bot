@@ -600,7 +600,8 @@ class Error(commands.Cog):
 
             elif str(ctx.command) in [
                 "perform_parade",
-                "spawn_random_sushi"
+                "spawn_random_sushi",
+                "raid_perform"
             ]:
                 return
 

@@ -539,6 +539,12 @@ class Clock(commands.Cog):
         await ctx.message.add_reaction("✅")
         await Frames(self.client).achievements_process_hourly()
 
+    @commands.command(aliases=["test4"])
+    @commands.is_owner()
+    async def achievements_process_daily_manual(self, ctx):
+        await ctx.message.add_reaction("✅")
+        await Frames(self.client).achievements_process_daily()
+
     @commands.command(aliases=["test3"])
     @commands.is_owner()
     async def frame_automate_manual(self, ctx):
