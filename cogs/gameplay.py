@@ -741,7 +741,7 @@ class Gameplay(commands.Cog):
                     raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
                     victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
                     level_diff = raider_medals - victim_medals
-                    range_diff = 30
+                    range_diff = 60
 
                     if abs(level_diff) <= range_diff:
                         users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})

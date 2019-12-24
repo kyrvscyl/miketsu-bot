@@ -244,6 +244,22 @@ class Realm(commands.Cog):
                                 "cards.collected": False
                             }
                         })
+                        users.update({
+                            'user_id': str(ctx.author.id),
+                            'cards': {
+                                '$elemMatch': {
+                                    'name': select_formatted[0],
+                                    'grade': int(select_formatted[1])
+                                }
+                            }
+                        }, {
+                            "$pull": {
+                                "cards": {
+                                    'name': select_formatted[0],
+                                    'grade': int(select_formatted[1])
+                                }
+                            }
+                        })
                         await select.add_reaction("✅")
 
     @commands.command(aliases=["rcollect", "rcol"])
