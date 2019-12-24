@@ -290,8 +290,8 @@ class Clock(commands.Cog):
     @commands.is_owner()
     async def clock_start_manual(self, ctx):
         config.update_one({"var": 1}, {"$set": {"clock": False}})
-        await self.clock_start()
         await ctx.message.add_reaction("✅")
+        await self.clock_start()
 
     async def clock_start(self):
 

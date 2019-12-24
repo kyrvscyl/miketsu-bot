@@ -4367,6 +4367,28 @@ class Economy(commands.Cog):
             })
             await ctx.message.add_reaction("✅")
 
+    @commands.command(aliases=["compensate"])
+    @commands.is_owner()
+    async def compensate_economy_items(self, ctx, member: discord.Member = None):
+
+        users.update_one({
+            "user_id": str(member.id)}, {
+            "$inc": {
+                "amulets": 2500,
+                "jades": 30000,
+                "coins": 50000000,
+                "amulets_b": 750,
+                "sushi": 2500,
+                "realm_ticket": 250,
+                "encounter_ticket": 150,
+                "parade_tickets": 100,
+                "talisman": 500000,
+                "friendship_pass": 250,
+                "friendship": 2000
+            }
+        })
+        await ctx.message.add_reaction("✅")
+
     @commands.command(aliases=["push"])
     @commands.is_owner()
     async def compensate_push_shikigami_manually(self, ctx, member: discord.Member = None, *, args):
