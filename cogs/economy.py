@@ -4316,7 +4316,7 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             color=user.colour,
             title="Frame acquisition",
-            description=f"{user.mention} has acquired{intro_caption}{frame_name} frame!\n"
+            description=f"{user.mention} has obtained{intro_caption}{frame_name} frame!\n"
                         f"Acquired {jades:,d}{e_j} as bonus rewards!",
             timestamp=self.get_timestamp()
         )
@@ -4359,7 +4359,7 @@ class Economy(commands.Cog):
             users.update_one({
                 "user_id": str(member.id)}, {
                 "$set": {
-                    "level": 60, "experience": 100000, "lvl_exp_next": 100000
+                    "level": 60, "experience": 100000, "level_exp_next": 100000
                 },
                 "$inc": {
                     "amulets": (60 - current_level) * 10
