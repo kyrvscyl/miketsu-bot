@@ -2380,16 +2380,20 @@ class Economy(commands.Cog):
                       f"```"
 
         embed = discord.Embed(color=query1.colour, description=description, timestamp=self.get_timestamp())
-        print(self.get_time_converted(ship_profile['cards']['timestamp']))
 
-        time_deployed = self.get_time_converted(ship_profile["cards"]["timestamp"])
-        hours, minutes = self.hours_minutes((time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC")))
-        embed.add_field(
-            name=f"Equipped realm card",
-            value=f"{ship_profile['cards']['name'].title()} | "
-                  f"Grade {ship_profile['cards']['grade']} | "
-                  f"Collect in {hours}h, {minutes}m"
-        )
+        try:
+            time_deployed = self.get_time_converted(ship_profile["cards"]["timestamp"])
+            hours, minutes = self.hours_minutes((time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC")))
+            embed.add_field(
+                name=f"Equipped realm card",
+                value=f"{ship_profile['cards']['name'].title()} | "
+                      f"Grade {ship_profile['cards']['grade']} | "
+                      f"Collect in {hours}h, {minutes}m"
+            )
+        except TypeError:
+            pass
+        except AttributeError:
+            pass
 
         embed.set_author(
             name=f"{ship_profile['ship_name']}",
