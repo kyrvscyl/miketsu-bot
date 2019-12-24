@@ -19,31 +19,28 @@ shoots = get_collections("shoots")
 stickers = get_collections("stickers")
 users = get_collections("users")
 
-# Lists
-actions = []
-stickers_list = []
-
-shoots_failed = cycle(config.find_one({"list": 3}, {"_id": 0, "failed_shoots": 1})["failed_shoots"])
-shoots_success = cycle(config.find_one({"list": 3}, {"_id": 0, "success_shoots": 1})["success_shoots"])
-reactions = cycle(config.find_one({"list": 3}, {"_id": 0, "reactions": 1})["reactions"])
-
-
-def generate_new_stickers():
-    global stickers_list
-    global actions
-
-    for sticker in stickers.find({}, {"_id": 0}):
-        stickers_list.append("`{}`, ".format(sticker["alias"]))
-        actions.append(sticker["alias"])
-
-
-generate_new_stickers()
-
 
 class Funfun(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+        self.actions = []
+        self.stickers_list = []
+
+        self.shoots_failed = cycle(config.find_one({"list": 3}, {"_id": 0, "failed_shoots": 1})["failed_shoots"])
+        self.shoots_success = cycle(config.find_one({"list": 3}, {"_id": 0, "success_shoots": 1})["success_shoots"])
+        self.reactions = cycle(config.find_one({"list": 3}, {"_id": 0, "reactions": 1})["reactions"])
+
+        self.generate_new_stickers()
+
+    def generate_new_stickers(self):
+        self.actions.clear()
+        self.stickers_list.clear()
+
+        for sticker in stickers.find({}, {"_id": 0}):
+            self.stickers_list.append("`{}`, ".format(sticker["alias"]))
+            self.actions.append(sticker["alias"])
 
     def pluralize(self, singular, count):
         if count > 1:
@@ -163,10 +160,10 @@ class Funfun(commands.Cog):
                     roll = random.randint(1, 100)
 
                     if roll >= 45:
-                        response = next(shoots_failed).format(user.mention)
+                        response = next(self.shoots_failed).format(user.mention)
                         await self.mikes_shoot_post_process(user, member_target, member_target, response, channel)
                     else:
-                        response = next(shoots_success).format(member_target.mention)
+                        response = next(self.shoots_success).format(member_target.mention)
                         await self.mikes_shoot_post_process(user, member_target, user, response, channel)
 
                     break
@@ -175,7 +172,7 @@ class Funfun(commands.Cog):
     @commands.guild_only()
     async def sticker_help(self, ctx):
 
-        quotient = int(len(stickers_list) / 2)
+        quotient = int(len(self.stickers_list) / 2)
         page = 1
         page_total = 2
 
@@ -186,7 +183,7 @@ class Funfun(commands.Cog):
 
             end = y * quotient
             start = end - quotient
-            description = "".join(sorted(stickers_list[start:end]))[:-2:]
+            description = "".join(sorted(self.stickers_list[start:end]))[:-2:]
 
             embed = discord.Embed(
                 color=0xffe6a7, title="stickers",
@@ -225,7 +222,7 @@ class Funfun(commands.Cog):
         alias = arg1.lower()
         link = args
 
-        if alias in actions:
+        if alias in self.actions:
             embed = discord.Embed(color=ctx.author.colour, title=f"Alias `{alias}` is already taken", )
             await ctx.channel.send(embed=embed)
 
@@ -234,7 +231,7 @@ class Funfun(commands.Cog):
             embed = discord.Embed(color=ctx.author.colour, title=f"New sticker added with alias: `{alias}`")
             embed.set_image(url=link)
             await ctx.channel.send(embed=embed)
-            generate_new_stickers()
+            self.generate_new_stickers()
 
         else:
             await ctx.message.add_reaction("❌")
@@ -255,7 +252,7 @@ class Funfun(commands.Cog):
             sticker_recognized = None
 
             for sticker_try in list_message:
-                if sticker_try in actions:
+                if sticker_try in self.actions:
                     sticker_recognized = sticker_try
                     break
 
@@ -265,7 +262,7 @@ class Funfun(commands.Cog):
                     if len(message.content) == 4:
                         embed = discord.Embed(
                             colour=discord.Colour(0xffe6a7),
-                            description=next(reactions)
+                            description=next(self.reactions)
                         )
                         msg = await message.channel.send(embed=embed)
                         await msg.delete(delay=15)

@@ -19,7 +19,7 @@ config = get_collections("config")
 # Variables
 prefix = ";"
 time_start = datetime.now()
-version = "1.6.beta"
+version = "1.7.beta"
 
 # Instantiation
 client = commands.Bot(command_prefix=prefix, case_insensitive=True)

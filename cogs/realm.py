@@ -3,16 +3,16 @@ Error Module
 Miketsu, 2019
 """
 import asyncio
+import os
 import random
 from datetime import datetime, timedelta
-from math import exp
+from math import exp, ceil
 
 import discord
 import pytz
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import colour, id_guild
 
 # Collections
 config = get_collections("config")
@@ -22,26 +22,8 @@ realms = get_collections("realms")
 ships = get_collections("ships")
 users = get_collections("users")
 
-# Lists
-realm_cards = []
-
-# Variables
-developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
-emoji_dict = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
-
-id_scroll = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
-id_spell_spam = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
 # Instantiations
-
-for card in realms.find({}, {"_id": 0}):
-    realm_cards.append(f"{card['name'].lower()}")
-
-
-def check_if_user_has_development_role(ctx):
-    return str(ctx.author.id) in developer_team
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Realm(commands.Cog):
@@ -50,21 +32,42 @@ class Realm(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
+        
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
+        
+        self.id_scroll = self.channels["channels"]["scroll-of-everything"]
+        self.id_spell_spam = self.channels["channels"]["spell-spam"]
+
+        self.realm_cards = []
+
+        for card in realms.find({}, {"_id": 0}):
+            self.realm_cards.append(f"{card['name'].lower()}")
+
+    def check_if_user_has_development_role(self):
+        def predicate(ctx):
+            return str(ctx.author.id) in self.developer_team
+        return commands.check(predicate)
+
     def get_bond(self, x, y):
         bond_list = sorted([x.id, y.id], reverse=True)
         return f"{bond_list[0]}x{bond_list[1]}"
 
     def get_emoji(self, item):
-        return emoji_dict[item]
+        return self.get_emojis[item]
 
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
     
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
     
     def get_time_converted(self, utc_dt):
-        return utc_dt.replace(tzinfo=pytz.timezone("UTC")).astimezone(tz=pytz.timezone(timezone))
+        return utc_dt.replace(tzinfo=pytz.timezone("UTC")).astimezone(tz=pytz.timezone(self.timezone))
 
     def pluralize(self, singular, count):
         if count > 1:
@@ -128,7 +131,7 @@ class Realm(commands.Cog):
             embed = discord.Embed(
                 title="realms",
                 description="equip realms with your ships to obtained shared rewards",
-                color=colour
+                color=self.colour
             )
 
             def generate_data():
@@ -175,13 +178,81 @@ class Realm(commands.Cog):
                     page = 1
                 await msg.edit(embed=create_new_embed_page(page))
 
+    @commands.command(aliases=["cards"])
+    @commands.guild_only()
+    async def realm_card_show_user(self, ctx, *, member: discord.Member = None):
+
+        if member is None:
+            await self.realm_card_show_user_post(ctx.author, ctx)
+
+        else:
+            await self.realm_card_show_user_post(member, ctx)
+
+    async def realm_card_show_user_post(self, member, ctx):
+
+        cards = users.find_one({"user_id": str(member.id)}, {"_id": 0, "cards": 1})["cards"]
+        list_formatted = []
+
+        def generate_emoji(x):
+            dictionary = {"moon": "🌖", "drums": "🥁", "umbrella": "🏖️", "fish": "🐠"}
+            return dictionary[x]
+
+        for c in cards:
+            list_formatted.append(f"{generate_emoji(c['name'])} {c['name'].title()} | Grade `{c['grade']} 🌟`\n")
+
+        await self.realm_card_show_user_post_paginate(ctx, list_formatted)
+
+    async def realm_card_show_user_post_paginate(self, ctx, list_formatted):
+
+        page, lines_max = 1, 10
+        page_total = ceil(len(list_formatted) / lines_max)
+        if page_total == 0:
+            page_total = 1
+
+        def embed_create_page_new(page_new):
+            end = page_new * lines_max
+            start = end - lines_max
+            description_new = "".join(list_formatted[start:end])
+
+            embed_new = discord.Embed(
+                color=ctx.author.colour,
+                description=f"{description_new}", timestamp=self.get_timestamp()
+            )
+            embed_new.set_author(name=f"{ctx.author.display_name}'s realm cards", icon_url=ctx.author.avatar_url)
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            return embed_new
+
+        msg = await ctx.channel.send(embed=embed_create_page_new(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=embed_create_page_new(page))
+
     @commands.command(aliases=["realm", "rlm"])
     @commands.guild_only()
     async def realm_card_use(self, ctx, arg1=None, *, member: discord.Member = None):
 
         if arg1 is None and member is None:
             embed = discord.Embed(
-                color=colour,
+                color=self.colour,
                 title="realm use, rlm u",
                 description=f"equip your realm by mentioning a member"
             )
@@ -213,7 +284,7 @@ class Realm(commands.Cog):
                         user_cards.append(f"{x['name']}/{x['grade']}")
 
                     embed = discord.Embed(
-                        color=colour,
+                        color=self.colour,
                         title="Realm card selection",
                         description=f"enter a valid realm card and grade"
                     )
@@ -271,7 +342,7 @@ class Realm(commands.Cog):
             ship_data = ships.find_one({"code": code}, {"_id": 0})
         except AttributeError:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="rcollect, rcol",
                 description=f"collect your cruising rewards"
             )
@@ -283,7 +354,7 @@ class Realm(commands.Cog):
             return
         except TypeError:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="rcollect, rcol",
                 description=f"collect your cruising rewards"
             )
@@ -296,7 +367,7 @@ class Realm(commands.Cog):
 
         if ship_data is None:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid ship",
                 description=f"that ship has sunk before it was even fully built"
             )
@@ -304,7 +375,7 @@ class Realm(commands.Cog):
 
         elif ship_data["cards"]["collected"] is True or ship_data["cards"]["equipped"] is False:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid collection",
                 description=f"the ship has not yet been deployed for cruise"
             )
@@ -318,7 +389,7 @@ class Realm(commands.Cog):
 
             if now < (time_deployed + timedelta(days=1)):
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid collection",
                     description=f"the ship has not yet returned from its cruise"
                 )

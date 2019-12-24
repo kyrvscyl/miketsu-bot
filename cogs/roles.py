@@ -16,28 +16,8 @@ config = get_collections("config")
 guilds = get_collections("guilds")
 sortings = get_collections("sortings")
 
-# Dictionary
-emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-roles_emoji = {}
-
-# Lists
-admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
-msg_id_list = []
-
-# Variables
-id_guild = int(os.environ.get("SERVER"))
-
-id_sorting = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0, "channels": 1})["channels"]["sorting-hat"]
-
-e_c = emojis["c"]
-
 # Instantiations
-
-for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
-    msg_id_list.append(role_select_msg["msg_id"])
-
-    for roles_emoji_entry in role_select_msg["fields"]:
-        roles_emoji.update({roles_emoji_entry['emoji']: f"{roles_emoji_entry['role_id']}"})
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Roles(commands.Cog):
@@ -46,22 +26,34 @@ class Roles(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.e_c = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]["c"]
+        self.id_sorting = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0})["channels"]["sorting-hat"]
+
+        self.msg_id_list = []
+        self.roles_emoji = {}
+
+        for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
+            self.msg_id_list.append(role_select_msg["msg_id"])
+
+            for roles_emoji_entry in role_select_msg["fields"]:
+                self.roles_emoji.update({roles_emoji_entry['emoji']: f"{roles_emoji_entry['role_id']}"})
+
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-        
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
 
         if self.client.get_user(int(payload.user_id)).bot:
             return
 
-        elif str(payload.message_id) in msg_id_list:
+        elif str(payload.message_id) in self.msg_id_list:
 
             guild = self.client.get_guild(int(id_guild))
             request_2 = sortings.find_one({"msg_id": str(payload.message_id)}, {"_id": 0})
 
             member = guild.get_member(int(payload.user_id))
-            sorting_channel = self.client.get_channel(int(id_sorting))
+            sorting_channel = self.client.get_channel(int(self.id_sorting))
             role_selection_msg = await sorting_channel.fetch_message(int(payload.message_id))
 
             role_id = sortings.find_one({
@@ -103,10 +95,10 @@ class Roles(commands.Cog):
         if self.client.get_user(int(payload.user_id)).bot:
             return
 
-        elif str(payload.message_id) in msg_id_list:
+        elif str(payload.message_id) in self.msg_id_list:
 
             guild = self.client.get_guild(int(id_guild))
-            role_id = roles_emoji[str(payload.emoji)]
+            role_id = self.roles_emoji[str(payload.emoji)]
             role_remove = discord.utils.get(guild.roles, id=int(role_id))
             member = guild.get_member(int(payload.user_id))
             await member.remove_roles(role_remove)
@@ -116,7 +108,7 @@ class Roles(commands.Cog):
     async def edit_msg_role_selection_members_count(self, msg_id, guild):
 
         request = sortings.find_one({"msg_id": str(msg_id)}, {"_id": 0})
-        sorting_channel = self.client.get_channel(int(id_sorting))
+        sorting_channel = self.client.get_channel(int(self.id_sorting))
 
         embed = discord.Embed(
             title=request["title"],

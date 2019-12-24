@@ -28,119 +28,8 @@ realms = get_collections("realms")
 shikigamis = get_collections("shikigamis")
 users = get_collections("users")
 
-# Dictionary
-attack_verb = cycle(config.find_one({"dict": 1}, {"_id": 0, "attack_verb": 1})["attack_verb"])
-emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
-
-# Lists
-pool_sp = []
-pool_ssr = []
-pool_ssn = []
-
-demons = []
-quizzes = []
-pool_all = []
-description_nether = []
-actual_rewards = []
-realm_cards = []
-
-assemble_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "assemble_captions": 1})["assemble_captions"])
-boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
-rewards_nether = config.find_one({"list": 1}, {"_id": 0, "rewards_nether": 1})["rewards_nether"]
-
-# Variables
-guild_id = int(os.environ.get("SERVER"))
-admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
-colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-
-id_hosting = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
-id_spell_spam = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-e_m = emojis["m"]
-e_j = emojis["j"]
-e_c = emojis["c"]
-e_f = emojis["f"]
-e_a = emojis["a"]
-e_t = emojis["t"]
-e_1 = emojis["1"]
-e_2 = emojis["2"]
-e_6 = emojis["6"]
-e_x = emojis["x"]
-
 # Instantiations
-
-for card in realms.find({}, {"_id": 0}):
-    realm_cards.append(f"{card['name'].lower()}")
-
-for shiki in shikigamis.find({}, {"_id": 0, "name": 1}):
-    pool_all.append(shiki["name"])
-
-for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
-    quizzes.append(quiz)
-
-for document in bosses.find({}, {"_id": 0, "boss": 1}):
-    demons.append(document["boss"])
-
-for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1}):
-    if shikigami["rarity"] == "SP":
-        pool_sp.append(shikigami["name"])
-    elif shikigami["rarity"] == "SSR":
-        pool_ssr.append(shikigami["name"])
-    elif shikigami["rarity"] == "SSN":
-        pool_ssn.append(shikigami["name"])
-
-
-def generate_nether_information():
-    for index, reward in enumerate(range(1, 9)):
-        lvl = index + 1
-        jades = rewards_nether[0] * lvl
-        coins = rewards_nether[1] * lvl
-        exp = rewards_nether[2] * lvl
-        medals = rewards_nether[3] * lvl
-        shards_sp = int(rewards_nether[4] * lvl) + floor(lvl/8)
-        shards_ssr = int(rewards_nether[5] * lvl) + floor(lvl/8)
-        shards_ssn = int(rewards_nether[6] * lvl) + floor(lvl/8)
-        actual_rewards.append([jades, coins, exp, medals, shards_sp, shards_ssr, shards_ssn])
-
-
-def status_set(x):
-    global boss_spawn
-    boss_spawn = x
-
-
-boss_spawn = False
-quizzes_shuffle = random.shuffle(quizzes)
-quizzes_cycle = cycle(quizzes)
-generate_nether_information()
-
-
-def check_if_user_has_any_alt_roles(user):
-    for role in reversed(user.roles):
-        if role.name in ["Geminio"]:
-            return True
-    return False
-
-
-def check_if_user_has_any_admin_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in admin_roles:
-            return True
-    return False
-
-
-def check_if_user_has_encounter_tickets(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "encounter_ticket": 1})["encounter_ticket"] > 0
-
-
-def check_if_user_has_raid_tickets(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "realm_ticket": 1})["realm_ticket"] > 0
-
-
-def check_if_user_has_nether_pass(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "nether_pass": 1})["nether_pass"] is True
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Gameplay(commands.Cog):
@@ -149,6 +38,120 @@ class Gameplay(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.attack_verb = cycle(config.find_one({"dict": 1}, {"_id": 0, "attack_verb": 1})["attack_verb"])
+        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
+        self.get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
+        
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        self.listings = config.find_one({"list": 1}, {"_id": 0})
+        
+        self.id_spell_spam = self.channels["channels"]["spell-spam"]
+        self.id_hosting = self.channels["channels"]["bot-sparring"]
+
+        self.admin_roles = self.listings["admin_roles"]
+
+        self.e_m = self.emojis["m"]
+        self.e_j = self.emojis["j"]
+        self.e_c = self.emojis["c"]
+        self.e_f = self.emojis["f"]
+        self.e_a = self.emojis["a"]
+        self.e_t = self.emojis["t"]
+        self.e_1 = self.emojis["1"]
+        self.e_2 = self.emojis["2"]
+        self.e_6 = self.emojis["6"]
+        self.e_x = self.emojis["x"]
+
+        self.pool_sp = []
+        self.pool_ssr = []
+        self.pool_ssn = []
+
+        self.demons = []
+        self.quizzes = []
+        self.pool_all = []
+        self.description_nether = []
+        self.actual_rewards = []
+        self.realm_cards = []
+
+        self.assemble_captions = cycle(self.listings["assemble_captions"])
+        self.boss_comment = self.listings["boss_comment"]
+        self.rewards_nether = self.listings["rewards_nether"]
+
+        self.boss_spawn = False
+        self.quizzes_shuffle = random.shuffle(self.quizzes)
+        self.quizzes_cycle = cycle(self.quizzes)
+        self.generate_nether_information()
+        
+        for card in realms.find({}, {"_id": 0}):
+            self.realm_cards.append(f"{card['name'].lower()}")
+        
+        for shiki in shikigamis.find({}, {"_id": 0, "name": 1}):
+            self.pool_all.append(shiki["name"])
+        
+        for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
+            self.quizzes.append(quiz)
+        
+        for document in bosses.find({}, {"_id": 0, "boss": 1}):
+            self.demons.append(document["boss"])
+        
+        for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1}):
+            if shikigami["rarity"] == "SP":
+                self.pool_sp.append(shikigami["name"])
+            elif shikigami["rarity"] == "SSR":
+                self.pool_ssr.append(shikigami["name"])
+            elif shikigami["rarity"] == "SSN":
+                self.pool_ssn.append(shikigami["name"])
+
+    def generate_nether_information(self):
+        for index, reward in enumerate(range(1, 9)):
+            lvl = index + 1
+            jades = self.rewards_nether[0] * lvl
+            coins = self.rewards_nether[1] * lvl
+            exp = self.rewards_nether[2] * lvl
+            medals = self.rewards_nether[3] * lvl
+            shards_sp = int(self.rewards_nether[4] * lvl) + floor(lvl/8)
+            shards_ssr = int(self.rewards_nether[5] * lvl) + floor(lvl/8)
+            shards_ssn = int(self.rewards_nether[6] * lvl) + floor(lvl/8)
+            self.actual_rewards.append([jades, coins, exp, medals, shards_sp, shards_ssr, shards_ssn])
+
+    def status_set(self, x):
+        self.boss_spawn = x
+    
+    def check_if_user_has_any_alt_roles(self, user):
+        for role in reversed(user.roles):
+            if role.name in ["Geminio"]:
+                return True
+        return False
+    
+    def check_if_user_has_any_admin_roles(self):
+        def predicate(ctx):
+            for role in reversed(ctx.author.roles):
+                if role.name in self.admin_roles:
+                    return True
+            return False
+        return commands.check(predicate)
+    
+    def check_if_user_has_encounter_tickets(self):
+        def predicate(ctx):
+            return users.find_one({
+                "user_id": str(ctx.author.id)}, {"_id": 0, "encounter_ticket": 1}
+            )["encounter_ticket"] > 0
+        return commands.check(predicate)
+    
+    def check_if_user_has_raid_tickets(self):
+        def predicate(ctx):
+            return users.find_one({
+                "user_id": str(ctx.author.id)}, {"_id": 0, "realm_ticket": 1}
+            )["realm_ticket"] > 0
+        return commands.check(predicate)
+    
+    def check_if_user_has_nether_pass(self, ctx):
+        return users.find_one({
+            "user_id": str(ctx.author.id)}, {"_id": 0, "nether_pass": 1}
+        )["nether_pass"] is True
+    
     def calculate(self, x, y, z):
         try:
             if x - y > 0:
@@ -161,7 +164,7 @@ class Gameplay(commands.Cog):
             return 0
 
     def get_emoji(self, item):
-        return get_emojis[item]
+        return self.get_emojis[item]
 
     def get_frame_thumbnail(self, frame):
         return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
@@ -173,7 +176,7 @@ class Gameplay(commands.Cog):
         return users.find_one({"user_id": str(victim.id)}, {"_id": 0, "raided_count": 1})["raided_count"]
     
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
     
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
@@ -206,7 +209,7 @@ class Gameplay(commands.Cog):
 
     def encounter_roll_netherworld_generate_cards(self, user, waves):
 
-        card_rewards = random.choice(realm_cards)
+        card_rewards = random.choice(self.realm_cards)
         if waves >= 60:
             grade = random.choice([5, 5, 6])
         elif waves >= 50:
@@ -240,7 +243,7 @@ class Gameplay(commands.Cog):
             approximate_results.append(f"{result['name'].title()}")
 
         embed = discord.Embed(
-            title="Invalid shikigami", colour=discord.Colour(colour),
+            title="Invalid shikigami", colour=self.colour,
             description=f"check the spelling of the shikigami"
         )
         embed.add_field(
@@ -282,7 +285,7 @@ class Gameplay(commands.Cog):
     
     async def achievements_process_announce(self, member, frame_name, jades):
 
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
 
         users.update_one({
             "user_id": str(member.id)}, {
@@ -305,7 +308,7 @@ class Gameplay(commands.Cog):
             color=member.colour,
             title="Frame acquisition",
             description=f"{member.mention} has acquired{intro_caption}{frame_name} frame!\n"
-                        f"Acquired {jades:,d}{e_j} as bonus rewards!",
+                        f"Acquired {jades:,d}{self.e_j} as bonus rewards!",
             timestamp=self.get_timestamp()
         )
         embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
@@ -416,7 +419,8 @@ class Gameplay(commands.Cog):
                     if len(r) > 0:
                         embed.add_field(
                             name="Rewards", inline=False,
-                            value=f"{r[0]:,d}{e_j} | {r[1]:,d}{e_c} | {r[2]:,d}{e_x} | {r[3]:,d}{e_m}",
+                            value=f"{r[0]:,d}{self.e_j} | {r[1]:,d}{self.e_c} | "
+                                  f"{r[2]:,d}{self.e_x} | {r[3]:,d}{self.e_m}",
                         )
                         card_reward, card_grade = self.encounter_roll_netherworld_generate_cards(user, c)
                         embed.add_field(
@@ -464,7 +468,7 @@ class Gameplay(commands.Cog):
                     ranges = [[0, 9], [10, 19], [20, 29], [30, 39], [40, 49], [50, 59], [60, 69], [70, 79]]
                     for g, covered in enumerate(ranges):
                         if cleared_waves <= covered[1]:
-                            rewards_select = actual_rewards[g]
+                            rewards_select = self.actual_rewards[g]
 
                             jades = random.uniform(rewards_select[0] * 0.95, rewards_select[0] * 1.05)
                             coins = random.uniform(rewards_select[1] * 0.95, rewards_select[1] * 1.05)
@@ -501,23 +505,25 @@ class Gameplay(commands.Cog):
                                 }
                             })
 
-                            shikigami_pool = {shiki_iterate: 0 for shiki_iterate in pool_ssr + pool_sp + pool_ssn}
+                            shikigami_pool = {
+                                shiki_iterate: 0 for shiki_iterate in self.pool_ssr + self.pool_sp + self.pool_ssn
+                            }
 
                             i = 0
                             while i < shards_sp:
-                                shikigami_shard = random.choice(pool_sp)
+                                shikigami_shard = random.choice(self.pool_sp)
                                 shikigami_pool[shikigami_shard] += 1
                                 i += 1
 
                             i = 0
                             while i < shards_ssr:
-                                shikigami_shard = random.choice(pool_ssr)
+                                shikigami_shard = random.choice(self.pool_ssr)
                                 shikigami_pool[shikigami_shard] += 1
                                 i += 1
 
                             i = 0
                             while i < shards_ssn:
-                                shikigami_shard = random.choice(pool_ssn)
+                                shikigami_shard = random.choice(self.pool_ssn)
                                 shikigami_pool[shikigami_shard] += 1
                                 i += 1
 
@@ -542,7 +548,7 @@ class Gameplay(commands.Cog):
                 return
             except KeyError:
                 embed1 = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid selection",
                     description=f"this shikigami is not in your possession, already dead, or does not exist"
                 )
@@ -649,7 +655,7 @@ class Gameplay(commands.Cog):
             address = f"temp/{user_id}.png"
             new_im.save(address)
             new_photo = discord.File(address, filename=f"{user_id}.png")
-            hosting_channel = self.client.get_channel(int(id_hosting))
+            hosting_channel = self.client.get_channel(int(self.id_hosting))
             msg = await hosting_channel.send(file=new_photo)
             attachment_link = msg.attachments[0].url
             return attachment_link
@@ -687,7 +693,7 @@ class Gameplay(commands.Cog):
     async def netherworld_show_information(self, ctx):
 
         embed = discord.Embed(
-            color=colour,
+            color=self.colour,
             title=f"netherworld, nw",
             description=f"fights and clears unwanted forces and earn rich rewards"
         )
@@ -726,7 +732,7 @@ class Gameplay(commands.Cog):
 
                 if raid_count >= 3:
                     embed = discord.Embed(
-                        colour=discord.Colour(colour),
+                        colour=self.colour,
                         description="raids are capped at 3 times per day and per realm"
                     )
                     embed.set_author(
@@ -751,7 +757,7 @@ class Gameplay(commands.Cog):
 
                     else:
                         embed = discord.Embed(
-                            title=f"Invalid chosen realm", colour=discord.Colour(colour),
+                            title=f"Invalid chosen realm", colour=self.colour,
                             description=f"You can only raid realms with ±{range_diff:,d} of your level",
                         )
                         await ctx.channel.send(embed=embed)
@@ -791,7 +797,7 @@ class Gameplay(commands.Cog):
                 embed.add_field(
                     name=f"Results, `{total_chance}%`",
                     value=f"{raider.display_name} won!\n"
-                          f"{coins:,d}{e_c}, {jades:,d}{e_j}, {medals:,d}{e_m}"
+                          f"{coins:,d}{self.e_c}, {jades:,d}{self.e_j}, {medals:,d}{self.e_m}"
                 )
                 embed.set_footer(text=raider.display_name, icon_url=raider.avatar_url)
                 await self.raid_perform_attack_giverewards_as_winner_raider(raider, coins, jades, medals, exp)
@@ -807,7 +813,7 @@ class Gameplay(commands.Cog):
                 embed.add_field(
                     name=f"Results, `{total_chance}%`",
                     value=f"{victim.display_name} won!\n"
-                          f"{coins:,d}{e_c}, {jades:,d}{e_j}, {medals:,d}{e_m}"
+                          f"{coins:,d}{self.e_c}, {jades:,d}{self.e_j}, {medals:,d}{self.e_m}"
                 )
                 embed.set_footer(text=raider.display_name, icon_url=raider.avatar_url)
                 await self.raid_perform_attack_giverewards_as_winner_victim(victim, raider, coins, jades, medals, exp)
@@ -884,12 +890,12 @@ class Gameplay(commands.Cog):
     async def encounter_add_quiz(self, ctx, arg1, *, emoji=None):
 
         name = arg1.replace("_", " ").lower()
-        if name not in pool_all:
+        if name not in self.pool_all:
             await self.shikigami_post_approximate_results(ctx, name)
 
         elif emoji is None:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="No emojis provided",
                 description="specify emojis to change the shikigami's identity"
             )
@@ -920,17 +926,17 @@ class Gameplay(commands.Cog):
         survivability = bosses.count({"current_hp": {"$gt": 0}})
         discoverability = bosses.count({"discoverer": {"$eq": 0}})
 
-        if (survivability > 0 or discoverability > 0) and boss_spawn is False:
+        if (survivability > 0 or discoverability > 0) and self.boss_spawn is False:
             roll_1 = random.randint(0, 100)
 
             if roll_1 <= 20:
-                status_set(True)
+                self.status_set(True)
                 await self.encounter_roll_boss(user, ctx, search_msg)
             else:
                 roll_2 = random.randint(0, 100)
                 await asyncio.sleep(1)
 
-                if 0 <= roll_2 <= 20 and check_if_user_has_nether_pass(ctx):
+                if 0 <= roll_2 <= 20 and self.check_if_user_has_nether_pass(ctx):
                     await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
                 else:
                     roll_3 = random.randint(0, 100)
@@ -942,7 +948,7 @@ class Gameplay(commands.Cog):
             roll_2 = random.randint(0, 100)
             await asyncio.sleep(1)
 
-            if 0 <= roll_2 <= 20 and check_if_user_has_nether_pass(ctx):
+            if 0 <= roll_2 <= 20 and self.check_if_user_has_nether_pass(ctx):
                 await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
             else:
                 roll_3 = random.randint(0, 100)
@@ -953,7 +959,7 @@ class Gameplay(commands.Cog):
 
     async def encounter_roll_quiz(self, user, ctx, search_msg):
 
-        quiz_select = next(quizzes_cycle)
+        quiz_select = next(self.quizzes_cycle)
         answer = quiz_select['name']
         question = quiz_select['demon_quiz']
         timeout = 10
@@ -1010,7 +1016,7 @@ class Gameplay(commands.Cog):
                 await self.perform_add_log("amulets", 5, ctx.author.id)
                 embed = discord.Embed(
                     title="Demon Quiz", color=user.colour,
-                    description=f"You have earned 5{e_a}",
+                    description=f"You have earned 5{self.e_a}",
                     timestamp=self.get_timestamp()
                 )
                 embed.set_footer(text="Correct!", icon_url=user.avatar_url)
@@ -1138,7 +1144,7 @@ class Gameplay(commands.Cog):
         assembly_players = []
         assembly_players2 = []
         assembly_players_name = []
-        boss_busters_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["boss_busters"]
+        boss_busters_id = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})["roles"]["boss_busters"]
 
         def generate_embed_boss(time_remaining, listings):
 
@@ -1186,7 +1192,7 @@ class Gameplay(commands.Cog):
         embed = discord.Embed(
             description=f"🏁 [Assemble here!]({link})"
         )
-        await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(assemble_captions)}", embed=embed)
+        await ctx.channel.send(content=f"<@&{boss_busters_id}>! {next(self.assemble_captions)}", embed=embed)
 
         def check(r, u):
             return u != self.client.user and str(r.emoji) == "🏁" and r.message.id == search_msg.id
@@ -1198,7 +1204,7 @@ class Gameplay(commands.Cog):
                 reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
 
             except asyncio.TimeoutError:
-                embed = discord.Embed(title="🎌 Assembly ends!", colour=discord.Colour(colour))
+                embed = discord.Embed(title="🎌 Assembly ends!", colour=self.colour)
                 await search_msg.clear_reactions()
                 await ctx.channel.send(embed=embed)
                 break
@@ -1207,7 +1213,7 @@ class Gameplay(commands.Cog):
                 if str(user.id) in assembly_players:
                     pass
 
-                elif check_if_user_has_any_alt_roles(user):
+                elif self.check_if_user_has_any_alt_roles(user):
                     pass
 
                 elif str(user.id) not in assembly_players:
@@ -1240,15 +1246,15 @@ class Gameplay(commands.Cog):
         if len(assembly_players) == 0:
             await asyncio.sleep(3)
             embed = discord.Embed(
-                title="Encounter Boss", colour=discord.Colour(colour),
+                title="Encounter Boss", colour=self.colour,
                 description=f"No players have joined the assembly.\nThe rare boss {boss_select} has fled."
             )
             await ctx.channel.send(embed=embed)
-            status_set(False)
+            self.status_set(False)
 
         else:
             await asyncio.sleep(3)
-            embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=discord.Colour(colour))
+            embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=self.colour)
             await ctx.channel.send(embed=embed)
 
             boss_profile = bosses.find_one({
@@ -1289,7 +1295,7 @@ class Gameplay(commands.Cog):
             embed = discord.Embed(
                 color=player_.colour,
                 description=f"*{player_.mention} "
-                            f"{next(attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
+                            f"{next(self.attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
             )
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(1)
@@ -1317,11 +1323,11 @@ class Gameplay(commands.Cog):
             boss_coinsteal = round(boss_profile_new["rewards"]["coins"] * 0.03)
 
             description = f"💨 Rare Boss {boss_select} has fled with {round(boss_currenthp):,d} remaining HP\n" \
-                          f"💸 Stealing {boss_jadesteal:,d} {e_j} & {boss_coinsteal:,d} {e_c} " \
-                          f"each from its attackers!\n\n{random.choice(boss_comment)}~"
+                          f"💸 Stealing {boss_jadesteal:,d} {self.e_j} & {boss_coinsteal:,d} {self.e_c} " \
+                          f"each from its attackers!\n\n{random.choice(self.boss_comment)}~"
 
             embed = discord.Embed(
-                colour=discord.Colour(colour), description=description, timestamp=self.get_timestamp()
+                colour=self.colour, description=description, timestamp=self.get_timestamp()
             )
             embed.set_thumbnail(url=boss_url)
 
@@ -1338,7 +1344,7 @@ class Gameplay(commands.Cog):
 
             await ctx.channel.send(embed=embed)
             self.client.get_command("encounter_search").reset_cooldown(ctx)
-            status_set(False)
+            self.status_set(False)
 
         elif boss_currenthp == 0:
 
@@ -1387,7 +1393,7 @@ class Gameplay(commands.Cog):
                 zip(challengers, boss_coins_user, boss_jades_users, boss_medals_users, boss_exp_users, distribution))
 
             embed = discord.Embed(
-                title=f"The Rare Boss {boss_select} has been defeated!", colour=discord.Colour(colour)
+                title=f"The Rare Boss {boss_select} has been defeated!", colour=self.colour
             )
             await ctx.channel.send(embed=embed)
             await self.encounter_roll_boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
@@ -1395,7 +1401,7 @@ class Gameplay(commands.Cog):
     async def encounter_roll_boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
 
         embed = discord.Embed(
-            colour=discord.Colour(colour),
+            colour=self.colour,
             title="🎊 Boss defeat rewards!",
             timestamp=self.get_timestamp()
         )
@@ -1413,7 +1419,8 @@ class Gameplay(commands.Cog):
 
                 embed.add_field(
                     name=f"{name}, {damage_contribution}%",
-                    value=f"{coins_r:,d}{e_c}, {jades_r:,d}{e_j}, {medal_r:,d}{e_m}, {exp_r:,d} {e_x}",
+                    value=f"{coins_r:,d}{self.e_c}, {jades_r:,d}{self.e_j}, "
+                          f"{medal_r:,d}{self.e_m}, {exp_r:,d} {self.e_x}",
                     inline=False
                 )
                 users.update_one({
@@ -1464,10 +1471,10 @@ class Gameplay(commands.Cog):
             await ctx.channel.send(embed=embed)
             await asyncio.sleep(2)
             user = ctx.guild.get_member(int(discoverer))
-            description = f"{user.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
-                          f"{medals:,d}{e_m} and {exp:,d} {e_x} for initially discovering {boss_select}!"
+            description = f"{user.mention} earned an extra {jades:,d}{self.e_j}, {coins:,d}{self.e_c}, " \
+                          f"{medals:,d}{self.e_m} and {exp:,d} {self.e_x} for initially discovering {boss_select}!"
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 description=description, timestamp=self.get_timestamp()
             )
             await ctx.channel.send(embed=embed)
@@ -1476,7 +1483,7 @@ class Gameplay(commands.Cog):
 
         self.client.get_command("encounter_search").reset_cooldown(ctx)
         users.update_many({"level": {"$gt": 60}}, {"$set": {"experience": 100000, "level_exp_next": 100000}})
-        status_set(False)
+        self.status_set(False)
 
     async def encounter_roll_boss_create(self, user, boss_select):
         discoverer = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})
@@ -1572,13 +1579,13 @@ class Gameplay(commands.Cog):
                     boss_description = "All rare bosses are currently dead"
 
                 embed = discord.Embed(
-                    title=f"Boss survivability", colour=discord.Colour(colour),
+                    title=f"Boss survivability", colour=self.colour,
                     description=boss_description,
                     timestamp=self.get_timestamp()
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif query not in demons:
+            elif query not in self.demons:
                 raise AttributeError
 
             else:
@@ -1618,7 +1625,7 @@ class Gameplay(commands.Cog):
                               f"Experience  :: {experience}```"
 
                 embed = discord.Embed(
-                    title=f"Rare Boss {query} stats", colour=discord.Colour(colour),
+                    title=f"Rare Boss {query} stats", colour=self.colour,
                     description=description,
                     timestamp=self.get_timestamp()
                 )
@@ -1627,10 +1634,10 @@ class Gameplay(commands.Cog):
 
         except AttributeError:
             embed = discord.Embed(
-                title="bossinfo, binfo", colour=discord.Colour(colour),
+                title="bossinfo, binfo", colour=self.colour,
                 description="shows discovered boss statistics"
             )
-            demons_formatted = ", ".join(demons)
+            demons_formatted = ", ".join(self.demons)
             embed.add_field(name="Bosses", value=f"*{demons_formatted}*")
             embed.add_field(
                 name="Example",

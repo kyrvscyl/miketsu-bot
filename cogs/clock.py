@@ -36,29 +36,8 @@ streaks = get_collections("streaks")
 users = get_collections("users")
 weathers = get_collections("weathers")
 
-# Lists
-admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
-captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
-clock_emojis = config.find_one({"list": 1}, {"_id": 0, "clock_emojis": 1})["clock_emojis"]
-
-# Variables
+# Instantiations
 id_guild = int(os.environ.get("SERVER"))
-colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-
-id_boss_busters = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})["roles"]["boss_busters"]
-id_clock = guilds.find_one({"server": str(id_guild)}, {"channels.clock": 1, "_id": 0})["channels"]["clock"]
-id_headlines = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
-id_silver_sickles = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})["roles"]["silver_sickles"]
-id_spell_spam = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-
-def check_if_has_any_admin_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in admin_roles:
-            return True
-    return False
 
 
 class Clock(commands.Cog):
@@ -67,8 +46,35 @@ class Clock(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        self.roles = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})
+        self.listings = config.find_one({"list": 1}, {"_id": 0})
+
+        self.id_boss_busters = self.roles["roles"]["boss_busters"]
+        self.id_silver_sickles = self.roles["roles"]["silver_sickles"]
+
+        self.id_clock = self.channels["channels"]["clock"]
+        self.id_headlines = self.channels["channels"]["headlines"]
+        self.id_spell_spam = self.channels["channels"]["spell-spam"]
+
+        self.admin_roles = self.listings["admin_roles"]
+        self.clock_emojis = self.listings["clock_emojis"]
+
+        self.captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
+
+    def check_if_user_has_any_admin_roles(self):
+        def predicate(ctx):
+            for role in reversed(ctx.author.roles):
+                if role.name in self.admin_roles:
+                    return True
+            return False
+        return commands.check(predicate)
+
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
 
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
@@ -79,7 +85,7 @@ class Clock(commands.Cog):
         else:
             emoji_clock_index = (int(hours) * 2) + 1
 
-        emoji_clock = clock_emojis[emoji_clock_index]
+        emoji_clock = self.clock_emojis[emoji_clock_index]
         return emoji_clock
 
     def generate_weather(self, hour):
@@ -114,11 +120,11 @@ class Clock(commands.Cog):
 
         print("Opening the netherworld gates")
         users.update_many({}, {"$set": {"nether_pass": True}})
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
-        content = f"<@&{id_boss_busters}>"
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
+        content = f"<@&{self.id_boss_busters}>"
 
         embed = discord.Embed(
-            color=colour,
+            color=self.colour,
             title="Netherworld gates update",
             description=f"The gates of Netherworld have been re-opened\n"
                         f"use `{self.prefix}enc` to explore them by chance",
@@ -142,7 +148,7 @@ class Clock(commands.Cog):
                     }
                 })
 
-                headlines_channel = self.client.get_channel(int(id_headlines))
+                headlines_channel = self.client.get_channel(int(self.id_headlines))
 
                 content = f"<@&{reminder['role_id']}>"
                 embed = discord.Embed(
@@ -168,11 +174,11 @@ class Clock(commands.Cog):
 
         content = f"<@&{gold_galleons_id}>"
         embed = discord.Embed(
-            color=colour,
+            color=self.colour,
             title="A new round of showdown bidding has started!",
             timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
         )
-        embed.description = next(captions)
+        embed.description = next(self.captions)
         try:
             embed.set_footer(text=f"Round {reminders_date_list.index(date_time) + 1} of {len(reminders_date_list)}")
             msg = await headlines_channel.send(content=content, embed=embed)
@@ -332,7 +338,7 @@ class Clock(commands.Cog):
                 weather1, weather2 = self.generate_weather(int(hour_24))
 
             try:
-                clock = self.client.get_channel(int(id_clock))
+                clock = self.client.get_channel(int(self.id_clock))
                 clock_name = f"{self.get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}"
                 print(f"{clock.name} -> {clock_name}")
 
@@ -391,14 +397,14 @@ class Clock(commands.Cog):
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
     @commands.command(aliases=["events", "event", "e"])
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def events_manipulate(self, ctx, *args):
 
         if len(args) == 0:
             embed = discord.Embed(
                 title="events, e",
                 description="manipulate event settings for reminders, etc.",
-                color=colour
+                color=self.colour
             )
             embed.add_field(
                 name="Arguments",
@@ -411,7 +417,7 @@ class Clock(commands.Cog):
             embed = discord.Embed(
                 title="events activate, e a",
                 description="activate repetitive events",
-                color=colour
+                color=self.colour
             )
             embed.add_field(
                 name="Timing",
@@ -435,7 +441,7 @@ class Clock(commands.Cog):
             embed = discord.Embed(
                 title="events deactivate, e d",
                 description="deactivate events",
-                color=colour
+                color=self.colour
             )
             embed.add_field(
                 name="Event codes",
@@ -461,7 +467,7 @@ class Clock(commands.Cog):
                 embed = discord.Embed(
                     title="Invalid action",
                     description="this event is already deactivated",
-                    color=colour
+                    color=self.colour
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -516,12 +522,12 @@ class Clock(commands.Cog):
             description=f"Title: {request['event'].title()}\n"
                         f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until "
                         f"`{date_end.strftime('%Y-%m-%d | %a')}`",
-            color=colour,
+            color=self.colour,
             timestamp=self.get_timestamp()
         )
         embed.add_field(
             name="Action",
-            value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{id_headlines}>"
+            value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{self.id_headlines}>"
         )
         await ctx.channel.send(embed=embed)
 

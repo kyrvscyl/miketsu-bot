@@ -26,54 +26,8 @@ guilds = get_collections("guilds")
 portraits = get_collections("portraits")
 shikigamis = get_collections("shikigamis")
 
-# Lists
-pool_all = []
-lists_souls = []
-lists_souls_raw = []
-
-duel_fields = config.find_one({"list": 1}, {"_id": 0, "duel_fields": 1})["duel_fields"]
-invalid_channels = config.find_one({"list": 1}, {"_id": 0, "invalid_channels": 1})["invalid_channels"]
-primary_roles = config.find_one({"list": 1}, {"_id": 0, "primary_roles": 1})["primary_roles"]
-
-# Variables
-id_guild = int(os.environ.get("SERVER"))
-colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-
-id_castle = int(guilds.find_one({"server": str(id_guild)}, {"_id": 0, "categories": 1})["categories"]["castle"])
-id_duelling_room = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["duelling-room"]
-id_hosting = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
-id_reference = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["reference-section"]
-id_restricted = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["restricted-section"]
-
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-# Dictionaries
-primary_emojis = config.find_one({"dict": 1}, {"_id": 0, "primary_emojis": 1})["primary_emojis"]
-
 # Instantiations
-
-for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2", "3"]}}, {"_id": 0, "index": 1}):
-    lists_souls.append("`{}`".format(soul["index"].lower()))
-    lists_souls_raw.append(soul["index"].lower())
-
-for document in shikigamis.find({}, {"_id": 0, "name": 1}):
-    pool_all.append(document["name"])
-
-
-def check_if_valid_and_castle(ctx):
-    return ctx.channel.category.id == id_castle and str(ctx.channel.name) not in invalid_channels
-
-
-def check_if_channel_is_pvp(ctx):
-    return str(ctx.channel.id) == id_duelling_room
-
-
-def check_if_reference_section(ctx):
-    return str(ctx.channel.id) == id_reference
-
-
-def check_if_restricted_section(ctx):
-    return str(ctx.channel.id) == id_restricted
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Castle(commands.Cog):
@@ -81,7 +35,51 @@ class Castle(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
-    
+
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.primary_emojis = config.find_one({"dict": 1}, {"_id": 0, "primary_emojis": 1})["primary_emojis"]
+
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        self.categories = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "categories": 1})
+        self.listings = config.find_one({"list": 1}, {"_id": 0})
+
+        self.id_castle = int(self.categories["categories"]["castle"])
+        self.id_duelling_room = self.channels["channels"]["duelling-room"]
+        self.id_hosting = self.channels["channels"]["bot-sparring"]
+        self.id_reference = self.channels["channels"]["reference-section"]
+        self.id_restricted = self.channels["channels"]["restricted-section"]
+
+        self.pool_all = []
+        self.lists_souls = []
+        self.lists_souls_raw = []
+
+        self.duel_fields = self.listings["duel_fields"]
+        self.invalid_channels = self.listings["invalid_channels"]
+        self.primary_roles = self.listings["primary_roles"]
+
+        for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2", "3"]}}, {"_id": 0, "index": 1}):
+            self.lists_souls.append("`{}`".format(soul["index"].lower()))
+            self.lists_souls_raw.append(soul["index"].lower())
+
+        for document in shikigamis.find({}, {"_id": 0, "name": 1}):
+            self.pool_all.append(document["name"])
+
+    def check_if_valid_and_castle(self):
+        def predicate(ctx):
+            return ctx.channel.category.id == self.id_castle and str(ctx.channel.name) not in self.invalid_channels
+        return commands.check(predicate)
+
+    def check_if_channel_is_pvp(self, ctx):
+        return str(ctx.channel.id) == self.id_duelling_room
+
+    def check_if_reference_section(self, ctx):
+        return str(ctx.channel.id) == self.id_reference
+
+    def check_if_restricted_section(self, ctx):
+        return str(ctx.channel.id) == self.id_restricted
+
     def create_webhook_post(self, webhooks, book):
 
         bukkuman = webhooks[0]
@@ -174,13 +172,13 @@ class Castle(commands.Cog):
         return webhook
 
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
 
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
     
     def get_emoji_primary_role(self, role):
-        return primary_emojis[role]
+        return self.primary_emojis[role]
     
     def lengthen(self, index):
         prefix = "#{}"
@@ -206,12 +204,12 @@ class Castle(commands.Cog):
     @commands.guild_only()
     async def post_table_of_content(self, ctx):
 
-        if check_if_reference_section(ctx):
+        if self.check_if_reference_section(ctx):
 
             await self.post_table_of_content_reference(ctx.channel)
             await ctx.message.delete()
 
-        elif check_if_restricted_section(ctx):
+        elif self.check_if_restricted_section(ctx):
 
             await self.post_table_of_content_restricted(ctx.channel)
             await ctx.message.delete()
@@ -281,7 +279,7 @@ class Castle(commands.Cog):
         except AttributeError:
             return False
 
-        lists_souls_formatted = ", ".join(lists_souls)
+        lists_souls_formatted = ", ".join(self.lists_souls)
         description = \
             "• To open a book use `;open [section] [index]`\n" \
             "• Example: `;open sbs 3`"
@@ -323,7 +321,7 @@ class Castle(commands.Cog):
     @commands.guild_only()
     async def post_book_reference(self, ctx, arg1, *, args="None"):
 
-        if check_if_reference_section(ctx):
+        if self.check_if_reference_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
             query = {"section": arg1.lower(), "index": args.lower()}
@@ -354,7 +352,7 @@ class Castle(commands.Cog):
                 webhook.execute()
                 await self.post_process_books(ctx, query)
 
-        elif check_if_restricted_section(ctx):
+        elif self.check_if_restricted_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
             query = {"section": arg1.lower(), "index": args.lower()}
@@ -417,7 +415,7 @@ class Castle(commands.Cog):
 
         try:
             floor_num = int(ctx.channel.topic[:1])
-            floor_frames = cycle(list(portraits.find({"floor": floor_num})))
+            floor_frames = cycle(list(portraits.find({"floor": floor_num}, {"_id": 0})))
 
             def create_new_embed_page():
                 frame_preview = next(floor_frames)
@@ -463,7 +461,7 @@ class Castle(commands.Cog):
 
         if arg1.lower() not in ["edit", "add"]:
             embed = discord.Embed(
-                title="portrait add, portrait edit", colour=discord.Colour(colour),
+                title="portrait add, portrait edit", colour=self.colour,
                 description=f"use `add` first before using `edit`\n"
                             f"use square photos for best results"
             )
@@ -494,7 +492,7 @@ class Castle(commands.Cog):
                 floor = int(argument[1])
             except ValueError:
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid floor number",
                     description="available floors: 1-6 only"
                 )
@@ -506,20 +504,20 @@ class Castle(commands.Cog):
 
             find_role = ""
             for role in reversed(user_roles):
-                if role.name in primary_roles:
+                if role.name in self.primary_roles:
                     find_role = role.name
                     break
 
             if frame_profile is not None:
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description=f"portrait already exists, use `{self.prefix}frame edit <...>`"
                 )
                 await ctx.channel.send(embed=embed)
 
             elif floor not in [1, 2, 3, 4, 5, 6]:
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid floor number",
                     description="available floors: 1-6 only"
                 )
@@ -562,11 +560,11 @@ class Castle(commands.Cog):
     async def castle_portrait_customize_process(self, img_link, ign, find_role, ctx, description, floor, frame_num):
 
         async with ctx.channel.typing():
-            embed = discord.Embed(colour=discord.Colour(colour), title="Processing the image.. ")
+            embed = discord.Embed(colour=self.colour, title="Processing the image.. ")
             msg1 = await ctx.channel.send(embed=embed)
             await asyncio.sleep(2)
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Adding a fancy frame based on your highest primary server role.."
             )
             await msg1.edit(embed=embed)
@@ -587,7 +585,7 @@ class Castle(commands.Cog):
             background.save(new_address)
 
             new_photo = discord.File(new_address, filename=f"{ign}.png")
-            hosting_channel = self.client.get_channel(int(id_hosting))
+            hosting_channel = self.client.get_channel(int(self.id_hosting))
             msg = await hosting_channel.send(file=new_photo)
 
             await asyncio.sleep(3)
@@ -617,7 +615,7 @@ class Castle(commands.Cog):
 
         if len(args) == 0 or args[0].lower() in ["help", "h"]:
             embed = discord.Embed(
-                title="duel, d", colour=discord.Colour(colour),
+                title="duel, d", colour=self.colour,
                 description="shows the help prompt for the first 3 arguments"
             )
             embed.add_field(name="Arguments", value="*add, update, show, delete*", inline=False)
@@ -626,7 +624,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() == "add" and len(args) <= 1:
             embed = discord.Embed(
-                title="duel add, d a", colour=discord.Colour(colour),
+                title="duel add, d a", colour=self.colour,
                 description="add a new duelist in the database"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}duel add <name>`*", inline=False)
@@ -634,7 +632,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() == ["delete", "d"] and len(args) <= 1:
             embed = discord.Embed(
-                title="duel delete, d d", colour=discord.Colour(colour),
+                title="duel delete, d d", colour=self.colour,
                 description="removes a duelist in the database"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}duel delete <exact_name>`*", inline=False)
@@ -648,7 +646,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
-                title="duel update, d u", colour=discord.Colour(colour),
+                title="duel update, d u", colour=self.colour,
                 description="updates a duelist's profile"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}d u <name or id> <field> <value>`*")
@@ -671,23 +669,23 @@ class Castle(commands.Cog):
 
         elif args[0].lower() in ["update", "u"] and len(args) == 2:
             fields_formatted = []
-            for field in duel_fields:
+            for field in self.duel_fields:
                 fields_formatted.append(f"`{field}`")
 
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="No field and value provided",
                 description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["update", "u"] and args[2].lower() not in duel_fields and len(args) >= 3:
+        elif args[0].lower() in ["update", "u"] and args[2].lower() not in self.duel_fields and len(args) >= 3:
             fields_formatted = []
-            for field in duel_fields:
+            for field in self.duel_fields:
                 fields_formatted.append(f"`{field}`")
 
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid field update request",
                 description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
@@ -696,20 +694,20 @@ class Castle(commands.Cog):
         elif args[0].lower() in ["update", "u"] and len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
             await self.management_duel_profile_update_field(ctx, args)
 
-        elif args[0].lower() in ["update", "u"] and args[2].lower() in duel_fields and len(args) == 3:
+        elif args[0].lower() in ["update", "u"] and args[2].lower() in self.duel_fields and len(args) == 3:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid field update request",
                 description=f"No value provided for the field {args[2].lower()}"
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in duel_fields:
+        elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in self.duel_fields:
             await self.management_duel_profile_update_field(ctx, args)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
             embed = discord.Embed(
-                title="duel show, d s", colour=discord.Colour(colour),
+                title="duel show, d s", colour=self.colour,
                 description="queries the duelists database"
             )
             embed.add_field(
@@ -867,7 +865,7 @@ class Castle(commands.Cog):
             approximate_results.append(f"{result['#']}/{result['name_lower']}")
 
         embed = discord.Embed(
-            colour=discord.Colour(colour),
+            colour=self.colour,
             title="Invalid query",
             description=f"the ID/name `{member_name}` returned no results"
         )
@@ -912,7 +910,7 @@ class Castle(commands.Cog):
             }})
             await ctx.message.add_reaction("✅")
 
-        elif args[2].lower() in ["unban", "uncore"] and " ".join(args[3:]).lower() in pool_all:
+        elif args[2].lower() in ["unban", "uncore"] and " ".join(args[3:]).lower() in self.pool_all:
             duelists.update_one(find_query, {
                 "$pull": {
                     args[2].lower()[2:]: " ".join(args[3:]).lower()
@@ -923,7 +921,7 @@ class Castle(commands.Cog):
             })
             await ctx.message.add_reaction("✅")
 
-        elif args[2].lower() in ["ban", "core"] and " ".join(args[3:]).lower() in pool_all:
+        elif args[2].lower() in ["ban", "core"] and " ".join(args[3:]).lower() in self.pool_all:
             duelists.update_one(find_query, {
                 "$push": {
                     args[2].lower(): " ".join(args[3:]).lower()
@@ -984,7 +982,7 @@ class Castle(commands.Cog):
 
         else:
             embed = discord.Embed(
-                title="Invalid duelist", colour=discord.Colour(colour),
+                title="Invalid duelist", colour=self.colour,
                 description="that name already exists in the database"
             )
             await ctx.channel.send(embed=embed)
@@ -1037,7 +1035,7 @@ class Castle(commands.Cog):
         combined_img.save(temp_address)
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link

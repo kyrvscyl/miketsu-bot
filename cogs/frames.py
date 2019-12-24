@@ -24,39 +24,8 @@ shikigamis = get_collections("shikigamis")
 ships = get_collections("ships")
 users = get_collections("users")
 
-# Dictionary
-emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-
-# Variables
-id_guild = int(os.environ.get("SERVER"))
-colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-
-id_hosting = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
-id_spell_spam = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-total_sp = shikigamis.count_documents({"rarity": "SP"})
-total_ssr = shikigamis.count_documents({"rarity": "SSR"})
-total_sr = shikigamis.count_documents({"rarity": "SR"})
-total_r = shikigamis.count_documents({"rarity": "R"})
-total_n = shikigamis.count_documents({"rarity": "N"})
-total_ssn = shikigamis.count_documents({"rarity": "SSN"})
-
-e_j = emojis["j"]
-
-# Lists
-developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
-medal_achievements = []
-
 # Instantiations
-
-for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
-    medal_achievements.append([m['name'], m['required']])
-
-
-def check_if_developer_team(ctx):
-    return str(ctx.author.id) in developer_team
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Frames(commands.Cog):
@@ -64,11 +33,41 @@ class Frames(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
+
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+
+        self.id_spell_spam = self.channels["channels"]["spell-spam"]
+        self.id_hosting = self.channels["channels"]["bot-sparring"]
+
+        self.e_j = self.emojis["j"]
+
+        self.total_sp = shikigamis.count_documents({"rarity": "SP"})
+        self.total_ssr = shikigamis.count_documents({"rarity": "SSR"})
+        self.total_sr = shikigamis.count_documents({"rarity": "SR"})
+        self.total_r = shikigamis.count_documents({"rarity": "R"})
+        self.total_n = shikigamis.count_documents({"rarity": "N"})
+        self.total_ssn = shikigamis.count_documents({"rarity": "SSN"})
+
+        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
+        self.medal_achievements = []
+
+        for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
+            self.medal_achievements.append([m['name'], m['required']])
+
+    def check_if_developer_team(self):
+        def predicate(ctx):
+            return str(ctx.author.id) in self.developer_team
+        return commands.check(predicate)
+
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
     
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
     
     def get_frame_thumbnail(self, frame):
         return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
@@ -140,7 +139,7 @@ class Frames(commands.Cog):
         address = f"temp/frames1.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"frames1.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
@@ -272,7 +271,7 @@ class Frames(commands.Cog):
         address = f"temp/frames1.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"frames1.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
@@ -416,7 +415,7 @@ class Frames(commands.Cog):
                 ]):
                     count_ssn = result["count"]
 
-                if count_ssn == total_sr:
+                if count_ssn == self.total_sr:
                     await self.achievements_process_announce(member, "Kitsune", jades)
 
             if "Blazing Sun" not in user_frames:
@@ -444,7 +443,7 @@ class Frames(commands.Cog):
                 ]):
                     count_ssr = result["count"]
 
-                if count_ssr == total_ssr:
+                if count_ssr == self.total_ssr:
                     await self.achievements_process_announce(member, "Blazing Sun", jades)
                     blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
                     await member.add_roles(blazing_role)
@@ -527,7 +526,7 @@ class Frames(commands.Cog):
 
             if document["medals"] >= 2000:
 
-                for reward in medal_achievements:
+                for reward in self.medal_achievements:
                     if document["medals"] >= reward[1] and reward[0] not in user_frames:
                         await self.achievements_process_announce(member, reward[0], jades)
 
@@ -580,7 +579,7 @@ class Frames(commands.Cog):
                 ]):
                     count_r = result["count"]
 
-                if count_r == total_r:
+                if count_r == self.total_r:
                     await self.achievements_process_announce(member, "River of Moon", jades)
 
             if "Fortune Cat" not in user_frames:
@@ -605,7 +604,7 @@ class Frames(commands.Cog):
                 ]):
                     count_n = result["count"]
 
-                if count_n == total_n:
+                if count_n == self.total_n:
                     await self.achievements_process_announce(member, "Fortune Cat", jades)
 
             if "Kero-Kero" not in user_frames:
@@ -630,7 +629,7 @@ class Frames(commands.Cog):
                 ]):
                     count_ssn = result["count"]
 
-                if count_ssn == total_ssn:
+                if count_ssn == self.total_ssn:
                     await self.achievements_process_announce(member, "Kero-Kero", jades)
 
             if "Frameous" not in user_frames:
@@ -961,7 +960,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_announce(self, member, frame_name, jades):
 
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
 
         if users.find_one({
             "user_id": str(member.id), "achievements.name": f"{frame_name}"
@@ -989,8 +988,8 @@ class Frames(commands.Cog):
             embed = discord.Embed(
                 color=member.colour,
                 title="Frame acquisition",
-                description=f"{member.mention} has acquired{intro_caption}{frame_name} frame!\n"
-                            f"Acquired {jades:,d}{e_j} as bonus rewards!",
+                description=f"{member.mention} has obtained{intro_caption}{frame_name} frame!\n"
+                            f"Acquired {jades:,d}{self.e_j} as bonus rewards!",
                 timestamp=self.get_timestamp()
             )
             embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")

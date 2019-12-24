@@ -3,20 +3,20 @@ Error Module
 Miketsu, 2019
 """
 
+import os
 from datetime import datetime
 
 import discord
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import colour, id_guild
 
 # Collections
 guilds = get_collections("guilds")
+config = get_collections("config")
 
-# Variables
-id_spell_spam = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-id_scroll = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
+# Instantiations
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Error(commands.Cog):
@@ -25,6 +25,13 @@ class Error(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        
+        self.id_spell_spam = self.channels["channels"]["spell-spam"]
+        self.id_scroll = self.channels["channels"]["scroll-of-everything"]
+        
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
@@ -38,10 +45,10 @@ class Error(commands.Cog):
     
     async def submit_error(self, ctx, error, exception):
 
-        channel = self.client.get_channel(int(id_scroll))
+        channel = self.client.get_channel(int(self.id_scroll))
 
         embed = discord.Embed(
-            colour=discord.Colour(colour),
+            colour=self.colour,
             title=f"Command Error Report",
             timestamp=self.get_timestamp()
         )
@@ -71,7 +78,7 @@ class Error(commands.Cog):
 
             if str(ctx.command) == "raid_perform":
                 embed = discord.Embed(
-                    title="raid, r", colour=discord.Colour(colour),
+                    title="raid, r", colour=self.colour,
                     description="raids the tagged member, requires 1 🎟"
                 )
                 embed.add_field(
@@ -84,7 +91,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "shikigami_list_show_collected":
                 embed = discord.Embed(
-                    title="shikilist, sl", colour=discord.Colour(colour),
+                    title="shikilist, sl", colour=self.colour,
                     description="shows your shikigami listings by rarity "
                 )
                 embed.add_field(
@@ -96,7 +103,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "shikigami_show_post_shiki":
                 embed = discord.Embed(
-                    title="shikigami, shiki", colour=discord.Colour(colour),
+                    title="shikigami, shiki", colour=self.colour,
                     description="shows your shikigami profile stats"
                 )
                 embed.add_field(
@@ -108,7 +115,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "raid_perform_calculation":
                 embed = discord.Embed(
-                    title="raidcalc, raidc, rc", colour=discord.Colour(colour),
+                    title="raidcalc, raidc, rc", colour=self.colour,
                     description="calculates your odds of winning"
                 )
                 embed.add_field(
@@ -135,7 +142,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "announcement_post_memorandum":
                 embed = discord.Embed(
                     title="memo",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description="submit an official paperwork memo"
                 )
                 embed.add_field(
@@ -152,7 +159,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "collect_suggestions":
                 embed = discord.Embed(
                     title="suggest, report",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description="submit suggestions/reports for the bot or guild\n"
                                 "available to use through direct message"
                 )
@@ -165,7 +172,7 @@ class Error(commands.Cog):
             elif str(ctx.command) in ["perform_exploration"]:
                 embed = discord.Embed(
                     title="explore, exp",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description=f"explore unlocked chapters\n"
                                 f"consumes sushi, set a shikigami first via `{self.prefix}set`\n"
                 )
@@ -186,7 +193,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "stat_shikigami":
                 embed = discord.Embed(
                     title="stats",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description="shows shikigami pulls statistics"
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}stat tamamonomae`*", inline=False)
@@ -195,7 +202,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "sticker_add_new":
                 embed = discord.Embed(
                     title="newsticker, ns",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description="add new stickers in the database"
                 )
                 embed.add_field(
@@ -212,7 +219,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "shikigami_shrine":
                 embed = discord.Embed(
-                    title="shrine", colour=discord.Colour(colour),
+                    title="shrine", colour=self.colour,
                     description="exchange your shikigamis for talismans to acquire exclusive shikigamis"
                 )
                 embed.add_field(
@@ -229,7 +236,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "leaderboard_show":
                 embed = discord.Embed(
-                    title="leaderboard, lb", colour=discord.Colour(colour),
+                    title="leaderboard, lb", colour=self.colour,
                     description="shows various leaderboards"
                 )
                 embed.add_field(
@@ -244,7 +251,7 @@ class Error(commands.Cog):
                 "shikigami_image_show_collected"
             ]:
                 embed = discord.Embed(
-                    title="collection, col", colour=discord.Colour(colour),
+                    title="collection, col", colour=self.colour,
                     description="shows your or tagged member's shikigami pulls by rarity without the count"
                 )
                 embed.add_field(
@@ -257,7 +264,7 @@ class Error(commands.Cog):
                 "shikigami_show_post_shiki"
             ]:
                 embed = discord.Embed(
-                    title="shikigami, shiki", colour=discord.Colour(colour),
+                    title="shikigami, shiki", colour=self.colour,
                     description="shows your owned shikigami stats"
                 )
                 embed.add_field(
@@ -270,7 +277,7 @@ class Error(commands.Cog):
                 "shikigami_show_post_shikis"
             ]:
                 embed = discord.Embed(
-                    title="shikigamis, shikis", colour=discord.Colour(colour),
+                    title="shikigamis, shikis", colour=self.colour,
                     description="shows your or tagged member's shikigami pulls by rarity"
                 )
                 embed.add_field(
@@ -281,7 +288,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) in ["shikigami_show_post_shards"]:
                 embed = discord.Embed(
-                    title="shards", colour=discord.Colour(colour),
+                    title="shards", colour=self.colour,
                     description="shows your or tagged member's shikigami shards count by rarity"
                 )
                 embed.add_field(
@@ -292,7 +299,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "profile_change_shikigami_main":
                 embed = discord.Embed(
-                    title="display", colour=discord.Colour(colour),
+                    title="display", colour=self.colour,
                     description="changes your profile display thumbnail"
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}set inferno ibaraki`*", inline=False)
@@ -300,7 +307,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "summon_perform_mystery":
                 embed = discord.Embed(
-                    title="summon, s", colour=discord.Colour(colour),
+                    title="summon, s", colour=self.colour,
                     description="simulates summon and collect shikigamis"
                 )
                 embed.add_field(
@@ -331,7 +338,7 @@ class Error(commands.Cog):
             ]:
                 embed = discord.Embed(
                     title="bounty, b",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description="search shikigami bounty locations or modify them"
                 )
                 embed.add_field(
@@ -347,7 +354,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "castle_portrait_customize":
                 embed = discord.Embed(
-                    title="portrait, portraits", colour=discord.Colour(colour),
+                    title="portrait, portraits", colour=self.colour,
                     description=f"customize your own guild portrait\n"
                                 f"appears in the castle's floors via `{self.prefix}wander`"
                 )
@@ -361,7 +368,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "announcement_post_memorandum":
                 embed = discord.Embed(
-                    title="announce", colour=discord.Colour(colour),
+                    title="announce", colour=self.colour,
                     description="sends an embed message\n"
                                 "prioritization: description > title > img_link\n"
                                 "where title and img_link are optional"
@@ -379,7 +386,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "announcement_post_message":
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="say",
                     description="allows me to repeat a text message"
                 )
@@ -388,7 +395,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "show_cycle_quest1":
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="cycle",
                     description="Patronus quest command participants only"
                 )
@@ -418,7 +425,7 @@ class Error(commands.Cog):
 
             elif str(ctx.command) in ["announcement_post_memorandum "]:
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid input",
                     description="tag a valid channel"
                 )
@@ -442,7 +449,7 @@ class Error(commands.Cog):
                     "realm_card_use"
                 ]:
                     embed = discord.Embed(
-                        title="Invalid member", colour=discord.Colour(colour),
+                        title="Invalid member", colour=self.colour,
                         description="That member does not exist or does not have a profile in this guild"
                     )
                     await ctx.channel.send(embed=embed)
@@ -457,7 +464,7 @@ class Error(commands.Cog):
 
             if str(ctx.command) == "pray_use":
                 embed = discord.Embed(
-                    colour=colour,
+                    colour=self.colour,
                     title=f"Insufficient prayers",
                     description=f"You have used up all your prayers today 🙏",
                     timestamp=self.get_timestamp()
@@ -466,14 +473,14 @@ class Error(commands.Cog):
 
             elif str(ctx.command) == "raid_perform":
                 embed = discord.Embed(
-                    title=f"Insufficient realm tickets", colour=discord.Colour(colour),
+                    title=f"Insufficient realm tickets", colour=self.colour,
                     description="purchase at the shop or get your daily rewards"
                 )
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "perform_parade":
                 embed = discord.Embed(
-                    title="Insufficient parade tickets", colour=discord.Colour(colour),
+                    title="Insufficient parade tickets", colour=self.colour,
                     description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
                 )
                 await ctx.channel.send(embed=embed)
@@ -496,7 +503,7 @@ class Error(commands.Cog):
             elif str(ctx.command) == "castle_wander":
                 embed = discord.Embed(
                     title="wander, w",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description="usable only at the castle's channels with valid floors\n"
                                 "check the channel topics for the floor number\n"
                 )
@@ -505,7 +512,7 @@ class Error(commands.Cog):
             elif str(ctx.command) in ["perform_exploration"]:
                 embed = discord.Embed(
                     title="explore, exp",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description=f"explore unlocked chapters\n"
                                 f"requires sushi, set a shikigami first via `{self.prefix}set`\n"
                 )
@@ -526,13 +533,14 @@ class Error(commands.Cog):
             elif str(ctx.command) in [
                 "management_guild",
                 "encounter_add_quiz",
-                "events_manipulate"
+                "events_manipulate",
+                "compensate_economy_items "
             ]:
                 return
 
             elif isinstance(error, commands.NoPrivateMessage):
                 embed = discord.Embed(
-                    title="Invalid channel", colour=discord.Colour(colour),
+                    title="Invalid channel", colour=self.colour,
                     description="This command can only be used inside the guild"
                 )
                 await ctx.channel.send(embed=embed)
@@ -562,7 +570,7 @@ class Error(commands.Cog):
 
                 embed = discord.Embed(
                     title="sushi, food, hungry, ap",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description=f"request for hourly free food servings\n"
                                 f"pings the <@&{role}> role"
                 )
@@ -581,9 +589,9 @@ class Error(commands.Cog):
 
                 embed = discord.Embed(
                     title="Invalid channel",
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     description=f"Certain commands are not available through direct message channels.\n"
-                                f"Use them at the <#{id_spell_spam}>"
+                                f"Use them at the <#{self.id_spell_spam}>"
                 )
                 await ctx.author.send(embed=embed)
 
@@ -591,7 +599,7 @@ class Error(commands.Cog):
 
             if str(ctx.command) == "announcement_post_message":
                 embed = discord.Embed(
-                    title="Invalid syntax", colour=discord.Colour(colour),
+                    title="Invalid syntax", colour=self.colour,
                     description="Provide a valid channel"
                 )
                 await ctx.channel.send(embed=embed)

@@ -33,147 +33,8 @@ streaks = get_collections("streaks")
 users = get_collections("users")
 zones = get_collections("zones")
 
-# Dictionaries
-emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-emoji_dict = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
-evo_requirement = config.find_one({"dict": 1}, {"_id": 0, "evo_requirement": 1})["evo_requirement"]
-mystic_shop = config.find_one({"dict": 1}, {"_id": 0, "mystic_shop": 1})["mystic_shop"]
-shard_requirement = config.find_one({"dict": 1}, {"_id": 0, "shard_requirement": 1})["shard_requirement"]
-talisman_acquire = config.find_one({"dict": 1}, {"_id": 0, "talisman_acquire": 1})["talisman_acquire"]
-
-# Variables
-id_guild = int(os.environ.get("SERVER"))
-colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-id_hosting = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-e_1 = emojis["1"]
-e_2 = emojis["2"]
-e_3 = emojis["3"]
-e_4 = emojis["4"]
-e_5 = emojis["5"]
-e_6 = emojis["6"]
-e_a = emojis["a"]
-e_b = emojis["b"]
-e_c = emojis["c"]
-e_f = emojis["f"]
-e_j = emojis["j"]
-e_m = emojis["m"]
-e_s = emojis["s"]
-e_t = emojis["t"]
-e_x = emojis["x"]
-
-# Lists
-pool_sp = []
-pool_ssr = []
-pool_sr = []
-pool_r = []
-pool_n = []
-pool_ssn = []
-
-pool_shrine = []
-pool_all = []
-pool_all_mystery = []
-pool_all_broken = []
-
-trading_list = []
-purchasable_frames = []
-trading_list_formatted = []
-
-rarities = config.find_one({"list": 1}, {"_id": 0, "rarities": 1})["rarities"]
-
-steal_adverb = config.find_one({"list": 1}, {"_id": 0, "steal_adverb": 1})["steal_adverb"]
-steal_verb = config.find_one({"list": 1}, {"_id": 0, "steal_verb": 1})["steal_verb"]
-steal_noun = config.find_one({"list": 1}, {"_id": 0, "steal_noun": 1})["steal_noun"]
-steal_comment = config.find_one({"list": 1}, {"_id": 0, "steal_comment": 1})["steal_comment"]
-
-prayer_heard = cycle(config.find_one({"list": 1}, {"_id": 0, "prayer_heard": 1})["prayer_heard"])
-prayer_ignored = cycle(config.find_one({"list": 1}, {"_id": 0, "prayer_ignored": 1})["prayer_ignored"])
-
-developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
-id_spell_spam = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-
-summon_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "summon_captions": 1})["summon_captions"])
-
 # Instantiations
-
-for s in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
-    if s["shrine"] is True:
-        pool_shrine.append(s["name"])
-    elif s["rarity"] == "SP":
-        pool_sp.append(s["name"])
-    elif s["rarity"] == "SSR":
-        pool_ssr.append(s["name"])
-    elif s["rarity"] == "SR":
-        pool_sr.append(s["name"])
-    elif s["rarity"] == "R":
-        pool_r.append(s["name"])
-    elif s["rarity"] == "N":
-        pool_n.append(s["name"])
-    elif s["rarity"] == "SSN":
-        pool_ssn.append(s["name"])
-
-
-for doc in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
-    purchasable_frames.append(doc["name"].lower())
-
-for _offer in mystic_shop:
-    for _amount in mystic_shop[_offer]:
-        trading_list.append([
-            mystic_shop[_offer][_amount]["offer"][0],
-            mystic_shop[_offer][_amount]["offer"][1],
-            mystic_shop[_offer][_amount]["cost"][0],
-            mystic_shop[_offer][_amount]["cost"][1],
-            _offer, _amount
-        ])
-
-
-for trade in trading_list:
-    trading_list_formatted.append(
-        f"▫ `{trade[1]}`{emoji_dict[trade[0]]} → `{trade[3]:,d}`{emoji_dict[trade[2]]} | {trade[4]} {trade[5]}\n"
-    )
-
-
-pool_all_mystery.extend(pool_sp)
-pool_all_mystery.extend(pool_ssr)
-pool_all_mystery.extend(pool_sr)
-pool_all_mystery.extend(pool_r)
-pool_all_mystery.extend(pool_shrine)
-pool_all_broken.extend(pool_n)
-pool_all_broken.extend(pool_ssn)
-pool_all.extend(pool_all_mystery)
-pool_all.extend(pool_all_broken)
-
-
-def check_if_user_has_development_role(ctx):
-    return str(ctx.author.id) in developer_team
-
-
-def check_if_user_has_any_alt_roles(user):
-    for role in reversed(user.roles):
-        if role.name in ["Geminio"]:
-            return True
-    return False
-
-
-def check_if_user_has_prayers(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "prayers": 1})["prayers"] > 0
-
-
-def check_if_user_has_parade_tickets(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "parade_tickets": 1})["parade_tickets"] > 0
-
-
-def check_if_user_has_shiki_set(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "display": 1})["display"] is not None
-
-
-def check_if_user_has_sushi_1(ctx):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] > 0
-
-
-def check_if_user_has_sushi_2(ctx, required):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Economy(commands.Cog):
@@ -181,9 +42,153 @@ class Economy(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
+    
+        self.dictionaries = config.find_one({"dict": 1}, {"_id": 0})
+        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
 
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        self.listings = config.find_one({"list": 1}, {"_id": 0})
+        
+        self.emojis = self.dictionaries["emojis"]
+        self.emoji_dict = self.dictionaries["get_emojis"]
+        self.evo_requirement = self.dictionaries["evo_requirement"]
+        self.mystic_shop = self.dictionaries["mystic_shop"]
+        self.shard_requirement = self.dictionaries["shard_requirement"]
+        self.talisman_acquire = self.dictionaries["talisman_acquire"]
+
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.id_hosting = self.channels["channels"]["bot-sparring"]
+        self.id_spell_spam = self.channels["channels"]["spell-spam"]
+        
+        self.e_1 = self.emojis["1"]
+        self.e_2 = self.emojis["2"]
+        self.e_3 = self.emojis["3"]
+        self.e_4 = self.emojis["4"]
+        self.e_5 = self.emojis["5"]
+        self.e_6 = self.emojis["6"]
+        self.e_a = self.emojis["a"]
+        self.e_b = self.emojis["b"]
+        self.e_c = self.emojis["c"]
+        self.e_f = self.emojis["f"]
+        self.e_j = self.emojis["j"]
+        self.e_m = self.emojis["m"]
+        self.e_s = self.emojis["s"]
+        self.e_t = self.emojis["t"]
+        self.e_x = self.emojis["x"]
+
+        self.rarities = self.listings["rarities"]
+
+        self.steal_adverb = self.listings["steal_adverb"]
+        self.steal_verb = self.listings["steal_verb"]
+        self.steal_noun = self.listings["steal_noun"]
+        self.steal_comment = self.listings["steal_comment"]
+
+        self.prayer_heard = cycle(self.listings["prayer_heard"])
+        self.prayer_ignored = cycle(self.listings["prayer_ignored"])
+
+        self.summon_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "summon_captions": 1})["summon_captions"])
+
+        self.pool_sp = []
+        self.pool_ssr = []
+        self.pool_sr = []
+        self.pool_r = []
+        self.pool_n = []
+        self.pool_ssn = []
+
+        self.pool_shrine = []
+        self.pool_all = []
+        self.pool_all_mystery = []
+        self.pool_all_broken = []
+
+        self.trading_list = []
+        self.purchasable_frames = []
+        self.trading_list_formatted = []
+
+        for s in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
+            if s["shrine"] is True:
+                self.pool_shrine.append(s["name"])
+            elif s["rarity"] == "SP":
+                self.pool_sp.append(s["name"])
+            elif s["rarity"] == "SSR":
+                self.pool_ssr.append(s["name"])
+            elif s["rarity"] == "SR":
+                self.pool_sr.append(s["name"])
+            elif s["rarity"] == "R":
+                self.pool_r.append(s["name"])
+            elif s["rarity"] == "N":
+                self.pool_n.append(s["name"])
+            elif s["rarity"] == "SSN":
+                self.pool_ssn.append(s["name"])
+
+        for doc in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
+            self.purchasable_frames.append(doc["name"].lower())
+
+        for _offer in self.mystic_shop:
+            for _amount in self.mystic_shop[_offer]:
+                self.trading_list.append([
+                    self.mystic_shop[_offer][_amount]["offer"][0],
+                    self.mystic_shop[_offer][_amount]["offer"][1],
+                    self.mystic_shop[_offer][_amount]["cost"][0],
+                    self.mystic_shop[_offer][_amount]["cost"][1],
+                    _offer, _amount
+                ])
+
+        for trade in self.trading_list:
+            self.trading_list_formatted.append(
+                f"▫ `{trade[1]}`{self.emoji_dict[trade[0]]} → `{trade[3]:,d}`{self.emoji_dict[trade[2]]} | "
+                f"{trade[4]} {trade[5]}\n"
+            )
+
+        self.pool_all_mystery.extend(self.pool_sp)
+        self.pool_all_mystery.extend(self.pool_ssr)
+        self.pool_all_mystery.extend(self.pool_sr)
+        self.pool_all_mystery.extend(self.pool_r)
+        self.pool_all_mystery.extend(self.pool_shrine)
+        self.pool_all_broken.extend(self.pool_n)
+        self.pool_all_broken.extend(self.pool_ssn)
+        self.pool_all.extend(self.pool_all_mystery)
+        self.pool_all.extend(self.pool_all_broken)
+
+    def check_if_user_has_development_role(self):
+        def predicate(ctx):
+            return str(ctx.author.id) in self.developer_team
+        return commands.check(predicate)
+
+    def check_if_user_has_any_alt_roles(self, user):
+        for role in reversed(user.roles):
+            if role.name in ["Geminio"]:
+                return True
+        return False
+    
+    def check_if_user_has_prayers(self):
+        def predicate(ctx):
+            return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "prayers": 1})["prayers"] > 0
+        return commands.check(predicate)
+    
+    def check_if_user_has_parade_tickets(self):
+        def predicate(ctx):
+            return users.find_one({
+                "user_id": str(ctx.author.id)}, {"_id": 0, "parade_tickets": 1}
+            )["parade_tickets"] > 0
+        return commands.check(predicate)
+    
+    def check_if_user_has_shiki_set(self):
+        def predicate(ctx):
+            return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "display": 1})["display"] is not None
+        return commands.check(predicate)
+    
+    def check_if_user_has_sushi_1(self):
+        def predicate(ctx):
+            return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] > 0
+        return commands.check(predicate)
+    
+    def check_if_user_has_sushi_2(self, ctx, required):
+        return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
+    
     def get_emoji(self, item):
-        return emoji_dict[item]
+        return self.emoji_dict[item]
 
     def get_variables(self, r):
         dictionary = {
@@ -200,36 +205,36 @@ class Economy(commands.Cog):
         return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
     
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
     
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
     
     def get_time_converted(self, utc_dt):
-        return utc_dt.replace(tzinfo=pytz.timezone("UTC")).astimezone(tz=pytz.timezone(timezone))
+        return utc_dt.replace(tzinfo=pytz.timezone("UTC")).astimezone(tz=pytz.timezone(self.timezone))
     
     def get_bond(self, x, y):
-        bond_list = sorted([x.id, y.id], reverse=True)
+        bond_list = sorted([x, y], reverse=True)
         return f"{bond_list[0]}x{bond_list[1]}"
     
     def get_shard_requirement(self, shiki):
         rarity = shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "rarity": 1})["rarity"]
-        return shard_requirement[rarity], rarity
+        return self.shard_requirement[rarity], rarity
     
     def get_evo_link(self, evolution):
         return {True: "evo", False: "pre"}[evolution]
     
     def get_evo_requirement(self, r):
-        return evo_requirement[r]
+        return self.evo_requirement[r]
     
     def get_rarity_emoji(self, rarity):
-        return {"SP": e_1, "SSR": e_2, "SR": e_3, "R": e_4, "N": e_5, "SSN": e_6}[rarity]
+        return {"SP": self.e_1, "SSR": self.e_2, "SR": self.e_3, "R": self.e_4, "N": self.e_5, "SSN": self.e_6}[rarity]
     
     def get_rarity_shikigami(self, shiki):
         return shikigamis.find_one({"name": shiki}, {"_id": 0, "rarity": 1})["rarity"]
     
     def get_talisman_acquire(self, rarity):
-        return talisman_acquire[rarity]
+        return self.talisman_acquire[rarity]
     
     def get_thumbnail_shikigami(self, shiki, evolution):
         return shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "thumbnail": 1})["thumbnail"][evolution]
@@ -266,7 +271,7 @@ class Economy(commands.Cog):
     async def frame_automate(self):
 
         print("Recalculating frames distribution")
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
         guild = spell_spam_channel.guild
 
         await self.frame_automate_starlight(guild, spell_spam_channel)
@@ -307,7 +312,7 @@ class Economy(commands.Cog):
             jades = 2000
             users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": jades}})
             await self.perform_add_log("jades", jades, starlight_current.id)
-            msg = f"{starlight_current.mention} has earned {jades:,d}{e_j} " \
+            msg = f"{starlight_current.mention} has earned {jades:,d}{self.e_j} " \
                   f"for wielding the Starlight Sky frame for a day!"
             await spell_spam_channel.send(msg)
 
@@ -318,9 +323,9 @@ class Economy(commands.Cog):
             await asyncio.sleep(3)
 
             description = \
-                f"{starlight_new.mention} {random.choice(steal_adverb)} {random.choice(steal_verb)} " \
+                f"{starlight_new.mention} {random.choice(self.steal_adverb)} {random.choice(self.steal_verb)} " \
                 f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
-                f"{random.choice(steal_noun)}!! {random.choice(steal_comment)}\n\n" \
+                f"{random.choice(self.steal_noun)}!! {random.choice(self.steal_comment)}\n\n" \
                 f"🍀 No SSR streak record of {streak_list_new[0][1]} summons! " \
                 f"Cuts in three fourths every reset!"
 
@@ -354,8 +359,8 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             title="Blazing Sun Frame Update",
             description=f"completed the SSR shikigami collection\n"
-                        f"earns 10{e_a} every reset",
-            color=colour,
+                        f"earns 10{self.e_a} every reset",
+            color=self.colour,
             timestamp=self.get_timestamp()
         )
         embed.add_field(
@@ -396,7 +401,7 @@ class Economy(commands.Cog):
             approximate_results.append(f"{result['name'].title()}")
 
         embed = discord.Embed(
-            title="Invalid shikigami", colour=discord.Colour(colour),
+            title="Invalid shikigami", colour=self.colour,
             description=f"check the spelling of the shikigami"
         )
         embed.add_field(
@@ -457,7 +462,7 @@ class Economy(commands.Cog):
                 title=f"{strike}Free sushi!{strike} 25🍣",
                 description=f"claim your free sushi every hour! 🎉\n"
                             f"served {len(listings)} hungry {self.pluralize('Onmyoji', len(listings))}",
-                color=colour,
+                color=self.colour,
                 timestamp=timestamp
             )
             embed.set_footer(text=f"lasts {minutes} minutes", icon_url=self.client.user.avatar_url)
@@ -497,7 +502,7 @@ class Economy(commands.Cog):
 
         if shiki is None:
             embed = discord.Embed(
-                color=colour,
+                color=self.colour,
                 title="wish, w",
                 description=f"wish for a shikigami shard to manually summon it"
             )
@@ -518,10 +523,10 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif profile["wish"] is True and shiki.lower() not in pool_all_mystery:
+        elif profile["wish"] is True and shiki.lower() not in self.pool_all_mystery:
             await self.shikigami_post_approximate_results(ctx, shiki.lower())
 
-        elif profile["wish"] is True and shiki.lower() in pool_all_mystery:
+        elif profile["wish"] is True and shiki.lower() in self.pool_all_mystery:
 
             users.update_one({"user_id": str(user.id)}, {"$set": {"wish": shiki.lower()}})
             query = users.find_one({
@@ -576,7 +581,7 @@ class Economy(commands.Cog):
             description_new = "".join(shard_wishes[start:end])
 
             embed_new = discord.Embed(
-                color=colour,
+                color=self.colour,
                 title=f"🗒 Wish List [{ordinal(self.get_time().timetuple().tm_yday)} day]",
                 description=f"{description_new}",
                 timestamp=self.get_timestamp()
@@ -631,7 +636,7 @@ class Economy(commands.Cog):
 
         except KeyError:
             embed = discord.Embed(
-                title="Invalid member", colour=discord.Colour(colour),
+                title="Invalid member", colour=self.colour,
                 description="that member doesn't exist or lacks a profile in this guild",
                 timestamp=self.get_timestamp()
             )
@@ -657,7 +662,7 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif check_if_user_has_any_alt_roles(member):
+        elif self.check_if_user_has_any_alt_roles(member):
             await ctx.message.add_reaction("❌")
 
         else:
@@ -698,7 +703,7 @@ class Economy(commands.Cog):
                     color=user.colour,
                     title=f"Wish fulfilled",
                     description=f"Donated 1 {shikigami_wished_for.title()} shard to {member.mention}\n"
-                                f"Also acquired 10{e_f} and 3 💗",
+                                f"Also acquired 10{self.e_f} and 3 💗",
                     timestamp=self.get_timestamp()
                 )
                 embed.set_footer(
@@ -727,7 +732,7 @@ class Economy(commands.Cog):
 
         elif args not in ["daily", "weekly", "boss"]:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid argument",
                 description="provide a valid argument: `daily`, `weekly`, or `boss`"
             )
@@ -749,11 +754,11 @@ class Economy(commands.Cog):
             await self.perform_add_log("jades", rewards, ship['shipper2'])
 
         embed1 = discord.Embed(
-            title="🎁 Daily rewards reset and issued", colour=discord.Colour(colour),
+            title="🎁 Daily rewards reset and issued", colour=self.colour,
             description=f"claim yours using `{self.prefix}daily` and check your income using `{self.prefix}sail`"
         )
 
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
         await spell_spam_channel.send(embed=embed1)
 
     async def perform_reset_rewards_weekly(self):
@@ -761,10 +766,10 @@ class Economy(commands.Cog):
         users.update_many({}, {"$set": {"weekly": False}})
 
         embed = discord.Embed(
-            title="💝 Weekly rewards reset", colour=discord.Colour(colour),
+            title="💝 Weekly rewards reset", colour=self.colour,
             description=f"claim yours using `{self.prefix}weekly`"
         )
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
         await spell_spam_channel.send(embed=embed)
 
     async def perform_reset_boss(self):
@@ -788,7 +793,7 @@ class Economy(commands.Cog):
             rarity_evolved = [0]
             count_all = []
 
-            for rarity in rarities:
+            for rarity in self.rarities:
 
                 for result in users.aggregate([
                     {
@@ -814,7 +819,7 @@ class Economy(commands.Cog):
                 ]):
                     rarity_evolved.append(result["count"])
 
-            for rarity in rarities:
+            for rarity in self.rarities:
 
                 for result in users.aggregate([
                     {
@@ -869,10 +874,10 @@ class Economy(commands.Cog):
             embed.add_field(name="Total Amulets Spent", value=f"{count_total:,d}")
             await ctx.channel.send(embed=embed)
 
-        elif name.lower() not in pool_all:
+        elif name.lower() not in self.pool_all:
             await self.shikigami_post_approximate_results(ctx, name.lower())
 
-        elif name.lower() in pool_all:
+        elif name.lower() in self.pool_all:
 
             listings = []
             for entry in users.aggregate([
@@ -1000,16 +1005,16 @@ class Economy(commands.Cog):
             if roll < 5:
                 p = random.uniform(0, 1.2)
                 if p >= 126 / 109:
-                    parade_pull.append(random.choice(pool_sp))
+                    parade_pull.append(random.choice(self.pool_sp))
                 else:
                     if random.uniform(1, 50) >= 0:
-                        parade_pull.append(random.choice(pool_ssr))
+                        parade_pull.append(random.choice(self.pool_ssr))
                     else:
-                        parade_pull.append(random.choice(pool_ssn))
+                        parade_pull.append(random.choice(self.pool_ssn))
             elif roll <= 25:
-                parade_pull.append(random.choice(pool_sr))
+                parade_pull.append(random.choice(self.pool_sr))
             else:
-                parade_pull.append(random.choice(pool_r))
+                parade_pull.append(random.choice(self.pool_r))
 
         x_init, y_init = random.randint(1, max_rows), random.randint(1, max_rows)
         attachment_link = await self.perform_parade_generate_image(ctx, max_rows, parade_pull, x_init, y_init)
@@ -1132,7 +1137,7 @@ class Economy(commands.Cog):
         address = f"temp/{ctx.author.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
@@ -1184,7 +1189,7 @@ class Economy(commands.Cog):
         embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
         msg = await ctx.channel.send(embed=embed)
 
-        rewards_emoji = [e_j, e_f, e_a, e_c, e_t, e_m, e_s]
+        rewards_emoji = [self.e_j, self.e_f, self.e_a, self.e_c, self.e_t, self.e_m, self.e_s]
         rewards_selection = []
 
         for x in range(0, 3):
@@ -1197,15 +1202,17 @@ class Economy(commands.Cog):
             return str(r.emoji) in rewards_selection and u == ctx.author
 
         def get_rewards(y):
-            rewards_amount = {e_j: 250, e_f: 50, e_a: 3, e_c: 450000, e_t: 1500, e_m: 150, e_s: 25}
+            rewards_amount = {
+                self.e_j: 250, self.e_f: 50, self.e_a: 3, self.e_c: 450000, self.e_t: 1500, self.e_m: 150, self.e_s: 25
+            }
             rewards_text = {
-                e_j: "jades",
-                e_f: "friendship",
-                e_a: "amulets",
-                e_c: "coins",
-                e_t: "talisman",
-                e_m: "medals",
-                e_s: "sushi"
+                self.e_j: "jades",
+                self.e_f: "friendship",
+                self.e_a: "amulets",
+                self.e_c: "coins",
+                self.e_t: "talisman",
+                self.e_m: "medals",
+                self.e_s: "sushi"
             }
             return rewards_amount[y], rewards_text[y]
 
@@ -1225,7 +1232,7 @@ class Economy(commands.Cog):
             if roll >= 55:
                 embed = discord.Embed(
                     title=f"Prayer results", color=ctx.author.colour,
-                    description=f"{next(prayer_ignored)}",
+                    description=f"{next(self.prayer_ignored)}",
                     timestamp=self.get_timestamp()
                 )
                 embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
@@ -1236,7 +1243,7 @@ class Economy(commands.Cog):
                 amount, rewards = get_rewards(str(reaction.emoji))
                 embed = discord.Embed(
                     title=f"Prayer results", color=ctx.author.colour,
-                    description=f"{next(prayer_heard)} You obtained {amount:,d}{str(reaction.emoji)}",
+                    description=f"{next(self.prayer_heard)} You obtained {amount:,d}{str(reaction.emoji)}",
                     timestamp=self.get_timestamp()
                 )
                 embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
@@ -1253,7 +1260,7 @@ class Economy(commands.Cog):
 
         bounties.update_one({"aliases": name.lower()}, {"$push": {"aliases": alias.lower()}})
         embed = discord.Embed(
-            colour=discord.Colour(colour),
+            colour=self.colour,
             title="Bounty profile updated",
             description=f"successfully added {alias} to {name_formatted.title()}",
             timestamp=self.get_timestamp()
@@ -1266,7 +1273,7 @@ class Economy(commands.Cog):
 
         bounties.update_one({"aliases": name.lower()}, {"$push": {"location": location}})
         embed = discord.Embed(
-            colour=discord.Colour(colour),
+            colour=self.colour,
             title=f"Successfully added new location to {name.title()}",
             description=f"{location}",
             timestamp=self.get_timestamp()
@@ -1309,7 +1316,7 @@ class Economy(commands.Cog):
                 bounty_list.append(result["bounty"])
 
             embed = discord.Embed(
-                title="No exact results", colour=discord.Colour(colour),
+                title="No exact results", colour=self.colour,
                 description="the provided name/keyword is non-existent",
                 timestamp=self.get_timestamp()
             )
@@ -1327,7 +1334,7 @@ class Economy(commands.Cog):
 
         elif profile["daily"] is True:
             embed = discord.Embed(
-                title="Collection failed", colour=discord.Colour(colour),
+                title="Collection failed", colour=self.colour,
                 description=f"already collected today, check back tomorrow"
             )
             await ctx.channel.send(embed=embed)
@@ -1362,8 +1369,8 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             color=ctx.author.colour,
             title="🎁 Daily rewards",
-            description=f"A box containing {friendship_pass} 💗, {jades}{e_j}, {coins:,d}{e_c}, {realm_ticket} 🎟, "
-                        f"{encounter_ticket} 🎫, {parade_tickets} 🎏, {sushi} 🍣",
+            description=f"A box containing {friendship_pass} 💗, {jades}{self.e_j}, {coins:,d}{self.e_c}, "
+                        f"{realm_ticket} 🎟, {encounter_ticket} 🎫, {parade_tickets} 🎏, {sushi} 🍣",
             timestamp=self.get_timestamp()
         )
         embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
@@ -1381,7 +1388,7 @@ class Economy(commands.Cog):
 
         elif profile["weekly"] is True:
             embed = discord.Embed(
-                title="Collection Failed", colour=discord.Colour(colour),
+                title="Collection Failed", colour=self.colour,
                 description=f"already collected this reset, check back next week"
             )
             await ctx.channel.send(embed=embed)
@@ -1408,8 +1415,8 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             color=ctx.author.colour,
             title="💝 Weekly rewards",
-            description=f"A mythical box containing {jades:,d}{e_j}, {coins:,d}{e_c}, and {amulets:,d}{e_a}, & "
-                        f"{sushi:,d}{e_s}",
+            description=f"A mythical box containing {jades:,d}{self.e_j}, {coins:,d}{self.e_c}, "
+                        f"{amulets:,d}{self.e_a}, & {sushi:,d}{self.e_s}",
             timestamp=self.get_timestamp()
         )
         embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
@@ -1483,21 +1490,21 @@ class Economy(commands.Cog):
             icon_url=member.avatar_url
         )
         embed.add_field(
-            name=f"{e_x} Experience | Nether Pass",
+            name=f"{self.e_x} Experience | Nether Pass",
             value=f"Level: {level} ({exp:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
         )
         embed.add_field(
-            name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
+            name=f"{self.e_1} | {self.e_2} | {self.e_3} | {self.e_4} | {self.e_5} | {self.e_6}",
             value=f"{p['SP']} | {p['SSR']} | {p['SR']} | {p['R']:,d} | {p['N']:,d} | "
                   f"{p['SSN']:,d}",
             inline=False
         )
         embed.add_field(
-            name=f"{e_b} Broken Amulets",
+            name=f"{self.e_b} Broken Amulets",
             value=f"On Hand: {amulets_b} | Used: {amulets_spent_b:,d}"
         )
         embed.add_field(
-            name=f"{e_a} Mystery Amulets",
+            name=f"{self.e_a} Mystery Amulets",
             value=f"On Hand: {amulets} | Used: {amulets_spent:,d}", inline=False
         )
         embed.add_field(
@@ -1506,7 +1513,7 @@ class Economy(commands.Cog):
             inline=False
         )
         embed.add_field(
-            name=f"🍣 | {e_f} | {e_t} | {e_m} | {e_j} | {e_c}",
+            name=f"🍣 | {self.e_f} | {self.e_t} | {self.e_m} | {self.e_j} | {self.e_c}",
             value=f"{sushi} | {friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}"
         )
         msg = await ctx.channel.send(embed=embed)
@@ -1580,7 +1587,7 @@ class Economy(commands.Cog):
         address = f"temp/{member.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -1596,15 +1603,15 @@ class Economy(commands.Cog):
             users.update_one({"user_id": str(user.id)}, {"$set": {"display": select_formatted}})
             await ctx.message.add_reaction("✅")
 
-        elif select_formatted not in pool_all_mystery:
+        elif select_formatted not in self.pool_all_mystery:
             await self.shikigami_post_approximate_results(ctx, select_formatted)
 
-        elif select_formatted in pool_all_mystery:
+        elif select_formatted in self.pool_all_mystery:
             count = users.count_documents({"user_id": str(user.id), "shikigami.name": select_formatted})
 
             if count != 1:
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid selection",
                     description=f"this shikigami is not in your possession"
                 )
@@ -1620,7 +1627,7 @@ class Economy(commands.Cog):
 
         rarity = str(arg1.upper())
 
-        if rarity not in rarities:
+        if rarity not in self.rarities:
             raise commands.MissingRequiredArgument(ctx.author)
 
         elif member is None:
@@ -1709,7 +1716,7 @@ class Economy(commands.Cog):
         address = f"temp/{member.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -1720,7 +1727,7 @@ class Economy(commands.Cog):
 
         rarity = str(arg1.upper())
 
-        if rarity not in rarities:
+        if rarity not in self.rarities:
             raise commands.MissingRequiredArgument(ctx.author)
 
         elif member is None:
@@ -1896,7 +1903,7 @@ class Economy(commands.Cog):
 
         elif arg1.lower() in ["sacrifice", "s"] and len(args) == 0:
             embed = discord.Embed(
-                title="shrine sacrifice, shr s", colour=discord.Colour(colour),
+                title="shrine sacrifice, shr s", colour=self.colour,
                 description="sacrifice your shikigamis to the shrine in exchange for talismans"
             )
             embed.add_field(
@@ -1917,7 +1924,7 @@ class Economy(commands.Cog):
 
         elif arg1.lower() in ["exchange", "exc"] and len(args) == 0:
             embed = discord.Embed(
-                title="shrine exchange, shrine exc", colour=discord.Colour(colour),
+                title="shrine exchange, shrine exc", colour=self.colour,
                 description="exchange your talismans for exclusive shrine only shikigamis"
             )
             embed.add_field(
@@ -1939,13 +1946,13 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif arg1.lower() in ["sacrifice", "s"] and shiki not in pool_all_mystery:
+        elif arg1.lower() in ["sacrifice", "s"] and shiki not in self.pool_all_mystery:
             await self.shikigami_post_approximate_results(ctx, shiki)
 
-        elif arg1.lower() in ["exchange", "exc"] and shiki not in pool_shrine:
+        elif arg1.lower() in ["exchange", "exc"] and shiki not in self.pool_shrine:
             await self.shikigami_post_approximate_results(ctx, shiki)
 
-        elif arg1.lower() in ["sacrifice", "s"] and shiki in pool_all_mystery:
+        elif arg1.lower() in ["sacrifice", "s"] and shiki in self.pool_all_mystery:
 
             try:
                 request = users.find_one({
@@ -2011,7 +2018,7 @@ class Economy(commands.Cog):
                     await self.perform_add_log("talisman", final_talismans, user.id)
                     embed = discord.Embed(
                         title="Shrine successful", colour=user.colour,
-                        description=f"You shrined {shiki.title()} for {final_talismans:,d}{e_t}",
+                        description=f"You shrined {shiki.title()} for {final_talismans:,d}{self.e_t}",
                         timestamp=self.get_timestamp()
                     )
                     embed.set_thumbnail(url=self.get_thumbnail_shikigami(shiki, "evo"))
@@ -2028,7 +2035,7 @@ class Economy(commands.Cog):
                     embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                     await ctx.channel.send(embed=embed)
 
-        elif arg1.lower() in ["exchange", "exc"] and shiki in pool_shrine:
+        elif arg1.lower() in ["exchange", "exc"] and shiki in self.pool_shrine:
 
             rarity = shikigamis.find_one({"name": shiki}, {"_id": 0, "rarity": 1})["rarity"]
             talisman = users.find_one({"user_id": str(user.id)}, {"_id": 0, "talisman": 1})["talisman"]
@@ -2036,8 +2043,8 @@ class Economy(commands.Cog):
 
             if talisman >= required_talisman:
                 embed = discord.Embed(
-                    title="Exchange confirmation", colour=discord.Colour(colour),
-                    description=f"confirm exchange of {required_talisman:,d}{e_t} for a {shiki.title()}",
+                    title="Exchange confirmation", colour=self.colour,
+                    description=f"confirm exchange of {required_talisman:,d}{self.e_t} for a {shiki.title()}",
                     timestamp=self.get_timestamp()
                 )
                 embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -2052,8 +2059,8 @@ class Economy(commands.Cog):
 
                 except asyncio.TimeoutError:
                     embed = discord.Embed(
-                        title="Timeout!", colour=discord.Colour(colour),
-                        description=f"no confirmation received for {e_t} exchange",
+                        title="Timeout!", colour=self.colour,
+                        description=f"no confirmation received for {self.e_t} exchange",
                     )
                     embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
                     await confirm_.edit(embed=embed)
@@ -2080,8 +2087,8 @@ class Economy(commands.Cog):
                     })
                     await self.perform_add_log("talisman", - required_talisman, user.id)
                     embed = discord.Embed(
-                        title="Exchange success!", colour=discord.Colour(colour),
-                        description=f"You acquired {shiki.title()} for {required_talisman:,d}{e_t}",
+                        title="Exchange success!", colour=self.colour,
+                        description=f"You acquired {shiki.title()} for {required_talisman:,d}{self.e_t}",
                         timestamp=self.get_timestamp()
                     )
                     embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -2089,8 +2096,8 @@ class Economy(commands.Cog):
 
             elif talisman < required_talisman:
                 embed = discord.Embed(
-                    title="Insufficient talismans", colour=discord.Colour(colour),
-                    description=f"You lack {required_talisman - talisman:,d}{e_t}",
+                    title="Insufficient talismans", colour=self.colour,
+                    description=f"You lack {required_talisman - talisman:,d}{self.e_t}",
                 )
                 embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
                 await ctx.channel.send(embed=embed)
@@ -2113,7 +2120,7 @@ class Economy(commands.Cog):
 
         if len(query) < 2:
             embed = discord.Embed(
-                title="evolve, evo", colour=discord.Colour(colour),
+                title="evolve, evo", colour=self.colour,
                 description="perform evolution of owned shikigami"
             )
             embed.add_field(
@@ -2134,7 +2141,7 @@ class Economy(commands.Cog):
 
         elif profile_my_shikigami == {}:
             embed = discord.Embed(
-                title="Invalid selection", colour=discord.Colour(colour),
+                title="Invalid selection", colour=self.colour,
                 description=f"this shikigami is not in your possession yet",
             )
             await ctx.channel.send(embed=embed)
@@ -2148,7 +2155,7 @@ class Economy(commands.Cog):
     async def perform_evolution_shikigami(self, ctx, rarity, evo, user, query, count):
         if rarity == "SP":
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid shikigami",
                 description=f"this shikigami is already evolved upon summoning"
             )
@@ -2156,7 +2163,7 @@ class Economy(commands.Cog):
 
         elif evo is True:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Evolution failed",
                 description=f"Your {query.title()} is already evolved",
             )
@@ -2201,7 +2208,7 @@ class Economy(commands.Cog):
 
             elif count == 0:
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Invalid selection",
                     description=f"this shikigami is not in your possession"
                 )
@@ -2211,7 +2218,7 @@ class Economy(commands.Cog):
                 required = rarity_count - count
                 noun_duplicate = self.pluralize('dupe', required)
                 embed = discord.Embed(
-                    colour=discord.Colour(colour),
+                    colour=self.colour,
                     title="Insufficient shikigamis",
                     description=f"You lack {required} more {query.title()} {noun_duplicate} to evolve",
                 )
@@ -2238,7 +2245,7 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(
             color=user.colour,
-            description=f"Your total daily ship sail rewards: {total_rewards:,d}{e_j}",
+            description=f"Your total daily ship sail rewards: {total_rewards:,d}{self.e_j}",
             timestamp=self.get_timestamp()
         )
         embed.set_footer(
@@ -2327,35 +2334,35 @@ class Economy(commands.Cog):
     async def friendship_ship(self, ctx, query1: discord.Member = None, *, query2: discord.Member = None):
 
         try:
-            code = self.get_bond(ctx.author, query1)
+            if query1 is None and query2 is None:
+                embed = discord.Embed(
+                    title="ship, ships", colour=self.colour,
+                    description=f"shows a ship profile or your own list of ships\n"
+                                f"to change your ship's name use *`{self.prefix}fpchange`*"
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*• `{self.prefix}ship <@member>`*\n"
+                          f"*• `{self.prefix}ship <@member> <@member>`*\n"
+                          f"*• `{self.prefix}ships`*"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif query1 is not None and query2 is None:
+                code = self.get_bond(ctx.author.id, query1.id)
+                await self.friendship_post_ship(code, query1, ctx)
+
+            elif query1 is not None and query2 is not None:
+                code = self.get_bond(query1.id, query2.id)
+                await self.friendship_post_ship(code, query1, ctx)
+
         except TypeError:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid ship",
                 description=f"that ship has sunk before it was even fully built"
             )
             await ctx.channel.send(embed=embed)
-            return
-
-        if query1 is None and query2 is None:
-            embed = discord.Embed(
-                title="ship, ships", colour=discord.Colour(colour),
-                description=f"shows a ship profile or your own list of ships\n"
-                            f"to change your ship's name use *`{self.prefix}fpchange`*"
-            )
-            embed.add_field(
-                name="Formats",
-                value=f"*• `{self.prefix}ship <@member>`*\n"
-                      f"*• `{self.prefix}ship <@member> <@member>`*\n"
-                      f"*• `{self.prefix}ships`*"
-            )
-            await ctx.channel.send(embed=embed)
-
-        elif query1 is not None and query2 is None:
-            await self.friendship_post_ship(code, query1, ctx)
-
-        elif query1 is not None and query2 is not None:
-            await self.friendship_post_ship(code, query1, ctx)
 
     async def friendship_post_ship(self, code, query1, ctx):
 
@@ -2383,7 +2390,9 @@ class Economy(commands.Cog):
 
         try:
             time_deployed = self.get_time_converted(ship_profile["cards"]["timestamp"])
-            hours, minutes = self.hours_minutes((time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC")))
+            hours, minutes = self.hours_minutes(
+                (time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC"))
+            )
             embed.add_field(
                 name=f"Equipped realm card",
                 value=f"{ship_profile['cards']['name'].title()} | "
@@ -2412,7 +2421,7 @@ class Economy(commands.Cog):
 
         if receiver is None:
             embed = discord.Embed(
-                title="friendship, fp", colour=discord.Colour(colour),
+                title="friendship, fp", colour=self.colour,
                 description=f"sends and receives friendship & builds ship that earns daily reward\n"
                             f"built ships are shown using *`{self.prefix}ship`*"
             )
@@ -2435,12 +2444,12 @@ class Economy(commands.Cog):
         elif receiver.name == giver.name:
             await ctx.message.add_reaction("❌")
 
-        elif check_if_user_has_any_alt_roles(receiver):
+        elif self.check_if_user_has_any_alt_roles(receiver):
             await ctx.message.add_reaction("❌")
 
         elif profile["friendship_pass"] < 1:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Insufficient friendship passes",
                 description=f"fulfill wishes or claim your dailies to obtain more"
             )
@@ -2479,10 +2488,10 @@ class Economy(commands.Cog):
             await self.friendship_give_check_levelup(ctx, code, giver)
             users.update_one({"user_id": str(giver.id)}, {"$inc": {"friendship": 5}})
             await self.perform_add_log("friendship", 5, giver)
-            await ctx.message.add_reaction(f"{e_f.replace('<', '').replace('>', '')}")
+            await ctx.message.add_reaction(f"{self.e_f.replace('<', '').replace('>', '')}")
 
             def check(r, u):
-                return u.id == receiver.id and str(r.emoji) == e_f and r.message.id == ctx.message.id
+                return u.id == receiver.id and str(r.emoji) == self.e_f and r.message.id == ctx.message.id
 
             try:
                 await self.client.wait_for("reaction_add", timeout=120, check=check)
@@ -2524,7 +2533,7 @@ class Economy(commands.Cog):
     async def friendship_change_name(self, ctx, receiver: discord.Member = None, *, new_name=None):
 
         embed = discord.Embed(
-            title="fpchange, fpc", colour=discord.Colour(colour),
+            title="fpchange, fpc", colour=self.colour,
             description="changes your ship name with the mentioned member"
         )
         embed.add_field(name="Format", value=f"*• `{self.prefix}fpc <@member> <ship name>`*")
@@ -2545,13 +2554,13 @@ class Economy(commands.Cog):
     async def shop_buy_items_show_all(self, ctx):
 
         embed = discord.Embed(
-            title="Mystic Trader", colour=discord.Colour(colour),
+            title="Mystic Trader", colour=self.colour,
             description="exchange various economy items"
         )
         embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/8/86/246a.jpg")
         embed.add_field(
             name="Trading List",
-            value="".join(trading_list_formatted),
+            value="".join(self.trading_list_formatted),
             inline=False
         )
         embed.add_field(name="Example", value=f"*`{self.prefix}buy amulets 11`*", inline=False)
@@ -2574,7 +2583,7 @@ class Economy(commands.Cog):
                 url = ""
 
             embed = discord.Embed(
-                title="AkiraKL's Frame Shop", colour=discord.Colour(colour),
+                title="AkiraKL's Frame Shop", colour=self.colour,
                 description="purchase premium frames for premium prices"
             )
             embed.set_thumbnail(url=url)
@@ -2595,7 +2604,7 @@ class Economy(commands.Cog):
 
         if len(args) == 0:
             embed = discord.Embed(
-                title="buy", colour=discord.Colour(colour),
+                title="buy", colour=self.colour,
                 description=f"purchase from the list of items from the *`{self.prefix}shop`*\n"
                             f"react to confirm purchase"
             )
@@ -2605,7 +2614,7 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif args[0].lower() in ["frame"] and len(args) > 1 and " ".join(args[1::]).lower() in purchasable_frames:
+        elif args[0].lower() in ["frame"] and len(args) > 1 and " ".join(args[1::]).lower() in self.purchasable_frames:
 
             frame = " ".join(args[1::]).lower()
             request = frames.find_one({"name": frame.title()}, {"_id": 0})
@@ -2635,10 +2644,10 @@ class Economy(commands.Cog):
 
         else:
             def get_offer_and_cost(x):
-                _offer_item = mystic_shop[x[0]][x[1]]["offer"][0]
-                _offer_amount = mystic_shop[x[0]][x[1]]["offer"][1]
-                _cost_item = mystic_shop[x[0]][x[1]]["cost"][0]
-                _cost_amount = mystic_shop[x[0]][x[1]]["cost"][1]
+                _offer_item = self.mystic_shop[x[0]][x[1]]["offer"][0]
+                _offer_amount = self.mystic_shop[x[0]][x[1]]["offer"][1]
+                _cost_item = self.mystic_shop[x[0]][x[1]]["cost"][0]
+                _cost_amount = self.mystic_shop[x[0]][x[1]]["cost"][1]
                 return _offer_item, _offer_amount, _cost_item, _cost_amount
 
             try:
@@ -2669,14 +2678,14 @@ class Economy(commands.Cog):
 
             except KeyError:
                 embed = discord.Embed(
-                    title="Invalid purchase code", colour=discord.Colour(colour),
+                    title="Invalid purchase code", colour=self.colour,
                     description=f"You entered an invalid purchase code",
                 )
                 await ctx.channel.send(embed=embed)
 
             except IndexError:
                 embed = discord.Embed(
-                    title="Invalid purchase code", colour=discord.Colour(colour),
+                    title="Invalid purchase code", colour=self.colour,
                     description=f"You entered an invalid purchase code",
                 )
                 await ctx.channel.send(embed=embed)
@@ -2690,7 +2699,7 @@ class Economy(commands.Cog):
             await self.client.wait_for("reaction_add", timeout=10.0, check=check)
         except asyncio.TimeoutError:
             embed = discord.Embed(
-                title="Timeout!", colour=discord.Colour(colour),
+                title="Timeout!", colour=self.colour,
                 description=f"no confirmation was received",
                 timestamp=self.get_timestamp()
             )
@@ -2734,7 +2743,7 @@ class Economy(commands.Cog):
 
         else:
             embed = discord.Embed(
-                title="Purchase failure", colour=discord.Colour(colour),
+                title="Purchase failure", colour=self.colour,
                 description=f"You have insufficient {self.get_emoji(cost_item)}",
             )
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -2759,7 +2768,7 @@ class Economy(commands.Cog):
                 await self.perform_add_log(currency, -amount, user.id)
 
                 embed = discord.Embed(
-                    title="Confirmation receipt", colour=discord.Colour(colour),
+                    title="Confirmation receipt", colour=self.colour,
                     description=f"You acquired {emoji} {frame_name} in exchange for "
                                 f"{amount:,d}{self.get_emoji(currency)}",
                     timestamp=self.get_timestamp()
@@ -2768,14 +2777,14 @@ class Economy(commands.Cog):
 
             else:
                 embed = discord.Embed(
-                    title="Purchase failure", colour=discord.Colour(colour),
+                    title="Purchase failure", colour=self.colour,
                     description=f"this frame is already in your possession",
                 )
                 await ctx.channel.send(embed=embed)
 
         else:
             embed = discord.Embed(
-                title="Purchase failure", colour=discord.Colour(colour),
+                title="Purchase failure", colour=self.colour,
                 description=f" You have insufficient {self.get_emoji(currency)}",
             )
             await ctx.channel.send(embed=embed)
@@ -2786,7 +2795,7 @@ class Economy(commands.Cog):
 
         if shiki is None:
             embed = discord.Embed(
-                title="summon, s", colour=discord.Colour(colour),
+                title="summon, s", colour=self.colour,
                 description="simulates summon and collect shikigamis"
             )
             embed.add_field(
@@ -2813,7 +2822,7 @@ class Economy(commands.Cog):
         else:
             shiki_formatted = shiki.lower()
 
-            if shiki_formatted in pool_all_mystery or shiki_formatted in pool_all_broken:
+            if shiki_formatted in self.pool_all_mystery or shiki_formatted in self.pool_all_broken:
                 await self.summon_perform_shards(ctx, shiki_formatted, ctx.author)
 
             else:
@@ -2829,7 +2838,7 @@ class Economy(commands.Cog):
 
         if amulet_have == 0:
             embed = discord.Embed(
-                title="Insufficient amulets", colour=discord.Colour(colour),
+                title="Insufficient amulets", colour=self.colour,
                 description="perform exploration to obtain more",
             )
             await ctx.channel.send(embed=embed)
@@ -2851,13 +2860,13 @@ class Economy(commands.Cog):
             roll = random.uniform(0, 100)
 
             if roll < 1:
-                summon_pull.append(("SSN", "||{}||".format(random.choice(pool_ssn))))
+                summon_pull.append(("SSN", "||{}||".format(random.choice(self.pool_ssn))))
             else:
                 roll = random.uniform(0, 100)
                 if roll <= 13:
-                    summon_pull.append(("R", "{}".format(random.choice(pool_r))))
+                    summon_pull.append(("R", "{}".format(random.choice(self.pool_r))))
                 else:
-                    summon_pull.append(("N", random.choice(pool_n)))
+                    summon_pull.append(("N", random.choice(self.pool_n)))
 
         sum_ssn = sum(x.count("SSN") for x in summon_pull)
         sum_r = sum(x.count("R") for x in summon_pull)
@@ -2876,7 +2885,7 @@ class Economy(commands.Cog):
         )
         embed.set_footer(text=f"{f_ssn}; {f_r}; {f_n}", icon_url=user.avatar_url)
 
-        msg = "{}".format(next(summon_captions)).format(user.mention)
+        msg = "{}".format(next(self.summon_captions)).format(user.mention)
         await ctx.channel.send(msg, embed=embed)
         await self.summon_perform_broken_pull_update(user, sum_ssn, sum_n, sum_r, amulet_pull, summon_pull)
 
@@ -2925,7 +2934,7 @@ class Economy(commands.Cog):
 
             if amulet_have == 0:
                 embed = discord.Embed(
-                    title="Insufficient amulets", colour=discord.Colour(colour),
+                    title="Insufficient amulets", colour=self.colour,
                     description="exchange at the shop to obtain more",
                 )
                 await ctx.channel.send(embed=embed)
@@ -2937,8 +2946,8 @@ class Economy(commands.Cog):
 
                 if amulet_pull > amulet_have:
                     embed = discord.Embed(
-                        title="Insufficient amulets", colour=discord.Colour(colour),
-                        description=f"You only have {amulet_have}{e_a} in possession",
+                        title="Insufficient amulets", colour=self.colour,
+                        description=f"You only have {amulet_have}{self.e_a} in possession",
                         timestamp=self.get_timestamp()
                     )
                     embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
@@ -2967,13 +2976,13 @@ class Economy(commands.Cog):
             if roll < 1.2:
                 p = random.uniform(0, 1.2)
                 if p >= 126 / 109:
-                    summon_pull.append(("SP", "||{}||".format(random.choice(pool_sp))))
+                    summon_pull.append(("SP", "||{}||".format(random.choice(self.pool_sp))))
                 else:
-                    summon_pull.append(("SSR", "||{}||".format(random.choice(pool_ssr))))
+                    summon_pull.append(("SSR", "||{}||".format(random.choice(self.pool_ssr))))
             elif roll <= 18.8:
-                summon_pull.append(("SR", random.choice(pool_sr)))
+                summon_pull.append(("SR", random.choice(self.pool_sr)))
             else:
-                summon_pull.append(("R", random.choice(pool_r)))
+                summon_pull.append(("R", random.choice(self.pool_r)))
 
         sum_sp = sum(x.count("SP") for x in summon_pull)
         sum_ssr = sum(x.count("SSR") for x in summon_pull)
@@ -3000,7 +3009,7 @@ class Economy(commands.Cog):
             shikigami_pulled = summon_pull[0][1].replace("||", "")
             embed.set_thumbnail(url=self.get_thumbnail_shikigami(shikigami_pulled, "pre"))
 
-        msg = "{}".format(next(summon_captions)).format(user.mention)
+        msg = "{}".format(next(self.summon_captions)).format(user.mention)
         await ctx.channel.send(msg, embed=embed)
         await self.summon_perform_mystery_pull_update(user, sum_sp, sum_ssr, sum_sr, sum_r, amulet_pull, summon_pull)
         await self.summon_perform_mystery_pull_update_streak(user, summon_pull)
@@ -3105,7 +3114,7 @@ class Economy(commands.Cog):
                     }
                 })
                 embed = discord.Embed(
-                    title="Summon success", colour=discord.Colour(colour),
+                    title="Summon success", colour=self.colour,
                     description=f"You acquired the {rarity} shikigami {shiki.title()}!",
                     timestamp=self.get_timestamp()
                 )
@@ -3115,7 +3124,7 @@ class Economy(commands.Cog):
 
             else:
                 embed = discord.Embed(
-                    title="Summon failed", colour=discord.Colour(colour),
+                    title="Summon failed", colour=self.colour,
                     description=f"You lack {required_shards - shards} {shiki.title()} shards",
                 )
                 embed.set_thumbnail(url=self.get_thumbnail_shikigami(shiki, "pre"))
@@ -3123,7 +3132,7 @@ class Economy(commands.Cog):
 
         except TypeError:
             embed = discord.Embed(
-                title="Summon failed", colour=discord.Colour(colour),
+                title="Summon failed", colour=self.colour,
                 description=f"You have insufficient shards of {shiki.title()}",
                 timestamp=self.get_timestamp()
             )
@@ -3135,39 +3144,41 @@ class Economy(commands.Cog):
 
         if args.lower() in ["ssr"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SSR": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_2} LeaderBoard", "SSR")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_2} LeaderBoard", "SSR")
 
         elif args.lower() in ["sp"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SP": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_1} LeaderBoard", "SP")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_1} LeaderBoard", "SP")
 
         elif args.lower() in ["sr"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SR": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_3} LeaderBoard", "SR")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_3} LeaderBoard", "SR")
 
         elif args.lower() in ["ssn"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SSN": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_6} LeaderBoard", "SSN")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_6} LeaderBoard", "SSN")
 
         elif args.lower() in ["medal", "medals"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_m} Medal LeaderBoard", "medals")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_m} Medal LeaderBoard", "medals")
 
         elif args.lower() in ["amulet", "amulets"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "amulets_spent": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_a} Spender LeaderBoard", "amulets_spent")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_a} Spender LeaderBoard", "amulets_spent")
 
         elif args.lower() in ["friendship", "fp"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "friendship": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_f} Friendship LeaderBoard", "friendship")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_f} Friendship LeaderBoard", "friendship")
 
         elif args.lower() in ["streak", "ssrstreak"]:
             query = streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"No {e_2} Summon Streak LeaderBoard", "SSR_current")
+            await self.leaderboard_post_record_users(
+                ctx, query, f"No {self.e_2} Summon Streak LeaderBoard", "SSR_current"
+            )
 
         elif args.lower() in ["level"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "level": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_x} Level LeaderBoard", "level")
+            await self.leaderboard_post_record_users(ctx, query, f"{self.e_x} Level LeaderBoard", "level")
 
         elif args.lower() in ["achievements", "frames"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "achievements": 1})
@@ -3206,7 +3217,7 @@ class Economy(commands.Cog):
             raw_list.append((ship["ship_name"], ship["points"]))
 
         for ship in sorted(raw_list, key=lambda x: x[1], reverse=True):
-            formatted_list.append(f"🔸{ship[0]}, x{ship[1]} {e_f} \n")
+            formatted_list.append(f"🔸{ship[0]}, x{ship[1]} {self.e_f} \n")
 
         await self.leaderboard_paginate(title, ctx, formatted_list)
 
@@ -3337,7 +3348,7 @@ class Economy(commands.Cog):
 
         rarity = str(arg1.upper())
 
-        if rarity not in rarities:
+        if rarity not in self.rarities:
             raise commands.MissingRequiredArgument(ctx.author)
 
         elif member is None:
@@ -3484,7 +3495,7 @@ class Economy(commands.Cog):
         address = f"temp/{member.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -3500,12 +3511,12 @@ class Economy(commands.Cog):
             "_id": 0, "shikigami.$": 1
         })
 
-        if shiki not in pool_all_mystery and shiki not in pool_all_broken:
+        if shiki not in self.pool_all_mystery and shiki not in self.pool_all_broken:
             await self.shikigami_post_approximate_results(ctx, shiki)
 
         elif user_shikigami is None:
             embed = discord.Embed(
-                colour=discord.Colour(colour),
+                colour=self.colour,
                 title="Invalid selection",
                 description=f"this shikigami is not in your possession"
             )
@@ -3548,9 +3559,9 @@ class Economy(commands.Cog):
 
         rarity = str(arg1.upper())
 
-        if rarity not in rarities:
+        if rarity not in self.rarities:
             embed = discord.Embed(
-                title="Invalid rarity", color=colour,
+                title="Invalid rarity", color=self.colour,
                 description=f"you provided an invalid shikigami rarity"
             )
             embed.add_field(
@@ -3666,7 +3677,7 @@ class Economy(commands.Cog):
         address = f"temp/{member.id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{member.id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -3836,7 +3847,7 @@ class Economy(commands.Cog):
                     timestamp=self.get_timestamp()
                 )
                 embed_explore.add_field(
-                    name=f"Shikigami: {user_profile['display'].title()} | {user_profile_new['sushi']} {e_s}",
+                    name=f"Shikigami: {user_profile['display'].title()} | {user_profile_new['sushi']} {self.e_s}",
                     value=f"Level: {shiki_level} | Experience: {exp}/{level_exp_next}\n"
                           f"Clear Chance: ~{round(total_chance, 2)}%"
                 )
@@ -3912,7 +3923,7 @@ class Economy(commands.Cog):
                     msg.id == r.message.id and \
                     str(r.emoji) == "🏹" and \
                     u.id == ctx.author.id and \
-                    check_if_user_has_sushi_2(ctx, sushi_required)
+                    self.check_if_user_has_sushi_2(ctx, sushi_required)
 
             while True:
                 try:
@@ -4056,35 +4067,35 @@ class Economy(commands.Cog):
         shards_r = zone["shards_count"]["R"]
         shards_n = zone["shards_count"]["N"]
 
-        shikigami_pool = {shiki: 0 for shiki in pool_ssr + pool_sp + pool_sr + pool_r + pool_n}
+        shikigami_pool = {shiki: 0 for shiki in self.pool_ssr + self.pool_sp + self.pool_sr + self.pool_r + self.pool_n}
 
         i = 0
         while i < shards_sp:
-            shikigami_shard = random.choice(pool_sp)
+            shikigami_shard = random.choice(self.pool_sp)
             shikigami_pool[shikigami_shard] += 1
             i += 1
 
         i = 0
         while i < shards_ssr:
-            shikigami_shard = random.choice(pool_ssr)
+            shikigami_shard = random.choice(self.pool_ssr)
             shikigami_pool[shikigami_shard] += 1
             i += 1
 
         i = 0
         while i < shards_sr:
-            shikigami_shard = random.choice(pool_sr)
+            shikigami_shard = random.choice(self.pool_sr)
             shikigami_pool[shikigami_shard] += 1
             i += 1
 
         i = 0
         while i < shards_r:
-            shikigami_shard = random.choice(pool_r)
+            shikigami_shard = random.choice(self.pool_r)
             shikigami_pool[shikigami_shard] += 1
             i += 1
 
         i = 0
         while i < shards_n:
-            shikigami_shard = random.choice(pool_n)
+            shikigami_shard = random.choice(self.pool_n)
             shikigami_pool[shikigami_shard] += 1
             i += 1
 
@@ -4155,7 +4166,7 @@ class Economy(commands.Cog):
         address = f"temp/{user_id}.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"{user_id}.png")
-        hosting_channel = self.client.get_channel(int(id_hosting))
+        hosting_channel = self.client.get_channel(int(self.id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -4192,7 +4203,7 @@ class Economy(commands.Cog):
         if arg1 is None:
             embed = discord.Embed(
                 title=f"chapter, ch",
-                color=colour,
+                color=self.colour,
                 description=f"shows chapter information and unlocked chapters"
             )
             embed.add_field(
@@ -4259,8 +4270,8 @@ class Economy(commands.Cog):
                 )
                 embed.add_field(
                     name="Shards drop count",
-                    value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | "
-                          f"{e_4} {shards_r} | {e_5} {shards_n}",
+                    value=f"{self.e_1} {shards_sp} | {self.e_2} {shards_ssr} | {self.e_3} {shards_sr} | "
+                          f"{self.e_4} {shards_r} | {self.e_5} {shards_n}",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -4268,7 +4279,7 @@ class Economy(commands.Cog):
             except TypeError:
                 embed = discord.Embed(
                     title=f"Invalid chapter",
-                    color=colour,
+                    color=self.colour,
                     description="Available chapters: 1-28 only"
                 )
                 await ctx.channel.send(embed=embed)
@@ -4298,7 +4309,7 @@ class Economy(commands.Cog):
             if entry["count"] != 0:
                 return
 
-        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
 
         users.update_one({
             "user_id": str(user.id)}, {
@@ -4321,7 +4332,7 @@ class Economy(commands.Cog):
             color=user.colour,
             title="Frame acquisition",
             description=f"{user.mention} has obtained{intro_caption}{frame_name} frame!\n"
-                        f"Acquired {jades:,d}{e_j} as bonus rewards!",
+                        f"Acquired {jades:,d}{self.e_j} as bonus rewards!",
             timestamp=self.get_timestamp()
         )
         embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
@@ -4333,7 +4344,7 @@ class Economy(commands.Cog):
     async def compensate_increase_shikigami_level(self, ctx, member: discord.Member = None, *, args):
 
         shiki = args.lower()
-        if shiki in pool_all:
+        if shiki in self.pool_all:
 
             query = users.find_one({
                 "user_id": str(member.id),
@@ -4398,7 +4409,7 @@ class Economy(commands.Cog):
     async def compensate_push_shikigami_manually(self, ctx, member: discord.Member = None, *, args):
 
         shiki = args.lower()
-        if shiki in pool_all:
+        if shiki in self.pool_all:
 
             query = users.find_one({
                 "user_id": str(member.id),

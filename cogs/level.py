@@ -15,13 +15,6 @@ users = get_collections("users")
 config = get_collections("config")
 logs = get_collections("logs")
 
-# Dictionaries
-emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-
-# Variables
-e_x = emojis["x"]
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
 
 class Level(commands.Cog):
 
@@ -29,8 +22,14 @@ class Level(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
+
+        self.e_x = self.emojis["x"]
+
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
 
     async def level_add_experience(self, user, exp):
 
@@ -90,7 +89,7 @@ class Level(commands.Cog):
                 await self.logs_add_line("coins", coins, user.id)
 
             try:
-                await ctx.add_reaction(e_x)
+                await ctx.add_reaction(self.e_x)
             except discord.errors.HTTPException:
                 pass
 

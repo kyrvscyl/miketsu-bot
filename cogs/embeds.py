@@ -18,28 +18,8 @@ guilds = get_collections("guilds")
 config = get_collections("config")
 sortings = get_collections("sortings")
 
-# Dictionary
-emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-
-# Lists
-admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
-msg_id_list = []
-
-# Variables
-id_guild = int(os.environ.get("SERVER"))
-e_c = emojis["c"]
-
 # Instantiations
-
-for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
-    msg_id_list.append(role_select_msg["msg_id"])
-
-
-def check_if_has_any_admin_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in admin_roles:
-            return True
-    return False
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Embeds(commands.Cog):
@@ -48,11 +28,30 @@ class Embeds(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.listings = config.find_one({"list": 1}, {"_id": 0})
+        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
+
+        self.admin_roles = self.listings["admin_roles"]
+
+        self.msg_id_list = []
+        self.e_c = self.emojis["c"]
+
+        for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
+            self.msg_id_list.append(role_select_msg["msg_id"])
+
+    def check_if_user_has_any_admin_roles(self):
+        def predicate(ctx):
+            for role in reversed(ctx.author.roles):
+                if role.name in self.admin_roles:
+                    return True
+            return False
+        return commands.check(predicate)
+
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-    
+
     @commands.command(aliases=["patch"])
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def post_patch_notes(self, ctx, arg1, *, args):
 
         guild = self.client.get_guild(int(id_guild))
@@ -91,7 +90,7 @@ class Embeds(commands.Cog):
             await asyncio.sleep(1)
 
     @commands.command(aliases=["welcome"])
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def edit_message_welcome(self, ctx):
 
         request = guilds.find_one({
@@ -356,7 +355,7 @@ class Embeds(commands.Cog):
             await banner_msg.edit(embed=embed6)
 
     @commands.command(aliases=["beasts"])
-    @commands.check(check_if_has_any_admin_roles)
+    @commands.check(check_if_user_has_any_admin_roles)
     async def edit_message_beasts_selection(self, ctx):
 
         guild_roles = ctx.guild.roles

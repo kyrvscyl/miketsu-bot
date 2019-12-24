@@ -11,31 +11,20 @@ from math import ceil
 import discord
 import pytz
 from discord.ext import tasks, commands
+from pushbullet import Pushbullet
 
 from cogs.mongo.database import get_collections
+
+# Pushbullet
+pb = Pushbullet(api_key=str(os.environ.get("PUSHBULLET")))
 
 # Collections
 changelogs = get_collections("changelogs")
 config = get_collections("config")
 guilds = get_collections("guilds")
 
-# Lists
-status = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
-admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
-
-# Variables
+# Instantiations
 id_guild = int(os.environ.get("SERVER"))
-colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-
-id_headlines = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-
-def check_if_has_any_admin_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in admin_roles:
-            return True
-    return False
 
 
 class Startup(commands.Cog):
@@ -44,13 +33,30 @@ class Startup(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.statuses = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
+        
+        self.commands_fake = [
+            "daily", "weekly", "profile", "set", "buy", "summon", "explore", "explores", "chapter", "realm", "realms",
+            "rcollect", "evolve", "friendship", "ships", "leaderboard", "shikigami", "shikigamis", "shrine", "sail",
+            "pray", "stat", "frames", "wish", "wishlist", "fulfill", "parade", "collections", "shards", "cards",
+            "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange"
+        ]
+
+        self.commands_others = [
+            "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait",
+            "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report"
+        ]
+
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
     
     @commands.Cog.listener()
     async def on_ready(self):
         owner_id = await self.client.application_info()
-        time_now = datetime.now(tz=pytz.timezone(timezone))
+        time_now = datetime.now(tz=pytz.timezone(self.timezone))
 
         print("Initializing...")
         print("-------")
@@ -61,62 +67,65 @@ class Startup(commands.Cog):
         try:
             self.change_status.start()
         except RuntimeError:
-            pass
+            pb.push_note("Miketsu Bot", "Experience a hiccup on changing my status ~1")
         print("-------")
 
     @tasks.loop(seconds=1200)
     async def change_status(self):
         try:
-            await self.client.change_presence(activity=discord.Game(next(status)))
+            await self.client.change_presence(activity=discord.Game(next(self.statuses)))
         except RuntimeError:
-            pass
+            pb.push_note("Miketsu Bot", "Experience a hiccup on changing my status ~2")
 
     @commands.command(aliases=["info", "i"])
-    async def show_greeting_message(self, ctx):
+    async def show_message_greetings(self, ctx):
 
         embed = discord.Embed(
-            color=colour,
+            color=self.colour,
             description=f"To see my commands, type *`{self.prefix}help`*"
         )
-        embed.set_author(name=f"Hello there! I'm {self.client.user.display_name}! ~")
+        embed.set_author(
+            name=f"Hello there! I'm {self.client.user.display_name}! ~",
+            icon_url=self.client.user.avatar_url
+        )
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["h", "help"])
-    async def show_help_message(self, ctx):
+    async def show_message_help(self, ctx):
+
         embed = discord.Embed(
             title="help, h",
-            color=colour,
+            color=self.colour,
             description=f"append the prefix symbol *`{self.prefix}`*"
+        )
+        embed.add_field(
+            name="fake Onmyoji",
+            value=f"*{', '.join(sorted(self.commands_fake))}*",
+            inline=False
+        )
+        embed.add_field(
+            name="Others / Utility",
+            value=f"*{', '.join(sorted(self.commands_others))}*",
+            inline=False
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
         embed.set_footer(text="*Head commands, **#pvp-fair exclusive")
-        embed.add_field(
-            name="fake Onmyoji",
-            value="*"
-                  "daily, weekly, profile, set, buy, summon, explore, explores, chapter, realm, realms, rcollect, "
-                  "evolve, friendship, ships, leaderboard, shikigami, shikigamis, shrine, sail, pray, stat, "
-                  "frames, wish, wishlist, fulfill, parade, collections, shards, "
-                  "raid, raidc, encounter, netherworld, bossinfo"
-                  "*",
-            inline=False
-        )
-        embed.add_field(
-            name="Others",
-            value="*"
-                  "changelog, bounty, suggest, stickers, newsticker, wander, portrait, "
-                  "stats, duel\\*\\*, memo\\*, manage\\*, events\\*"
-                  "*",
-            inline=False
-        )
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["suggest", "report"])
     async def collect_suggestions(self, ctx, *, content):
-        request = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels.scroll-of-everything": 1})
-        record_scroll_id = request["channels"]["scroll-of-everything"]
-        record_scroll = self.client.get_channel(int(record_scroll_id))
 
-        embed = discord.Embed(color=colour, title="📨 New Suggestion/Report", timestamp=self.get_timestamp())
+        query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        id_scroll = query["channels"]["scroll-of-everything"]
+        scroll_channel = self.client.get_channel(int(id_scroll))
+
+        embed = discord.Embed(
+            color=self.colour,
+            title="📨 New Suggestion/Report",
+            timestamp=self.get_timestamp()
+        )
+        embed.add_field(name="Content", value=f"{content}", inline=False)
+
         try:
             link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
             embed.description = f"Author: {ctx.author.mention}\n" \
@@ -126,9 +135,8 @@ class Startup(commands.Cog):
             embed.description = f"From: {ctx.author.mention}\n" \
                                 f"Submitted through: Direct Message"
 
-        embed.add_field(name="Content", value=f"{content}", inline=False)
-        suggestion = await record_scroll.send(embed=embed)
-        await suggestion.add_reaction("📌")
+        msg = await scroll_channel.send(embed=embed)
+        await msg.add_reaction("📌")
         await ctx.message.add_reaction("📩")
 
     @commands.command(aliases=["changelog", "changelogs"])
@@ -141,33 +149,26 @@ class Startup(commands.Cog):
         for line in reversed(changelog_lines):
             changelog_lines_formatted.append(f"• {line}\n")
 
-        embed = discord.Embed(color=colour, title="Changelog", timestamp=self.get_timestamp())
-        embed.description = " ".join(changelog_lines_formatted)
-
         await self.show_changelogs_paginate(ctx, changelog_lines_formatted)
 
     async def show_changelogs_paginate(self, ctx, formatted_list):
 
-        page = 1
-        max_lines = 20
+        page, max_lines = 1, 20
         page_total = ceil(len(formatted_list) / max_lines)
+
         if page_total == 0:
             page_total = 1
 
-        def create_new_embed_page(page_new):
+        def embed_new_create(page_new):
             end = page * max_lines
             start = end - max_lines
             description = "".join(formatted_list[start:end])
 
-            embed_new = discord.Embed(
-                color=ctx.author.colour,
-                title="Bot changelogs",
-                description=description
-            )
+            embed_new = discord.Embed(color=self.colour, title="Bot changelogs", description=description)
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
-        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        msg = await ctx.channel.send(embed=embed_new_create(page))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
@@ -189,7 +190,7 @@ class Startup(commands.Cog):
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await msg.edit(embed=create_new_embed_page(page))
+                await msg.edit(embed=embed_new_create(page))
 
 
 def setup(client):

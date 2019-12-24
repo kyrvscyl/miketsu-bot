@@ -16,17 +16,8 @@ from cogs.mongo.database import get_collections
 config = get_collections("config")
 guilds = get_collections("guilds")
 
-# Variables
-guild_id = int(os.environ.get("SERVER"))
-
-id_auror_dept = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["auror-department"]
-id_headlines = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
-id_office = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headmasters-office"]
-id_scroll = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
-id_shard_seeker = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "roles": 1})["roles"]["shard_seekers"]
-id_shard_trading = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["shard-trading"]
-
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+# Instantiations
+id_guild = int(os.environ.get("SERVER"))
 
 
 class Automation(commands.Cog):
@@ -34,8 +25,20 @@ class Automation(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
+        self.roles = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})
+
+        self.id_auror_dept = self.channels["channels"]["auror-department"]
+        self.id_headlines = self.channels["channels"]["headlines"]
+        self.id_office = self.channels["channels"]["headmasters-office"]
+        self.id_scroll = self.channels["channels"]["scroll-of-everything"]
+        self.id_shard_trading = self.channels["channels"]["shard-trading"]
+        self.id_shard_seeker = self.roles["roles"]["shard_seekers"]
+
     def get_time(self):
-        return datetime.now(tz=pytz.timezone(timezone))
+        return datetime.now(tz=pytz.timezone(self.timezone))
 
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
@@ -55,27 +58,26 @@ class Automation(commands.Cog):
             return
 
         elif str(message.channel).startswith("Direct Message") is True:
-            record_scroll_channel = self.client.get_channel(int(id_scroll))
+            record_scroll_channel = self.client.get_channel(int(self.id_scroll))
             await record_scroll_channel.send(f"{message.author}: {message.content}")
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
 
         try:
-
-            if str(payload.data["channel_id"]) == id_shard_trading and payload.data["pinned"] is True:
+            if str(payload.data["channel_id"]) == self.id_shard_trading and payload.data["pinned"] is True:
 
                 user_id = payload.data["author"]["id"]
                 attachments = payload.data["attachments"]
-                link = f"https://discordapp.com/channels/{guild_id}/{id_shard_trading}/{payload.data['id']}"
+                link = f"https://discordapp.com/channels/{id_guild}/{self.id_shard_trading}/{payload.data['id']}"
                 description = payload.data["content"] + f"\n\n[Link here!]({link})"
 
-                guild = self.client.get_guild(int(guild_id))
+                guild = self.client.get_guild(int(id_guild))
                 member = guild.get_member(int(user_id))
-                headlines_channel = self.client.get_channel(int(id_headlines))
-                shard_trading_channel = self.client.get_channel(int(id_shard_trading))
+                headlines_channel = self.client.get_channel(int(self.id_headlines))
+                shard_trading_channel = self.client.get_channel(int(self.id_shard_trading))
 
-                content = f"<@&{id_shard_seeker}>!"
+                content = f"<@&{self.id_shard_seeker}>!"
                 embed = discord.Embed(color=member.colour, description=description, timestamp=self.get_timestamp())
                 embed.set_author(name=f"{member.display_name} is seeking for shards!", icon_url=member.avatar_url)
                 embed.set_footer(text=f"#{shard_trading_channel.name}")
@@ -103,7 +105,9 @@ class Automation(commands.Cog):
     async def on_member_join(self, member):
 
         await Level(self).level_create_user(member)
-        request = guilds.find_one({"server": f"{member.guild.id}"}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1})
+        request = guilds.find_one({
+            "server": f"{member.guild.id}"}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1}
+        )
 
         try:
             common_room_id = request["channels"]["the-common-room"]
@@ -175,7 +179,7 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        record_scroll_channel = self.client.get_channel(int(id_scroll))
+        record_scroll_channel = self.client.get_channel(int(self.id_scroll))
 
         embed = discord.Embed(color=0xffffff, timestamp=self.get_timestamp())
         embed.set_author(name=f"{member} [{member.display_name}] has left the house!")
@@ -196,8 +200,8 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
 
-        record_scroll_channel = self.client.get_channel(int(id_scroll))
-        auror_department_channel = self.client.get_channel(int(id_auror_dept))
+        record_scroll_channel = self.client.get_channel(int(self.id_scroll))
+        auror_department_channel = self.client.get_channel(int(self.id_auror_dept))
 
         if before.roles != after.roles:
             changed_role1 = list(set(after.roles) - set(before.roles))
