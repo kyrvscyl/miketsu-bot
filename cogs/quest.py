@@ -16,15 +16,15 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 from cogs.mongo.database import get_collections
 
 # Collections
+config = get_collections("config")
 guilds = get_collections("guilds")
-weather = get_collections("weathers")
+hints = get_collections("hints")
 owls = get_collections("owls")
-sendoffs = get_collections("sendoffs")
 patronus = get_collections("patronus")
 quests = get_collections("quests")
+sendoffs = get_collections("sendoffs")
 thieves = get_collections("thieves")
-hints = get_collections("hints")
-config = get_collections("config")
+weather = get_collections("weathers")
 
 # Dictionary
 flexibility_category = config.find_one({"dict": 2}, {"_id": 0, "flexibility_category": 1})["flexibility_category"]
@@ -35,22 +35,25 @@ quest1_responses = config.find_one({"dict": 2}, {"_id": 0, "quest1_responses": 1
 # Lists
 owls_list = []
 
-lengths = config.find_one({"list": 2}, {"_id": 0, "lengths": 1})["lengths"]
-flexibilities = config.find_one({"list": 2}, {"_id": 0, "flexibilities": 1})["flexibilities"]
-wand_lengths = config.find_one({"list": 2}, {"_id": 0, "wand_lengths": 1})["wand_lengths"]
 cores = config.find_one({"list": 2}, {"_id": 0, "cores": 1})["cores"]
-traits = config.find_one({"list": 2}, {"_id": 0, "traits": 1})["traits"]
-patronuses = config.find_one({"list": 2}, {"_id": 0, "patronuses": 1})["patronuses"]
-woods = config.find_one({"list": 2}, {"_id": 0, "woods": 1})["woods"]
+flexibilities = config.find_one({"list": 2}, {"_id": 0, "flexibilities": 1})["flexibilities"]
 flexibility_types = config.find_one({"list": 2}, {"_id": 0, "flexibility_types": 1})["flexibility_types"]
+lengths = config.find_one({"list": 2}, {"_id": 0, "lengths": 1})["lengths"]
+patronuses = config.find_one({"list": 2}, {"_id": 0, "patronuses": 1})["patronuses"]
+traits = config.find_one({"list": 2}, {"_id": 0, "traits": 1})["traits"]
+wand_lengths = config.find_one({"list": 2}, {"_id": 0, "wand_lengths": 1})["wand_lengths"]
+woods = config.find_one({"list": 2}, {"_id": 0, "woods": 1})["woods"]
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-diagon_alleys = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["categories"]["diagon-alley"]
-record_scroll = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["channels"]["scroll-of-everything"]
-headmaster_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["headmaster"]
 
+id_diagon_alley = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["categories"]["diagon-alley"]
+id_headmaster = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["headmaster"]
+id_scroll = guilds.find_one({"server": str(guild_id)}, {"_id": 0})["channels"]["scroll-of-everything"]
+
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
+
+# Instantiations
 
 for owl in owls.find({"key": "owl"}, {"_id": 0, "type": 1}):
     owls_list.append(owl["type"])
@@ -260,7 +263,7 @@ class Quest(commands.Cog):
         self.prefix = self.client.command_prefix
 
     async def logging(self, msg):
-        channel = self.client.get_channel(int(record_scroll))
+        channel = self.client.get_channel(int(id_scroll))
         await channel.send(f"[{get_time().strftime('%Y-%b-%d %HH')}] " + msg)
 
     @commands.command(aliases=["hint"])
@@ -339,7 +342,7 @@ class Quest(commands.Cog):
         elif spell_check(m.content) and user in role_dolphin.members:
             await Expecto(self.client).expecto_patronum(m.guild, user, m.channel, m)
 
-        elif str(m.channel.category.id) == diagon_alleys:
+        elif str(m.channel.category.id) == id_diagon_alley:
 
             if msg == "eeylops owl emporium" and str(m.channel) != "eeylops-owl-emporium":
                 await Expecto(self.client).create_emporium(m.channel.category, m.guild, msg, m, user)
@@ -1057,7 +1060,8 @@ class Expecto(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                return False
+                await msg.clear_reactions()
+                break
             else:
                 if str(reaction.emoji) == "➡":
                     page += 1
@@ -1323,12 +1327,12 @@ class Expecto(commands.Cog):
             if user not in role_owl.members:
                 await penalize_quest1(user, cycle, points=30)
 
-            elif (valid_channel_id not in msg or headmaster_id not in msg) and "✉" not in msg:
+            elif (valid_channel_id not in msg or id_headmaster not in msg) and "✉" not in msg:
 
                 await reaction.message.add_reaction("❔")
                 await penalize_quest1(user, cycle, points=10)
 
-            elif (valid_channel_id in msg or headmaster_id in msg) and "✉" in msg:
+            elif (valid_channel_id in msg or id_headmaster in msg) and "✉" in msg:
 
                 cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
 

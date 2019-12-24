@@ -15,7 +15,7 @@ import pytz
 from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 
-from cogs.economy import reset_boss
+from cogs.economy import Economy
 from cogs.mongo.database import get_collections
 
 # Collections
@@ -45,16 +45,18 @@ description_nether = []
 actual_rewards = []
 realm_cards = []
 
-rewards_nether = config.find_one({"list": 1}, {"_id": 0, "rewards_nether": 1})["rewards_nether"]
-boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
 assemble_captions = cycle(config.find_one({"list": 1}, {"_id": 0, "assemble_captions": 1})["assemble_captions"])
+boss_comment = config.find_one({"list": 1}, {"_id": 0, "boss_comment": 1})["boss_comment"]
+rewards_nether = config.find_one({"list": 1}, {"_id": 0, "rewards_nether": 1})["rewards_nether"]
 
 # Variables
 guild_id = int(os.environ.get("SERVER"))
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
-embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
-spell_spam_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
+colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+
+id_hosting = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
+id_spell_spam = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
+
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 e_m = emojis["m"]
@@ -68,6 +70,7 @@ e_2 = emojis["2"]
 e_6 = emojis["6"]
 e_x = emojis["x"]
 
+# Instantiations
 
 for card in realms.find({}, {"_id": 0}):
     realm_cards.append(f"{card['name'].lower()}")
@@ -103,6 +106,11 @@ def generate_nether_information():
         actual_rewards.append([jades, coins, exp, medals, shards_sp, shards_ssr, shards_ssn])
 
 
+def status_set(x):
+    global boss_spawn
+    boss_spawn = x
+
+
 boss_spawn = False
 quizzes_shuffle = random.shuffle(quizzes)
 quizzes_cycle = cycle(quizzes)
@@ -114,84 +122,6 @@ def check_if_user_has_any_alt_roles(user):
         if role.name in ["Geminio"]:
             return True
     return False
-
-
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
-
-
-def get_frame_thumbnail(frame):
-    return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
-
-
-def get_rarity_shikigami(s):
-    return shikigamis.find_one({"name": s}, {"_id": 0, "rarity": 1})["rarity"]
-
-
-def push_new_shikigami(user_id, s, evolve, shards):
-    users.update_one({
-        "user_id": str(user_id)}, {
-        "$push": {
-            "shikigami": {
-                "name": s,
-                "rarity": get_rarity_shikigami(s),
-                "grade": 1,
-                "owned": 0,
-                "evolved": evolve,
-                "shards": shards,
-                "level": 1,
-                "exp": 0,
-                "level_exp_next": 6
-            }
-        }
-    })
-
-
-async def shikigami_post_approximate_results(ctx, query):
-    shikigamis_search = shikigamis.find({
-        "name": {"$regex": f"^{query[:2].lower()}"}
-    }, {"_id": 0, "name": 1})
-
-    approximate_results = []
-    for result in shikigamis_search:
-        approximate_results.append(f"{result['name'].title()}")
-
-    embed = discord.Embed(
-        title="Invalid shikigami", colour=discord.Colour(embed_color),
-        description=f"check the spelling of the shikigami"
-    )
-    embed.add_field(
-        name="Possible matches",
-        value="*{}*".format(", ".join(approximate_results)),
-        inline=False
-    )
-    await ctx.channel.send(embed=embed)
-
-
-async def boss_daily_reset_check():
-    print("Checking if boss will be reset")
-    survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
-    discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
-
-    if survivability == 0 and discoverability == 0:
-        await reset_boss()
-
-
-def calculate(x, y, z):
-    try:
-        if x - y > 0:
-            return ((x - y) / x) * z
-        elif x - y < 0:
-            return -((y - x) / y) * z
-        else:
-            return 0
-    except ZeroDivisionError:
-        return 0
 
 
 def check_if_user_has_any_admin_roles(ctx):
@@ -213,75 +143,153 @@ def check_if_user_has_nether_pass(ctx):
     return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "nether_pass": 1})["nether_pass"] is True
 
 
-def emojify(item):
-    emoji_dict = {
-        "jades": e_j, "coins": e_c, "realm_ticket": "🎟", "amulets": e_a,
-        "medals": e_m, "friendship": e_f, "encounter_ticket": "🎫", "talisman": e_t,
-        "prayers": "🙏", "friendship_pass": "💗", "parade_tickets": "🎏"
-    }
-    return emoji_dict[item]
-
-
-def get_emoji(item):
-    return get_emojis[item]
-
-
-def get_raid_count(victim):
-    return users.find_one({"user_id": str(victim.id)}, {"_id": 0, "raided_count": 1})["raided_count"]
-
-
-def get_time():
-    return datetime.now(tz=pytz.timezone(timezone))
-
-
-def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
-def status_set(x):
-    global boss_spawn
-    boss_spawn = x
-
-
-async def logs_add_line(currency, amount, user_id):
-
-    if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-        profile = {"user_id": str(user_id), "logs": []}
-        logs.insert_one(profile)
-
-    logs.update_one({
-        "user_id": str(user_id)
-    }, {
-        "$push": {
-            "logs": {
-                "$each": [{
-                    "currency": currency,
-                    "amount": amount,
-                    "date": get_time(),
-                }],
-                "$position": 0,
-                "$slice": 200
-            }
-        }
-    })
-
-
 class Gameplay(commands.Cog):
 
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
 
+    def calculate(self, x, y, z):
+        try:
+            if x - y > 0:
+                return ((x - y) / x) * z
+            elif x - y < 0:
+                return -((y - x) / y) * z
+            else:
+                return 0
+        except ZeroDivisionError:
+            return 0
+
+    def get_emoji(self, item):
+        return get_emojis[item]
+
+    def get_frame_thumbnail(self, frame):
+        return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
+    
+    def get_rarity_shikigami(self, s):
+        return shikigamis.find_one({"name": s}, {"_id": 0, "rarity": 1})["rarity"]
+
+    def get_raid_count(self, victim):
+        return users.find_one({"user_id": str(victim.id)}, {"_id": 0, "raided_count": 1})["raided_count"]
+    
+    def get_time(self):
+        return datetime.now(tz=pytz.timezone(timezone))
+    
+    def get_timestamp(self):
+        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+
+    def pluralize(self, singular, count):
+        if count > 1:
+            if singular[-1:] == "s":
+                return singular + "es"
+            return singular + "s"
+        else:
+            return singular
+
+    def push_new_shikigami(self, user_id, s, evolve, shards):
+        users.update_one({
+            "user_id": str(user_id)}, {
+            "$push": {
+                "shikigami": {
+                    "name": s,
+                    "rarity": self.get_rarity_shikigami(s),
+                    "grade": 1,
+                    "owned": 0,
+                    "evolved": evolve,
+                    "shards": shards,
+                    "level": 1,
+                    "exp": 0,
+                    "level_exp_next": 6
+                }
+            }
+        })
+
+    def encounter_roll_netherworld_generate_cards(self, user, waves):
+
+        card_rewards = random.choice(realm_cards)
+        if waves >= 60:
+            grade = random.choice([5, 5, 6])
+        elif waves >= 50:
+            grade = random.choice([4, 4, 5])
+        elif waves >= 40:
+            grade = random.choice([3, 3, 4])
+        elif waves >= 30:
+            grade = random.choice([2, 2, 3])
+        elif waves >= 20:
+            grade = random.choice([1, 1, 2])
+        else:
+            grade = random.choice([1, 1, 2])
+
+        users.update_one({"user_id": str(user.id)}, {
+            "$push": {
+                "cards": {
+                    "name": card_rewards,
+                    "grade": int(grade)
+                }
+            }
+        })
+        return card_rewards, grade
+
+    async def shikigami_post_approximate_results(self, ctx, query):
+        shikigamis_search = shikigamis.find({
+            "name": {"$regex": f"^{query[:2].lower()}"}
+        }, {"_id": 0, "name": 1})
+
+        approximate_results = []
+        for result in shikigamis_search:
+            approximate_results.append(f"{result['name'].title()}")
+
+        embed = discord.Embed(
+            title="Invalid shikigami", colour=discord.Colour(colour),
+            description=f"check the spelling of the shikigami"
+        )
+        embed.add_field(
+            name="Possible matches",
+            value="*{}*".format(", ".join(approximate_results)),
+            inline=False
+        )
+        await ctx.channel.send(embed=embed)
+        
+    async def perform_add_log(self, currency, amount, user_id):
+    
+        if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
+            profile = {"user_id": str(user_id), "logs": []}
+            logs.insert_one(profile)
+    
+        logs.update_one({
+            "user_id": str(user_id)
+        }, {
+            "$push": {
+                "logs": {
+                    "$each": [{
+                        "currency": currency,
+                        "amount": amount,
+                        "date": self.get_time(),
+                    }],
+                    "$position": 0,
+                    "$slice": 200
+                }
+            }
+        })
+    
+    async def boss_daily_reset_check(self):
+        print("Checking if boss will be reset")
+        survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
+        discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
+    
+        if survivability == 0 and discoverability == 0:
+            await Economy(self).perform_reset_boss()
+    
     async def achievements_process_announce(self, member, frame_name, jades):
 
-        spell_spam_channel = self.client.get_channel(int(spell_spam_id))
+        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
 
         users.update_one({
             "user_id": str(member.id)}, {
             "$push": {
                 "achievements": {
                     "name": frame_name,
-                    "date_acquired": get_time()
+                    "date_acquired": self.get_time()
                 }
             },
             "$inc": {
@@ -298,10 +306,10 @@ class Gameplay(commands.Cog):
             title="Frame acquisition",
             description=f"{member.mention} has acquired{intro_caption}{frame_name} frame!\n"
                         f"Acquired {jades:,d}{e_j} as bonus rewards!",
-            timestamp=get_timestamp()
+            timestamp=self.get_timestamp()
         )
         embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
-        embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+        embed.set_thumbnail(url=self.get_frame_thumbnail(frame_name))
         await spell_spam_channel.send(embed=embed)
         await asyncio.sleep(1)
 
@@ -371,7 +379,7 @@ class Gameplay(commands.Cog):
             embed = discord.Embed(
                 color=user.colour, title=f"Encounter Netherworld",
                 description=f"react below and place your shikigamis to start clearing waves",
-                timestamp=get_timestamp()
+                timestamp=self.get_timestamp()
             )
 
             formatted_shikigamis = []
@@ -382,7 +390,7 @@ class Gameplay(commands.Cog):
                     formatted_shikigamis.append(f"{e[0].title()}/{e[1]}")
 
             embed.add_field(
-                name=f"Top {len(top_shikigamis)} {pluralize('shikigami', len(top_shikigamis))}",
+                name=f"Top {len(top_shikigamis)} {self.pluralize('shikigami', len(top_shikigamis))}",
                 value=f"*{', '.join(formatted_shikigamis[:10])}*",
                 inline=False
             )
@@ -394,7 +402,7 @@ class Gameplay(commands.Cog):
                     for index2, x in enumerate(placed_shikigamis):
                         caption_list.append(
                             f"`Attempt#{index2 + 1}` :: {x[0].title()} | ~{round(x[1], 2)}% | "
-                            f"{x[2]} {pluralize('clear', x[2])}\n"
+                            f"{x[2]} {self.pluralize('clear', x[2])}\n"
                         )
 
                 caption = ''.join(caption_list)
@@ -430,6 +438,7 @@ class Gameplay(commands.Cog):
             try:
                 await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
+                await search_msg.clear_reactions()
                 return
             else:
                 await search_msg.clear_reactions()
@@ -477,9 +486,9 @@ class Gameplay(commands.Cog):
                                     "nether_pass": False
                                 }
                             })
-                            await logs_add_line("jades", int(jades), user.id)
-                            await logs_add_line("coins", int(coins), user.id)
-                            await logs_add_line("medals", int(medals), user.id)
+                            await self.perform_add_log("jades", int(jades), user.id)
+                            await self.perform_add_log("coins", int(coins), user.id)
+                            await self.perform_add_log("medals", int(medals), user.id)
 
                             users.update_one({
                                 "user_id": str(user.id),
@@ -533,7 +542,7 @@ class Gameplay(commands.Cog):
                 return
             except KeyError:
                 embed1 = discord.Embed(
-                    colour=discord.Colour(embed_color),
+                    colour=discord.Colour(colour),
                     title="Invalid selection",
                     description=f"this shikigami is not in your possession, already dead, or does not exist"
                 )
@@ -586,32 +595,6 @@ class Gameplay(commands.Cog):
                         top_shikigamis, dead_shikigamis, "end", shikigami_bet, cleared_waves, "", []
                     )
                 )
-
-    def encounter_roll_netherworld_generate_cards(self, user, waves):
-
-        card_rewards = random.choice(realm_cards)
-        if waves >= 60:
-            grade = random.choice([5, 5, 6])
-        elif waves >= 50:
-            grade = random.choice([4, 4, 5])
-        elif waves >= 40:
-            grade = random.choice([3, 3, 4])
-        elif waves >= 30:
-            grade = random.choice([2, 2, 3])
-        elif waves >= 20:
-            grade = random.choice([1, 1, 2])
-        else:
-            grade = random.choice([1, 1, 2])
-
-        users.update_one({"user_id": str(user.id)}, {
-            "$push": {
-                "cards": {
-                    "name": card_rewards,
-                    "grade": int(grade)
-                }
-            }
-        })
-        return card_rewards, grade
 
     async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
         try:
@@ -666,7 +649,7 @@ class Gameplay(commands.Cog):
             address = f"temp/{user_id}.png"
             new_im.save(address)
             new_photo = discord.File(address, filename=f"{user_id}.png")
-            hosting_channel = self.client.get_channel(int(hosting_id))
+            hosting_channel = self.client.get_channel(int(id_hosting))
             msg = await hosting_channel.send(file=new_photo)
             attachment_link = msg.attachments[0].url
             return attachment_link
@@ -691,7 +674,7 @@ class Gameplay(commands.Cog):
             })
 
             if query is None:
-                push_new_shikigami(user_id, shikigami_shard[0], False, 0)
+                self.push_new_shikigami(user_id, shikigami_shard[0], False, 0)
 
             users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
                 "$inc": {
@@ -704,7 +687,7 @@ class Gameplay(commands.Cog):
     async def netherworld_show_information(self, ctx):
 
         embed = discord.Embed(
-            color=embed_color,
+            color=colour,
             title=f"netherworld, nw",
             description=f"fights and clears unwanted forces and earn rich rewards"
         )
@@ -739,11 +722,11 @@ class Gameplay(commands.Cog):
 
         else:
             try:
-                raid_count = get_raid_count(victim)
+                raid_count = self.get_raid_count(victim)
 
                 if raid_count >= 3:
                     embed = discord.Embed(
-                        colour=discord.Colour(embed_color),
+                        colour=discord.Colour(colour),
                         description="raids are capped at 3 times per day and per realm"
                     )
                     embed.set_author(
@@ -764,11 +747,11 @@ class Gameplay(commands.Cog):
                         users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
                         users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
                         await self.raid_perform_attack(victim, raider, ctx)
-                        await logs_add_line("realm_ticket", -1, raider.id)
+                        await self.perform_add_log("realm_ticket", -1, raider.id)
 
                     else:
                         embed = discord.Embed(
-                            title=f"Invalid chosen realm", colour=discord.Colour(embed_color),
+                            title=f"Invalid chosen realm", colour=discord.Colour(colour),
                             description=f"You can only raid realms with ±{range_diff:,d} of your level",
                         )
                         await ctx.channel.send(embed=embed)
@@ -789,12 +772,12 @@ class Gameplay(commands.Cog):
                 "_id": 0, "level": 1, "medals": 1, "SP": 1, "SSR": 1, "SR": 1, "R": 1
             })
 
-            chance1 = calculate(profile_raider["level"], profile_victim["level"], 0.15)
-            chance2 = calculate(profile_raider["medals"], profile_victim["medals"], 0.15)
-            chance3 = calculate(profile_raider["SP"], profile_victim["SP"], 0.09)
-            chance4 = calculate(profile_raider["SSR"], profile_victim["SSR"], 0.07)
-            chance5 = calculate(profile_raider["SR"], profile_victim["SR"], 0.03)
-            chance6 = calculate(profile_raider["R"], profile_victim["R"], 0.01)
+            chance1 = self.calculate(profile_raider["level"], profile_victim["level"], 0.15)
+            chance2 = self.calculate(profile_raider["medals"], profile_victim["medals"], 0.15)
+            chance3 = self.calculate(profile_raider["SP"], profile_victim["SP"], 0.09)
+            chance4 = self.calculate(profile_raider["SSR"], profile_victim["SSR"], 0.07)
+            chance5 = self.calculate(profile_raider["SR"], profile_victim["SR"], 0.03)
+            chance6 = self.calculate(profile_raider["R"], profile_victim["R"], 0.01)
             total_chance = round((0.5 + chance1 + chance2 + chance3 + chance4 + chance5 + chance6) * 100)
             roll = random.uniform(0, 100)
 
@@ -803,7 +786,7 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     title="Realm raid", color=raider.colour,
                     description=f"{raider.mention} raids {victim.display_name}'s realm!",
-                    timestamp=get_timestamp()
+                    timestamp=self.get_timestamp()
                 )
                 embed.add_field(
                     name=f"Results, `{total_chance}%`",
@@ -819,7 +802,7 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     title="Realm raid", color=raider.colour,
                     description=f"{raider.mention} raids {victim.display_name}'s realm!",
-                    timestamp=get_timestamp()
+                    timestamp=self.get_timestamp()
                 )
                 embed.add_field(
                     name=f"Results, `{total_chance}%`",
@@ -840,17 +823,17 @@ class Gameplay(commands.Cog):
         users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {"$inc": {"experience": exp}})
         users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": coins, "jades": jades, "medals": medals}})
 
-        await logs_add_line("coins", coins, victim.id)
-        await logs_add_line("jades", jades, victim.id)
-        await logs_add_line("medals", medals, victim.id)
+        await self.perform_add_log("coins", coins, victim.id)
+        await self.perform_add_log("jades", jades, victim.id)
+        await self.perform_add_log("medals", medals, victim.id)
 
     async def raid_perform_attack_giverewards_as_winner_raider(self, raider, coins, jades, medals, exp):
         users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {"$inc": {"experience": exp}})
         users.update_one({"user_id": str(raider.id)}, {"$inc": {"coins": coins, "jades": jades, "medals": medals}})
 
-        await logs_add_line("coins", coins, raider.id)
-        await logs_add_line("jades", jades, raider.id)
-        await logs_add_line("medals", medals, raider.id)
+        await self.perform_add_log("coins", coins, raider.id)
+        await self.perform_add_log("jades", jades, raider.id)
+        await self.perform_add_log("medals", medals, raider.id)
 
     @commands.command(aliases=["raidcalc", "raidc", "rc"])
     @commands.guild_only()
@@ -876,12 +859,12 @@ class Gameplay(commands.Cog):
                 "_id": 0, "level": 1, "medals": 1, "SP": 1, "SSR": 1, "SR": 1, "R": 1
             })
 
-            chance1 = calculate(profile_raider["level"], profile_victim["level"], 0.15)
-            chance2 = calculate(profile_raider["medals"], profile_victim["medals"], 0.15)
-            chance3 = calculate(profile_raider["SP"], profile_victim["SP"], 0.09)
-            chance4 = calculate(profile_raider["SSR"], profile_victim["SSR"], 0.07)
-            chance5 = calculate(profile_raider["SR"], profile_victim["SR"], 0.03)
-            chance6 = calculate(profile_raider["R"], profile_victim["R"], 0.01)
+            chance1 = self.calculate(profile_raider["level"], profile_victim["level"], 0.15)
+            chance2 = self.calculate(profile_raider["medals"], profile_victim["medals"], 0.15)
+            chance3 = self.calculate(profile_raider["SP"], profile_victim["SP"], 0.09)
+            chance4 = self.calculate(profile_raider["SSR"], profile_victim["SSR"], 0.07)
+            chance5 = self.calculate(profile_raider["SR"], profile_victim["SR"], 0.03)
+            chance6 = self.calculate(profile_raider["R"], profile_victim["R"], 0.01)
             total_chance = round((0.5 + chance1 + chance2 + chance3 + chance4 + chance5 + chance6) * 100)
 
             embed = discord.Embed(
@@ -902,11 +885,11 @@ class Gameplay(commands.Cog):
 
         name = arg1.replace("_", " ").lower()
         if name not in pool_all:
-            await shikigami_post_approximate_results(ctx, name)
+            await self.shikigami_post_approximate_results(ctx, name)
 
         elif emoji is None:
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="No emojis provided",
                 description="specify emojis to change the shikigami's identity"
             )
@@ -925,7 +908,7 @@ class Gameplay(commands.Cog):
 
         users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"encounter_ticket": -1}})
         await self.encounter_roll(ctx.author, ctx)
-        await logs_add_line("encounter_ticket", -1, ctx.author.id)
+        await self.perform_add_log("encounter_ticket", -1, ctx.author.id)
         self.client.get_command("encounter_search").reset_cooldown(ctx)
 
     async def encounter_roll(self, user, ctx):
@@ -976,10 +959,10 @@ class Gameplay(commands.Cog):
         timeout = 10
         guesses = 3
 
-        embed = discord.Embed(title=f"Demon Quiz", color=user.colour, timestamp=get_timestamp())
+        embed = discord.Embed(title=f"Demon Quiz", color=user.colour, timestamp=self.get_timestamp())
         embed.description = f"Time Limit: {timeout} sec"
         embed.add_field(name="Who is this shikigami?", value=f"{question}")
-        embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"{guesses} {self.pluralize('guess', guesses)}", icon_url=user.avatar_url)
         await search_msg.edit(embed=embed)
 
         def check(guess):
@@ -996,7 +979,7 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     title="Demon Quiz", color=user.colour,
                     description=f"You have failed the quiz",
-                    timestamp=get_timestamp()
+                    timestamp=self.get_timestamp()
                 )
                 embed.add_field(name="Correct Answer", value=f"{answer.title()}")
                 embed.set_footer(text="Time is up!", icon_url=user.avatar_url)
@@ -1007,28 +990,28 @@ class Gameplay(commands.Cog):
 
                 if guesses == 3:
                     guesses -= 1
-                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{guesses} {self.pluralize('guess', guesses)}", icon_url=user.avatar_url)
                     await search_msg.edit(embed=embed)
 
                 elif guesses == 2:
                     guesses -= 1
-                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{guesses} {self.pluralize('guess', guesses)}", icon_url=user.avatar_url)
                     await search_msg.edit(embed=embed)
 
                 elif guesses == 1:
                     guesses -= 1
-                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{guesses} {self.pluralize('guess', guesses)}", icon_url=user.avatar_url)
                     embed.remove_field(0)
                     embed.add_field(name="Correct Answer", value=f"{answer.title()}")
                     await search_msg.edit(embed=embed)
                     break
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"amulets": 5}})
-                await logs_add_line("amulets", 5, ctx.author.id)
+                await self.perform_add_log("amulets", 5, ctx.author.id)
                 embed = discord.Embed(
                     title="Demon Quiz", color=user.colour,
                     description=f"You have earned 5{e_a}",
-                    timestamp=get_timestamp()
+                    timestamp=self.get_timestamp()
                 )
                 embed.set_footer(text="Correct!", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
@@ -1047,9 +1030,9 @@ class Gameplay(commands.Cog):
         embed = discord.Embed(
             color=user.colour,
             title="Encounter treasure",
-            description=f"A treasure chest containing {offer_amount:,d}{get_emoji(offer_item)}\n"
-                        f"It opens using {cost_amount:,d}{get_emoji(cost_item)}",
-            timestamp=get_timestamp()
+            description=f"A treasure chest containing {offer_amount:,d}{self.get_emoji(offer_item)}\n"
+                        f"It opens using {cost_amount:,d}{self.get_emoji(cost_item)}",
+            timestamp=self.get_timestamp()
         )
         embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
         await search_msg.edit(embed=embed)
@@ -1066,7 +1049,7 @@ class Gameplay(commands.Cog):
                 color=user.colour,
                 title="Encounter Treasure",
                 description=f"The chest you found turned into ashes 🔥",
-                timestamp=get_timestamp()
+                timestamp=self.get_timestamp()
             )
             embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
             await search_msg.edit(embed=embed)
@@ -1082,8 +1065,8 @@ class Gameplay(commands.Cog):
                         cost_item: -cost_amount}
                 })
 
-                await logs_add_line(offer_item, offer_amount, user.id)
-                await logs_add_line(cost_item, -cost_amount, user.id)
+                await self.perform_add_log(offer_item, offer_amount, user.id)
+                await self.perform_add_log(cost_item, -cost_amount, user.id)
 
                 cost_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, cost_item: 1})[cost_item]
                 offer_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, offer_item: 1})[offer_item]
@@ -1091,13 +1074,14 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"You acquired `{offer_amount:,d}`{get_emoji(offer_item)} in exchange for "
-                                f"`{cost_amount:,d}`{get_emoji(cost_item)}",
-                    timestamp=get_timestamp()
+                    description=f"You acquired `{offer_amount:,d}`{self.get_emoji(offer_item)} in exchange for "
+                                f"`{cost_amount:,d}`{self.get_emoji(cost_item)}",
+                    timestamp=self.get_timestamp()
                 )
                 embed.add_field(
                     name="Inventory",
-                    value=f"`{offer_item_have:,d}` {emojify(offer_item)} | `{cost_item_have:,d}` {emojify(cost_item)}"
+                    value=f"`{offer_item_have:,d}` {self.get_emoji(offer_item)} | "
+                          f"`{cost_item_have:,d}` {self.get_emoji(cost_item)}"
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
@@ -1106,8 +1090,8 @@ class Gameplay(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour,
                     title="Encounter treasure",
-                    description=f"exchange failed, you only have {cost_item_current:,d}{get_emoji(cost_item)}",
-                    timestamp=get_timestamp()
+                    description=f"exchange failed, you only have {cost_item_current:,d}{self.get_emoji(cost_item)}",
+                    timestamp=self.get_timestamp()
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
@@ -1168,7 +1152,7 @@ class Gameplay(commands.Cog):
                 title="Encounter Boss", color=discoverer.colour,
                 description=f"The rare boss {boss_select} has been triggered!\n\n"
                             f"⏰ {round(time_remaining)} secs left!",
-                timestamp=get_timestamp()
+                timestamp=self.get_timestamp()
             )
             embed_new.add_field(
                 name="Stats",
@@ -1194,7 +1178,7 @@ class Gameplay(commands.Cog):
             return embed_new
 
         await asyncio.sleep(2)
-        time_discovered = get_time()
+        time_discovered = self.get_time()
         await search_msg.edit(embed=generate_embed_boss(timeout, assembly_players_name))
         await search_msg.add_reaction("🏁")
 
@@ -1210,11 +1194,11 @@ class Gameplay(commands.Cog):
         while count_players < 10:
             try:
                 await asyncio.sleep(1)
-                timeout = ((time_discovered + timedelta(seconds=180)) - get_time()).total_seconds()
+                timeout = ((time_discovered + timedelta(seconds=180)) - self.get_time()).total_seconds()
                 reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
 
             except asyncio.TimeoutError:
-                embed = discord.Embed(title="🎌 Assembly ends!", colour=discord.Colour(embed_color))
+                embed = discord.Embed(title="🎌 Assembly ends!", colour=discord.Colour(colour))
                 await search_msg.clear_reactions()
                 await ctx.channel.send(embed=embed)
                 break
@@ -1249,14 +1233,14 @@ class Gameplay(commands.Cog):
                     assembly_players.append(str(user.id))
                     assembly_players2.append(str(user.name))
                     assembly_players_name.append(user.display_name)
-                    timeout_new = ((time_discovered + timedelta(seconds=180)) - get_time()).total_seconds()
+                    timeout_new = ((time_discovered + timedelta(seconds=180)) - self.get_time()).total_seconds()
                     await search_msg.edit(embed=generate_embed_boss(timeout_new, assembly_players_name))
                     count_players += 1
 
         if len(assembly_players) == 0:
             await asyncio.sleep(3)
             embed = discord.Embed(
-                title="Encounter Boss", colour=discord.Colour(embed_color),
+                title="Encounter Boss", colour=discord.Colour(colour),
                 description=f"No players have joined the assembly.\nThe rare boss {boss_select} has fled."
             )
             await ctx.channel.send(embed=embed)
@@ -1264,7 +1248,7 @@ class Gameplay(commands.Cog):
 
         else:
             await asyncio.sleep(3)
-            embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=discord.Colour(embed_color))
+            embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=discord.Colour(colour))
             await ctx.channel.send(embed=embed)
 
             boss_profile = bosses.find_one({
@@ -1337,7 +1321,7 @@ class Gameplay(commands.Cog):
                           f"each from its attackers!\n\n{random.choice(boss_comment)}~"
 
             embed = discord.Embed(
-                colour=discord.Colour(embed_color), description=description, timestamp=get_timestamp()
+                colour=discord.Colour(colour), description=description, timestamp=self.get_timestamp()
             )
             embed.set_thumbnail(url=boss_url)
 
@@ -1403,7 +1387,7 @@ class Gameplay(commands.Cog):
                 zip(challengers, boss_coins_user, boss_jades_users, boss_medals_users, boss_exp_users, distribution))
 
             embed = discord.Embed(
-                title=f"The Rare Boss {boss_select} has been defeated!", colour=discord.Colour(embed_color)
+                title=f"The Rare Boss {boss_select} has been defeated!", colour=discord.Colour(colour)
             )
             await ctx.channel.send(embed=embed)
             await self.encounter_roll_boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
@@ -1411,9 +1395,9 @@ class Gameplay(commands.Cog):
     async def encounter_roll_boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
 
         embed = discord.Embed(
-            colour=discord.Colour(embed_color),
+            colour=discord.Colour(colour),
             title="🎊 Boss defeat rewards!",
-            timestamp=get_timestamp()
+            timestamp=self.get_timestamp()
         )
         embed.set_thumbnail(url=boss_url)
 
@@ -1440,9 +1424,9 @@ class Gameplay(commands.Cog):
                         "medals": round([reward][0][3])
                     }
                 })
-                await logs_add_line("jades", round([reward][0][2]), [reward][0][0])
-                await logs_add_line("coins", round([reward][0][1]), [reward][0][0])
-                await logs_add_line("medals", round([reward][0][3]), [reward][0][0])
+                await self.perform_add_log("jades", round([reward][0][2]), [reward][0][0])
+                await self.perform_add_log("coins", round([reward][0][1]), [reward][0][0])
+                await self.perform_add_log("medals", round([reward][0][3]), [reward][0][0])
 
                 users.update_one({
                     "user_id": [reward][0][0], "level": {"$lt": 60}}, {
@@ -1465,9 +1449,9 @@ class Gameplay(commands.Cog):
                     "medals": medals,
                 }
             })
-            await logs_add_line("jades", jades, discoverer)
-            await logs_add_line("coins", coins, discoverer)
-            await logs_add_line("medals", medals, discoverer)
+            await self.perform_add_log("jades", jades, discoverer)
+            await self.perform_add_log("coins", coins, discoverer)
+            await self.perform_add_log("medals", medals, discoverer)
 
             users.update_one({
                 "user_id": discoverer, "level": {"$lt": 60}}, {
@@ -1483,8 +1467,8 @@ class Gameplay(commands.Cog):
             description = f"{user.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
                           f"{medals:,d}{e_m} and {exp:,d} {e_x} for initially discovering {boss_select}!"
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
-                description=description, timestamp=get_timestamp()
+                colour=discord.Colour(colour),
+                description=description, timestamp=self.get_timestamp()
             )
             await ctx.channel.send(embed=embed)
         except AttributeError:
@@ -1535,7 +1519,7 @@ class Gameplay(commands.Cog):
                 }
             })
             if deduction_jades.modified_count > 0:
-                await logs_add_line("jades", -boss_jadesteal, player_id)
+                await self.perform_add_log("jades", -boss_jadesteal, player_id)
 
 
             deduction_coins = users.update_one({
@@ -1545,21 +1529,21 @@ class Gameplay(commands.Cog):
                 }
             })
             if deduction_jades.modified_count > 0:
-                await logs_add_line("coins", -boss_coinsteal, player_id)
+                await self.perform_add_log("coins", -boss_coinsteal, player_id)
 
             if deduction_jades.modified_count == 0:
                 users.update_one({"user_id": player_id}, {"$set": {"jades": 0}})
                 current_jades = users.find_one({"user_id": player_id}, {"_id": 0, "jades": 1})["jades"]
-                await logs_add_line("jades", -current_jades, player_id)
+                await self.perform_add_log("jades", -current_jades, player_id)
             else:
-                await logs_add_line("jades", -boss_jadesteal, player_id)
+                await self.perform_add_log("jades", -boss_jadesteal, player_id)
 
             if deduction_coins.modified_count == 0:
                 users.update_one({"user_id": player_id}, {"$set": {"coins": 0}})
                 current_coins = users.find_one({"user_id": player_id}, {"_id": 0, "coins": 1})["coins"]
-                await logs_add_line("coins", -current_coins, player_id)
+                await self.perform_add_log("coins", -current_coins, player_id)
             else:
-                await logs_add_line("coins", -boss_coinsteal, player_id)
+                await self.perform_add_log("coins", -boss_coinsteal, player_id)
 
     @commands.command(aliases=["binfo", "bossinfo"])
     @commands.guild_only()
@@ -1588,9 +1572,9 @@ class Gameplay(commands.Cog):
                     boss_description = "All rare bosses are currently dead"
 
                 embed = discord.Embed(
-                    title=f"Boss survivability", colour=discord.Colour(embed_color),
+                    title=f"Boss survivability", colour=discord.Colour(colour),
                     description=boss_description,
-                    timestamp=get_timestamp()
+                    timestamp=self.get_timestamp()
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -1634,16 +1618,16 @@ class Gameplay(commands.Cog):
                               f"Experience  :: {experience}```"
 
                 embed = discord.Embed(
-                    title=f"Rare Boss {query} stats", colour=discord.Colour(embed_color),
+                    title=f"Rare Boss {query} stats", colour=discord.Colour(colour),
                     description=description,
-                    timestamp=get_timestamp()
+                    timestamp=self.get_timestamp()
                 )
                 embed.set_thumbnail(url=boss_url)
                 await ctx.channel.send(embed=embed)
 
         except AttributeError:
             embed = discord.Embed(
-                title="bossinfo, binfo", colour=discord.Colour(embed_color),
+                title="bossinfo, binfo", colour=discord.Colour(colour),
                 description="shows discovered boss statistics"
             )
             demons_formatted = ", ".join(demons)

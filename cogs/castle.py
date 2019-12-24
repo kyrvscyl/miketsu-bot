@@ -36,77 +36,44 @@ invalid_channels = config.find_one({"list": 1}, {"_id": 0, "invalid_channels": 1
 primary_roles = config.find_one({"list": 1}, {"_id": 0, "primary_roles": 1})["primary_roles"]
 
 # Variables
-guild_id = int(os.environ.get("SERVER"))
-castle_id = int(guilds.find_one({"server": str(guild_id)}, {"_id": 0, "categories": 1})["categories"]["castle"])
-duelling_room_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["duelling-room"]
-embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-hosting_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
-reference_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["reference-section"]
-restricted_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["restricted-section"]
+id_guild = int(os.environ.get("SERVER"))
+colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+
+id_castle = int(guilds.find_one({"server": str(id_guild)}, {"_id": 0, "categories": 1})["categories"]["castle"])
+id_duelling_room = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["duelling-room"]
+id_hosting = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["bot-sparring"]
+id_reference = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["reference-section"]
+id_restricted = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["restricted-section"]
+
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 # Dictionaries
 primary_emojis = config.find_one({"dict": 1}, {"_id": 0, "primary_emojis": 1})["primary_emojis"]
 
+# Instantiations
 
 for soul in books.find({"section": "sbs", "index": {"$nin": ["1", "2", "3"]}}, {"_id": 0, "index": 1}):
     lists_souls.append("`{}`".format(soul["index"].lower()))
     lists_souls_raw.append(soul["index"].lower())
 
-
 for document in shikigamis.find({}, {"_id": 0, "name": 1}):
     pool_all.append(document["name"])
 
 
-def get_time():
-    return datetime.now(tz=pytz.timezone(timezone))
-
-
-def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
-def get_emoji_primary_role(role):
-    return primary_emojis[role]
-
-
 def check_if_valid_and_castle(ctx):
-    return ctx.channel.category.id == castle_id and str(ctx.channel.name) not in invalid_channels
+    return ctx.channel.category.id == id_castle and str(ctx.channel.name) not in invalid_channels
 
 
 def check_if_channel_is_pvp(ctx):
-    return str(ctx.channel.id) == duelling_room_id
+    return str(ctx.channel.id) == id_duelling_room
 
 
 def check_if_reference_section(ctx):
-    return str(ctx.channel.id) == reference_id
+    return str(ctx.channel.id) == id_reference
 
 
 def check_if_restricted_section(ctx):
-    return str(ctx.channel.id) == restricted_id
-
-
-def lengthen(index):
-    prefix = "#{}"
-    if index < 10:
-        prefix = "#00{}"
-    elif index < 100:
-        prefix = "#0{}"
-    return prefix.format(index)
-
-
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
-
-
-async def post_process_books(ctx, query):
-    books.update_one(query, {"$inc": {"borrows": 1}})
-    await ctx.message.delete()
+    return str(ctx.channel.id) == id_restricted
 
 
 class Castle(commands.Cog):
@@ -114,7 +81,7 @@ class Castle(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
-
+    
     def create_webhook_post(self, webhooks, book):
 
         bukkuman = webhooks[0]
@@ -205,6 +172,35 @@ class Castle(commands.Cog):
             pass
 
         return webhook
+
+    def get_time(self):
+        return datetime.now(tz=pytz.timezone(timezone))
+
+    def get_timestamp(self):
+        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+    
+    def get_emoji_primary_role(self, role):
+        return primary_emojis[role]
+    
+    def lengthen(self, index):
+        prefix = "#{}"
+        if index < 10:
+            prefix = "#00{}"
+        elif index < 100:
+            prefix = "#0{}"
+        return prefix.format(index)
+    
+    def pluralize(self, singular, count):
+        if count > 1:
+            if singular[-1:] == "s":
+                return singular + "es"
+            return singular + "s"
+        else:
+            return singular
+
+    async def post_process_books(self, ctx, query):
+        books.update_one(query, {"$inc": {"borrows": 1}})
+        await ctx.message.delete()
 
     @commands.command(aliases=["guides"])
     @commands.guild_only()
@@ -350,13 +346,13 @@ class Castle(commands.Cog):
                     content=f"{book['content']} {contributor}",
                     file=file
                 )
-                await post_process_books(ctx, query)
+                await self.post_process_books(ctx, query)
 
             elif book is not None:
 
                 webhook = self.create_webhook_post(webhooks, book)
                 webhook.execute()
-                await post_process_books(ctx, query)
+                await self.post_process_books(ctx, query)
 
         elif check_if_restricted_section(ctx):
 
@@ -376,13 +372,13 @@ class Castle(commands.Cog):
                     content=f"{book['content']}",
                     file=file
                 )
-                await post_process_books(ctx, query)
+                await self.post_process_books(ctx, query)
 
             elif book is not None:
 
                 webhook = self.create_webhook_post(webhooks, book)
                 webhook.execute()
-                await post_process_books(ctx, query)
+                await self.post_process_books(ctx, query)
 
     @commands.command(aliases=["portraits"])
     @commands.guild_only()
@@ -434,7 +430,7 @@ class Castle(commands.Cog):
 
                 embed_new = discord.Embed(
                     color=ctx.author.colour,
-                    title=f"{get_emoji_primary_role(find_role)} {in_game_name}",
+                    title=f"{self.get_emoji_primary_role(find_role)} {in_game_name}",
                     description=description
                 )
                 embed_new.set_image(url=image_link)
@@ -453,6 +449,7 @@ class Castle(commands.Cog):
                 try:
                     reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
                 except asyncio.TimeoutError:
+                    await msg.clear_reactions()
                     break
                 else:
                     if str(reaction.emoji) == "➡":
@@ -466,7 +463,7 @@ class Castle(commands.Cog):
 
         if arg1.lower() not in ["edit", "add"]:
             embed = discord.Embed(
-                title="portrait add, portrait edit", colour=discord.Colour(embed_color),
+                title="portrait add, portrait edit", colour=discord.Colour(colour),
                 description=f"use `add` first before using `edit`\n"
                             f"use square photos for best results"
             )
@@ -497,7 +494,7 @@ class Castle(commands.Cog):
                 floor = int(argument[1])
             except ValueError:
                 embed = discord.Embed(
-                    colour=discord.Colour(embed_color),
+                    colour=discord.Colour(colour),
                     title="Invalid floor number",
                     description="available floors: 1-6 only"
                 )
@@ -515,14 +512,14 @@ class Castle(commands.Cog):
 
             if frame_profile is not None:
                 embed = discord.Embed(
-                    colour=discord.Colour(embed_color),
+                    colour=discord.Colour(colour),
                     description=f"portrait already exists, use `{self.prefix}frame edit <...>`"
                 )
                 await ctx.channel.send(embed=embed)
 
             elif floor not in [1, 2, 3, 4, 5, 6]:
                 embed = discord.Embed(
-                    colour=discord.Colour(embed_color),
+                    colour=discord.Colour(colour),
                     title="Invalid floor number",
                     description="available floors: 1-6 only"
                 )
@@ -565,11 +562,11 @@ class Castle(commands.Cog):
     async def castle_portrait_customize_process(self, img_link, ign, find_role, ctx, description, floor, frame_num):
 
         async with ctx.channel.typing():
-            embed = discord.Embed(colour=discord.Colour(embed_color), title="Processing the image.. ")
+            embed = discord.Embed(colour=discord.Colour(colour), title="Processing the image.. ")
             msg1 = await ctx.channel.send(embed=embed)
             await asyncio.sleep(2)
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="Adding a fancy frame based on your highest primary server role.."
             )
             await msg1.edit(embed=embed)
@@ -590,7 +587,7 @@ class Castle(commands.Cog):
             background.save(new_address)
 
             new_photo = discord.File(new_address, filename=f"{ign}.png")
-            hosting_channel = self.client.get_channel(int(hosting_id))
+            hosting_channel = self.client.get_channel(int(id_hosting))
             msg = await hosting_channel.send(file=new_photo)
 
             await asyncio.sleep(3)
@@ -600,7 +597,7 @@ class Castle(commands.Cog):
 
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"{get_emoji_primary_role(find_role)} {ign}",
+                title=f"{self.get_emoji_primary_role(find_role)} {ign}",
                 description=description
             )
             embed.set_image(url=attachment_link)
@@ -620,7 +617,7 @@ class Castle(commands.Cog):
 
         if len(args) == 0 or args[0].lower() in ["help", "h"]:
             embed = discord.Embed(
-                title="duel, d", colour=discord.Colour(embed_color),
+                title="duel, d", colour=discord.Colour(colour),
                 description="shows the help prompt for the first 3 arguments"
             )
             embed.add_field(name="Arguments", value="*add, update, show, delete*", inline=False)
@@ -629,7 +626,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() == "add" and len(args) <= 1:
             embed = discord.Embed(
-                title="duel add, d a", colour=discord.Colour(embed_color),
+                title="duel add, d a", colour=discord.Colour(colour),
                 description="add a new duelist in the database"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}duel add <name>`*", inline=False)
@@ -637,7 +634,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() == ["delete", "d"] and len(args) <= 1:
             embed = discord.Embed(
-                title="duel delete, d d", colour=discord.Colour(embed_color),
+                title="duel delete, d d", colour=discord.Colour(colour),
                 description="removes a duelist in the database"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}duel delete <exact_name>`*", inline=False)
@@ -651,7 +648,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() in ["update", "u"] and len(args) <= 1:
             embed = discord.Embed(
-                title="duel update, d u", colour=discord.Colour(embed_color),
+                title="duel update, d u", colour=discord.Colour(colour),
                 description="updates a duelist's profile"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}d u <name or id> <field> <value>`*")
@@ -678,7 +675,7 @@ class Castle(commands.Cog):
                 fields_formatted.append(f"`{field}`")
 
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="No field and value provided",
                 description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
@@ -690,7 +687,7 @@ class Castle(commands.Cog):
                 fields_formatted.append(f"`{field}`")
 
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="Invalid field update request",
                 description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
@@ -701,7 +698,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() in ["update", "u"] and args[2].lower() in duel_fields and len(args) == 3:
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="Invalid field update request",
                 description=f"No value provided for the field {args[2].lower()}"
             )
@@ -712,7 +709,7 @@ class Castle(commands.Cog):
 
         elif args[0].lower() in ["show", "s"] and len(args) == 1:
             embed = discord.Embed(
-                title="duel show, d s", colour=discord.Colour(embed_color),
+                title="duel show, d s", colour=discord.Colour(colour),
                 description="queries the duelists database"
             )
             embed.add_field(
@@ -755,8 +752,8 @@ class Castle(commands.Cog):
         try:
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"{lengthen(member['#'])} : {member['name']}",
-                timestamp=get_timestamp()
+                title=f"{self.lengthen(member['#'])} : {member['name']}",
+                timestamp=self.get_timestamp()
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(
@@ -800,6 +797,7 @@ class Castle(commands.Cog):
                 try:
                     await self.client.wait_for("reaction_add", timeout=180, check=check)
                 except asyncio.TimeoutError:
+                    await msg.clear_reactions()
                     break
                 else:
                     links = member["lineup"]
@@ -808,7 +806,7 @@ class Castle(commands.Cog):
                         embed_new = discord.Embed(
                             title=f"🖼 Lineup Archives for {member['name']}",
                             color=ctx.author.colour,
-                            timestamp=get_timestamp()
+                            timestamp=self.get_timestamp()
                         )
                         if len(links) > 0:
                             embed_new.set_image(url=links[page - 1])
@@ -840,10 +838,10 @@ class Castle(commands.Cog):
         project = {"_id": 0, "#": 1, "name": 1}
 
         for duelist in duelists.find(find_query, project).sort([("#", 1)]):
-            number = lengthen(duelist["#"])
+            number = self.lengthen(duelist["#"])
             formatted_list.append(f"`{number}:` | {duelist['name']}\n")
 
-        noun = pluralize("duelist", len(formatted_list))
+        noun = self.pluralize("duelist", len(formatted_list))
         content = f"There are {len(formatted_list)} registered {noun}"
         await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
 
@@ -854,10 +852,10 @@ class Castle(commands.Cog):
         project = {"_id": 0, "#": 1, "name": 1}
 
         for duelist in duelists.find(find_query, project).sort([("name_lower", 1)]):
-            number = lengthen(duelist["#"])
+            number = self.lengthen(duelist["#"])
             formatted_list.append(f"`{number}:` | {duelist['name']}\n")
 
-        noun = pluralize("result", len(formatted_list))
+        noun = self.pluralize("result", len(formatted_list))
         content = f"I've got {len(formatted_list)} {noun} for duelists starting with __{args[2].lower()}__"
         await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
 
@@ -869,7 +867,7 @@ class Castle(commands.Cog):
             approximate_results.append(f"{result['#']}/{result['name_lower']}")
 
         embed = discord.Embed(
-            colour=discord.Colour(embed_color),
+            colour=discord.Colour(colour),
             title="Invalid query",
             description=f"the ID/name `{member_name}` returned no results"
         )
@@ -898,19 +896,19 @@ class Castle(commands.Cog):
                 "$push": {
                     "note": {
                         "member": ctx.author.name,
-                        "time": get_time(),
+                        "time": self.get_time(),
                         "note": " ".join(args[3::])
                     }
                 },
                 "$set": {
-                    "last_update": get_time()
+                    "last_update": self.get_time()
                 }
             })
             await ctx.message.add_reaction("✅")
 
         elif args[2].lower() == "name":
             duelists.update_one(find_query, {"$set": {
-                "name": args[3], "name_lower": args[3].lower(), "last_update": get_time()
+                "name": args[3], "name_lower": args[3].lower(), "last_update": self.get_time()
             }})
             await ctx.message.add_reaction("✅")
 
@@ -920,7 +918,7 @@ class Castle(commands.Cog):
                     args[2].lower()[2:]: " ".join(args[3:]).lower()
                 },
                 "$set": {
-                    "last_update": get_time()
+                    "last_update": self.get_time()
                 }
             })
             await ctx.message.add_reaction("✅")
@@ -931,7 +929,7 @@ class Castle(commands.Cog):
                     args[2].lower(): " ".join(args[3:]).lower()
                 },
                 "$set": {
-                    "last_update": get_time()
+                    "last_update": self.get_time()
                 }
             })
             await ctx.message.add_reaction("✅")
@@ -943,7 +941,7 @@ class Castle(commands.Cog):
                     "lineup": image_link
                 },
                 "$set": {
-                    "last_update": get_time()
+                    "last_update": self.get_time()
                 }
             })
             await ctx.message.add_reaction("✅")
@@ -979,14 +977,14 @@ class Castle(commands.Cog):
                 "lineup": [],
                 "notes": [],
                 "link": None,
-                "last_update": get_time()
+                "last_update": self.get_time()
             }
             duelists.insert_one(profile)
             await ctx.message.add_reaction("✅")
 
         else:
             embed = discord.Embed(
-                title="Invalid duelist", colour=discord.Colour(embed_color),
+                title="Invalid duelist", colour=discord.Colour(colour),
                 description="that name already exists in the database"
             )
             await ctx.channel.send(embed=embed)
@@ -1039,7 +1037,7 @@ class Castle(commands.Cog):
         combined_img.save(temp_address)
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(int(hosting_id))
+        hosting_channel = self.client.get_channel(int(id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
         return attachment_link
@@ -1059,7 +1057,7 @@ class Castle(commands.Cog):
 
             embed_new = discord.Embed(
                 color=ctx.author.colour, title="🎌 Secret Duelling Book",
-                description=f"{description_new}", timestamp=get_timestamp()
+                description=f"{description_new}", timestamp=self.get_timestamp()
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             embed_new.set_thumbnail(url=ctx.guild.icon_url)
@@ -1076,6 +1074,7 @@ class Castle(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
             except asyncio.TimeoutError:
+                await msg.clear_reactions()
                 break
             else:
                 if str(reaction.emoji) == "➡":

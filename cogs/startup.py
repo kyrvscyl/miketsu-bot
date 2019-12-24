@@ -15,20 +15,20 @@ from discord.ext import tasks, commands
 from cogs.mongo.database import get_collections
 
 # Collections
-guilds = get_collections("guilds")
 changelogs = get_collections("changelogs")
 config = get_collections("config")
+guilds = get_collections("guilds")
 
 # Lists
 status = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
 admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_roles"]
 
 # Variables
-guild_id = int(os.environ.get("SERVER"))
-headlines_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
-timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-embed_color = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
+id_guild = int(os.environ.get("SERVER"))
+colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
 
+id_headlines = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["headlines"]
+timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
 
 def check_if_has_any_admin_roles(ctx):
@@ -38,16 +38,15 @@ def check_if_has_any_admin_roles(ctx):
     return False
 
 
-def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
 class Startup(commands.Cog):
 
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
 
+    def get_timestamp(self):
+        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+    
     @commands.Cog.listener()
     async def on_ready(self):
         owner_id = await self.client.application_info()
@@ -76,7 +75,7 @@ class Startup(commands.Cog):
     async def show_greeting_message(self, ctx):
 
         embed = discord.Embed(
-            color=embed_color,
+            color=colour,
             description=f"To see my commands, type *`{self.prefix}help`*"
         )
         embed.set_author(name=f"Hello there! I'm {self.client.user.display_name}! ~")
@@ -86,7 +85,7 @@ class Startup(commands.Cog):
     async def show_help_message(self, ctx):
         embed = discord.Embed(
             title="help, h",
-            color=embed_color,
+            color=colour,
             description=f"append the prefix symbol *`{self.prefix}`*"
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
@@ -113,11 +112,11 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["suggest", "report"])
     async def collect_suggestions(self, ctx, *, content):
-        request = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels.scroll-of-everything": 1})
+        request = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels.scroll-of-everything": 1})
         record_scroll_id = request["channels"]["scroll-of-everything"]
         record_scroll = self.client.get_channel(int(record_scroll_id))
 
-        embed = discord.Embed(color=embed_color, title="📨 New Suggestion/Report", timestamp=get_timestamp())
+        embed = discord.Embed(color=colour, title="📨 New Suggestion/Report", timestamp=self.get_timestamp())
         try:
             link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
             embed.description = f"Author: {ctx.author.mention}\n" \
@@ -142,7 +141,7 @@ class Startup(commands.Cog):
         for line in reversed(changelog_lines):
             changelog_lines_formatted.append(f"• {line}\n")
 
-        embed = discord.Embed(color=embed_color, title="Changelog", timestamp=get_timestamp())
+        embed = discord.Embed(color=colour, title="Changelog", timestamp=self.get_timestamp())
         embed.description = " ".join(changelog_lines_formatted)
 
         await self.show_changelogs_paginate(ctx, changelog_lines_formatted)
@@ -179,6 +178,7 @@ class Startup(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
+                await msg.clear_reactions()
                 break
             else:
                 if str(reaction.emoji) == "➡":

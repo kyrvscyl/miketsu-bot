@@ -26,9 +26,10 @@ admin_roles = config.find_one({"list": 1}, {"_id": 0, "admin_roles": 1})["admin_
 msg_id_list = []
 
 # Variables
-guild_id = int(os.environ.get("SERVER"))
+id_guild = int(os.environ.get("SERVER"))
 e_c = emojis["c"]
 
+# Instantiations
 
 for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
     msg_id_list.append(role_select_msg["msg_id"])
@@ -41,21 +42,20 @@ def check_if_has_any_admin_roles(ctx):
     return False
 
 
-def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
 class Embeds(commands.Cog):
 
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
 
+    def get_timestamp(self):
+        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+    
     @commands.command(aliases=["patch"])
     @commands.check(check_if_has_any_admin_roles)
     async def post_patch_notes(self, ctx, arg1, *, args):
 
-        guild = self.client.get_guild(int(guild_id))
+        guild = self.client.get_guild(int(id_guild))
         request = guilds.find_one({"server": str(guild.id)}, {"_id": 0, "channels": 1})
         headlines_id = request["channels"]["headlines"]
         headlines_channel = self.client.get_channel(int(headlines_id))
@@ -95,7 +95,7 @@ class Embeds(commands.Cog):
     async def edit_message_welcome(self, ctx):
 
         request = guilds.find_one({
-            "server": f"{guild_id}"}, {
+            "server": f"{id_guild}"}, {
             "_id": 0,
             "channels": 1,
             "roles.patronus": 1,
@@ -309,7 +309,7 @@ class Embeds(commands.Cog):
             return
 
         request = guilds.find_one({
-            "server": f"{guild_id}"}, {
+            "server": f"{id_guild}"}, {
             "_id": 0,
             "channels": 1,
             "messages": 1,
@@ -607,21 +607,21 @@ class Embeds(commands.Cog):
     async def post_sorting_messages(self, ctx):
 
         request = guilds.find_one({
-            "server": f"{guild_id}"}, {
+            "server": f"{id_guild}"}, {
             "_id": 0, "channels": 1
         })
 
         sorting_id = request["channels"]["sorting-hat"]
         sorting_channel = self.client.get_channel(int(sorting_id))
 
-        guild = self.client.get_guild(int(guild_id))
+        guild = self.client.get_guild(int(id_guild))
 
         for document in sortings.find({}, {"_id": 0}):
 
             embed = discord.Embed(
                 title=document["title"],
                 description=document["description"].replace('\\n', '\n'),
-                timestamp=get_timestamp(),
+                timestamp=self.get_timestamp(),
                 color=document["color"]
             )
 
@@ -667,15 +667,6 @@ class Embeds(commands.Cog):
             await asyncio.sleep(2)
 
         await ctx.message.delete()
-
-    @commands.command(aliases=["1"])
-    @commands.is_owner()
-    async def test(self, ctx):
-
-        sorting_channel = self.client.get_channel(int(606688376648761380))
-        msg = await sorting_channel.fetch_message(651798001983160320)
-        print(msg)
-        print(msg.reactions)
 
 
 def setup(client):

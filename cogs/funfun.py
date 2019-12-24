@@ -13,18 +13,18 @@ from discord.ext import commands
 from cogs.mongo.database import get_collections
 
 # Collections
+config = get_collections("config")
 guilds = get_collections("guilds")
+shoots = get_collections("shoots")
 stickers = get_collections("stickers")
 users = get_collections("users")
-config = get_collections("config")
-shoots = get_collections("shoots")
 
 # Lists
 actions = []
 stickers_list = []
 
-failed_shoots = cycle(config.find_one({"list": 3}, {"_id": 0, "failed_shoots": 1})["failed_shoots"])
-success_shoots = cycle(config.find_one({"list": 3}, {"_id": 0, "success_shoots": 1})["success_shoots"])
+shoots_failed = cycle(config.find_one({"list": 3}, {"_id": 0, "failed_shoots": 1})["failed_shoots"])
+shoots_success = cycle(config.find_one({"list": 3}, {"_id": 0, "success_shoots": 1})["success_shoots"])
 reactions = cycle(config.find_one({"list": 3}, {"_id": 0, "reactions": 1})["reactions"])
 
 
@@ -40,118 +40,115 @@ def generate_new_stickers():
 generate_new_stickers()
 
 
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
-
-
-async def mike_how_hot(guild, channel, msg):
-    msg_formatted = msg.lower().split(" ")
-
-    for word in msg_formatted:
-
-        if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
-
-            user_id = re.sub("[<>@!]", "", word)
-            random.seed(int(user_id))
-            member = guild.get_member(int(user_id))
-            r = random.randint(1, 100)
-            hot = r / 1.17
-
-            emoji = "💔"
-            if hot > 25:
-                emoji = "❤"
-            if hot > 50:
-                emoji = "💖"
-            if hot > 75:
-                emoji = "💞"
-
-            embed = discord.Embed(
-                color=member.colour,
-                title=f"**{member.display_name}** is **{hot:.2f}%** hot {emoji}"
-            )
-            await channel.send(embed=embed)
-            break
-
-
-async def mikes_shoot_post_process(user, victim, winner, response, channel):
-
-    if shoots.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-        profile = {
-            "user_id": str(user.id),
-            "victim": []
-        }
-        shoots.insert_one(profile)
-
-    if shoots.find_one({"user_id": str(user.id), "victim.user_id": str(victim.id)}, {"_id": 0}) is None:
-        shoots.update_one({
-            "user_id": str(user.id)}, {
-            "$push": {
-                "victim": {
-                    "user_id": str(victim.id),
-                    "successes": 0,
-                    "fails": 0
-                }
-            }
-        })
-
-    embed = discord.Embed(color=user.colour, description=f"*{response}*")
-
-    if winner.id == user.id:
-        increment = {"victim.$.successes": 1, "victim.$.fails": 0}
-
-        shoots.update_one({
-            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-            "$inc": increment
-        }
-        )
-
-        query = shoots.find_one({
-            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-            "_id": 0,
-            "victim.$": 1
-        })
-        successes = query["victim"][0]["successes"]
-        fails = query["victim"][0]["fails"]
-
-        embed.set_footer(
-            text=f"{successes}/{successes + fails} successful {pluralize('shooting', successes + fails)}",
-            icon_url=user.avatar_url
-        )
-
-    else:
-        increment = {"victim.$.successes": 0, "victim.$.fails": 1}
-
-        shoots.update_one({
-            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-            "$inc": increment
-        }
-        )
-        query = shoots.find_one({
-            "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-            "_id": 0,
-            "victim.$": 1
-        })
-        successes = query["victim"][0]["successes"]
-        fails = query["victim"][0]["fails"]
-
-        embed.set_footer(
-            text=f"{fails}/{successes + fails} failed {pluralize('shooting', successes + fails)}",
-            icon_url=user.avatar_url
-        )
-
-    await channel.send(embed=embed)
-
-
 class Funfun(commands.Cog):
 
     def __init__(self, client):
         self.client = client
 
+    def pluralize(self, singular, count):
+        if count > 1:
+            if singular[-1:] == "s":
+                return singular + "es"
+            return singular + "s"
+        else:
+            return singular
+
+    async def mike_how_hot(self, guild, channel, msg):
+        msg_formatted = msg.lower().split(" ")
+    
+        for word in msg_formatted:
+    
+            if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
+    
+                user_id = re.sub("[<>@!]", "", word)
+                random.seed(int(user_id))
+                member = guild.get_member(int(user_id))
+                r = random.randint(1, 100)
+                hot = r / 1.17
+    
+                emoji = "💔"
+                if hot > 25:
+                    emoji = "❤"
+                if hot > 50:
+                    emoji = "💖"
+                if hot > 75:
+                    emoji = "💞"
+    
+                embed = discord.Embed(
+                    color=member.colour,
+                    title=f"**{member.display_name}** is **{hot:.2f}%** hot {emoji}"
+                )
+                await channel.send(embed=embed)
+                break
+    
+    async def mikes_shoot_post_process(self, user, victim, winner, response, channel):
+    
+        if shoots.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
+            profile = {
+                "user_id": str(user.id),
+                "victim": []
+            }
+            shoots.insert_one(profile)
+    
+        if shoots.find_one({"user_id": str(user.id), "victim.user_id": str(victim.id)}, {"_id": 0}) is None:
+            shoots.update_one({
+                "user_id": str(user.id)}, {
+                "$push": {
+                    "victim": {
+                        "user_id": str(victim.id),
+                        "successes": 0,
+                        "fails": 0
+                    }
+                }
+            })
+    
+        embed = discord.Embed(color=user.colour, description=f"*{response}*")
+    
+        if winner.id == user.id:
+            increment = {"victim.$.successes": 1, "victim.$.fails": 0}
+    
+            shoots.update_one({
+                "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+                "$inc": increment
+            }
+            )
+    
+            query = shoots.find_one({
+                "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+                "_id": 0,
+                "victim.$": 1
+            })
+            successes = query["victim"][0]["successes"]
+            fails = query["victim"][0]["fails"]
+    
+            embed.set_footer(
+                text=f"{successes}/{successes + fails} successful {self.pluralize('shooting', successes + fails)}",
+                icon_url=user.avatar_url
+            )
+    
+        else:
+            increment = {"victim.$.successes": 0, "victim.$.fails": 1}
+    
+            shoots.update_one({
+                "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+                "$inc": increment
+            }
+            )
+            query = shoots.find_one({
+                "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
+                "_id": 0,
+                "victim.$": 1
+            })
+            successes = query["victim"][0]["successes"]
+            fails = query["victim"][0]["fails"]
+    
+            embed.set_footer(
+                text=f"{fails}/{successes + fails} failed {self.pluralize('shooting', successes + fails)}",
+                icon_url=user.avatar_url
+            )
+    
+        await channel.send(embed=embed)
+    
     async def mike_shoot(self, user, guild, channel, args):
         msg_formatted = args.lower().split(" ")
 
@@ -166,11 +163,11 @@ class Funfun(commands.Cog):
                     roll = random.randint(1, 100)
 
                     if roll >= 45:
-                        response = next(failed_shoots).format(user.mention)
-                        await mikes_shoot_post_process(user, member_target, member_target, response, channel)
+                        response = next(shoots_failed).format(user.mention)
+                        await self.mikes_shoot_post_process(user, member_target, member_target, response, channel)
                     else:
-                        response = next(success_shoots).format(member_target.mention)
-                        await mikes_shoot_post_process(user, member_target, user, response, channel)
+                        response = next(shoots_success).format(member_target.mention)
+                        await self.mikes_shoot_post_process(user, member_target, user, response, channel)
 
                     break
 
@@ -208,6 +205,7 @@ class Funfun(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=30, check=check)
             except asyncio.TimeoutError:
+                await msg.clear_reactions()
                 break
             else:
                 if str(reaction.emoji) == "➡":
@@ -277,7 +275,7 @@ class Funfun(commands.Cog):
                         await self.mike_shoot(message.author, message.guild, message.channel, message.content)
 
                     elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
-                        await mike_how_hot(message.guild, message.channel, message.content)
+                        await self.mike_how_hot(message.guild, message.channel, message.content)
 
                 except IndexError:
                     return

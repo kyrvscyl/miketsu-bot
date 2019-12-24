@@ -12,82 +12,36 @@ import pytz
 from discord.ext import commands
 
 from cogs.mongo.database import get_collections
-from cogs.startup import embed_color, guild_id
+from cogs.startup import colour, id_guild
 
 # Collections
-guilds = get_collections("guilds")
-realms = get_collections("realms")
 config = get_collections("config")
+guilds = get_collections("guilds")
+logs = get_collections("logs")
+realms = get_collections("realms")
 ships = get_collections("ships")
 users = get_collections("users")
-logs = get_collections("logs")
 
 # Lists
 realm_cards = []
 
 # Variables
-spell_spam_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
-scroll_id = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
+developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
 emoji_dict = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
-developer_team = guilds.find_one({"server": str(guild_id)}, {"_id": 0, "developers": 1})["developers"]
+
+id_scroll = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["scroll-of-everything"]
+id_spell_spam = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})["channels"]["spell-spam"]
+
 timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
 
+# Instantiations
 
 for card in realms.find({}, {"_id": 0}):
     realm_cards.append(f"{card['name'].lower()}")
 
 
-def get_time():
-    return datetime.now(tz=pytz.timezone(timezone))
-
-
-def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-
-def get_bond(x, y):
-    bond_list = sorted([x.id, y.id], reverse=True)
-    return f"{bond_list[0]}x{bond_list[1]}"
-
-
-def emojify(item):
-    return emoji_dict[item]
-
-
-def pluralize(singular, count):
-    if count > 1:
-        if singular[-1:] == "s":
-            return singular + "es"
-        return singular + "s"
-    else:
-        return singular
-
-
 def check_if_user_has_development_role(ctx):
     return str(ctx.author.id) in developer_team
-
-
-async def logs_add_line(currency, amount, user_id):
-
-    if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-        profile = {"user_id": str(user_id), "logs": []}
-        logs.insert_one(profile)
-
-    logs.update_one({
-        "user_id": str(user_id)
-    }, {
-        "$push": {
-            "logs": {
-                "$each": [{
-                    "currency": currency,
-                    "amount": amount,
-                    "date": get_time(),
-                }],
-                "$position": 0,
-                "$slice": 200
-            }
-        }
-    })
 
 
 class Realm(commands.Cog):
@@ -96,6 +50,52 @@ class Realm(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
+    def get_bond(self, x, y):
+        bond_list = sorted([x.id, y.id], reverse=True)
+        return f"{bond_list[0]}x{bond_list[1]}"
+
+    def get_emoji(self, item):
+        return emoji_dict[item]
+
+    def get_time(self):
+        return datetime.now(tz=pytz.timezone(timezone))
+    
+    def get_timestamp(self):
+        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+    
+    def get_time_converted(self, utc_dt):
+        return utc_dt.replace(tzinfo=pytz.timezone("UTC")).astimezone(tz=pytz.timezone(timezone))
+
+    def pluralize(self, singular, count):
+        if count > 1:
+            if singular[-1:] == "s":
+                return singular + "es"
+            return singular + "s"
+        else:
+            return singular
+
+    async def perform_add_log(self, currency, amount, user_id):
+    
+        if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
+            profile = {"user_id": str(user_id), "logs": []}
+            logs.insert_one(profile)
+    
+        logs.update_one({
+            "user_id": str(user_id)
+        }, {
+            "$push": {
+                "logs": {
+                    "$each": [{
+                        "currency": currency,
+                        "amount": amount,
+                        "date": self.get_time(),
+                    }],
+                    "$position": 0,
+                    "$slice": 200
+                }
+            }
+        })
+    
     @commands.command(aliases=["rca"])
     @commands.is_owner()
     async def realm_card_add(self, ctx, args):
@@ -128,7 +128,7 @@ class Realm(commands.Cog):
             embed = discord.Embed(
                 title="realms",
                 description="equip realms with your ships to obtained shared rewards",
-                color=embed_color
+                color=colour
             )
 
             def generate_data():
@@ -137,7 +137,7 @@ class Realm(commands.Cog):
                 for y in range(1, 7):
                     rewards = int(data[2] * exp(0.3868 * y))
                     values.append(
-                        f"`Grade {y}` :: `~ {rewards:,d}`{emojify(data[1])}\n"
+                        f"`Grade {y}` :: `~ {rewards:,d}`{self.get_emoji(data[1])}\n"
                     )
                 embed.set_thumbnail(url=data[3])
 
@@ -162,7 +162,8 @@ class Realm(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                return
+                await msg.clear_reactions()
+                break
             else:
                 if str(reaction.emoji) == "➡":
                     page += 1
@@ -180,7 +181,7 @@ class Realm(commands.Cog):
 
         if arg1 is None and member is None:
             embed = discord.Embed(
-                color=embed_color,
+                color=colour,
                 title="realm use, rlm u",
                 description=f"equip your realm by mentioning a member"
             )
@@ -197,21 +198,22 @@ class Realm(commands.Cog):
 
         elif arg1.lower() in ["use", "u"] and member is not None:
 
-            code = get_bond(ctx.author, member)
+            code = self.get_bond(ctx.author, member)
             ship_data = ships.find_one({"code": code}, {"_id": 0})
+
             if ship_data is not None:
 
-                if ship_data["card"]["equipped"] is True:
+                if ship_data["cards"]["equipped"] is True:
                     return
 
-                elif ship_data["card"]["equipped"] is False:
+                elif ship_data["cards"]["equipped"] is False:
 
                     user_cards = []
-                    for x in users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "cards": 1}):
+                    for x in users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "cards": 1})["cards"]:
                         user_cards.append(f"{x['name']}/{x['grade']}")
 
                     embed = discord.Embed(
-                        color=embed_color,
+                        color=colour,
                         title="Realm card selection",
                         description=f"enter a valid realm card and grade"
                     )
@@ -220,40 +222,52 @@ class Realm(commands.Cog):
                         value=f"*{', '.join(user_cards)}*",
                         inline=False
                     )
-                    msg = await ctx.channel.send(embed=embed)
+                    await ctx.channel.send(embed=embed)
 
                     def check(m):
-                        return m.lower() in user_cards and m.author.id == ctx.author.id
+                        return m.content.lower() in user_cards and m.author.id == ctx.author.id
 
                     try:
                         select = await self.client.wait_for("message", timeout=60, check=check)
                     except asyncio.TimeoutError:
                         return
                     else:
-                        select_formatted = select.lower().split("/")
+                        select_formatted = select.content.lower().split("/")
                         ships.update_one({
                             "code": code
                         }, {
                             "$set": {
-                                "card.equipped": True,
-                                "card.name": select_formatted[0],
-                                "card.grade": select_formatted[1],
-                                "card.timestamp": get_time(),
-                                "card.collected": False
+                                "cards.equipped": True,
+                                "cards.name": select_formatted[0],
+                                "cards.grade": int(select_formatted[1]),
+                                "cards.timestamp": self.get_time(),
+                                "cards.collected": False
                             }
                         })
-                        await msg.add_reaction("✅")
+                        await select.add_reaction("✅")
 
     @commands.command(aliases=["rcollect", "rcol"])
     @commands.guild_only()
     async def realm_card_collect_rewards(self, ctx, member: discord.Member = None):
 
         try:
-            code = get_bond(ctx.author, member)
+            code = self.get_bond(ctx.author, member)
             ship_data = ships.find_one({"code": code}, {"_id": 0})
+        except AttributeError:
+            embed = discord.Embed(
+                colour=discord.Colour(colour),
+                title="rcollect, rcol",
+                description=f"collect your cruising rewards"
+            )
+            embed.add_field(
+                name="Format",
+                value=f"*{self.prefix}rcollect <@member>*"
+            )
+            await ctx.channel.send(embed=embed)
+            return
         except TypeError:
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="rcollect, rcol",
                 description=f"collect your cruising rewards"
             )
@@ -266,7 +280,7 @@ class Realm(commands.Cog):
 
         if ship_data is None:
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="Invalid ship",
                 description=f"that ship has sunk before it was even fully built"
             )
@@ -274,7 +288,7 @@ class Realm(commands.Cog):
 
         elif ship_data["cards"]["collected"] is True or ship_data["cards"]["equipped"] is False:
             embed = discord.Embed(
-                colour=discord.Colour(embed_color),
+                colour=discord.Colour(colour),
                 title="Invalid collection",
                 description=f"the ship has not yet been deployed for cruise"
             )
@@ -283,17 +297,18 @@ class Realm(commands.Cog):
         elif ship_data["cards"]["collected"] is False and ship_data["cards"]["equipped"] is True:
 
             card_name = ship_data["cards"]["name"]
-            time_deployed = ship_data["cards"]["timestamp"]
+            time_deployed = self.get_time_converted(ship_data["cards"]["timestamp"])
+            now = datetime.now(tz=pytz.timezone("UTC"))
 
-            if datetime.now() < (time_deployed + timedelta(days=1)):
+            if now < (time_deployed + timedelta(days=1)):
                 embed = discord.Embed(
-                    colour=discord.Colour(embed_color),
+                    colour=discord.Colour(colour),
                     title="Invalid collection",
                     description=f"the ship has not yet returned from its cruise"
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif datetime.now() >= (time_deployed + timedelta(days=1)):
+            elif now >= (time_deployed + timedelta(days=1)):
                 card_data = realms.find_one({"name": card_name}, {"_id": 0})
 
                 rewards = card_data["rewards"]
@@ -313,12 +328,12 @@ class Realm(commands.Cog):
                                     f"Cruise: {ship_data['ship_name']}\n"
                                     f"Card: Grade {grade} {card_name.title()}",
                         color=shipper1.colour,
-                        timestamp=get_timestamp()
+                        timestamp=self.get_timestamp()
                     )
                     embed.set_author(name=f"Rewards collection", icon_url=shipper1.avatar_url)
                     embed.add_field(
                         name="Earnings per captain",
-                        value=f"{adjusted_rewards_count}{emojify(rewards)}"
+                        value=f"{adjusted_rewards_count}{self.get_emoji(rewards)}"
                     )
                     embed.set_thumbnail(url=link)
                     embed.set_footer(text=f"Level: {ship_data['level']}", icon_url=shipper2.avatar_url)
@@ -327,10 +342,10 @@ class Realm(commands.Cog):
 
                 if rewards != "experience":
                     users.update_one({"user_id": str(shipper1.id)}, {"$inc": {f"{rewards}": adjusted_rewards_count}})
-                    await logs_add_line(f"{rewards}", adjusted_rewards_count, shipper1.id)
+                    await self.perform_add_log(f"{rewards}", adjusted_rewards_count, shipper1.id)
 
                     users.update_one({"user_id": str(shipper2.id)}, {"$inc": {f"{rewards}": adjusted_rewards_count}})
-                    await logs_add_line(f"{rewards}", adjusted_rewards_count, shipper2.id)
+                    await self.perform_add_log(f"{rewards}", adjusted_rewards_count, shipper2.id)
 
                 else:
                     def get_shikigami_display(u):
