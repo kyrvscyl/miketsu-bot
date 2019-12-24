@@ -2456,7 +2456,7 @@ class Economy(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         elif profile["friendship_pass"] > 0:
-            code = self.get_bond(giver, receiver)
+            code = self.get_bond(giver.id, receiver.id)
             users.update_one({
                 "user_id": str(giver.id)}, {
                 "$inc": {
@@ -2542,7 +2542,7 @@ class Economy(commands.Cog):
             await ctx.channel.send(embed=embed)
 
         try:
-            code = self.get_bond(ctx.author, receiver)
+            code = self.get_bond(ctx.author.id, receiver.id)
             ships.update_one({"code": code}, {"$set": {"ship_name": new_name}})
             await self.friendship_post_ship(code, ctx.author, ctx)
 

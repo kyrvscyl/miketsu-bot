@@ -54,7 +54,7 @@ class Realm(commands.Cog):
         return commands.check(predicate)
 
     def get_bond(self, x, y):
-        bond_list = sorted([x.id, y.id], reverse=True)
+        bond_list = sorted([x, y], reverse=True)
         return f"{bond_list[0]}x{bond_list[1]}"
 
     def get_emoji(self, item):
@@ -269,7 +269,7 @@ class Realm(commands.Cog):
 
         elif arg1.lower() in ["use", "u"] and member is not None:
 
-            code = self.get_bond(ctx.author, member)
+            code = self.get_bond(ctx.author.id, member.id)
             ship_data = ships.find_one({"code": code}, {"_id": 0})
 
             if ship_data is not None:
@@ -338,7 +338,7 @@ class Realm(commands.Cog):
     async def realm_card_collect_rewards(self, ctx, member: discord.Member = None):
 
         try:
-            code = self.get_bond(ctx.author, member)
+            code = self.get_bond(ctx.author.id, member.id)
             ship_data = ships.find_one({"code": code}, {"_id": 0})
         except AttributeError:
             embed = discord.Embed(
