@@ -79,7 +79,7 @@ class Frames(commands.Cog):
         elif self.get_time().strftime("%b %d") != "Dec 25":
             return
 
-        elif f"<@{self.client.user.id}>" in message.content.split(" "):
+        elif f"{self.client.user.id}" in message.content.lower():
 
             greet, match, jades = ["merry", "christmas"], 0, 3500
             for x in greet:
