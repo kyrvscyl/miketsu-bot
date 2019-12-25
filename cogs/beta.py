@@ -10,7 +10,7 @@ from math import exp, ceil
 
 import discord
 import pytz
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from cogs.mongo.database import get_collections
 
@@ -26,7 +26,7 @@ users = get_collections("users")
 id_guild = int(os.environ.get("SERVER"))
 
 
-class Realm(commands.Cog):
+class Beta(commands.Cog):
 
     def __init__(self, client):
         self.client = client
@@ -38,20 +38,16 @@ class Realm(commands.Cog):
         self.get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
         
         self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
         
         self.id_scroll = self.channels["channels"]["scroll-of-everything"]
         self.id_spell_spam = self.channels["channels"]["spell-spam"]
+
+        self.cards_realm = config.find_one({"dict": 1}, {"_id": 0, "cards_realm": 1})["cards_realm"]
 
         self.realm_cards = []
 
         for card in realms.find({}, {"_id": 0}):
             self.realm_cards.append(f"{card['name'].lower()}")
-
-    def check_if_user_has_development_role(self):
-        def predicate(ctx):
-            return str(ctx.author.id) in self.developer_team
-        return commands.check(predicate)
 
     def get_bond(self, x, y):
         bond_list = sorted([x, y], reverse=True)
@@ -59,6 +55,9 @@ class Realm(commands.Cog):
 
     def get_emoji(self, item):
         return self.get_emojis[item]
+
+    def get_emoji_cards(self, x):
+        return self.cards_realm[x]
 
     def get_time(self):
         return datetime.now(tz=pytz.timezone(self.timezone))
@@ -98,7 +97,54 @@ class Realm(commands.Cog):
                 }
             }
         })
-    
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.sushi_bento_increment.start()
+
+    @tasks.loop(minutes=4)
+    async def sushi_bento_increment(self):
+
+        users.update_many({"bento": {"$lt": 360}}, {"$inc": {"bento": 1}})
+
+    @commands.command(aliases=["bento"])
+    @commands.guild_only()
+    async def sushi_bento(self, ctx):
+
+        query = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "bento": 1})
+        reserves = query["bento"]
+
+        def embed_new_create(strike):
+            embed_new = discord.Embed(
+                description=f"{strike}You currently have `{reserves:,d}`{self.get_emoji('sushi')} "
+                            f"in your reserve{strike}",
+                color=self.colour,
+                timestamp=self.get_timestamp()
+            )
+            embed_new.set_footer(
+                text=f"{ctx.author.display_name}",
+                icon_url=ctx.author.avatar_url
+            )
+            return embed_new
+
+        msg = await ctx.channel.send(embed=embed_new_create(""))
+        await msg.add_reaction("🍽️")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) == "🍽️" and u.id == ctx.author.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": reserves, "bento": -reserves}})
+                await msg.edit(embed=embed_new_create("~~"))
+                await self.perform_add_log("sushi", reserves, user.id)
+                await msg.clear_reactions()
+
     @commands.command(aliases=["rca"])
     @commands.is_owner()
     async def realm_card_add(self, ctx, args):
@@ -129,8 +175,8 @@ class Realm(commands.Cog):
 
         def create_new_embed_page(page_new):
             embed = discord.Embed(
-                title="realms",
-                description="equip realms with your ships to obtained shared rewards",
+                title="realms, rlms",
+                description="equip cards with your ships to obtained shared rewards",
                 color=self.colour
             )
 
@@ -140,7 +186,7 @@ class Realm(commands.Cog):
                 for y in range(1, 7):
                     rewards = int(data[2] * exp(0.3868 * y))
                     values.append(
-                        f"`Grade {y}` :: `~ {rewards:,d}`{self.get_emoji(data[1])}\n"
+                        f"{self.get_emoji_cards(data[0])}`Grade {y}` :: `~ {rewards:,d}`{self.get_emoji(data[1])}\n"
                     )
                 embed.set_thumbnail(url=data[3])
 
@@ -193,12 +239,8 @@ class Realm(commands.Cog):
         cards = users.find_one({"user_id": str(member.id)}, {"_id": 0, "cards": 1})["cards"]
         list_formatted = []
 
-        def generate_emoji(x):
-            dictionary = {"moon": "🌖", "drums": "🥁", "umbrella": "🏖️", "fish": "🐠"}
-            return dictionary[x]
-
         for c in cards:
-            list_formatted.append(f"{generate_emoji(c['name'])} {c['name'].title()} | Grade `{c['grade']} 🌟`\n")
+            list_formatted.append(f"{self.get_emoji_cards(c['name'])} {c['name'].title()} | Grade `{c['grade']} 🌟`\n")
 
         await self.realm_card_show_user_post_paginate(ctx, list_formatted)
 
@@ -335,7 +377,7 @@ class Realm(commands.Cog):
 
     @commands.command(aliases=["rcollect", "rcol"])
     @commands.guild_only()
-    async def realm_card_collect_rewards(self, ctx, member: discord.Member = None):
+    async def realm_card_collect_rewards(self, ctx, *, member: discord.Member = None):
 
         try:
             code = self.get_bond(ctx.author.id, member.id)
@@ -413,17 +455,17 @@ class Realm(commands.Cog):
                     embed = discord.Embed(
                         description=f"Captains {shipper1.mention} x {shipper2.mention}\n"
                                     f"Cruise: {ship_data['ship_name']}\n"
-                                    f"Card: Grade {grade} {card_name.title()}",
+                                    f"Card: {self.get_emoji_cards(card_name)}`Grade {grade}` {card_name.title()}",
                         color=shipper1.colour,
                         timestamp=self.get_timestamp()
                     )
-                    embed.set_author(name=f"Rewards collection", icon_url=shipper1.avatar_url)
+                    embed.set_author(name=f"Cruise rewards", icon_url=shipper1.avatar_url)
                     embed.add_field(
                         name="Earnings per captain",
-                        value=f"{adjusted_rewards_count}{self.get_emoji(rewards)}"
+                        value=f"{adjusted_rewards_count:,d}{self.get_emoji(rewards)}"
                     )
                     embed.set_thumbnail(url=link)
-                    embed.set_footer(text=f"Level: {ship_data['level']}", icon_url=shipper2.avatar_url)
+                    embed.set_footer(text=f"Ship Level: {ship_data['level']}", icon_url=shipper2.avatar_url)
                 except TypeError:
                     return
 
@@ -468,6 +510,73 @@ class Realm(commands.Cog):
                 })
                 await ctx.channel.send(embed=embed)
 
+    @commands.command(aliases=["raidable"])
+    @commands.guild_only()
+    async def raid_perform_check_users(self, ctx):
+
+        query = users.find({"raided_count": {"$lt": 3}}, {"_id": 0, "user_id": 1, "level": 1, "raided_count": 1})
+
+        list_raw = []
+        list_formatted = []
+
+        for user in query:
+            try:
+                member_name = self.client.get_user(int(user["user_id"]))
+                list_raw.append((member_name, user["level"], user["raided_count"]))
+            except AttributeError:
+                continue
+
+        for user in sorted(list_raw, key=lambda x: x[1], reverse=True):
+            list_formatted.append(f"• {user[0]}, `lvl.{user[1]:,d}`, `{user[2]}/3`\n")
+
+        await self.raid_perform_check_users_paginate("Available Realms", ctx, list_formatted)
+
+    async def raid_perform_check_users_paginate(self, title, ctx, formatted_list):
+
+        page = 1
+        max_lines = 15
+        page_total = ceil(len(formatted_list) / max_lines)
+        if page_total == 0:
+            page_total = 1
+
+        def create_new_embed_page(page_new):
+            end = page * max_lines
+            start = end - max_lines
+            description = "".join(formatted_list[start:end])
+
+            embed_new = discord.Embed(
+                color=ctx.author.colour,
+                title=title,
+                description=f"{description}",
+                timestamp=self.get_timestamp()
+            )
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            return embed_new
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=create_new_embed_page(page))
+
 
 def setup(client):
-    client.add_cog(Realm(client))
+    client.add_cog(Beta(client))

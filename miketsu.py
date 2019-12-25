@@ -24,10 +24,7 @@ version = "1.7.beta"
 # Instantiation
 client = commands.Bot(command_prefix=prefix, case_insensitive=True)
 client.remove_command("help")
-
-# Lists
 cogs_loaded = []
-dev_roles = config.find_one({"list": 1}, {"_id": 0, "dev_roles": 1})["dev_roles"]
 
 
 for filename in sorted(os.listdir("./cogs")):
@@ -35,13 +32,6 @@ for filename in sorted(os.listdir("./cogs")):
         client.load_extension(f"cogs.{filename[:-3]}")
         cogs_loaded.append(filename[:-3])
         print(f"Loading {filename}..")
-
-
-def check_if_has_any_development_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in dev_roles:
-            return True
-    return False
 
 
 @client.command(aliases=["stats", "statistics"])
@@ -83,7 +73,7 @@ async def show_bot_statistics(ctx):
 
 
 @client.command(aliases=["load", "l"])
-@commands.check(check_if_has_any_development_roles)
+@commands.is_owner()
 async def cogs_extension_load(ctx, extension):
     try:
         client.load_extension(f"cogs.{extension}")
@@ -96,7 +86,7 @@ async def cogs_extension_load(ctx, extension):
 
 
 @client.command(aliases=["unload", "ul"])
-@commands.check(check_if_has_any_development_roles)
+@commands.is_owner()
 async def cogs_extension_unload(ctx, extension):
     try:
         client.unload_extension(f"cogs.{extension}")
@@ -109,7 +99,7 @@ async def cogs_extension_unload(ctx, extension):
 
 
 @client.command(aliases=["reload", "rl"])
-@commands.check(check_if_has_any_development_roles)
+@commands.is_owner()
 async def cogs_extension_reload(ctx, extension):
     try:
         client.reload_extension(f"cogs.{extension}")
@@ -123,7 +113,7 @@ async def cogs_extension_reload(ctx, extension):
 
 
 @client.command(aliases=["shutdown"])
-@commands.check(check_if_has_any_development_roles)
+@commands.is_owner()
 async def cogs_extension_shutdown(ctx):
     for file_name in os.listdir("./cogs"):
         try:
@@ -138,7 +128,7 @@ async def cogs_extension_shutdown(ctx):
 
 
 @client.command(aliases=["initialize"])
-@commands.check(check_if_has_any_development_roles)
+@commands.is_owner()
 async def cogs_extension_initialize(ctx):
     for file_name in os.listdir("./cogs"):
         try:

@@ -32,6 +32,32 @@ users = get_collections("users")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_user_has_any_admin_roles(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
+            return True
+    return False
+
+
+def check_if_user_has_any_alt_roles(user):
+    for role in reversed(user.roles):
+        if role.name in ["Geminio"]:
+            return True
+    return False
+
+
+def check_if_user_has_encounter_tickets(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "encounter_ticket": 1})["encounter_ticket"] > 0
+
+
+def check_if_user_has_raid_tickets(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "realm_ticket": 1})["realm_ticket"] > 0
+
+
+def check_if_user_has_nether_pass(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "nether_pass": 1})["nether_pass"] is True
+
+
 class Gameplay(commands.Cog):
 
     def __init__(self, client):
@@ -81,7 +107,7 @@ class Gameplay(commands.Cog):
 
         self.boss_spawn = False
         self.quizzes_shuffle = random.shuffle(self.quizzes)
-        self.quizzes_cycle = cycle(self.quizzes)
+        self.quizzes_cycle = cycle(self.quizzes_shuffle)
         self.generate_nether_information()
         
         for card in realms.find({}, {"_id": 0}):
@@ -118,39 +144,6 @@ class Gameplay(commands.Cog):
 
     def status_set(self, x):
         self.boss_spawn = x
-    
-    def check_if_user_has_any_alt_roles(self, user):
-        for role in reversed(user.roles):
-            if role.name in ["Geminio"]:
-                return True
-        return False
-    
-    def check_if_user_has_any_admin_roles(self):
-        def predicate(ctx):
-            for role in reversed(ctx.author.roles):
-                if role.name in self.admin_roles:
-                    return True
-            return False
-        return commands.check(predicate)
-    
-    def check_if_user_has_encounter_tickets(self):
-        def predicate(ctx):
-            return users.find_one({
-                "user_id": str(ctx.author.id)}, {"_id": 0, "encounter_ticket": 1}
-            )["encounter_ticket"] > 0
-        return commands.check(predicate)
-    
-    def check_if_user_has_raid_tickets(self):
-        def predicate(ctx):
-            return users.find_one({
-                "user_id": str(ctx.author.id)}, {"_id": 0, "realm_ticket": 1}
-            )["realm_ticket"] > 0
-        return commands.check(predicate)
-    
-    def check_if_user_has_nether_pass(self, ctx):
-        return users.find_one({
-            "user_id": str(ctx.author.id)}, {"_id": 0, "nether_pass": 1}
-        )["nether_pass"] is True
     
     def calculate(self, x, y, z):
         try:
@@ -936,7 +929,7 @@ class Gameplay(commands.Cog):
                 roll_2 = random.randint(0, 100)
                 await asyncio.sleep(1)
 
-                if 0 <= roll_2 <= 20 and self.check_if_user_has_nether_pass(ctx):
+                if 0 <= roll_2 <= 20 and check_if_user_has_nether_pass(ctx):
                     await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
                 else:
                     roll_3 = random.randint(0, 100)
@@ -948,7 +941,7 @@ class Gameplay(commands.Cog):
             roll_2 = random.randint(0, 100)
             await asyncio.sleep(1)
 
-            if 0 <= roll_2 <= 20 and self.check_if_user_has_nether_pass(ctx):
+            if 0 <= roll_2 <= 20 and check_if_user_has_nether_pass(ctx):
                 await self.encounter_roll_netherworld(user, ctx.channel, search_msg)
             else:
                 roll_3 = random.randint(0, 100)
@@ -1213,7 +1206,7 @@ class Gameplay(commands.Cog):
                 if str(user.id) in assembly_players:
                     pass
 
-                elif self.check_if_user_has_any_alt_roles(user):
+                elif check_if_user_has_any_alt_roles(user):
                     pass
 
                 elif str(user.id) not in assembly_players:
@@ -1616,13 +1609,13 @@ class Gameplay(commands.Cog):
 
                 description = f"```" \
                               f"Discoverer  :: {discoverer}\n" \
-                              f"     Level  :: {level}\n" \
-                              f"  Total Hp  :: {total_hp}\n" \
-                              f"Current Hp  :: {current_hp}\n" \
-                              f"    Medals  :: {medals}\n" \
-                              f"     Jades  :: {jades}\n" \
-                              f"     Coins  :: {coins}\n" \
-                              f"Experience  :: {experience}```"
+                              f"     Level  :: {level:,d}\n" \
+                              f"  Total Hp  :: {total_hp:,d}\n" \
+                              f"Current Hp  :: {current_hp:,d}\n" \
+                              f"    Medals  :: {medals:,d}\n" \
+                              f"     Jades  :: {jades:,d}\n" \
+                              f"     Coins  :: {coins:,d}\n" \
+                              f"Experience  :: {experience:,d}```"
 
                 embed = discord.Embed(
                     title=f"Rare Boss {query} stats", colour=self.colour,

@@ -42,7 +42,7 @@ class Startup(commands.Cog):
             "daily", "weekly", "profile", "set", "buy", "summon", "explore", "explores", "chapter", "realm", "realms",
             "rcollect", "evolve", "friendship", "ships", "leaderboard", "shikigami", "shikigamis", "shrine", "sail",
             "pray", "stat", "frames", "wish", "wishlist", "fulfill", "parade", "collections", "shards", "cards",
-            "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange"
+            "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange", "bento", "raidable"
         ]
 
         self.commands_others = [

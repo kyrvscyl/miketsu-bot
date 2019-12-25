@@ -22,6 +22,13 @@ sortings = get_collections("sortings")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_user_has_any_admin_roles(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
+            return True
+    return False
+
+
 class Embeds(commands.Cog):
 
     def __init__(self, client):
@@ -39,13 +46,6 @@ class Embeds(commands.Cog):
         for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
             self.msg_id_list.append(role_select_msg["msg_id"])
 
-    def check_if_user_has_any_admin_roles(self):
-        def predicate(ctx):
-            for role in reversed(ctx.author.roles):
-                if role.name in self.admin_roles:
-                    return True
-            return False
-        return commands.check(predicate)
 
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))

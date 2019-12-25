@@ -37,6 +37,37 @@ zones = get_collections("zones")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_user_has_prayers(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "prayers": 1})["prayers"] > 0
+
+
+def check_if_user_has_development_role(ctx):
+    return str(ctx.author.id) in guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
+
+
+def check_if_user_has_any_alt_roles(user):
+    for role in reversed(user.roles):
+        if role.name in ["Geminio"]:
+            return True
+    return False
+
+
+def check_if_user_has_parade_tickets(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "parade_tickets": 1})["parade_tickets"] > 0
+
+
+def check_if_user_has_shiki_set(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "display": 1})["display"] is not None
+
+
+def check_if_user_has_sushi_1(ctx):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] > 0
+
+
+def check_if_user_has_sushi_2(ctx, required):
+    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
+
+
 class Economy(commands.Cog):
 
     def __init__(self, client):
@@ -44,7 +75,6 @@ class Economy(commands.Cog):
         self.prefix = self.client.command_prefix
     
         self.dictionaries = config.find_one({"dict": 1}, {"_id": 0})
-        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
 
         self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
         self.listings = config.find_one({"list": 1}, {"_id": 0})
@@ -150,42 +180,6 @@ class Economy(commands.Cog):
         self.pool_all_broken.extend(self.pool_ssn)
         self.pool_all.extend(self.pool_all_mystery)
         self.pool_all.extend(self.pool_all_broken)
-
-    def check_if_user_has_development_role(self):
-        def predicate(ctx):
-            return str(ctx.author.id) in self.developer_team
-        return commands.check(predicate)
-
-    def check_if_user_has_any_alt_roles(self, user):
-        for role in reversed(user.roles):
-            if role.name in ["Geminio"]:
-                return True
-        return False
-    
-    def check_if_user_has_prayers(self):
-        def predicate(ctx):
-            return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "prayers": 1})["prayers"] > 0
-        return commands.check(predicate)
-    
-    def check_if_user_has_parade_tickets(self):
-        def predicate(ctx):
-            return users.find_one({
-                "user_id": str(ctx.author.id)}, {"_id": 0, "parade_tickets": 1}
-            )["parade_tickets"] > 0
-        return commands.check(predicate)
-    
-    def check_if_user_has_shiki_set(self):
-        def predicate(ctx):
-            return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "display": 1})["display"] is not None
-        return commands.check(predicate)
-    
-    def check_if_user_has_sushi_1(self):
-        def predicate(ctx):
-            return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] > 0
-        return commands.check(predicate)
-    
-    def check_if_user_has_sushi_2(self, ctx, required):
-        return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
     
     def get_emoji(self, item):
         return self.emoji_dict[item]
@@ -662,7 +656,7 @@ class Economy(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif self.check_if_user_has_any_alt_roles(member):
+        elif check_if_user_has_any_alt_roles(member):
             await ctx.message.add_reaction("❌")
 
         else:
@@ -2267,8 +2261,8 @@ class Economy(commands.Cog):
     async def friendship_ship_show_generate(self, member, ctx):
 
         ships_listings = []
-        for ship in ships.find({"code": {"$regex": f".*{member.id}.*"}}):
-            ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"]]
+        for ship in ships.find({"code": {"$regex": f".*{member.id}.*"}}, {"_id": 0}):
+            ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"], ship['cards']]
             ships_listings.append(ship_entry)
 
         await self.friendship_ship_show_paginate(ships_listings, member, ctx)
@@ -2295,8 +2289,19 @@ class Economy(commands.Cog):
 
             while start < end:
                 try:
+                    appendage = ""
+                    timestamp = formatted_list[start][4]["timestamp"]
+                    collection = formatted_list[start][4]["collected"]
+
+                    if timestamp is not None and collection is False:
+                        time_deployed = self.get_time_converted(timestamp)
+                        hours, minutes = self.hours_minutes(
+                            (time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC"))
+                        )
+                        appendage = f" [{hours}h, {minutes}m]"
+
                     embed.add_field(
-                        name=f"{formatted_list[start][2]}, level {formatted_list[start][3]}",
+                        name=f"{formatted_list[start][2]}, level {formatted_list[start][3]}{appendage}",
                         value=f"<@{formatted_list[start][0]}> & <@{formatted_list[start][1]}>",
                         inline=False
                     )
@@ -2444,7 +2449,7 @@ class Economy(commands.Cog):
         elif receiver.name == giver.name:
             await ctx.message.add_reaction("❌")
 
-        elif self.check_if_user_has_any_alt_roles(receiver):
+        elif check_if_user_has_any_alt_roles(receiver):
             await ctx.message.add_reaction("❌")
 
         elif profile["friendship_pass"] < 1:
@@ -3923,7 +3928,7 @@ class Economy(commands.Cog):
                     msg.id == r.message.id and \
                     str(r.emoji) == "🏹" and \
                     u.id == ctx.author.id and \
-                    self.check_if_user_has_sushi_2(ctx, sushi_required)
+                    check_if_user_has_sushi_2(ctx, sushi_required)
 
             while True:
                 try:

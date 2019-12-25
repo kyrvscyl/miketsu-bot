@@ -31,6 +31,12 @@ class Error(commands.Cog):
         
         self.id_spell_spam = self.channels["channels"]["spell-spam"]
         self.id_scroll = self.channels["channels"]["scroll-of-everything"]
+
+        self.functions_ignore_check = [
+            "management_guild", "encounter_add_quiz", "events_manipulate", "compensate_economy_items",
+            "announcement_post_memorandum", "announcement_post_message", "purge_messages", "perform_reset",
+            "edit_special_roles"
+        ]
         
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
@@ -530,12 +536,7 @@ class Error(commands.Cog):
                 await ctx.channel.send(embed=embed)
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
-            elif str(ctx.command) in [
-                "management_guild",
-                "encounter_add_quiz",
-                "events_manipulate",
-                "compensate_economy_items "
-            ]:
+            elif str(ctx.command) in self.functions_ignore_check:
                 return
 
             elif isinstance(error, commands.NoPrivateMessage):

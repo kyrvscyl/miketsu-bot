@@ -135,7 +135,8 @@ class Level(commands.Cog):
                 "exploration": 1,
                 "achievements_count": 0,
                 "achievements": [],
-                "cards": []
+                "cards": [],
+                "bento": 0,
             }
             users.insert_one(profile)
 

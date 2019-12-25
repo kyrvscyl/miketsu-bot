@@ -40,6 +40,13 @@ weathers = get_collections("weathers")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_user_has_any_admin_roles(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
+            return True
+    return False
+
+
 class Clock(commands.Cog):
 
     def __init__(self, client):
@@ -64,14 +71,6 @@ class Clock(commands.Cog):
         self.clock_emojis = self.listings["clock_emojis"]
 
         self.captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
-
-    def check_if_user_has_any_admin_roles(self):
-        def predicate(ctx):
-            for role in reversed(ctx.author.roles):
-                if role.name in self.admin_roles:
-                    return True
-            return False
-        return commands.check(predicate)
 
     def get_time(self):
         return datetime.now(tz=pytz.timezone(self.timezone))
