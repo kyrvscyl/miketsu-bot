@@ -24,10 +24,7 @@ version = "1.7.beta"
 # Instantiation
 client = commands.Bot(command_prefix=prefix, case_insensitive=True)
 client.remove_command("help")
-
-# Lists
 cogs_loaded = []
-dev_roles = config.find_one({"list": 1}, {"_id": 0, "dev_roles": 1})["dev_roles"]
 
 
 for filename in sorted(os.listdir("./cogs")):
@@ -39,7 +36,7 @@ for filename in sorted(os.listdir("./cogs")):
 
 def check_if_has_any_development_roles(ctx):
     for role in reversed(ctx.author.roles):
-        if role.name in dev_roles:
+        if role.name in config.find_one({"list": 1}, {"_id": 0, "dev_roles": 1})["dev_roles"]:
             return True
     return False
 

@@ -38,7 +38,6 @@ class Realm(commands.Cog):
         self.get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
         
         self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
         
         self.id_scroll = self.channels["channels"]["scroll-of-everything"]
         self.id_spell_spam = self.channels["channels"]["spell-spam"]
@@ -47,11 +46,6 @@ class Realm(commands.Cog):
 
         for card in realms.find({}, {"_id": 0}):
             self.realm_cards.append(f"{card['name'].lower()}")
-
-    def check_if_user_has_development_role(self):
-        def predicate(ctx):
-            return str(ctx.author.id) in self.developer_team
-        return commands.check(predicate)
 
     def get_bond(self, x, y):
         bond_list = sorted([x, y], reverse=True)

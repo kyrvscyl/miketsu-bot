@@ -30,6 +30,18 @@ shikigamis = get_collections("shikigamis")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_channel_is_pvp(ctx):
+    return str(ctx.channel.id) == guilds.find_one({
+        "server": str(id_guild)}, {"_id": 0, "channels": 1}
+    )["channels"]["duelling-room"]
+
+
+def check_if_reference_section(ctx):
+    return str(ctx.channel.id) == guilds.find_one({
+        "server": str(id_guild)}, {"_id": 0, "channels": 1}
+    )["channels"]["reference-section"]
+
+
 class Castle(commands.Cog):
 
     def __init__(self, client):
@@ -70,12 +82,6 @@ class Castle(commands.Cog):
         def predicate(ctx):
             return ctx.channel.category.id == self.id_castle and str(ctx.channel.name) not in self.invalid_channels
         return commands.check(predicate)
-
-    def check_if_channel_is_pvp(self, ctx):
-        return str(ctx.channel.id) == self.id_duelling_room
-
-    def check_if_reference_section(self, ctx):
-        return str(ctx.channel.id) == self.id_reference
 
     def check_if_restricted_section(self, ctx):
         return str(ctx.channel.id) == self.id_restricted
@@ -204,7 +210,7 @@ class Castle(commands.Cog):
     @commands.guild_only()
     async def post_table_of_content(self, ctx):
 
-        if self.check_if_reference_section(ctx):
+        if check_if_reference_section(ctx):
 
             await self.post_table_of_content_reference(ctx.channel)
             await ctx.message.delete()
@@ -321,7 +327,7 @@ class Castle(commands.Cog):
     @commands.guild_only()
     async def post_book_reference(self, ctx, arg1, *, args="None"):
 
-        if self.check_if_reference_section(ctx):
+        if check_if_reference_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
             query = {"section": arg1.lower(), "index": args.lower()}

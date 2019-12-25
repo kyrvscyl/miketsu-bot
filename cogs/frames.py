@@ -28,6 +28,10 @@ users = get_collections("users")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_developer_team(ctx):
+    return str(ctx.author.id) in guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
+
+
 class Frames(commands.Cog):
 
     def __init__(self, client):
@@ -52,16 +56,10 @@ class Frames(commands.Cog):
         self.total_n = shikigamis.count_documents({"rarity": "N"})
         self.total_ssn = shikigamis.count_documents({"rarity": "SSN"})
 
-        self.developer_team = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
         self.medal_achievements = []
 
         for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
             self.medal_achievements.append([m['name'], m['required']])
-
-    def check_if_developer_team(self):
-        def predicate(ctx):
-            return str(ctx.author.id) in self.developer_team
-        return commands.check(predicate)
 
     def get_timestamp(self):
         return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))

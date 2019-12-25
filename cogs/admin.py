@@ -28,6 +28,13 @@ users = get_collections("users")
 id_guild = int(os.environ.get("SERVER"))
 
 
+def check_if_user_has_any_admin_roles(ctx):
+    for role in reversed(ctx.author.roles):
+        if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
+            return True
+    return False
+
+
 class Admin(commands.Cog):
 
     def __init__(self, client):
@@ -48,14 +55,6 @@ class Admin(commands.Cog):
         self.status_batch = config.find_one({"dict": 1}, {"_id": 0, "status_batch": 1})["status_batch"]
 
         self.admin_roles = self.listings["admin_roles"]
-
-    def check_if_user_has_any_admin_roles(self):
-        def predicate(ctx):
-            for role in reversed(ctx.author.roles):
-                if role.name in self.admin_roles:
-                    return True
-            return False
-        return commands.check(predicate)
 
     def get_guild_quest_converted(self, key):
         dictionary = {"inactive": "30", "semi-active": "60", "active": "90"}
