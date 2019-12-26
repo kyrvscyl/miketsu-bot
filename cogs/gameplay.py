@@ -106,8 +106,6 @@ class Gameplay(commands.Cog):
         self.rewards_nether = self.listings["rewards_nether"]
 
         self.boss_spawn = False
-        self.quizzes_shuffle = random.shuffle(self.quizzes)
-        self.quizzes_cycle = cycle(self.quizzes_shuffle)
         self.generate_nether_information()
         
         for card in realms.find({}, {"_id": 0}):
@@ -117,8 +115,13 @@ class Gameplay(commands.Cog):
             self.pool_all.append(shiki["name"])
         
         for quiz in shikigamis.find({"demon_quiz": {"$ne": None}}, {"_id": 0, "demon_quiz": 1, "name": 1}):
+            print(quiz)
             self.quizzes.append(quiz)
-        
+
+        random.shuffle(self.quizzes)
+        print(self.quizzes)
+        self.quizzes_cycle = cycle(self.quizzes)
+
         for document in bosses.find({}, {"_id": 0, "boss": 1}):
             self.demons.append(document["boss"])
         
