@@ -1,6 +1,6 @@
 """
 Discord Miketsu Bot.
-kyrvscyl, 2019
+kyrvscyl, 2020
 """
 import os
 from datetime import datetime
@@ -16,73 +16,105 @@ token = os.environ.get("TOKEN")
 # Collections
 config = get_collections("config")
 
-# Variables
-prefix = ";"
-time_start = datetime.now()
+# Instantiations
 version = "1.7.beta"
+prefix = ";"
 
-# Instantiation
-client = commands.Bot(command_prefix=prefix, case_insensitive=True)
-client.remove_command("help")
+time_start = datetime.now()
 cogs_loaded = []
 
-
-for filename in sorted(os.listdir("./cogs")):
-    if filename.endswith(".py"):
-        client.load_extension(f"cogs.{filename[:-3]}")
-        cogs_loaded.append(filename[:-3])
-        print(f"Loading {filename}..")
+client = commands.Bot(command_prefix=prefix, case_insensitive=True)
+client.remove_command("help")
 
 
-@client.command(aliases=["stats", "statistics"])
+def cogs_extension_startup():
+
+    for filename in sorted(os.listdir("./cogs")):
+        if filename.endswith(".py"):
+            try:
+                client.load_extension(f"cogs.{filename[:-3]}")
+            except commands.ExtensionNotLoaded:
+                print(f"Failed to load {filename}..")
+            else:
+                cogs_loaded.append(filename[:-3])
+                print(f"Loading {filename}..")
+
+
+async def process_msg_add_reaction(message, emoji):
+    try:
+        await message.add_reaction(emoji)
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_msg_submit(channel, content, embed):
+    try:
+        return await channel.send(content=content, embed=embed)
+    except AttributeError:
+        pass
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+@client.command(aliases=["stats"])
 async def show_bot_statistics(ctx):
-    guilds_list = []
-    for guild in client.guilds:
-        guilds_list.append(guild.name)
 
-    def days_hours_minutes(td):
+    def get_days_hours_minutes(td):
         return td.days, td.seconds // 3600, (td.seconds // 60) % 60
 
-    days, hours, minutes = days_hours_minutes(datetime.now() - time_start)
+    bot_info = await client.application_info()
+    days, hours, minutes = get_days_hours_minutes(datetime.now() - time_start)
     timestamp = datetime.timestamp(datetime.now())
 
+    modules_loaded = ', '.join(sorted(cogs_loaded))
+    if len(cogs_loaded) == 0:
+        modules_loaded = None
+
     embed = discord.Embed(
-        title=f"{client.user.name} Bot", colour=discord.Colour(16770727),
-        description="A fan made Onmyoji-themed exclusive Discord bot with a touch of wizarding magic ✨",
+        colour=discord.Colour(16770727),
+        title=f"{client.user.name} Bot",
+        description="A fan made Onmyoji-themed exclusive Discord bot",
         timestamp=datetime.utcfromtimestamp(timestamp)
     )
     embed.set_thumbnail(url=client.user.avatar_url)
     embed.add_field(
-        name="💻 Development",
-        value=f"• Coding: <@!180717337475809281>\n"
+        name="Development",
+        value=f"• Coding: <@!{bot_info.owner.id}>\n"
               f"• Support Group: <@!437941992748482562>, <@!201402446705065984>",
         inline=False
     )
     embed.add_field(
-        name="🛠 Statistics",
+        name="Statistics",
         value=f"• Version: {version}\n"
-              f"• Servers Count: {len(guilds_list)}\n"
-              f"• Servers: {' ,'.join(guilds_list)}\n"
               f"• Users: {len(client.users)}\n"
               f"• Running Time: {days}d, {hours}h, {minutes}m\n"
               f"• Ping: {round(client.latency, 5)} seconds",
         inline=False
     )
-    embed.add_field(name="💾 Modules", value="{}".format(", ".join(sorted(cogs_loaded))))
-    await ctx.channel.send(embed=embed)
+    embed.add_field(
+        name=f"Modules [{len(cogs_loaded)}]",
+        value=f"{modules_loaded}"
+    )
+
+    await process_msg_submit(ctx.channel, None, embed)
 
 
 @client.command(aliases=["load", "l"])
 @commands.is_owner()
 async def cogs_extension_load(ctx, extension):
+
     try:
         client.load_extension(f"cogs.{extension}")
+    except commands.ExtensionNotFound:
+        await process_msg_add_reaction(ctx.message, "❌")
+    else:
         cogs_loaded.append(f"{extension}")
         print(f"Loading {extension}.py..")
-    except commands.ExtensionNotLoaded:
-        await ctx.message.add_reaction("❌")
-    else:
-        await ctx.message.add_reaction("✅")
+        await process_msg_add_reaction(ctx.message, "✅")
 
 
 @client.command(aliases=["unload", "ul"])
@@ -90,60 +122,66 @@ async def cogs_extension_load(ctx, extension):
 async def cogs_extension_unload(ctx, extension):
     try:
         client.unload_extension(f"cogs.{extension}")
+    except commands.ExtensionNotLoaded:
+        await process_msg_add_reaction(ctx.message, "❌")
+    else:
         cogs_loaded.remove(f"{extension}")
         print(f"Unloading {extension}.py..")
-    except commands.ExtensionNotLoaded:
-        await ctx.message.add_reaction("❌")
-    else:
-        await ctx.message.add_reaction("✅")
+        await process_msg_add_reaction(ctx.message, "✅")
 
 
 @client.command(aliases=["reload", "rl"])
 @commands.is_owner()
 async def cogs_extension_reload(ctx, extension):
+
     try:
         client.reload_extension(f"cogs.{extension}")
-        print(f"Reloading {extension}.py..")
     except commands.ExtensionNotLoaded:
-        await ctx.message.add_reaction("❌")
+        await process_msg_add_reaction(ctx.message, "❌")
     except commands.ExtensionNotFound:
-        await ctx.message.add_reaction("❌")
+        await process_msg_add_reaction(ctx.message, "❌")
     else:
-        await ctx.message.add_reaction("✅")
+        print(f"Reloading {extension}.py..")
+        await process_msg_add_reaction(ctx.message, "✅")
 
 
 @client.command(aliases=["shutdown"])
 @commands.is_owner()
 async def cogs_extension_shutdown(ctx):
+
     for file_name in os.listdir("./cogs"):
-        try:
-            if file_name.endswith(".py"):
+        if file_name.endswith(".py"):
+            try:
                 client.unload_extension(f"cogs.{file_name[:-3]}")
                 cogs_loaded.remove(f"{file_name[:-3]}")
+            except commands.ExtensionNotLoaded:
+                continue
+            else:
                 print(f"Unloading {file_name}..")
-        except commands.ExtensionNotLoaded:
-            continue
 
-    await ctx.message.add_reaction("✅")
+    await process_msg_add_reaction(ctx.message, "✅")
 
 
 @client.command(aliases=["initialize"])
 @commands.is_owner()
 async def cogs_extension_initialize(ctx):
+
     for file_name in os.listdir("./cogs"):
-        try:
-            if file_name.endswith(".py"):
+        if file_name.endswith(".py"):
+            try:
                 client.load_extension(f"cogs.{file_name[:-3]}")
                 cogs_loaded.append(f"{file_name[:-3]}")
+            except commands.ExtensionAlreadyLoaded:
+                continue
+            except commands.ExtensionFailed:
+                continue
+            else:
                 print(f"Loading {file_name}..")
-        except commands.ExtensionAlreadyLoaded:
-            continue
-        except commands.ExtensionFailed:
-            continue
 
-    await ctx.message.add_reaction("✅")
+    await process_msg_add_reaction(ctx.message, "✅")
 
 
+cogs_extension_startup()
 print("-------")
 
 try:

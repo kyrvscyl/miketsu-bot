@@ -1,6 +1,6 @@
 """
 Startup Module
-Miketsu, 2019
+Miketsu, 2020
 """
 import asyncio
 import os
@@ -55,13 +55,13 @@ class Startup(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
-        owner_id = await self.client.application_info()
+        bot_info = await self.client.application_info()
         time_now = datetime.now(tz=pytz.timezone(self.timezone))
 
         print("Initializing...")
         print("-------")
         print("Logged in as {}".format(self.client.user))
-        print("Hi! {}!".format(self.client.get_user(owner_id.owner.id)))
+        print("Hi! {}!".format(self.client.get_user(bot_info.owner.id)))
         print("Time now: {}".format(time_now.strftime("%d.%b %Y %H:%M:%S")))
         print("-------")
         try:

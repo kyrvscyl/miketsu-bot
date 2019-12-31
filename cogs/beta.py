@@ -1,6 +1,6 @@
 """
 Error Module
-Miketsu, 2019
+Miketsu, 2020
 """
 import asyncio
 import os
@@ -100,6 +100,7 @@ class Beta(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
+
         self.sushi_bento_increment.start()
 
     @tasks.loop(minutes=4)
@@ -317,7 +318,7 @@ class Beta(commands.Cog):
             if ship_data is not None:
 
                 if ship_data["cards"]["equipped"] is True:
-                    return
+                    await ctx.message.add_reaction("🛳")
 
                 elif ship_data["cards"]["equipped"] is False:
 
@@ -381,7 +382,6 @@ class Beta(commands.Cog):
 
         try:
             code = self.get_bond(ctx.author.id, member.id)
-            ship_data = ships.find_one({"code": code}, {"_id": 0})
         except AttributeError:
             embed = discord.Embed(
                 colour=self.colour,
@@ -390,7 +390,7 @@ class Beta(commands.Cog):
             )
             embed.add_field(
                 name="Format",
-                value=f"*{self.prefix}rcollect <@member>*"
+                value=f"*`{self.prefix}rcollect <@member>`*"
             )
             await ctx.channel.send(embed=embed)
             return
@@ -402,10 +402,12 @@ class Beta(commands.Cog):
             )
             embed.add_field(
                 name="Format",
-                value=f"*{self.prefix}rcollect <@member>*"
+                value=f"*`{self.prefix}rcollect <@member>`*"
             )
             await ctx.channel.send(embed=embed)
             return
+
+        ship_data = ships.find_one({"code": code}, {"_id": 0})
 
         if ship_data is None:
             embed = discord.Embed(
@@ -445,29 +447,39 @@ class Beta(commands.Cog):
                 grade = ship_data["cards"]["grade"]
                 link = card_data["link"][str(grade)]
 
-                rewards_count = int(base * exp(0.3868 * grade))
+                multiplier = 0.0375 * int(ship_data['level']) + 0.9625
+                rewards_count = int((base * exp(0.3868 * grade)) * multiplier)
                 adjusted_rewards_count = int(random.uniform(rewards_count * 0.95, rewards_count * 1.05))
 
-                try:
-                    shipper1 = ctx.guild.get_member(int(ship_data["shipper1"]))
-                    shipper2 = ctx.guild.get_member(int(ship_data["shipper2"]))
+                shipper1 = ctx.guild.get_member(int(ship_data["shipper1"]))
+                shipper2 = ctx.guild.get_member(int(ship_data["shipper2"]))
 
-                    embed = discord.Embed(
-                        description=f"Captains {shipper1.mention} x {shipper2.mention}\n"
-                                    f"Cruise: {ship_data['ship_name']}\n"
-                                    f"Card: {self.get_emoji_cards(card_name)}`Grade {grade}` {card_name.title()}",
-                        color=shipper1.colour,
-                        timestamp=self.get_timestamp()
-                    )
-                    embed.set_author(name=f"Cruise rewards", icon_url=shipper1.avatar_url)
-                    embed.add_field(
-                        name="Earnings per captain",
-                        value=f"{adjusted_rewards_count:,d}{self.get_emoji(rewards)}"
-                    )
-                    embed.set_thumbnail(url=link)
-                    embed.set_footer(text=f"Ship Level: {ship_data['level']}", icon_url=shipper2.avatar_url)
-                except TypeError:
+                try:
+                    shipper1_mention = shipper1.mention
+                    shipper2_mention = shipper2.mention
+                except AttributeError:
                     return
+
+                embed = discord.Embed(
+                    description=f"Captains {shipper1_mention} x {shipper2_mention}\n"
+                                f"Cruise: {ship_data['ship_name']}\n"
+                                f"Card: {self.get_emoji_cards(card_name)} `Grade {grade}` {card_name.title()}",
+                    color=shipper1.colour,
+                    timestamp=self.get_timestamp()
+                )
+                embed.set_author(
+                    name=f"Cruise rewards",
+                    icon_url=shipper1.avatar_url
+                )
+                embed.add_field(
+                    name="Earnings per captain",
+                    value=f"{adjusted_rewards_count:,d}{self.get_emoji(rewards)}"
+                )
+                embed.set_thumbnail(url=link)
+                embed.set_footer(
+                    text=f"Ship Level: {ship_data['level']} | Multiplier: {multiplier}",
+                    icon_url=shipper2.avatar_url
+                )
 
                 if rewards != "experience":
                     users.update_one({"user_id": str(shipper1.id)}, {"$inc": {f"{rewards}": adjusted_rewards_count}})
@@ -485,7 +497,7 @@ class Beta(commands.Cog):
                         "shikigami.name": get_shikigami_display(shipper1)
                     }, {
                         "$inc": {
-                            "shikigami.exp": adjusted_rewards_count
+                            "shikigami.$.exp": adjusted_rewards_count
                         }
                     })
                     users.update_one({
@@ -493,10 +505,9 @@ class Beta(commands.Cog):
                         "shikigami.name": get_shikigami_display(shipper2)
                     }, {
                         "$inc": {
-                            "shikigami.exp": adjusted_rewards_count
+                            "shikigami.$.exp": adjusted_rewards_count
                         }
                     })
-
 
                 ships.update_one({"code": code}, {
                     "$set": {
@@ -510,7 +521,7 @@ class Beta(commands.Cog):
                 })
                 await ctx.channel.send(embed=embed)
 
-    @commands.command(aliases=["raidable"])
+    @commands.command(aliases=["raidable", "rdb"])
     @commands.guild_only()
     async def raid_perform_check_users(self, ctx):
 
@@ -522,12 +533,21 @@ class Beta(commands.Cog):
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"]))
-                list_raw.append((member_name, user["level"], user["raided_count"]))
+                if member_name is not None:
+                    list_raw.append((member_name, user["level"], user["raided_count"]))
             except AttributeError:
                 continue
 
+        def lengthen(x):
+            prefix = "#{}"
+            if x < 10:
+                prefix = "0{}"
+            elif x < 100:
+                prefix = "{}"
+            return prefix.format(x)
+
         for user in sorted(list_raw, key=lambda x: x[1], reverse=True):
-            list_formatted.append(f"• {user[0]}, `lvl.{user[1]:,d}`, `{user[2]}/3`\n")
+            list_formatted.append(f"• `lvl.{lengthen(user[1])}`, `{user[2]}/3` | {user[0]}\n")
 
         await self.raid_perform_check_users_paginate("Available Realms", ctx, list_formatted)
 

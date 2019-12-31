@@ -1,6 +1,6 @@
 """
 Clock Module
-Miketsu, 2019
+Miketsu, 2020
 """
 
 import asyncio
@@ -187,27 +187,6 @@ class Clock(commands.Cog):
         except ValueError:
             pass
 
-    async def perform_demolish_ships(self):
-        print("Demolishing certain ships")
-        guild = self.client.get_guild(int(id_guild))
-
-        for ship in ships.find({}, {"_id": 0}):
-            shipper1 = guild.get_member(int(ship['shipper1']))
-            shipper2 = guild.get_member(int(ship['shipper2']))
-            try:
-                if shipper1 is None or shipper2 is None:
-                    continue
-
-                elif shipper1.name == shipper2.name:
-                    x = ships.update_one({"code": ship["code"], "points": {"$gte": 50}}, {"$inc": {"points": -50}})
-                    if x.modified_count == 0:
-                        ships.update_one({"code": ship["code"], "points": {"$lt": 50}}, {"$set": {"points": 0}})
-
-            except AttributeError:
-                continue
-
-        ships.update_one({"points": 0, "level": {"$gte": 2}}, {"$inc": {"level": -1}})
-
     async def perform_delete_secret_channels(self):
         query = guilds.find({}, {"_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1})
         print("Deleting exposed secret channels")
@@ -373,7 +352,6 @@ class Clock(commands.Cog):
 
             if hour_minute in ["06:00", "18:00"]:
                 await self.perform_announce_netherworld()
-                await self.perform_demolish_ships()
 
             if hour_minute == "00:00":
                 await Gameplay(self.client).boss_daily_reset_check()

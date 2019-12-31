@@ -1,6 +1,6 @@
 """
 Error Module
-Miketsu, 2019
+Miketsu, 2020
 """
 
 import os
@@ -32,9 +32,14 @@ class Error(commands.Cog):
         self.id_spell_spam = self.channels["channels"]["spell-spam"]
         self.id_scroll = self.channels["channels"]["scroll-of-everything"]
 
+        self.functions_is_owner = [
+            "cogs_extension_load", "cogs_extension_unload", "cogs_extension_reload", "cogs_extension_shutdown",
+            "cogs_extension_initialize"
+        ]
+
         self.functions_ignore_check = [
             "management_guild", "encounter_add_quiz", "events_manipulate", "compensate_economy_items",
-            "announcement_post_memorandum", "announcement_post_message", "purge_messages", "perform_reset",
+            "post_memorandum", "post_message", "purge_messages", "perform_reset",
             "edit_special_roles"
         ]
         
@@ -145,7 +150,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "announcement_post_memorandum":
+            elif str(ctx.command) == "post_memorandum":
                 embed = discord.Embed(
                     title="memo",
                     colour=self.colour,
@@ -156,8 +161,9 @@ class Error(commands.Cog):
                     inline=False
                 )
                 embed.add_field(
-                    name="Notes", value=f"follow the step by step procedure\n"
-                                        f"enter any non-image link text to remove the memorandum's embedded image",
+                    name="Notes",
+                    value=f"follow the step by step procedure\n"
+                          f"enter any non-image link text to remove the memorandum's embedded image",
                     inline=False
                 )
                 await ctx.channel.send(embed=embed)
@@ -372,7 +378,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "announcement_post_memorandum":
+            elif str(ctx.command) == "post_memorandum":
                 embed = discord.Embed(
                     title="announce", colour=self.colour,
                     description="sends an embed message\n"
@@ -390,7 +396,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "announcement_post_message":
+            elif str(ctx.command) == "post_message":
                 embed = discord.Embed(
                     colour=self.colour,
                     title="say",
@@ -429,7 +435,7 @@ class Error(commands.Cog):
             ]:
                 return
 
-            elif str(ctx.command) in ["announcement_post_memorandum "]:
+            elif str(ctx.command) in ["post_memorandum "]:
                 embed = discord.Embed(
                     colour=self.colour,
                     title="Invalid input",
@@ -499,7 +505,7 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
-            elif str(ctx.command) == "announcement_post_message":
+            elif str(ctx.command) == "post_message":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
                     description=f"Missing required roles"
@@ -598,7 +604,7 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CommandInvokeError):
 
-            if str(ctx.command) == "announcement_post_message":
+            if str(ctx.command) == "post_message":
                 embed = discord.Embed(
                     title="Invalid syntax", colour=self.colour,
                     description="Provide a valid channel"

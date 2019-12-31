@@ -1,6 +1,6 @@
 """
 Encounter Module
-Miketsu, 2019
+Miketsu, 2020
 """
 
 import asyncio
@@ -275,7 +275,7 @@ class Gameplay(commands.Cog):
         discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
     
         if survivability == 0 and discoverability == 0:
-            await Economy(self).perform_reset_boss()
+            await Economy(self.client).perform_reset_boss()
     
     async def achievements_process_announce(self, member, frame_name, jades):
 
@@ -414,7 +414,7 @@ class Gameplay(commands.Cog):
                         embed.add_field(
                             name="Rewards", inline=False,
                             value=f"{r[0]:,d}{self.e_j} | {r[1]:,d}{self.e_c} | "
-                                  f"{r[2]:,d}{self.e_x} | {r[3]:,d}{self.e_m}",
+                                  f"{r[2]:,d} {self.e_x} | {r[3]:,d}{self.e_m}",
                         )
                         card_reward, card_grade = self.encounter_roll_netherworld_generate_cards(user, c)
                         embed.add_field(
@@ -956,7 +956,7 @@ class Gameplay(commands.Cog):
         quiz_select = next(self.quizzes_cycle)
         answer = quiz_select['name']
         question = quiz_select['demon_quiz']
-        timeout = 10
+        timeout = 20
         guesses = 3
 
         embed = discord.Embed(title=f"Demon Quiz", color=user.colour, timestamp=self.get_timestamp())

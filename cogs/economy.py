@@ -1,6 +1,6 @@
 """
 Economy Module
-Miketsu, 2019
+Miketsu, 2020
 """
 
 import asyncio
@@ -2349,7 +2349,8 @@ class Economy(commands.Cog):
                     name="Formats",
                     value=f"*• `{self.prefix}ship <@member>`*\n"
                           f"*• `{self.prefix}ship <@member> <@member>`*\n"
-                          f"*• `{self.prefix}ships`*"
+                          f"*• `{self.prefix}ships`*",
+                    inline=False
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -2380,7 +2381,7 @@ class Economy(commands.Cog):
         rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, ship_profile["points"])) + 1
 
         if ship_profile['level'] > 1:
-            rewards = str(ship_profile["level"] * 25) + " jades/day"
+            rewards = str(ship_profile["level"] * 25) + " jades/reset"
         else:
             rewards = "Must be Level 2 & above"
 
@@ -2392,28 +2393,35 @@ class Economy(commands.Cog):
                       f"```"
 
         embed = discord.Embed(color=query1.colour, description=description, timestamp=self.get_timestamp())
-
-        try:
-            time_deployed = self.get_time_converted(ship_profile["cards"]["timestamp"])
-            hours, minutes = self.hours_minutes(
-                (time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC"))
-            )
-            embed.add_field(
-                name=f"Equipped realm card",
-                value=f"{ship_profile['cards']['name'].title()} | "
-                      f"Grade {ship_profile['cards']['grade']} | "
-                      f"Collect in {hours}h, {minutes}m"
-            )
-        except TypeError:
-            pass
-        except AttributeError:
-            pass
-
         embed.set_author(
             name=f"{ship_profile['ship_name']}",
             icon_url=self.client.get_user(int(ship_profile["shipper1"])).avatar_url
         )
         embed.set_thumbnail(url=self.client.get_user(int(ship_profile['shipper2'])).avatar_url)
+
+        try:
+            time_deployed = self.get_time_converted(ship_profile["cards"]["timestamp"])
+        except TypeError:
+            pass
+        except AttributeError:
+            pass
+        else:
+            time_deployed_delta = time_deployed + timedelta(days=1)
+            now = datetime.now(tz=pytz.timezone("UTC"))
+
+            if now < time_deployed_delta:
+                hours, minutes = self.hours_minutes(time_deployed_delta - now)
+                caption = f"Collect in {hours}h, {minutes}m"
+            else:
+                caption = "claim now!"
+
+            embed.add_field(
+                name=f"Equipped realm card",
+                value=f"{ship_profile['cards']['name'].title()} | "
+                      f"Grade {ship_profile['cards']['grade']} | "
+                      f"{caption}"
+            )
+
         await ctx.channel.send(embed=embed)
 
     @commands.command(aliases=["friendship", "fp"])
@@ -2623,7 +2631,7 @@ class Economy(commands.Cog):
 
             frame = " ".join(args[1::]).lower()
             request = frames.find_one({"name": frame.title()}, {"_id": 0})
-            emoji, currency, amount = request["emoji"], request["currency"], request["amount"]
+            currency, amount = request["currency"], request["amount"]
             cost_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency]
 
             try:
@@ -2632,7 +2640,7 @@ class Economy(commands.Cog):
                 url = ""
 
             embed = discord.Embed(title="Confirm purchase?", color=ctx.author.colour, timestamp=self.get_timestamp())
-            embed.description = f"{emoji} {frame.title()} frame for `{amount:,d}` {self.get_emoji(currency)}"
+            embed.description = f"{frame.title()} frame for `{amount:,d}` {self.get_emoji(currency)}"
             embed.add_field(
                 name="Inventory",
                 value=f"`{cost_item_have:,d}` {self.get_emoji(currency)}"
@@ -2645,7 +2653,7 @@ class Economy(commands.Cog):
             answer = await self.shop_buy_items_confirmation(ctx, msg)
 
             if answer is True:
-                await self.shop_buy_items_process_purchase_frame(ctx, user, currency, amount, frame.title(), emoji)
+                await self.shop_buy_items_process_purchase_frame(ctx, user, currency, amount, frame.title())
 
         else:
             def get_offer_and_cost(x):
@@ -2754,7 +2762,7 @@ class Economy(commands.Cog):
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
             await ctx.channel.send(embed=embed)
 
-    async def shop_buy_items_process_purchase_frame(self, ctx, user, currency, amount, frame_name, emoji):
+    async def shop_buy_items_process_purchase_frame(self, ctx, user, currency, amount, frame_name):
         if users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency] >= amount:
 
             if users.find_one({"user_id": str(user.id), "achievements.name": frame_name}, {"_id": 0}) is None:
@@ -2774,8 +2782,7 @@ class Economy(commands.Cog):
 
                 embed = discord.Embed(
                     title="Confirmation receipt", colour=self.colour,
-                    description=f"You acquired {emoji} {frame_name} in exchange for "
-                                f"{amount:,d}{self.get_emoji(currency)}",
+                    description=f"You acquired {frame_name} in exchange for {amount:,d}{self.get_emoji(currency)}",
                     timestamp=self.get_timestamp()
                 )
                 await ctx.channel.send(embed=embed)
