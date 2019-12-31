@@ -376,7 +376,7 @@ class Clock(commands.Cog):
                 await self.perform_demolish_ships()
 
             if hour_minute == "00:00":
-                await Gameplay(self).boss_daily_reset_check()
+                await Gameplay(self.client).boss_daily_reset_check()
                 await Economy(self.client).perform_reset_rewards_daily()
 
                 if day_week.lower() == "mon":
@@ -393,6 +393,7 @@ class Clock(commands.Cog):
             raise KeyboardInterrupt
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
+            pb.push_note("Miketsu Bot", f"{exc_type}, Line {exc_tb.tb_lineno}")
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
     @commands.command(aliases=["events", "event", "e"])

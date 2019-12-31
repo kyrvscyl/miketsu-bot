@@ -497,7 +497,7 @@ class Economy(commands.Cog):
         if shiki is None:
             embed = discord.Embed(
                 color=self.colour,
-                title="wish, w",
+                title="wish",
                 description=f"wish for a shikigami shard to manually summon it"
             )
             embed.add_field(name="Example", value=f"*`{self.prefix}wish inferno ibaraki`*")
