@@ -2289,19 +2289,24 @@ class Economy(commands.Cog):
 
             while start < end:
                 try:
-                    appendage = ""
+                    caption = ""
                     timestamp = formatted_list[start][4]["timestamp"]
                     collection = formatted_list[start][4]["collected"]
 
                     if timestamp is not None and collection is False:
+
                         time_deployed = self.get_time_converted(timestamp)
-                        hours, minutes = self.hours_minutes(
-                            (time_deployed + timedelta(days=1)) - datetime.now(tz=pytz.timezone("UTC"))
-                        )
-                        appendage = f" [{hours}h, {minutes}m]"
+                        time_deployed_delta = time_deployed + timedelta(days=1)
+                        now = datetime.now(tz=pytz.timezone("UTC"))
+
+                        if now < time_deployed_delta:
+                            hours, minutes = self.hours_minutes(time_deployed_delta - now)
+                            caption = f", collect in {hours}h, {minutes}m"
+                        else:
+                            caption = ", claim now!"
 
                     embed.add_field(
-                        name=f"{formatted_list[start][2]}, level {formatted_list[start][3]}{appendage}",
+                        name=f"{formatted_list[start][2]}, level {formatted_list[start][3]}{caption}",
                         value=f"<@{formatted_list[start][0]}> & <@{formatted_list[start][1]}>",
                         inline=False
                     )
