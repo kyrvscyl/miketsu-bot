@@ -13,7 +13,7 @@ import pytz
 from PIL import Image
 from discord.ext import commands
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
 
 # Collections
 config = get_collections("config")
@@ -344,6 +344,18 @@ class Frames(commands.Cog):
                 elif profile["shikigami"][0]["evolved"] is True:
                     await self.achievements_process_announce(member, "Cursed Blade", jades)
 
+            if "Sword Swallowing-Snake" not in user_frames:
+                profile = users.find_one({
+                    "user_id": document["user_id"], "shikigami.name": "orochi"}, {
+                    "_id": 0, "shikigami.$": 1
+                })
+
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["evolved"] is True:
+                    await self.achievements_process_announce(member, "Sword Swallowing-Snake", jades)
+
             if "Dawn of the Thrilling Spring" not in user_frames:
                 if document["friendship"] >= 1000:
                     await self.achievements_process_announce(member, "Dawn of the Thrilling Spring", jades)
@@ -611,7 +623,7 @@ class Frames(commands.Cog):
                 for result in users.aggregate([
                     {
                         "$match": {
-                            "user_id": document["user_id"]
+                            "user_id": str(member.id)
                         }
                     }, {
                         "$unwind": {
@@ -619,7 +631,10 @@ class Frames(commands.Cog):
                         }
                     }, {
                         "$match": {
-                            "shikigami.rarity": "SSN"
+                            "shikigami.rarity": "SSN",
+                            "shikigami.owned": {
+                                "$gt": 0
+                            }
                         }
                     }, {
                         "$count": "count"

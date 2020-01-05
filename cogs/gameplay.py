@@ -16,7 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 
 from cogs.economy import Economy
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
 
 # Collections
 bosses = get_collections("bosses")

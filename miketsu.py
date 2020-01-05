@@ -5,10 +5,10 @@ kyrvscyl, 2020
 import os
 from datetime import datetime
 
-import discord
 from discord.ext import commands
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
+from cogs.ext.processes import *
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 token = os.environ.get("TOKEN")
@@ -38,26 +38,6 @@ def cogs_extension_startup():
             else:
                 cogs_loaded.append(filename[:-3])
                 print(f"Loading {filename}..")
-
-
-async def process_msg_add_reaction(message, emoji):
-    try:
-        await message.add_reaction(emoji)
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
-
-
-async def process_msg_submit(channel, content, embed):
-    try:
-        return await channel.send(content=content, embed=embed)
-    except AttributeError:
-        pass
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
 
 
 @client.command(aliases=["stats"])
@@ -110,11 +90,11 @@ async def cogs_extension_load(ctx, extension):
     try:
         client.load_extension(f"cogs.{extension}")
     except commands.ExtensionNotFound:
-        await process_msg_add_reaction(ctx.message, "❌")
+        await process_msg_reaction_add(ctx.message, "❌")
     else:
         cogs_loaded.append(f"{extension}")
         print(f"Loading {extension}.py..")
-        await process_msg_add_reaction(ctx.message, "✅")
+        await process_msg_reaction_add(ctx.message, "✅")
 
 
 @client.command(aliases=["unload", "ul"])
@@ -123,11 +103,11 @@ async def cogs_extension_unload(ctx, extension):
     try:
         client.unload_extension(f"cogs.{extension}")
     except commands.ExtensionNotLoaded:
-        await process_msg_add_reaction(ctx.message, "❌")
+        await process_msg_reaction_add(ctx.message, "❌")
     else:
         cogs_loaded.remove(f"{extension}")
         print(f"Unloading {extension}.py..")
-        await process_msg_add_reaction(ctx.message, "✅")
+        await process_msg_reaction_add(ctx.message, "✅")
 
 
 @client.command(aliases=["reload", "rl"])
@@ -137,12 +117,12 @@ async def cogs_extension_reload(ctx, extension):
     try:
         client.reload_extension(f"cogs.{extension}")
     except commands.ExtensionNotLoaded:
-        await process_msg_add_reaction(ctx.message, "❌")
+        await process_msg_reaction_add(ctx.message, "❌")
     except commands.ExtensionNotFound:
-        await process_msg_add_reaction(ctx.message, "❌")
+        await process_msg_reaction_add(ctx.message, "❌")
     else:
         print(f"Reloading {extension}.py..")
-        await process_msg_add_reaction(ctx.message, "✅")
+        await process_msg_reaction_add(ctx.message, "✅")
 
 
 @client.command(aliases=["shutdown"])
@@ -159,7 +139,7 @@ async def cogs_extension_shutdown(ctx):
             else:
                 print(f"Unloading {file_name}..")
 
-    await process_msg_add_reaction(ctx.message, "✅")
+    await process_msg_reaction_add(ctx.message, "✅")
 
 
 @client.command(aliases=["initialize"])
@@ -178,7 +158,7 @@ async def cogs_extension_initialize(ctx):
             else:
                 print(f"Loading {file_name}..")
 
-    await process_msg_add_reaction(ctx.message, "✅")
+    await process_msg_reaction_add(ctx.message, "✅")
 
 
 cogs_extension_startup()

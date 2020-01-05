@@ -9,15 +9,15 @@ import os
 import random
 from datetime import datetime, timedelta
 from itertools import cycle
-from math import ceil
+from math import exp, ceil
 
 import discord
 import pytz
 from PIL import Image, ImageFont, ImageDraw, ImageOps
-from discord.ext import commands
+from discord.ext import commands, tasks
 
+from cogs.ext.database import get_collections
 from cogs.frames import Frames
-from cogs.mongo.database import get_collections
 
 # Collections
 bosses = get_collections("bosses")
@@ -27,6 +27,7 @@ explores = get_collections("explores")
 frames = get_collections("frames")
 guilds = get_collections("guilds")
 logs = get_collections("logs")
+realms = get_collections("realms")
 shikigamis = get_collections("shikigamis")
 ships = get_collections("ships")
 streaks = get_collections("streaks")
@@ -85,6 +86,7 @@ class Economy(commands.Cog):
         self.mystic_shop = self.dictionaries["mystic_shop"]
         self.shard_requirement = self.dictionaries["shard_requirement"]
         self.talisman_acquire = self.dictionaries["talisman_acquire"]
+        self.cards_realm = self.dictionaries["cards_realm"]
 
         self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
         self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
@@ -183,6 +185,9 @@ class Economy(commands.Cog):
     
     def get_emoji(self, item):
         return self.emoji_dict[item]
+
+    def get_emoji_cards(self, x):
+        return self.cards_realm[x]
 
     def get_variables(self, r):
         dictionary = {
@@ -406,14 +411,15 @@ class Economy(commands.Cog):
         await ctx.channel.send(embed=embed)
 
     async def shikigami_process_levelup(self, user_id, shiki):
+
         profile = users.find_one({
             "user_id": str(user_id), "shikigami.name": shiki}, {
             "_id": 0,
             "shikigami.$": 1,
         })
-        exp = profile["shikigami"][0]["exp"]
+        experience = profile["shikigami"][0]["exp"]
         level = profile["shikigami"][0]["level"]
-        level_end = int(exp ** 0.400515000062462)
+        level_end = int(experience ** 0.400515000062462)
 
         if level > level_end:
             users.update_one({
@@ -443,15 +449,63 @@ class Economy(commands.Cog):
                     }
                 })
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+
+        self.sushi_bento_increment.start()
+
+    @tasks.loop(minutes=4)
+    async def sushi_bento_increment(self):
+
+        users.update_many({"bento": {"$lt": 360}}, {"$inc": {"bento": 1}})
+
+    @commands.command(aliases=["bento"])
+    @commands.guild_only()
+    async def sushi_bento(self, ctx):
+
+        query = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "bento": 1})
+        reserves = query["bento"]
+
+        def embed_new_create(strike):
+            embed_new = discord.Embed(
+                description=f"{strike}You currently have `{reserves:,d}`{self.get_emoji('sushi')} "
+                            f"in your reserve{strike}",
+                color=self.colour,
+                timestamp=self.get_timestamp()
+            )
+            embed_new.set_footer(
+                text=f"{ctx.author.display_name}",
+                icon_url=ctx.author.avatar_url
+            )
+            return embed_new
+
+        msg = await ctx.channel.send(embed=embed_new_create(""))
+        await msg.add_reaction("🍽️")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) == "🍽️" and u.id == ctx.author.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": reserves, "bento": -reserves}})
+                await msg.edit(embed=embed_new_create("~~"))
+                await self.perform_add_log("sushi", reserves, user.id)
+                await msg.clear_reactions()
+
     @commands.command(aliases=["sushi", "food", "ap", "hungry"])
     @commands.guild_only()
     @commands.cooldown(1, 60 * 60, commands.BucketType.guild)
     async def spawn_random_sushi(self, ctx):
 
         minutes, sushi_claimers, timestamp = 10, [], self.get_timestamp()
-        role = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles.sushchefs": 1})["roles"]["sushchefs"]
+        sushchefs_id = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})["roles"]["sushchefs"]
 
-        def create_embed(listings, strike):
+        def create_embed_new(listings, strike):
             embed = discord.Embed(
                 title=f"{strike}Free sushi!{strike} 25🍣",
                 description=f"claim your free sushi every hour! 🎉\n"
@@ -459,11 +513,14 @@ class Economy(commands.Cog):
                 color=self.colour,
                 timestamp=timestamp
             )
-            embed.set_footer(text=f"lasts {minutes} minutes", icon_url=self.client.user.avatar_url)
+            embed.set_footer(
+                text=f"lasts {minutes} minutes",
+                icon_url=self.client.user.avatar_url
+            )
             return embed
 
-        content = f"<@&{role}>!"
-        msg = await ctx.channel.send(content=content, embed=create_embed(sushi_claimers, ""))
+        content = f"<@&{sushchefs_id}>!"
+        msg = await ctx.channel.send(content=content, embed=create_embed_new(sushi_claimers, ""))
         await msg.add_reaction("🍽️")
 
         def check(r, u):
@@ -476,16 +533,477 @@ class Economy(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60 * minutes, check=check)
             except asyncio.TimeoutError:
-                await msg.edit(embed=create_embed(sushi_claimers, "~~"))
+                await msg.edit(embed=create_embed_new(sushi_claimers, "~~"))
                 await msg.clear_reactions()
                 break
             else:
                 sushi = 25
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": sushi}})
                 sushi_claimers.append(str(user.id))
-                await msg.edit(embed=create_embed(sushi_claimers, ""))
+                await msg.edit(embed=create_embed_new(sushi_claimers, ""))
                 await self.perform_add_log("sushi", sushi, user.id)
                 continue
+
+    @commands.command(aliases=["realms"])
+    @commands.guild_only()
+    async def realm_card_show_all(self, ctx):
+
+        dictionary, cards_listing, page = {}, [], 1
+        for x in realms.find({}, {"_id": 0}):
+            cards_listing.append([x["name"], x["rewards"], x["base"], x['link']["6"]])
+            dictionary.update({f"str({x['page']})": f"{x['name']}"})
+
+        page_total = len(dictionary)
+
+        def create_new_embed_page(page_new):
+            embed = discord.Embed(
+                title="realms",
+                description="equip cards with your ships to obtained shared rewards",
+                color=self.colour
+            )
+
+            def generate_data():
+                values, data = [], cards_listing[page_new - 1]
+
+                for y in range(1, 7):
+                    rewards = int(data[2] * exp(0.3868 * y))
+                    values.append(
+                        f"`Grade {y} 🌟` :: {self.get_emoji(data[1])}`~ +{rewards:,d}`\n"
+                    )
+                embed.set_thumbnail(url=data[3])
+                embed.add_field(
+                    name=f"{self.get_emoji_cards(data[0])} {str(data[0]).title()} card",
+                    value=f"{' '.join(values)}"
+                )
+                embed.set_footer(text=f"Page: {page_new} of {len(cards_listing)}")
+
+            generate_data()
+            return embed
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(1))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return msg.id == r.message.id and str(r.emoji) in ["⬅", "➡"] and u.id == ctx.author.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=create_new_embed_page(page))
+
+    @commands.command(aliases=["cards"])
+    @commands.guild_only()
+    async def realm_card_show_user(self, ctx, *, member: discord.Member = None):
+
+        if member is None:
+            await self.realm_card_show_user_post(ctx.author, ctx)
+
+        else:
+            await self.realm_card_show_user_post(member, ctx)
+
+    async def realm_card_show_user_post(self, member, ctx):
+
+        list_formatted = []
+        for c in users.find_one({"user_id": str(member.id)}, {"_id": 0, "cards": 1})["cards"]:
+            list_formatted.append(
+                f"Grade `{c['grade']} 🌟` | {self.get_emoji_cards(c['name'])} {c['name'].title()}\n"
+            )
+
+        await self.realm_card_show_user_post_paginate(ctx, member, list_formatted)
+
+    async def realm_card_show_user_post_paginate(self, ctx, member, list_formatted):
+
+        page, lines_max = 1, 10
+        page_total = ceil(len(list_formatted) / lines_max)
+        if page_total == 0:
+            page_total = 1
+
+        def embed_create_page_new(page_new):
+            end = page_new * lines_max
+            start = end - lines_max
+            description_new = "".join(list_formatted[start:end])
+
+            embed_new = discord.Embed(
+                color=member.colour,
+                description=f"{description_new}", timestamp=self.get_timestamp()
+            )
+            embed_new.set_author(
+                name=f"{member.display_name}'s realm cards",
+                icon_url=member.avatar_url
+            )
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            return embed_new
+
+        msg = await ctx.channel.send(embed=embed_create_page_new(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=embed_create_page_new(page))
+
+    @commands.command(aliases=["card"])
+    @commands.guild_only()
+    async def realm_card_use(self, ctx, arg1=None, *, member: discord.Member = None):
+
+        if arg1 is None and member is None:
+            embed = discord.Embed(
+                color=self.colour,
+                title="card",
+                description=f"equip your realms with cards to obtain shipment rewards"
+            )
+            embed.add_field(
+                name="Formats",
+                value=f"*`{self.prefix}card use <@member>`*\n",
+                inline=False
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif arg1.lower() in ["use", "u"] and member is None:
+            await ctx.message.add_reaction("❌")
+
+        elif arg1.lower() in ["use", "u"] and member is not None:
+
+            code = self.get_bond(ctx.author.id, member.id)
+            ship_data = ships.find_one({"code": code}, {"_id": 0})
+
+            if ship_data is None:
+                embed = discord.Embed(
+                    colour=self.colour,
+                    title="Invalid ship",
+                    description=f"that ship has sunk before it was even fully built"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif ship_data is not None:
+
+                if ship_data["cards"]["equipped"] is True:
+                    await ctx.message.add_reaction("🛳")
+
+                elif ship_data["cards"]["equipped"] is False:
+
+                    user_cards = []
+                    for x in users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "cards": 1})["cards"]:
+                        user_cards.append(f"{x['name']}/{x['grade']}")
+
+                    embed = discord.Embed(
+                        color=self.colour,
+                        title="Realm card selection",
+                        description=f"enter a valid realm card and grade"
+                    )
+                    embed.add_field(
+                        name="Available cards",
+                        value=f"*{', '.join(user_cards)}*",
+                        inline=False
+                    )
+                    await ctx.channel.send(embed=embed)
+
+                    def check(m):
+                        return m.content.lower() in user_cards and m.author.id == ctx.author.id
+
+                    try:
+                        select = await self.client.wait_for("message", timeout=60, check=check)
+                    except asyncio.TimeoutError:
+                        return
+                    else:
+                        select_formatted = select.content.lower().split("/")
+                        ships.update_one({
+                            "code": code
+                        }, {
+                            "$set": {
+                                "cards.equipped": True,
+                                "cards.name": select_formatted[0],
+                                "cards.grade": int(select_formatted[1]),
+                                "cards.timestamp": self.get_time(),
+                                "cards.collected": False
+                            }
+                        })
+
+                        index_pop = None
+                        for x in users.aggregate([
+                            {
+                                '$match': {
+                                    'user_id': str(ctx.author.id),
+                                    'cards': {
+                                        '$elemMatch': {
+                                            'name': select_formatted[0],
+                                            'grade': int(select_formatted[1])
+                                        }
+                                    }
+                                }
+                            }, {
+                                '$project': {
+                                    'index': {
+                                        '$indexOfArray': [
+                                            '$cards', {
+                                                'name': select_formatted[0],
+                                                'grade': int(select_formatted[1])
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]):
+                            index_pop = x["index"]
+
+                        users.update_one({
+                            "user_id": str(ctx.author.id),
+                        }, {
+                            "$pop": {
+                                "cards": index_pop
+                            }
+                        })
+                        await select.add_reaction("✅")
+
+    @commands.command(aliases=["rcollect", "rcol"])
+    @commands.guild_only()
+    async def realm_card_collect_rewards(self, ctx, *, member: discord.Member = None):
+
+        try:
+            code = self.get_bond(ctx.author.id, member.id)
+        except AttributeError:
+            embed = discord.Embed(
+                colour=self.colour,
+                title="rcollect, rcol",
+                description=f"collect your cruising rewards"
+            )
+            embed.add_field(
+                name="Format",
+                value=f"*`{self.prefix}rcollect <@member>`*"
+            )
+            await ctx.channel.send(embed=embed)
+            return
+        except TypeError:
+            embed = discord.Embed(
+                colour=self.colour,
+                title="rcollect, rcol",
+                description=f"collect your cruising rewards"
+            )
+            embed.add_field(
+                name="Format",
+                value=f"*`{self.prefix}rcollect <@member>`*"
+            )
+            await ctx.channel.send(embed=embed)
+            return
+
+        ship_data = ships.find_one({"code": code}, {"_id": 0})
+
+        if ship_data is None:
+            embed = discord.Embed(
+                colour=self.colour,
+                title="Invalid ship",
+                description=f"that ship has sunk before it was even fully built"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif ship_data["cards"]["collected"] is True or ship_data["cards"]["equipped"] is False:
+            embed = discord.Embed(
+                colour=self.colour,
+                title="Invalid collection",
+                description=f"the ship has not yet been deployed for cruise"
+            )
+            await ctx.channel.send(embed=embed)
+
+        elif ship_data["cards"]["collected"] is False and ship_data["cards"]["equipped"] is True:
+
+            card_name = ship_data["cards"]["name"]
+            time_deployed = self.get_time_converted(ship_data["cards"]["timestamp"])
+            now = datetime.now(tz=pytz.timezone("UTC"))
+
+            if now < (time_deployed + timedelta(days=1)):
+                embed = discord.Embed(
+                    colour=self.colour,
+                    title="Invalid collection",
+                    description=f"the ship has not yet returned from its cruise"
+                )
+                await ctx.channel.send(embed=embed)
+
+            elif now >= (time_deployed + timedelta(days=1)):
+                card_data = realms.find_one({"name": card_name}, {"_id": 0})
+
+                rewards = card_data["rewards"]
+                base = card_data["base"]
+                grade = ship_data["cards"]["grade"]
+                link = card_data["link"][str(grade)]
+
+                multiplier = 0.0375 * int(ship_data['level']) + 0.9625
+                rewards_count = int((base * exp(0.3868 * grade)) * multiplier)
+                adjusted_rewards_count = int(random.uniform(rewards_count * 0.95, rewards_count * 1.05))
+
+                shipper1 = ctx.guild.get_member(int(ship_data["shipper1"]))
+                shipper2 = ctx.guild.get_member(int(ship_data["shipper2"]))
+
+                try:
+                    shipper1_mention = shipper1.mention
+                    shipper2_mention = shipper2.mention
+                except AttributeError:
+                    return
+
+                embed = discord.Embed(
+                    description=f"Captains {shipper1_mention} x {shipper2_mention}\n"
+                                f"Cruise: {ship_data['ship_name']}\n"
+                                f"Card: {self.get_emoji_cards(card_name)} `Grade {grade}` {card_name.title()}",
+                    color=shipper1.colour,
+                    timestamp=self.get_timestamp()
+                )
+                embed.set_author(
+                    name=f"Cruise rewards",
+                    icon_url=shipper1.avatar_url
+                )
+                embed.add_field(
+                    name="Earnings per captain",
+                    value=f"{adjusted_rewards_count:,d}{self.get_emoji(rewards)}"
+                )
+                embed.set_thumbnail(url=link)
+                embed.set_footer(
+                    text=f"Ship Level: {ship_data['level']} | Multiplier: {multiplier}",
+                    icon_url=shipper2.avatar_url
+                )
+
+                if rewards != "experience":
+                    users.update_one({"user_id": str(shipper1.id)}, {"$inc": {f"{rewards}": adjusted_rewards_count}})
+                    await self.perform_add_log(f"{rewards}", adjusted_rewards_count, shipper1.id)
+
+                    users.update_one({"user_id": str(shipper2.id)}, {"$inc": {f"{rewards}": adjusted_rewards_count}})
+                    await self.perform_add_log(f"{rewards}", adjusted_rewards_count, shipper2.id)
+
+                else:
+                    def get_shikigami_display(u):
+                        return users.find_one({"user_id": str(u.id)}, {"_id": 0, "display": 1})["display"]
+
+                    users.update_one({
+                        "user_id": str(shipper1.id),
+                        "shikigami.name": get_shikigami_display(shipper1)
+                    }, {
+                        "$inc": {
+                            "shikigami.$.exp": adjusted_rewards_count
+                        }
+                    })
+                    users.update_one({
+                        "user_id": str(shipper1.id),
+                        "shikigami.name": get_shikigami_display(shipper2)
+                    }, {
+                        "$inc": {
+                            "shikigami.$.exp": adjusted_rewards_count
+                        }
+                    })
+
+                ships.update_one({"code": code}, {
+                    "$set": {
+                        "cards.equipped": False,
+                        "cards.name": None,
+                        "cards.grade": None,
+                        "cards.timestamp": None,
+                        "cards.collected": True
+
+                    }
+                })
+                await ctx.channel.send(embed=embed)
+
+    @commands.command(aliases=["raidable", "rdb"])
+    @commands.guild_only()
+    async def raid_perform_check_users(self, ctx):
+
+        query = users.find({"raided_count": {"$lt": 3}}, {"_id": 0, "user_id": 1, "level": 1, "raided_count": 1})
+
+        list_raw = []
+        list_formatted = []
+
+        for user in query:
+            try:
+                member_name = self.client.get_user(int(user["user_id"]))
+                if member_name is not None:
+                    list_raw.append((member_name, user["level"], user["raided_count"]))
+            except AttributeError:
+                continue
+
+        def lengthen(x):
+            prefix = "#{}"
+            if x < 10:
+                prefix = "0{}"
+            elif x < 100:
+                prefix = "{}"
+            return prefix.format(x)
+
+        for user in sorted(list_raw, key=lambda x: x[1], reverse=True):
+            list_formatted.append(f"• `lvl.{lengthen(user[1])}`, `{user[2]}/3` | {user[0]}\n")
+
+        await self.raid_perform_check_users_paginate("Available Realms", ctx, list_formatted)
+
+    async def raid_perform_check_users_paginate(self, title, ctx, formatted_list):
+
+        page = 1
+        max_lines = 15
+        page_total = ceil(len(formatted_list) / max_lines)
+        if page_total == 0:
+            page_total = 1
+
+        def create_new_embed_page(page_new):
+            end = page * max_lines
+            start = end - max_lines
+            description = "".join(formatted_list[start:end])
+
+            embed_new = discord.Embed(
+                color=ctx.author.colour,
+                title=title,
+                description=f"{description}",
+                timestamp=self.get_timestamp()
+            )
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            return embed_new
+
+        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        await msg.add_reaction("⬅")
+        await msg.add_reaction("➡")
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id
+
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
+            except asyncio.TimeoutError:
+                await msg.clear_reactions()
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                elif str(reaction.emoji) == "⬅":
+                    page -= 1
+                if page == 0:
+                    page = page_total
+                elif page > page_total:
+                    page = 1
+                await msg.edit(embed=create_new_embed_page(page))
 
     @commands.command(aliases=["wish"])
     @commands.guild_only()
@@ -1443,7 +1961,7 @@ class Economy(commands.Cog):
         amulets_b = p["amulets_b"]
         amulets_spent = p["amulets_spent"]
         amulets_spent_b = p["amulets_spent_b"]
-        exp = p["experience"]
+        experience = p["experience"]
         level = p["level"]
         level_exp_next = p["level_exp_next"]
         jades = p["jades"]
@@ -1485,7 +2003,7 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name=f"{self.e_x} Experience | Nether Pass",
-            value=f"Level: {level} ({exp:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
+            value=f"Level: {level} ({experience:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
         )
         embed.add_field(
             name=f"{self.e_1} | {self.e_2} | {self.e_3} | {self.e_4} | {self.e_5} | {self.e_6}",
@@ -1571,6 +2089,7 @@ class Economy(commands.Cog):
         new_im = Image.new("RGBA", (width, height))
 
         def get_coordinates(c):
+            x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
             x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
             y = (ceil(c / 5) * 200) - 200
             return x, y
@@ -2197,9 +2716,6 @@ class Economy(commands.Cog):
                 embed.set_thumbnail(url=image_url)
                 await ctx.channel.send(embed=embed)
 
-                if query == "orochi":
-                    await self.frame_acquisition(user, "Sword Swallowing-Snake", jades=2500)
-
             elif count == 0:
                 embed = discord.Embed(
                     colour=self.colour,
@@ -2275,17 +2791,20 @@ class Economy(commands.Cog):
         if page_total == 0:
             page_total = 1
 
-        def create_new_embed_page(page_new):
+        def embed_new_create(page_new):
             end = page_new * 5
             start = end - 5
             total_ships = len(formatted_list)
 
-            embed = discord.Embed(
+            embed_new = discord.Embed(
                 color=member.colour,
                 title=f"🚢 {member.display_name}'s ships [{total_ships} {self.pluralize('ship', total_ships)}]",
                 timestamp=self.get_timestamp()
             )
-            embed.set_footer(text=f"Page {page_new} of {page_total}")
+            embed_new.set_footer(
+                text=f"Page {page_new} of {page_total}",
+                icon_url=member.avatar_url
+            )
 
             while start < end:
                 try:
@@ -2301,24 +2820,24 @@ class Economy(commands.Cog):
 
                         if now < time_deployed_delta:
                             hours, minutes = self.hours_minutes(time_deployed_delta - now)
-                            caption = f", collect in {hours}h, {minutes}m"
+                            caption = f", `collect in {hours}h, {minutes}m`"
                         else:
-                            caption = ", claim now!"
+                            caption = ", `claim now!`"
 
-                    embed.add_field(
-                        name=f"{formatted_list[start][2]}, level {formatted_list[start][3]}{caption}",
+                    embed_new.add_field(
+                        name=f"`Lvl.{formatted_list[start][3]}` {formatted_list[start][2]}{caption}",
                         value=f"<@{formatted_list[start][0]}> & <@{formatted_list[start][1]}>",
                         inline=False
                     )
                     start += 1
                 except IndexError:
                     break
-            return embed
+            return embed_new
 
         def check_pagination(r, u):
             return u != self.client.user and r.message.id == msg.id
 
-        msg = await ctx.channel.send(embed=create_new_embed_page(page))
+        msg = await ctx.channel.send(embed=embed_new_create(page))
         await msg.add_reaction("⬅")
         await msg.add_reaction("➡")
 
@@ -2337,7 +2856,7 @@ class Economy(commands.Cog):
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await msg.edit(embed=create_new_embed_page(page))
+                await msg.edit(embed=embed_new_create(page))
 
     @commands.command(aliases=["ship"])
     @commands.guild_only()
@@ -2787,9 +3306,10 @@ class Economy(commands.Cog):
 
                 embed = discord.Embed(
                     title="Confirmation receipt", colour=self.colour,
-                    description=f"You acquired {frame_name} in exchange for {amount:,d}{self.get_emoji(currency)}",
+                    description=f"You acquired {frame_name} in exchange for `{amount:,d}`{self.get_emoji(currency)}",
                     timestamp=self.get_timestamp()
                 )
+                embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
                 await ctx.channel.send(embed=embed)
 
             else:
@@ -3822,6 +4342,8 @@ class Economy(commands.Cog):
             shikigami_set = user_profile["display"]
             shikigami_level, shikigami_evolved = get_shikigami_stats(user.id, shikigami_set)
 
+            thumbnail = self.get_thumbnail_shikigami(shikigami_set, self.get_evo_link(shikigami_evolved))
+
             evo_adjustment = 1
             if shikigami_evolved is True:
                 evo_adjustment = 0.75
@@ -3847,15 +4369,9 @@ class Economy(commands.Cog):
                 }, {
                     "_id": 0, "shikigami.$": 1, "sushi": 1
                 })
-                exp = user_profile_new["shikigami"][0]['exp']
+                experience = user_profile_new["shikigami"][0]['exp']
                 level_exp_next = user_profile_new["shikigami"][0]['level_exp_next']
                 shiki_level = user_profile_new["shikigami"][0]['level']
-
-                evo = users.find_one({
-                    "user_id": str(user.id), "shikigami.name": shikigami_set}, {
-                    "shikigami.$.name": 1
-                })["shikigami"][0]["evolved"]
-                thumbnail = self.get_thumbnail_shikigami(shikigami_set.lower(), self.get_evo_link(evo))
 
                 embed_explore = discord.Embed(
                     color=ctx.author.colour,
@@ -3864,8 +4380,8 @@ class Economy(commands.Cog):
                     timestamp=self.get_timestamp()
                 )
                 embed_explore.add_field(
-                    name=f"Shikigami: {user_profile['display'].title()} | {user_profile_new['sushi']} {self.e_s}",
-                    value=f"Level: {shiki_level} | Experience: {exp}/{level_exp_next}\n"
+                    name=f"Shikigami: {shikigami_set.title()} | {user_profile_new['sushi']} {self.e_s}",
+                    value=f"Level: {shiki_level} | Experience: {experience}/{level_exp_next}\n"
                           f"Clear Chance: ~{round(total_chance, 2)}%"
                 )
                 embed_explore.set_footer(
@@ -3957,6 +4473,7 @@ class Economy(commands.Cog):
                         }
                     })
                     await self.perform_add_log("sushi", -sushi_required, ctx.author.id)
+
                     roll = random.uniform(0, 100)
                     if roll < adjusted_chance:
                         explores.update_one({

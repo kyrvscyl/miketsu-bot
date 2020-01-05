@@ -8,12 +8,12 @@ from datetime import datetime
 from itertools import cycle
 from math import ceil
 
-import discord
 import pytz
 from discord.ext import tasks, commands
 from pushbullet import Pushbullet
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
+from cogs.ext.processes import *
 
 # Pushbullet
 pb = Pushbullet(api_key=str(os.environ.get("PUSHBULLET")))
@@ -39,10 +39,11 @@ class Startup(commands.Cog):
         self.statuses = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
         
         self.commands_fake = [
-            "daily", "weekly", "profile", "set", "buy", "summon", "explore", "explores", "chapter", "realm", "realms",
+            "daily", "weekly", "profile", "set", "buy", "summon", "explore", "explores", "chapter", "card", "realms",
             "rcollect", "evolve", "friendship", "ships", "leaderboard", "shikigami", "shikigamis", "shrine", "sail",
             "pray", "stat", "frames", "wish", "wishlist", "fulfill", "parade", "collections", "shards", "cards",
-            "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange", "bento", "raidable"
+            "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange", "bento", "raidable",
+            "souls [beta]"
         ]
 
         self.commands_others = [
@@ -55,6 +56,7 @@ class Startup(commands.Cog):
     
     @commands.Cog.listener()
     async def on_ready(self):
+
         bot_info = await self.client.application_info()
         time_now = datetime.now(tz=pytz.timezone(self.timezone))
 
@@ -67,11 +69,12 @@ class Startup(commands.Cog):
         try:
             self.change_status.start()
         except RuntimeError:
-            pb.push_note("Miketsu Bot", "Experience a hiccup on changing my status ~1")
+            pb.push_note("Miketsu Bot", "Experience a hiccup while changing my status ~1")
         print("-------")
 
     @tasks.loop(seconds=1200)
     async def change_status(self):
+
         try:
             await self.client.change_presence(activity=discord.Game(next(self.statuses)))
         except RuntimeError:
@@ -88,7 +91,7 @@ class Startup(commands.Cog):
             name=f"Hello there! I'm {self.client.user.display_name}! ~",
             icon_url=self.client.user.avatar_url
         )
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["h", "help"])
     async def show_message_help(self, ctx):
@@ -96,7 +99,7 @@ class Startup(commands.Cog):
         embed = discord.Embed(
             title="help, h",
             color=self.colour,
-            description=f"append the prefix symbol *`{self.prefix}`*"
+            description=f"append my command prefix symbol *`{self.prefix}`*"
         )
         embed.add_field(
             name="fake Onmyoji",
@@ -110,7 +113,7 @@ class Startup(commands.Cog):
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
         embed.set_footer(text="*Head commands, **#pvp-fair exclusive")
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["suggest", "report"])
     async def collect_suggestions(self, ctx, *, content):
@@ -135,9 +138,9 @@ class Startup(commands.Cog):
             embed.description = f"From: {ctx.author.mention}\n" \
                                 f"Submitted through: Direct Message"
 
-        msg = await scroll_channel.send(embed=embed)
-        await msg.add_reaction("📌")
-        await ctx.message.add_reaction("📩")
+        msg = await process_msg_submit(scroll_channel, None, embed)
+        await process_msg_reaction_add(msg, "📌")
+        await process_msg_reaction_add(ctx.message, "📩")
 
     @commands.command(aliases=["changelog", "changelogs"])
     @commands.guild_only()
@@ -168,9 +171,9 @@ class Startup(commands.Cog):
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
-        msg = await ctx.channel.send(embed=embed_new_create(page))
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
+        msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
+        await process_msg_reaction_add(msg, "⬅")
+        await process_msg_reaction_add(msg, "➡")
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -179,7 +182,7 @@ class Startup(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                await msg.clear_reactions()
+                await process_msg_reaction_clear(msg)
                 break
             else:
                 if str(reaction.emoji) == "➡":
@@ -190,7 +193,9 @@ class Startup(commands.Cog):
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await msg.edit(embed=embed_new_create(page))
+
+                await process_msg_edit(msg, None, embed_new_create(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
 
 def setup(client):

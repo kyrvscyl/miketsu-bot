@@ -16,9 +16,9 @@ from discord.ext import commands
 from pushbullet import Pushbullet
 
 from cogs.economy import Economy
+from cogs.ext.database import get_collections
 from cogs.frames import Frames
 from cogs.gameplay import Gameplay
-from cogs.mongo.database import get_collections
 from cogs.quest import Expecto, owls_restock
 
 # Pushbullet

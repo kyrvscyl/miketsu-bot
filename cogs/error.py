@@ -9,7 +9,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
 
 # Collections
 guilds = get_collections("guilds")

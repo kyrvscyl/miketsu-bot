@@ -10,13 +10,13 @@ from datetime import datetime
 from itertools import cycle
 from math import ceil
 
-import discord
 import pytz
 from PIL import Image, ImageFont, ImageDraw
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
+from cogs.ext.processes import *
 
 # Collections
 books = get_collections("books")
@@ -204,7 +204,7 @@ class Castle(commands.Cog):
 
     async def post_process_books(self, ctx, query):
         books.update_one(query, {"$inc": {"borrows": 1}})
-        await ctx.message.delete()
+        await process_msg_delete(ctx.message, None)
 
     @commands.command(aliases=["guides"])
     @commands.guild_only()
@@ -213,12 +213,12 @@ class Castle(commands.Cog):
         if check_if_reference_section(ctx):
 
             await self.post_table_of_content_reference(ctx.channel)
-            await ctx.message.delete()
+            await process_msg_delete(ctx.message, None)
 
         elif self.check_if_restricted_section(ctx):
 
             await self.post_table_of_content_restricted(ctx.channel)
-            await ctx.message.delete()
+            await process_msg_delete(ctx.message, None)
 
         else:
             request = guilds.find_one({"server": str(ctx.guild.id)}, {
@@ -233,7 +233,7 @@ class Castle(commands.Cog):
                 description="show the guild's game guides collection, usable only at the library"
             )
             embed.add_field(name="Libraries", value=f"<#{reference_section}>, <#{restricted_section}>")
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
     async def post_table_of_content_restricted(self, channel):
         try:
@@ -399,7 +399,8 @@ class Castle(commands.Cog):
             return value
 
         embed = discord.Embed(
-            title="Patronus Portraits", color=ctx.author.colour,
+            title="Patronus Portraits", 
+            color=ctx.author.colour,
             description=f"There are {count} frames hanging in the castle"
         )
 
@@ -412,7 +413,7 @@ class Castle(commands.Cog):
 
             embed.add_field(name=f"Floor {x}", value="*{}*".format(generate_value_floors(x)), inline=False)
 
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["wander", "w"])
     @commands.check(check_if_valid_and_castle)
@@ -423,7 +424,7 @@ class Castle(commands.Cog):
             floor_num = int(ctx.channel.topic[:1])
             floor_frames = cycle(list(portraits.find({"floor": floor_num}, {"_id": 0})))
 
-            def create_new_embed_page():
+            def embed_new_create():
                 frame_preview = next(floor_frames)
                 find_role = frame_preview["role"]
                 in_game_name = frame_preview["in_game_name"]
@@ -443,8 +444,8 @@ class Castle(commands.Cog):
                 )
                 return embed_new
 
-            msg = await ctx.channel.send(embed=create_new_embed_page())
-            await msg.add_reaction("➡")
+            msg = await process_msg_submit(ctx.channel, None, embed_new_create())
+            await process_msg_reaction_add(msg, "➡")
 
             def check(r, u):
                 return u != self.client.user and r.message.id == msg.id
@@ -453,11 +454,12 @@ class Castle(commands.Cog):
                 try:
                     reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
                 except asyncio.TimeoutError:
-                    await msg.clear_reactions()
+                    await process_msg_reaction_clear(msg)
                     break
                 else:
                     if str(reaction.emoji) == "➡":
-                        await msg.edit(embed=create_new_embed_page())
+                        await process_msg_edit(msg, None, embed_new_create())
+                        
         except ValueError:
             return
 
@@ -467,7 +469,8 @@ class Castle(commands.Cog):
 
         if arg1.lower() not in ["edit", "add"]:
             embed = discord.Embed(
-                title="portrait add, portrait edit", colour=self.colour,
+                title="portrait add, portrait edit", 
+                colour=self.colour,
                 description=f"use `add` first before using `edit`\n"
                             f"use square photos for best results"
             )
@@ -481,7 +484,7 @@ class Castle(commands.Cog):
                 value=f"*`{self.prefix}portrait add xann 6 default Headless`*",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif arg1.lower() in ["edit", "add"]:
             frame_id = str(ctx.author.id)
@@ -573,7 +576,7 @@ class Castle(commands.Cog):
                 colour=self.colour,
                 title="Adding a fancy frame based on your highest primary server role.."
             )
-            await msg1.edit(embed=embed)
+            await process_msg_edit(msg1, None, embed)
 
             opener = urllib.request.build_opener()
             opener.addheaders = [('User-agent', 'Mozilla/5.0')]
@@ -608,9 +611,9 @@ class Castle(commands.Cog):
             embed.set_footer(
                 text=f"Floor {floor} | Frame# {frame_num}"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             await asyncio.sleep(2)
-            await msg1.delete()
+            await process_msg_delete(msg1, None)
 
         return attachment_link
 
@@ -626,7 +629,7 @@ class Castle(commands.Cog):
             )
             embed.add_field(name="Arguments", value="*add, update, show, delete*", inline=False)
             embed.add_field(name=f"Example", value=f"*`{self.prefix}duel add`*", inline=False)
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() == "add" and len(args) <= 1:
             embed = discord.Embed(
@@ -634,7 +637,7 @@ class Castle(commands.Cog):
                 description="add a new duelist in the database"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}duel add <name>`*", inline=False)
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() == ["delete", "d"] and len(args) <= 1:
             embed = discord.Embed(
@@ -642,7 +645,7 @@ class Castle(commands.Cog):
                 description="removes a duelist in the database"
             )
             embed.add_field(name="Format", value=f"*`{self.prefix}duel delete <exact_name>`*", inline=False)
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() in ["add", "a"] and len(args) == 2:
             await self.management_duel_profile_member_add(ctx, args)
@@ -671,7 +674,7 @@ class Castle(commands.Cog):
                       f"*`{self.prefix}d u 100 notes benefits more on upper-hand teams`*",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) == 2:
             fields_formatted = []
@@ -683,7 +686,7 @@ class Castle(commands.Cog):
                 title="No field and value provided",
                 description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() in ["update", "u"] and args[2].lower() not in self.duel_fields and len(args) >= 3:
             fields_formatted = []
@@ -695,7 +698,7 @@ class Castle(commands.Cog):
                 title="Invalid field update request",
                 description=f"Valid fields: *{', '.join(fields_formatted)}*"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
             await self.management_duel_profile_update_field(ctx, args)
@@ -706,7 +709,7 @@ class Castle(commands.Cog):
                 title="Invalid field update request",
                 description=f"No value provided for the field {args[2].lower()}"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in self.duel_fields:
             await self.management_duel_profile_update_field(ctx, args)
@@ -729,7 +732,7 @@ class Castle(commands.Cog):
                       f"• *`{self.prefix}d s 120`*\n",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() == "all":
             await self.management_duel_profile_show_all(ctx)
@@ -741,7 +744,7 @@ class Castle(commands.Cog):
             await self.management_duel_profile_show_profile(ctx, args)
 
         else:
-            await ctx.message.add_reaction("❌")
+            await process_msg_reaction_add(ctx.message, "❌")
 
     async def management_duel_profile_show_profile(self, ctx, args):
         try:
@@ -789,9 +792,9 @@ class Castle(commands.Cog):
                 link = member["link"]
 
             embed.set_image(url=link)
-            msg = await ctx.channel.send(embed=embed)
-            await msg.add_reaction("⬅")
-            await msg.add_reaction("➡")
+            msg = await process_msg_submit(ctx.channel, None, embed)
+            await process_msg_reaction_add(msg, "⬅")
+            await process_msg_reaction_add(msg, "➡")
 
             def check(r, u):
                 return str(r.emoji) in ["⬅", "➡"] and msg.id == r.message.id and u.id != self.client.user.id
@@ -830,7 +833,7 @@ class Castle(commands.Cog):
                     elif page < 1:
                         page = len(links) - 1
 
-                    await msg.edit(embed=generate_embed_lineup(page))
+                    await process_msg_edit(msg, None, generate_embed_lineup(page))
 
         except TypeError:
             await self.management_duel_profile_show_approximate(ctx, args[1])
@@ -879,7 +882,7 @@ class Castle(commands.Cog):
             name="Possible matches",
             value="*{}*".format(", ".join(approximate_results))
         )
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     async def management_duel_profile_update_field(self, ctx, args):
         try:
@@ -908,13 +911,13 @@ class Castle(commands.Cog):
                     "last_update": self.get_time()
                 }
             })
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
         elif args[2].lower() == "name":
             duelists.update_one(find_query, {"$set": {
                 "name": args[3], "name_lower": args[3].lower(), "last_update": self.get_time()
             }})
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
         elif args[2].lower() in ["unban", "uncore"] and " ".join(args[3:]).lower() in self.pool_all:
             duelists.update_one(find_query, {
@@ -925,7 +928,7 @@ class Castle(commands.Cog):
                     "last_update": self.get_time()
                 }
             })
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
         elif args[2].lower() in ["ban", "core"] and " ".join(args[3:]).lower() in self.pool_all:
             duelists.update_one(find_query, {
@@ -936,7 +939,7 @@ class Castle(commands.Cog):
                     "last_update": self.get_time()
                 }
             })
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
         elif args[2].lower() in ["lineup", "lineups"]:
             image_link = ctx.message.attachments[0].url
@@ -948,15 +951,15 @@ class Castle(commands.Cog):
                     "last_update": self.get_time()
                 }
             })
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
         else:
-            await ctx.message.add_reaction("❌")
+            await process_msg_reaction_add(ctx.message, "❌")
 
     async def management_duel_profile_member_delete(self, ctx, args):
         if duelists.find_one({"name": args[1]}) is not None:
             duelists.delete_one({"name": args[1]})
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
             name_id = 1
             for member in duelists.find({}, {"_id": 0, "name": 1}):
@@ -984,14 +987,14 @@ class Castle(commands.Cog):
                 "last_update": self.get_time()
             }
             duelists.insert_one(profile)
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
         else:
             embed = discord.Embed(
                 title="Invalid duelist", colour=self.colour,
                 description="that name already exists in the database"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
     async def management_duel_profile_generate_image(self, bans, cores, ctx):
 
@@ -1048,28 +1051,29 @@ class Castle(commands.Cog):
 
     async def management_duel_profile_paginate_embeds(self, ctx, formatted_list, content):
 
-        page = 1
-        max_lines = 20
+        page, max_lines = 1, 20
         page_total = ceil(len(formatted_list) / max_lines)
         if page_total == 0:
             page_total = 1
 
-        def create_new_embed_page(page_new):
+        def embed_new_create(page_new):
             end = page_new * max_lines
             start = end - max_lines
             description_new = "".join(formatted_list[start:end])
 
             embed_new = discord.Embed(
-                color=ctx.author.colour, title="🎌 Secret Duelling Book",
-                description=f"{description_new}", timestamp=self.get_timestamp()
+                color=ctx.author.colour,
+                title="🎌 Secret Duelling Book",
+                description=f"{description_new}",
+                timestamp=self.get_timestamp()
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             embed_new.set_thumbnail(url=ctx.guild.icon_url)
             return embed_new
 
-        msg = await ctx.channel.send(content=content, embed=create_new_embed_page(page))
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
+        msg = await process_msg_submit(ctx.channel, content, embed_new_create(page))
+        await process_msg_reaction_add(msg, "⬅")
+        await process_msg_reaction_add(msg, "➡")
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -1078,7 +1082,7 @@ class Castle(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
             except asyncio.TimeoutError:
-                await msg.clear_reactions()
+                await process_msg_reaction_clear(msg)
                 break
             else:
                 if str(reaction.emoji) == "➡":
@@ -1089,7 +1093,9 @@ class Castle(commands.Cog):
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await msg.edit(embed=create_new_embed_page(page))
+
+                await process_msg_edit(msg, None, embed_new_create(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
 
 def setup(client):

@@ -5,12 +5,12 @@ Miketsu, 2020
 import os
 from datetime import datetime
 
-import discord
 import pytz
 from discord.ext import commands
 
+from cogs.ext.database import get_collections
+from cogs.ext.processes import *
 from cogs.level import Level
-from cogs.mongo.database import get_collections
 
 # Collections
 config = get_collections("config")
@@ -18,17 +18,6 @@ guilds = get_collections("guilds")
 
 # Instantiations
 id_guild = int(os.environ.get("SERVER"))
-
-
-async def process_msg_submit(channel, content, embed):
-    try:
-        return await channel.send(content=content, embed=embed)
-    except AttributeError:
-        pass
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
 
 
 class Automation(commands.Cog):

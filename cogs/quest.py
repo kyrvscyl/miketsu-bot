@@ -13,7 +13,7 @@ import pytz
 from discord.ext import commands
 from discord_webhook import DiscordWebhook, DiscordEmbed
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
 
 # Collections
 config = get_collections("config")

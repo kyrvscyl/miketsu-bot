@@ -9,11 +9,11 @@ import re
 from datetime import datetime
 from math import ceil
 
-import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
+from cogs.ext.processes import *
 
 # Collections
 config = get_collections("config")
@@ -33,44 +33,6 @@ def check_if_user_has_any_admin_roles(ctx):
         if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
             return True
     return False
-
-
-async def process_msg_submit(channel, content, embed):
-    try:
-        return await channel.send(content=content, embed=embed)
-    except AttributeError:
-        pass
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
-    
-
-async def process_msg_edit(message, content, embed):
-    try:
-        return await message.edit(content=content, embed=embed)
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
-
-
-async def process_msg_reaction_add(message, emoji):
-    try:
-        await message.add_reaction(emoji)
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
-
-
-async def process_msg_reaction_clear(message):
-    try:
-        await message.clear_reactions()
-    except discord.errors.Forbidden:
-        pass
-    except discord.errors.HTTPException:
-        pass
 
 
 class Admin(commands.Cog):
@@ -1104,7 +1066,7 @@ class Admin(commands.Cog):
         if page_total == 0:
             page_total = 1
 
-        def embed_create_page_new(page_new):
+        def embed_new_create(page_new):
             end = page_new * lines_max
             start = end - lines_max
             description_new = "".join(list_formatted[start:end])
@@ -1119,7 +1081,7 @@ class Admin(commands.Cog):
             embed_new.set_thumbnail(url=ctx.guild.icon_url)
             return embed_new
 
-        msg = await process_msg_submit(ctx.channel, caption, embed_create_page_new(page))
+        msg = await process_msg_submit(ctx.channel, caption, embed_new_create(page))
         await process_msg_reaction_add(msg, "⬅")
         await process_msg_reaction_add(msg, "➡")
 
@@ -1141,7 +1103,8 @@ class Admin(commands.Cog):
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await process_msg_edit(msg, None, embed_create_page_new(page))
+                await process_msg_edit(msg, None, embed_new_create(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
 
 def setup(client):

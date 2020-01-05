@@ -8,7 +8,7 @@ import discord
 import pytz
 from discord.ext import commands
 
-from cogs.mongo.database import get_collections
+from cogs.ext.database import get_collections
 
 # Collections
 users = get_collections("users")
@@ -137,6 +137,9 @@ class Level(commands.Cog):
                 "achievements": [],
                 "cards": [],
                 "bento": 0,
+                "souls": [],
+                "scales": 0,
+                "scales_rev": 0
             }
             users.insert_one(profile)
 
