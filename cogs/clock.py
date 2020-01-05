@@ -271,7 +271,7 @@ class Clock(commands.Cog):
         await self.clock_start()
 
     @commands.command(aliases=["tick"])
-    @commands.is_owner()
+    @commands.guild_only()
     async def clock_start_manual(self, ctx):
         config.update_one({"var": 1}, {"$set": {"clock": False}})
         await ctx.message.add_reaction("✅")

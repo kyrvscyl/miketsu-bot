@@ -128,17 +128,18 @@ class Beta(commands.Cog):
 
     @commands.command(aliases=["souls"])
     @commands.guild_only()
-    async def process_souls(self, ctx, *, args):
+    async def process_souls(self, ctx, *, args=None):
 
         if args is None:
             embed = discord.Embed(
                 title="souls",
-                description="shows your souls inventory",
+                description="shows your souls inventory or challenge one",
                 color=self.colour
             )
             embed.add_field(
                 name="Formats",
-                value=f"*`{self.prefix}souls <name>`*"
+                value=f"*`{self.prefix}souls <name>`*\n"
+                      f"*`{self.prefix}souls <1-10>`*"
             )
             await ctx.channel.send(embed=embed)
 
@@ -146,8 +147,17 @@ class Beta(commands.Cog):
             await self.process_souls_show_users(ctx, ctx.author, args.lower())
 
         elif args.lower() is not None and args in self.soul_dungeons:
-            await self.process_souls_explore(args.lower(), ctx.author, ctx)
+            query = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "souls_unlocked": 1})
 
+            if query["souls_unlocked"] >= int(args):
+                await self.process_souls_explore(args.lower(), ctx.author, ctx)
+            else:
+                embed = discord.Embed(
+                    title="Invalid stage",
+                    description=f"You only have access up to {query['souls_unlocked']}",
+                    color=self.colour
+                )
+                await process_msg_submit(ctx.channel, None, embed)
 
     async def process_souls_explore(self, stage, user, ctx):
 
@@ -466,7 +476,7 @@ class Beta(commands.Cog):
             name="Rewards",
             value=f"Reversed scales: `{scales_rev}`\n"
                   f"Normal Scales: `{scales}`\n"
-                  f"# of Souls: {len(souls_rewards_total)}",
+                  f"# Dropped of Souls: `{souls_rewards_total}`",
             inline=False
         )
         embed.set_image(url=attachment_link)
@@ -556,6 +566,15 @@ class Beta(commands.Cog):
             })["souls"][soul_select]
 
         except KeyError:
+            embed = discord.Embed(
+                color=self.colour,
+                title=f"Invalid soul",
+                description=f"You do not own any of this soul"
+            )
+            await ctx.channel.send(embed=embed)
+            return
+
+        except TypeError:
             embed = discord.Embed(
                 color=self.colour,
                 title=f"Invalid soul",

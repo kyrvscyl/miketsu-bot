@@ -137,9 +137,10 @@ class Level(commands.Cog):
                 "achievements": [],
                 "cards": [],
                 "bento": 0,
-                "souls": [],
+                "souls": {},
                 "scales": 0,
-                "scales_rev": 0
+                "scales_rev": 0,
+                "souls_unlocked": 1
             }
             users.insert_one(profile)
 

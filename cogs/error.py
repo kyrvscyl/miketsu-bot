@@ -100,6 +100,19 @@ class Error(commands.Cog):
                 )
                 await ctx.channel.send(embed=embed)
 
+            elif str(ctx.command) == "raid_perform":
+                embed = discord.Embed(
+                    title="raid, r", colour=self.colour,
+                    description="raids the tagged member, requires 1 🎟"
+                )
+                embed.add_field(
+                    name="Formats",
+                    value=f"*`{self.prefix}raid @member`*\n"
+                          f"*`{self.prefix}r <name#discriminator>`*",
+                    inline=False
+                )
+                await ctx.channel.send(embed=embed)
+
             elif str(ctx.command) == "shikigami_list_show_collected":
                 embed = discord.Embed(
                     title="shikilist, sl", colour=self.colour,
