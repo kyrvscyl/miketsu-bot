@@ -197,6 +197,20 @@ class Startup(commands.Cog):
                 await process_msg_edit(msg, None, embed_new_create(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
+    @commands.command(aliases=["changelog_add"])
+    @commands.is_owner()
+    async def add_changelogs(self, ctx, *, args):
+
+        comment = args
+        changelogs.update_one({
+            "logs": 1,
+        }, {
+            "$push": {
+                "details": comment
+            }
+        })
+        await process_msg_reaction_add(ctx.message, "✅")
+
 
 def setup(client):
     client.add_cog(Startup(client))
