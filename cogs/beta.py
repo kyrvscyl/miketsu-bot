@@ -150,7 +150,7 @@ class Beta(commands.Cog):
             query = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "souls_unlocked": 1})
 
             if query["souls_unlocked"] >= int(args):
-                await self.process_souls_explore(args.lower(), ctx.author, ctx)
+                await self.process_souls_explore(args.lower(), ctx.author, ctx, query["souls_unlocked"])
             else:
                 embed = discord.Embed(
                     title="Invalid stage",
@@ -159,7 +159,7 @@ class Beta(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-    async def process_souls_explore(self, stage, user, ctx):
+    async def process_souls_explore(self, stage, user, ctx, unlocked):
 
         sushi_required = 4
         users.update_one({
@@ -303,7 +303,7 @@ class Beta(commands.Cog):
 
                     if last_souls["required"] == last_souls["clears"]:
                         embed_complete = embed_new_create(rounds, "~~")
-                        await self.process_souls_explore_rewards(embed_complete, user, stage, msg, ctx)
+                        await self.process_souls_explore_rewards(embed_complete, user, stage, msg, ctx, unlocked)
                         await msg.clear_reactions()
                         break
 
@@ -311,7 +311,7 @@ class Beta(commands.Cog):
                         rounds += 1
                         await msg.edit(embed=embed_new_create(rounds, ""))
 
-    async def process_souls_explore_rewards(self, embed, user, stage, msg, ctx):
+    async def process_souls_explore_rewards(self, embed, user, stage, msg, ctx, unlocked):
 
         def get_slot(s):
             dictionary = {
@@ -482,6 +482,9 @@ class Beta(commands.Cog):
         embed.set_image(url=attachment_link)
         await self.process_souls_experience_add(user, soul_exp_list)
         await msg.edit(embed=embed)
+
+        if unlocked == int(stage):
+            users.update_one({"user_id": str(user.id), "souls_unlocked": {"$lt": 10}}, {"$inc": {"souls_unlocked": 1}})
 
     async def process_souls_experience_add(self, user, soul_exp_list):
 
