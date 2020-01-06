@@ -3,30 +3,12 @@ Embeds Module
 Miketsu, 2020
 """
 import asyncio
-import os
 import urllib.request
-from datetime import datetime
 from math import ceil
 
-import discord
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-
-# Collections
-guilds = get_collections("guilds")
-config = get_collections("config")
-sortings = get_collections("sortings")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
-
-
-def check_if_user_has_any_admin_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
-            return True
-    return False
+from cogs.ext.initialize import *
 
 
 class Embeds(commands.Cog):
@@ -35,20 +17,10 @@ class Embeds(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-        self.listings = config.find_one({"list": 1}, {"_id": 0})
-        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-
-        self.admin_roles = self.listings["admin_roles"]
-
         self.msg_id_list = []
-        self.e_c = self.emojis["c"]
 
         for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
             self.msg_id_list.append(role_select_msg["msg_id"])
-
-
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
     @commands.command(aliases=["patch"])
     @commands.check(check_if_user_has_any_admin_roles)
@@ -620,7 +592,7 @@ class Embeds(commands.Cog):
             embed = discord.Embed(
                 title=document["title"],
                 description=document["description"].replace('\\n', '\n'),
-                timestamp=self.get_timestamp(),
+                timestamp=get_timestamp(),
                 color=document["color"]
             )
 

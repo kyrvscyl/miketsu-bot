@@ -3,21 +3,10 @@ Embeds Module
 Miketsu, 2020
 """
 import asyncio
-import os
-from datetime import datetime
 
-import discord
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-
-# Collections
-config = get_collections("config")
-guilds = get_collections("guilds")
-sortings = get_collections("sortings")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
+from cogs.ext.initialize import *
 
 
 class Roles(commands.Cog):
@@ -25,9 +14,6 @@ class Roles(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
-
-        self.e_c = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]["c"]
-        self.id_sorting = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0})["channels"]["sorting-hat"]
 
         self.msg_id_list = []
         self.roles_emoji = {}
@@ -37,9 +23,6 @@ class Roles(commands.Cog):
 
             for roles_emoji_entry in role_select_msg["fields"]:
                 self.roles_emoji.update({roles_emoji_entry['emoji']: f"{roles_emoji_entry['role_id']}"})
-
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -53,7 +36,7 @@ class Roles(commands.Cog):
             request_2 = sortings.find_one({"msg_id": str(payload.message_id)}, {"_id": 0})
 
             member = guild.get_member(int(payload.user_id))
-            sorting_channel = self.client.get_channel(int(self.id_sorting))
+            sorting_channel = self.client.get_channel(int(id_sorting))
             role_selection_msg = await sorting_channel.fetch_message(int(payload.message_id))
 
             role_id = sortings.find_one({
@@ -108,12 +91,12 @@ class Roles(commands.Cog):
     async def edit_msg_role_selection_members_count(self, msg_id, guild):
 
         request = sortings.find_one({"msg_id": str(msg_id)}, {"_id": 0})
-        sorting_channel = self.client.get_channel(int(self.id_sorting))
+        sorting_channel = self.client.get_channel(int(id_sorting))
 
         embed = discord.Embed(
             title=request["title"],
             description=request["description"].replace('\\n', '\n'),
-            timestamp=self.get_timestamp(),
+            timestamp=get_timestamp(),
             color=request["color"]
         )
 

@@ -2,28 +2,14 @@
 Discord Miketsu Bot.
 kyrvscyl, 2020
 """
-import os
-from datetime import datetime
 
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-from cogs.ext.processes import *
+from cogs.ext.initialize import *
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-token = os.environ.get("TOKEN")
 
-# Collections
-config = get_collections("config")
-
-# Instantiations
-version = "1.7.beta"
-prefix = ";"
-
-time_start = datetime.now()
-cogs_loaded = []
-
-client = commands.Bot(command_prefix=prefix, case_insensitive=True)
+client = commands.Bot(command_prefix=command_prefix, case_insensitive=True)
 client.remove_command("help")
 
 
@@ -55,7 +41,7 @@ async def show_bot_statistics(ctx):
         modules_loaded = None
 
     embed = discord.Embed(
-        colour=discord.Colour(16770727),
+        colour=colour,
         title=f"{client.user.name} Bot",
         description="A fan made Onmyoji-themed exclusive Discord bot",
         timestamp=datetime.utcfromtimestamp(timestamp)
@@ -79,7 +65,6 @@ async def show_bot_statistics(ctx):
         name=f"Modules [{len(cogs_loaded)}]",
         value=f"{modules_loaded}"
     )
-
     await process_msg_submit(ctx.channel, None, embed)
 
 
@@ -162,6 +147,7 @@ async def cogs_extension_initialize(ctx):
 
 
 cogs_extension_startup()
+
 print("-------")
 
 try:

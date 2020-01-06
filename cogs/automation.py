@@ -2,55 +2,17 @@
 Automation Module
 Miketsu, 2020
 """
-import os
-from datetime import datetime
 
-import pytz
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-from cogs.ext.processes import *
+from cogs.ext.initialize import *
 from cogs.level import Level
-
-# Collections
-config = get_collections("config")
-guilds = get_collections("guilds")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
 
 
 class Automation(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-
-        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-        self.roles = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})
-
-        self.id_auror_dept = self.channels["channels"]["auror-department"]
-        self.id_headlines = self.channels["channels"]["headlines"]
-        self.id_office = self.channels["channels"]["headmasters-office"]
-        self.id_scroll = self.channels["channels"]["scroll-of-everything"]
-        self.id_shard_trading = self.channels["channels"]["shard-trading"]
-
-        self.id_shard_seeker = self.roles["roles"]["shard_seekers"]
-
-    def get_time(self):
-        return datetime.now(tz=pytz.timezone(self.timezone))
-
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-    def pluralize(self, singular, count):
-        if count > 1:
-            if singular[-1:] == "s":
-                return singular + "es"
-            return singular + "s"
-        else:
-            return singular
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -59,28 +21,36 @@ class Automation(commands.Cog):
             return
 
         elif str(message.channel).startswith("Direct Message") is True:
-            record_scroll_channel = self.client.get_channel(int(self.id_scroll))
+            record_scroll_channel = self.client.get_channel(int(id_scroll))
             await process_msg_submit(record_scroll_channel, f"{message.author}: {message.content}", None)
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload):
 
         try:
-            if str(payload.data["channel_id"]) == self.id_shard_trading and payload.data["pinned"] is True:
+            if str(payload.data["channel_id"]) == id_shard_trading and payload.data["pinned"] is True:
 
                 user_id = payload.data["author"]["id"]
                 attachments = payload.data["attachments"]
-                link = f"https://discordapp.com/channels/{id_guild}/{self.id_shard_trading}/{payload.data['id']}"
+                link = f"https://discordapp.com/channels/{id_guild}/{id_shard_trading}/{payload.data['id']}"
                 description = payload.data["content"] + f"\n\n[Link here!]({link})"
 
                 guild = self.client.get_guild(int(id_guild))
                 member = guild.get_member(int(user_id))
-                headlines_channel = self.client.get_channel(int(self.id_headlines))
-                shard_trading_channel = self.client.get_channel(int(self.id_shard_trading))
 
-                content = f"<@&{self.id_shard_seeker}>!"
-                embed = discord.Embed(color=member.colour, description=description, timestamp=self.get_timestamp())
-                embed.set_author(name=f"{member.display_name} is seeking for shards!", icon_url=member.avatar_url)
+                headlines_channel = self.client.get_channel(int(id_headlines))
+                shard_trading_channel = self.client.get_channel(int(id_shard_trading))
+
+                content = f"<@&{id_shard_seeker}>!"
+                embed = discord.Embed(
+                    color=member.colour,
+                    description=description,
+                    timestamp=get_timestamp()
+                )
+                embed.set_author(
+                    name=f"{member.display_name} is seeking for shards!",
+                    icon_url=member.avatar_url
+                )
                 embed.set_footer(text=f"#{shard_trading_channel.name}")
 
                 if len(attachments) > 0:
@@ -105,7 +75,7 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
 
-        await Level(self).level_create_user(member)
+        await Level(self.client).level_create_user(member)
 
         query = guilds.find_one({
             "server": f"{member.guild.id}"}, {
@@ -127,7 +97,7 @@ class Automation(commands.Cog):
         embed3 = discord.Embed(
             color=0xffffff,
             description=welcome_message.format(member.mention),
-            timestamp=self.get_timestamp()
+            timestamp=get_timestamp()
         )
         common_room_channel = self.client.get_channel(int(common_room_id))
         await process_msg_submit(common_room_channel, None, embed3)
@@ -136,13 +106,13 @@ class Automation(commands.Cog):
             color=0xffff80,
             title="✉ Acceptance Letter",
             description=acceptance_letter.format(member.display_name, welcome_id, sorting_hat_id),
-            timestamp=self.get_timestamp()
+            timestamp=get_timestamp()
         )
         content = bot_intro.format(self.client.user.name, self.client.command_prefix)
         await process_msg_submit(member, None, embed1)
         await process_msg_submit(member, content, None)
 
-        embed2 = discord.Embed(color=0xffffff, timestamp=self.get_timestamp())
+        embed2 = discord.Embed(color=0xffffff, timestamp=get_timestamp())
         embed2.set_author(name=f"{member} has joined the house!")
         embed2.set_footer(
             text=f"{member.guild.member_count} members",
@@ -163,11 +133,11 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        record_scroll_channel = self.client.get_channel(int(self.id_scroll))
+        record_scroll_channel = self.client.get_channel(int(id_scroll))
 
         embed = discord.Embed(
             color=0xffffff,
-            timestamp=self.get_timestamp()
+            timestamp=get_timestamp()
         )
         embed.set_author(
             name=f"{member} [{member.display_name}] has left the house!"
@@ -181,8 +151,8 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
 
-        record_scroll_channel = self.client.get_channel(int(self.id_scroll))
-        auror_department_channel = self.client.get_channel(int(self.id_auror_dept))
+        record_scroll_channel = self.client.get_channel(int(id_scroll))
+        auror_department_channel = self.client.get_channel(int(id_auror_dept))
 
         if before.roles != after.roles:
             changed_role1 = list(set(after.roles) - set(before.roles))
@@ -192,10 +162,10 @@ class Automation(commands.Cog):
                 embed = discord.Embed(
                     color=0x50e3c2,
                     title=f"Removed {changed_role2[0].name} role from {before} [{before.display_name}]",
-                    timestamp=self.get_timestamp()
+                    timestamp=get_timestamp()
                 )
                 embed.set_footer(
-                    text=f"{len(after.roles)} {self.pluralize('role', len(after.roles))}",
+                    text=f"{len(after.roles)} {pluralize('role', len(after.roles))}",
                     icon_url=before.avatar_url
                 )
                 await process_msg_submit(record_scroll_channel, None, embed)
@@ -204,7 +174,7 @@ class Automation(commands.Cog):
                 embed = discord.Embed(
                     color=0x50e3c2,
                     title=f"Added {changed_role1[0].name} role to {before} [{before.display_name}]",
-                    timestamp=self.get_timestamp()
+                    timestamp=get_timestamp()
                 )
                 embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
                 await process_msg_submit(record_scroll_channel, None, embed)
@@ -213,7 +183,7 @@ class Automation(commands.Cog):
                     embed = discord.Embed(
                         color=0x50e3c2,
                         title=f"{before.display_name} has been promoted to ⚜ Auror",
-                        timestamp=self.get_timestamp()
+                        timestamp=get_timestamp()
                     )
                     embed.set_footer(icon_url=before.avatar_url)
                     await process_msg_submit(auror_department_channel, None, embed)
@@ -222,18 +192,24 @@ class Automation(commands.Cog):
             embed = discord.Embed(
                 color=0x7ed321,
                 description=f"{before.name} → {after.name}",
-                timestamp=self.get_timestamp()
+                timestamp=get_timestamp()
             )
-            embed.set_author(name=f"Username change", icon_url=before.avatar_url)
+            embed.set_author(
+                name=f"Username change",
+                icon_url=before.avatar_url
+            )
             await process_msg_submit(record_scroll_channel, None, embed)
 
         elif before.nick != after.nick:
             embed = discord.Embed(
                 color=0x7ed321,
                 description=f"{before.display_name} → {after.mention}",
-                timestamp=self.get_timestamp()
+                timestamp=get_timestamp()
             )
-            embed.set_author(name=f"Nickname change", icon_url=before.avatar_url)
+            embed.set_author(
+                name=f"Nickname change",
+                icon_url=before.avatar_url
+            )
             await process_msg_submit(record_scroll_channel, None, embed)
 
 

@@ -7,17 +7,9 @@ import random
 import re
 from itertools import cycle
 
-import discord
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-
-# Collections
-config = get_collections("config")
-guilds = get_collections("guilds")
-shoots = get_collections("shoots")
-stickers = get_collections("stickers")
-users = get_collections("users")
+from cogs.ext.initialize import *
 
 
 class Funfun(commands.Cog):
@@ -28,9 +20,9 @@ class Funfun(commands.Cog):
         self.actions = []
         self.stickers_list = []
 
-        self.shoots_failed = cycle(config.find_one({"list": 3}, {"_id": 0, "failed_shoots": 1})["failed_shoots"])
-        self.shoots_success = cycle(config.find_one({"list": 3}, {"_id": 0, "success_shoots": 1})["success_shoots"])
-        self.reactions = cycle(config.find_one({"list": 3}, {"_id": 0, "reactions": 1})["reactions"])
+        self.shoots_failed = cycle(listings_3["failed_shoots"])
+        self.shoots_success = cycle(listings_3["success_shoots"])
+        self.reactions = cycle(listings_3["reactions"])
 
         self.generate_new_stickers()
 
@@ -41,14 +33,6 @@ class Funfun(commands.Cog):
         for sticker in stickers.find({}, {"_id": 0}):
             self.stickers_list.append("`{}`, ".format(sticker["alias"]))
             self.actions.append(sticker["alias"])
-
-    def pluralize(self, singular, count):
-        if count > 1:
-            if singular[-1:] == "s":
-                return singular + "es"
-            return singular + "s"
-        else:
-            return singular
 
     async def mike_how_hot(self, guild, channel, msg):
         msg_formatted = msg.lower().split(" ")
@@ -119,7 +103,7 @@ class Funfun(commands.Cog):
             fails = query["victim"][0]["fails"]
     
             embed.set_footer(
-                text=f"{successes}/{successes + fails} successful {self.pluralize('shooting', successes + fails)}",
+                text=f"{successes}/{successes + fails} successful {pluralize('shooting', successes + fails)}",
                 icon_url=user.avatar_url
             )
     
@@ -140,7 +124,7 @@ class Funfun(commands.Cog):
             fails = query["victim"][0]["fails"]
     
             embed.set_footer(
-                text=f"{fails}/{successes + fails} failed {self.pluralize('shooting', successes + fails)}",
+                text=f"{fails}/{successes + fails} failed {pluralize('shooting', successes + fails)}",
                 icon_url=user.avatar_url
             )
     

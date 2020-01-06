@@ -4,47 +4,18 @@ Miketsu, 2020
 """
 
 import asyncio
-import os
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import timedelta
 from itertools import cycle
 
-import discord
-import pytz
 from discord.ext import commands
-from pushbullet import Pushbullet
 
 from cogs.economy import Economy
-from cogs.ext.database import get_collections
+from cogs.ext.initialize import *
 from cogs.frames import Frames
 from cogs.gameplay import Gameplay
 from cogs.quest import Expecto, owls_restock
-
-# Pushbullet
-pb = Pushbullet(api_key=str(os.environ.get("PUSHBULLET")))
-
-# Collections
-config = get_collections("config")
-events = get_collections("events")
-guilds = get_collections("guilds")
-logs = get_collections("logs")
-quests = get_collections("quests")
-reminders = get_collections("reminders")
-ships = get_collections("ships")
-streaks = get_collections("streaks")
-users = get_collections("users")
-weathers = get_collections("weathers")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
-
-
-def check_if_user_has_any_admin_roles(ctx):
-    for role in reversed(ctx.author.roles):
-        if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
-            return True
-    return False
 
 
 class Clock(commands.Cog):
@@ -53,38 +24,15 @@ class Clock(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-        self.roles = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1})
-        self.listings = config.find_one({"list": 1}, {"_id": 0})
-
-        self.id_boss_busters = self.roles["roles"]["boss_busters"]
-        self.id_silver_sickles = self.roles["roles"]["silver_sickles"]
-
-        self.id_clock = self.channels["channels"]["clock"]
-        self.id_headlines = self.channels["channels"]["headlines"]
-        self.id_spell_spam = self.channels["channels"]["spell-spam"]
-
-        self.admin_roles = self.listings["admin_roles"]
-        self.clock_emojis = self.listings["clock_emojis"]
-
         self.captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
 
-    def get_time(self):
-        return datetime.now(tz=pytz.timezone(self.timezone))
-
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-
-    def get_emoji(self, hours, minutes):
+    def get_emoji_clock(self, hours, minutes):
         if int(minutes) >= 30:
             emoji_clock_index = (int(hours) * 2) + 2
         else:
             emoji_clock_index = (int(hours) * 2) + 1
 
-        emoji_clock = self.clock_emojis[emoji_clock_index]
+        emoji_clock = clock_emojis[emoji_clock_index]
         return emoji_clock
 
     def generate_weather(self, hour):
@@ -119,15 +67,15 @@ class Clock(commands.Cog):
 
         print("Opening the netherworld gates")
         users.update_many({}, {"$set": {"nether_pass": True}})
-        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
-        content = f"<@&{self.id_boss_busters}>"
+        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        content = f"<@&{id_boss_busters}>"
 
         embed = discord.Embed(
-            color=self.colour,
+            color=colour,
             title="Netherworld gates update",
             description=f"The gates of Netherworld have been re-opened\n"
                         f"use `{self.prefix}enc` to explore them by chance",
-            timestamp=self.get_timestamp()
+            timestamp=get_timestamp()
         )
         await spell_spam_channel.send(content=content, embed=embed)
 
@@ -135,7 +83,7 @@ class Clock(commands.Cog):
 
         print("Processing event reminders")
         for reminder in events.find({"status": True}, {"_id": 0}):
-            if reminder["next"].strftime("%Y-%m-%d %H:%M") == self.get_time().strftime("%Y-%m-%d %H:%M"):
+            if reminder["next"].strftime("%Y-%m-%d %H:%M") == get_time().strftime("%Y-%m-%d %H:%M"):
 
                 events.update_one({
                     "code": reminder["code"],
@@ -147,13 +95,13 @@ class Clock(commands.Cog):
                     }
                 })
 
-                headlines_channel = self.client.get_channel(int(self.id_headlines))
+                headlines_channel = self.client.get_channel(int(id_headlines))
 
                 content = f"<@&{reminder['role_id']}>"
                 embed = discord.Embed(
                     title="⏰ Reminder",
                     description="{}".format(reminder['description'].replace('\\n', '\n')),
-                    timestamp=self.get_timestamp(),
+                    timestamp=get_timestamp(),
                     color=16733562
                 )
                 await headlines_channel.send(content=content, embed=embed)
@@ -173,7 +121,7 @@ class Clock(commands.Cog):
 
         content = f"<@&{gold_galleons_id}>"
         embed = discord.Embed(
-            color=self.colour,
+            color=colour,
             title="A new round of showdown bidding has started!",
             timestamp=datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
         )
@@ -258,7 +206,7 @@ class Clock(commands.Cog):
                     "$each": [{
                         "currency": currency,
                         "amount": amount,
-                        "date": self.get_time(),
+                        "date": get_time(),
                     }],
                     "$position": 0,
                     "$slice": 200
@@ -286,7 +234,7 @@ class Clock(commands.Cog):
 
             while True:
                 try:
-                    if self.get_time().strftime("%S") == "00":
+                    if get_time().strftime("%S") == "00":
                         await self.clock_update()
                         await asyncio.sleep(1)
                     else:
@@ -302,13 +250,13 @@ class Clock(commands.Cog):
     async def clock_update(self):
 
         try:
-            time = self.get_time().strftime("%H:%M EST | %a")
-            hour_minute = self.get_time().strftime("%H:%M")
-            minute_hand = self.get_time().strftime("%M")
-            hour_24 = self.get_time().strftime("%H")
-            hour_12 = self.get_time().strftime("%I")
-            day_week = self.get_time().strftime("%a")
-            bidding_format = self.get_time().strftime("%b %d, %Y %H:%M")
+            time = get_time().strftime("%H:%M EST | %a")
+            hour_minute = get_time().strftime("%H:%M")
+            minute_hand = get_time().strftime("%M")
+            hour_24 = get_time().strftime("%H")
+            hour_12 = get_time().strftime("%I")
+            day_week = get_time().strftime("%a")
+            bidding_format = get_time().strftime("%b %d, %Y %H:%M")
             weather1 = weathers.find_one({"weather1": {"$type": "string"}}, {"weather1": 1})["weather1"]
             weather2 = weathers.find_one({"weather2": {"$type": "string"}}, {"weather2": 1})["weather2"]
 
@@ -316,8 +264,8 @@ class Clock(commands.Cog):
                 weather1, weather2 = self.generate_weather(int(hour_24))
 
             try:
-                clock = self.client.get_channel(int(self.id_clock))
-                clock_name = f"{self.get_emoji(hour_12, minute_hand)} {time} {weather1} {weather2}"
+                clock = self.client.get_channel(int(id_clock))
+                clock_name = f"{self.get_emoji_clock(hour_12, minute_hand)} {time} {weather1} {weather2}"
                 print(f"{clock.name} -> {clock_name}")
 
                 if clock.name == clock_name:
@@ -382,7 +330,7 @@ class Clock(commands.Cog):
             embed = discord.Embed(
                 title="events, e",
                 description="manipulate event settings for reminders, etc.",
-                color=self.colour
+                color=colour
             )
             embed.add_field(
                 name="Arguments",
@@ -395,7 +343,7 @@ class Clock(commands.Cog):
             embed = discord.Embed(
                 title="events activate, e a",
                 description="activate repetitive events",
-                color=self.colour
+                color=colour
             )
             embed.add_field(
                 name="Timing",
@@ -419,7 +367,7 @@ class Clock(commands.Cog):
             embed = discord.Embed(
                 title="events deactivate, e d",
                 description="deactivate events",
-                color=self.colour
+                color=colour
             )
             embed.add_field(
                 name="Event codes",
@@ -445,7 +393,7 @@ class Clock(commands.Cog):
                 embed = discord.Embed(
                     title="Invalid action",
                     description="this event is already deactivated",
-                    color=self.colour
+                    color=colour
                 )
                 await ctx.channel.send(embed=embed)
 
@@ -458,11 +406,11 @@ class Clock(commands.Cog):
     async def events_manipulate_activate(self, ctx, event, timing):
 
         if timing.lower() == "now":
-            offset = (self.get_time().weekday() - 2) % 7
-            get_patch_start_day = (self.get_time() - timedelta(days=offset)).strftime("%Y-%m-%d")
+            offset = (get_time().weekday() - 2) % 7
+            get_patch_start_day = (get_time() - timedelta(days=offset)).strftime("%Y-%m-%d")
         else:
-            offset = (self.get_time().weekday() - 2) % 7
-            get_patch_start_day = (self.get_time() + timedelta(days=offset)).strftime("%Y-%m-%d")
+            offset = (get_time().weekday() - 2) % 7
+            get_patch_start_day = (get_time() + timedelta(days=offset)).strftime("%Y-%m-%d")
 
         date_absolute = datetime.strptime(get_patch_start_day, "%Y-%m-%d")
         request = events.find_one({"code": event}, {"_id": 0})
@@ -471,10 +419,10 @@ class Clock(commands.Cog):
         date_start = date_absolute
 
         if timing.lower() == "now":
-            date_start = datetime.strptime(self.get_time().strftime("%Y-%m-%d"), "%Y-%m-%d")
+            date_start = datetime.strptime(get_time().strftime("%Y-%m-%d"), "%Y-%m-%d")
             date_next = date_start + timedelta(days=request['delta']) - timedelta(hours=request['delta_hr'])
 
-            if date_start < datetime.strptime(self.get_time().strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M"):
+            if date_start < datetime.strptime(get_time().strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M"):
                 date_start = date_start + timedelta(days=1)
                 date_next = date_next + timedelta(days=1)
 
@@ -500,12 +448,12 @@ class Clock(commands.Cog):
             description=f"Title: {request['event'].title()}\n"
                         f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until "
                         f"`{date_end.strftime('%Y-%m-%d | %a')}`",
-            color=self.colour,
-            timestamp=self.get_timestamp()
+            color=colour,
+            timestamp=get_timestamp()
         )
         embed.add_field(
             name="Action",
-            value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{self.id_headlines}>"
+            value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{id_headlines}>"
         )
         await ctx.channel.send(embed=embed)
 

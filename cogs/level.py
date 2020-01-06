@@ -2,18 +2,14 @@
 Level Module
 Miketsu, 2020
 """
-from datetime import datetime
-
-import discord
-import pytz
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
+from cogs.ext.initialize import *
 
 # Collections
 users = get_collections("users")
 config = get_collections("config")
-logs = get_collections("logs")
+
 
 
 class Level(commands.Cog):
@@ -21,15 +17,6 @@ class Level(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
-
-        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-
-        self.e_x = self.emojis["x"]
-
-        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-    def get_time(self):
-        return datetime.now(tz=pytz.timezone(self.timezone))
 
     async def level_add_experience(self, user, exp):
 
@@ -65,9 +52,9 @@ class Level(commands.Cog):
                 }
             })
 
-            await self.logs_add_line("jades", jades, user.id)
-            await self.logs_add_line("amulets", amulets, user.id)
-            await self.logs_add_line("coins", coins, user.id)
+            await perform_add_log("jades", jades, user.id)
+            await perform_add_log("amulets", amulets, user.id)
+            await perform_add_log("coins", coins, user.id)
 
             if level_end == 60:
 
@@ -84,12 +71,12 @@ class Level(commands.Cog):
                     }
                 })
 
-                await self.logs_add_line("jades", jades, user.id)
-                await self.logs_add_line("amulets", amulets, user.id)
-                await self.logs_add_line("coins", coins, user.id)
+                await perform_add_log("jades", jades, user.id)
+                await perform_add_log("amulets", amulets, user.id)
+                await perform_add_log("coins", coins, user.id)
 
             try:
-                await ctx.add_reaction(self.e_x)
+                await ctx.add_reaction(e_x)
             except discord.errors.HTTPException:
                 pass
 
@@ -144,7 +131,7 @@ class Level(commands.Cog):
             }
             users.insert_one(profile)
 
-    async def logs_add_line(self, currency, amount, user_id):
+    async def perform_add_log(self, currency, amount, user_id):
         if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
             profile = {"user_id": str(user_id), "logs": []}
             logs.insert_one(profile)
@@ -157,7 +144,7 @@ class Level(commands.Cog):
                     "$each": [{
                         "currency": currency,
                         "amount": amount,
-                        "date": self.get_time(),
+                        "date": get_time(),
                     }],
                     "$position": 0,
                     "$slice": 200

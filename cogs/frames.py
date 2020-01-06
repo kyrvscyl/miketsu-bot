@@ -4,50 +4,18 @@ Miketsu, 2020
 """
 
 import asyncio
-import os
-from datetime import datetime
 from math import ceil
 
-import discord
-import pytz
 from PIL import Image
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-
-# Collections
-config = get_collections("config")
-explores = get_collections("explores")
-frames = get_collections("frames")
-guilds = get_collections("guilds")
-shikigamis = get_collections("shikigamis")
-ships = get_collections("ships")
-users = get_collections("users")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
-
-
-def check_if_developer_team(ctx):
-    return str(ctx.author.id) in guilds.find_one({"server": str(id_guild)}, {"_id": 0, "developers": 1})["developers"]
+from cogs.ext.initialize import *
 
 
 class Frames(commands.Cog):
 
     def __init__(self, client):
         self.client = client
-
-        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-        self.emojis = config.find_one({"dict": 1}, {"_id": 0, "emojis": 1})["emojis"]
-
-        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-
-        self.id_spell_spam = self.channels["channels"]["spell-spam"]
-        self.id_hosting = self.channels["channels"]["bot-sparring"]
-
-        self.e_j = self.emojis["j"]
 
         self.total_sp = shikigamis.count_documents({"rarity": "SP"})
         self.total_ssr = shikigamis.count_documents({"rarity": "SSR"})
@@ -60,15 +28,6 @@ class Frames(commands.Cog):
 
         for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
             self.medal_achievements.append([m['name'], m['required']])
-
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-    
-    def get_time(self):
-        return datetime.now(tz=pytz.timezone(self.timezone))
-    
-    def get_frame_thumbnail(self, frame):
-        return frames.find_one({"name": frame}, {"_id": 0, "link": 1})["link"]
     
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -76,7 +35,7 @@ class Frames(commands.Cog):
         if message.author.bot is True:
             return
 
-        elif self.get_time().strftime("%b %d") != "Dec 25":
+        elif get_time().strftime("%b %d") != "Dec 25":
             return
 
         elif f"{self.client.user.id}" in message.content.lower():
@@ -137,7 +96,7 @@ class Frames(commands.Cog):
         address = f"temp/frames1.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"frames1.png")
-        hosting_channel = self.client.get_channel(int(self.id_hosting))
+        hosting_channel = self.client.get_channel(int(id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
@@ -269,7 +228,7 @@ class Frames(commands.Cog):
         address = f"temp/frames1.png"
         new_im.save(address)
         new_photo = discord.File(address, filename=f"frames1.png")
-        hosting_channel = self.client.get_channel(int(self.id_hosting))
+        hosting_channel = self.client.get_channel(int(id_hosting))
         msg = await hosting_channel.send(file=new_photo)
         attachment_link = msg.attachments[0].url
 
@@ -973,7 +932,7 @@ class Frames(commands.Cog):
 
     async def achievements_process_announce(self, member, frame_name, jades):
 
-        spell_spam_channel = self.client.get_channel(int(self.id_spell_spam))
+        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
 
         if users.find_one({
             "user_id": str(member.id), "achievements.name": f"{frame_name}"
@@ -986,7 +945,7 @@ class Frames(commands.Cog):
                 "$push": {
                     "achievements": {
                         "name": frame_name,
-                        "date_acquired": self.get_time()
+                        "date_acquired": get_time()
                     }
                 },
                 "$inc": {
@@ -1002,11 +961,11 @@ class Frames(commands.Cog):
                 color=member.colour,
                 title="Frame acquisition",
                 description=f"{member.mention} has obtained{intro_caption}{frame_name} frame!\n"
-                            f"Acquired {jades:,d}{self.e_j} as bonus rewards!",
-                timestamp=self.get_timestamp()
+                            f"Acquired {jades:,d}{e_j} as bonus rewards!",
+                timestamp=get_timestamp()
             )
             embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
-            embed.set_thumbnail(url=self.get_frame_thumbnail(frame_name))
+            embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
             await spell_spam_channel.send(embed=embed)
             await asyncio.sleep(1)
         else:

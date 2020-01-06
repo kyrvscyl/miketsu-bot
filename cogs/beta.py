@@ -3,35 +3,13 @@ Error Module
 Miketsu, 2020
 """
 import asyncio
-import os
 import random
-from datetime import datetime
 from math import ceil, floor
 
-import pytz
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from discord.ext import commands
 
-from cogs.ext.database import get_collections
-from cogs.ext.processes import *
-
-# Collections
-config = get_collections("config")
-guilds = get_collections("guilds")
-logs = get_collections("logs")
-realms = get_collections("realms")
-ships = get_collections("ships")
-souls = get_collections("souls")
-users = get_collections("users")
-shikigamis = get_collections("shikigamis")
-explores = get_collections("explores")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
-
-
-def check_if_user_has_sushi_2(ctx, required):
-    return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
+from cogs.ext.initialize import *
 
 
 class Beta(commands.Cog):
@@ -39,92 +17,6 @@ class Beta(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
-        self.dictionaries = config.find_one({"dict": 1}, {"_id": 0})
-        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-        self.emojis = self.dictionaries["emojis"]
-
-        self.get_emojis = config.find_one({"dict": 1}, {"_id": 0, "get_emojis": 1})["get_emojis"]
-        self.e_s = self.emojis["s"]
-
-        self.channels = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-        
-        self.id_scroll = self.channels["channels"]["scroll-of-everything"]
-        self.id_spell_spam = self.channels["channels"]["spell-spam"]
-        self.id_hosting = self.channels["channels"]["scroll-of-everything"]
-
-        self.cards_realm = config.find_one({"dict": 1}, {"_id": 0, "cards_realm": 1})["cards_realm"]
-
-        self.realm_cards = []
-
-        for card in realms.find({}, {"_id": 0}):
-            self.realm_cards.append(f"{card['name'].lower()}")
-
-        self.souls_all = []
-
-        for soul in souls.find({}, {"_id": 0, "name": 1}):
-            self.souls_all.append(soul["name"])
-
-        self.soul_dungeons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
-
-    def get_thumbnail_shikigami(self, shiki, evolution):
-        return shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "thumbnail": 1})["thumbnail"][evolution]
-
-    def get_evo_link(self, evolution):
-        return {True: "evo", False: "pre"}[evolution]
-
-    def get_soul_thumbnail(self, soul):
-        query = souls.find_one({"name": soul.lower()}, {"_id": 0, "icon_circle": 1})
-        return query["icon_circle"]
-
-    def get_bond(self, x, y):
-        bond_list = sorted([x, y], reverse=True)
-        return f"{bond_list[0]}x{bond_list[1]}"
-
-    def get_emoji(self, item):
-        return self.get_emojis[item]
-
-    def get_emoji_cards(self, x):
-        return self.cards_realm[x]
-
-    def get_time(self):
-        return datetime.now(tz=pytz.timezone(self.timezone))
-    
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
-    
-    def get_time_converted(self, utc_dt):
-        return utc_dt.replace(tzinfo=pytz.timezone("UTC")).astimezone(tz=pytz.timezone(self.timezone))
-
-    def pluralize(self, singular, count):
-        if count > 1:
-            if singular[-1:] == "s":
-                return singular + "es"
-            return singular + "s"
-        else:
-            return singular
-
-    async def perform_add_log(self, currency, amount, user_id):
-    
-        if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-            profile = {"user_id": str(user_id), "logs": []}
-            logs.insert_one(profile)
-    
-        logs.update_one({
-            "user_id": str(user_id)
-        }, {
-            "$push": {
-                "logs": {
-                    "$each": [{
-                        "currency": currency,
-                        "amount": amount,
-                        "date": self.get_time(),
-                    }],
-                    "$position": 0,
-                    "$slice": 200
-                }
-            }
-        })
 
     @commands.command(aliases=["souls"])
     @commands.guild_only()
@@ -134,7 +26,7 @@ class Beta(commands.Cog):
             embed = discord.Embed(
                 title="souls",
                 description="shows your souls inventory or challenge one",
-                color=self.colour
+                color=colour
             )
             embed.add_field(
                 name="Formats",
@@ -143,10 +35,10 @@ class Beta(commands.Cog):
             )
             await ctx.channel.send(embed=embed)
 
-        elif args.lower() is not None and args in self.souls_all:
+        elif args.lower() is not None and args in souls_all:
             await self.process_souls_show_users(ctx, ctx.author, args.lower())
 
-        elif args.lower() is not None and args in self.soul_dungeons:
+        elif args.lower() is not None and args in soul_dungeons:
             query = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "souls_unlocked": 1})
 
             if query["souls_unlocked"] >= int(args):
@@ -155,7 +47,7 @@ class Beta(commands.Cog):
                 embed = discord.Embed(
                     title="Invalid stage",
                     description=f"You only have access up to {query['souls_unlocked']}",
-                    color=self.colour
+                    color=colour
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -169,7 +61,7 @@ class Beta(commands.Cog):
                 "sushi": - sushi_required
             }
         })
-        await self.perform_add_log("sushi", -sushi_required, user.id)
+        await perform_add_log("sushi", -sushi_required, user.id)
 
         def get_shikigami_stats(user_id, shiki):
             p = users.find_one({
@@ -187,7 +79,7 @@ class Beta(commands.Cog):
         shikigami_set = user_profile["display"]
         shikigami_level, shikigami_evolved, shikigami_exp, shikigami_exp_x = get_shikigami_stats(user.id, shikigami_set)
 
-        thumbnail = self.get_thumbnail_shikigami(shikigami_set, self.get_evo_link(shikigami_evolved))
+        thumbnail = get_thumbnail_shikigami(shikigami_set, get_evo_link(shikigami_evolved))
 
         evo_adjustment = 1
         if shikigami_evolved is True:
@@ -215,7 +107,7 @@ class Beta(commands.Cog):
                         "required": 3,
                         "stage": int(stage),
                         "completion": None,
-                        "date": self.get_time(),
+                        "date": get_time(),
                     }],
                     "$position": 0
                 }
@@ -234,7 +126,7 @@ class Beta(commands.Cog):
                 color=user.colour,
                 title=f"{strike}Soul Stage: {stage} :: Round {r} of 3{strike}",
                 description=description2,
-                timestamp=self.get_timestamp()
+                timestamp=get_timestamp()
             )
             embed_new_souls.set_footer(text=user.display_name, icon_url=user.avatar_url)
             embed_new_souls.set_thumbnail(url=thumbnail)
@@ -246,7 +138,7 @@ class Beta(commands.Cog):
             })
 
             embed_new_souls.add_field(
-                name=f"Shikigami: {shikigami_set.title()} | {user_profile_new['sushi']} {self.e_s}",
+                name=f"Shikigami: {shikigami_set.title()} | {user_profile_new['sushi']} {e_s}",
                 value=f"Level: {shikigami_level} | Experience: {shikigami_exp}/{shikigami_exp_x}\n"
                       f"Clear Chance: ~{round(total_chance, 2)}%"
             )
@@ -378,7 +270,7 @@ class Beta(commands.Cog):
 
             return im
 
-        day = self.get_time().strftime("%a").lower()
+        day = get_time().strftime("%a").lower()
         souls_rewards = []
         soul_slots = [0, 1, 2, 4, 5, 6]
         x_outline, y_outline = 22, 0
@@ -387,11 +279,11 @@ class Beta(commands.Cog):
         x_off = 0
 
         if day in ["sat", "sun"]:
-            for soul in souls.find({"source.souls_weekend": True}, {"_id": 0, "name": 1}):
-                souls_rewards.append(soul["name"])
+            for document in souls.find({"source.souls_weekend": True}, {"_id": 0, "name": 1}):
+                souls_rewards.append(document["name"])
 
-        for soul in souls.find({"source.souls_weekday": day}, {"_id": 0, "name": 1}):
-            souls_rewards.append(soul["name"])
+        for document in souls.find({"source.souls_weekday": day}, {"_id": 0, "name": 1}):
+            souls_rewards.append(document["name"])
 
         soul_raw_address = "data/raw/soul_slot.png"
         a, b = generate_amount_soul(int(stage))
@@ -403,7 +295,7 @@ class Beta(commands.Cog):
 
         soul_exp_list = []
 
-        for i, soul in enumerate(range(1, souls_rewards_total + 1)):
+        for i, document in enumerate(range(1, souls_rewards_total + 1)):
 
             if i % 6 == 0:
                 x_off = 0
@@ -465,7 +357,7 @@ class Beta(commands.Cog):
         bd.save(temp_address, quality=95)
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
-        hosting_channel = self.client.get_channel(int(self.id_hosting))
+        hosting_channel = self.client.get_channel(int(id_hosting))
         msg1 = await hosting_channel.send(file=new_photo)
         attachment_link = msg1.attachments[0].url
 
@@ -488,24 +380,24 @@ class Beta(commands.Cog):
 
     async def process_souls_experience_add(self, user, soul_exp_list):
 
-        for soul in soul_exp_list:
-            soul, exp, slot = soul[0], soul[1], soul[2]
+        for s in soul_exp_list:
+            s, exp, slot = s[0], s[1], s[2]
 
-            if users.find_one({"user_id": str(user.id), f"souls.{soul}": {"$type": "object"}}, {"_id": 0}) is None:
-                users.update_one({"user_id": str(user.id)}, {"$set": {f"souls.{soul}": []}})
+            if users.find_one({"user_id": str(user.id), f"souls.{s}": {"$type": "object"}}, {"_id": 0}) is None:
+                users.update_one({"user_id": str(user.id)}, {"$set": {f"souls.{s}": []}})
 
             x = users.update_one({
-                "user_id": str(user.id), "$and": [{f"souls.{soul}": {"$elemMatch": {"slot": slot}}}]
+                "user_id": str(user.id), "$and": [{f"souls.{s}": {"$elemMatch": {"slot": slot}}}]
             }, {
                 "$inc": {
-                    f"souls.{soul}.$.exp": exp
+                    f"souls.{s}.$.exp": exp
                 }
             })
 
             if x.modified_count == 0:
                 users.update_one({"user_id": str(user.id)}, {
                     "$push": {
-                        f"souls.{soul}": {
+                        f"souls.{s}": {
                             "grade": 1,
                             "slot": slot,
                             "level": 1,
@@ -516,18 +408,17 @@ class Beta(commands.Cog):
                     }
                 })
 
-            await self.process_souls_level_up(user, soul, slot)
+            await self.process_souls_level_up(user, s, slot)
 
-
-    async def process_souls_level_up(self, user, soul, slot):
+    async def process_souls_level_up(self, user, soul_name, slot):
 
         soul_data = users.find_one({
-            "user_id": str(user.id), "$and": [{f"souls.{soul}": {"$elemMatch": {"slot": slot}}}]
+            "user_id": str(user.id), "$and": [{f"souls.{soul_name}": {"$elemMatch": {"slot": slot}}}]
         }, {
             "_id": 0,
-            f"souls.{soul}": 1
+            f"souls.{soul_name}": 1
         })
-        if soul_data["souls"][soul][0]["lvl_exp_next"] >= soul_data["souls"][soul][0]["exp"]:
+        if soul_data["souls"][soul_name][0]["lvl_exp_next"] >= soul_data["souls"][soul_name][0]["exp"]:
             def get_lvl_exp_next_new(g):
                 dictionary = {
                     1: 0,
@@ -539,14 +430,14 @@ class Beta(commands.Cog):
                 }
                 return dictionary[g]
 
-            grade_next = soul_data["souls"][soul][0]["grade"] + 1
+            grade_next = soul_data["souls"][soul_name][0]["grade"] + 1
             lvl_exp_next_new = get_lvl_exp_next_new(grade_next)
             users.update_one({
                 "user_id": str(user.id),
-                "$and": [{f"souls.{soul}": {"$elemMatch": {"slot": slot}}}]
+                "$and": [{f"souls.{soul_name}": {"$elemMatch": {"slot": slot}}}]
             }, {
                 "$set": {
-                    f"souls.{soul}.$.lvl_exp_next": lvl_exp_next_new
+                    f"souls.{soul_name}.$.lvl_exp_next": lvl_exp_next_new
                 }
             })
 
@@ -554,13 +445,13 @@ class Beta(commands.Cog):
 
         embed = discord.Embed(
             color=ctx.author.colour,
-            timestamp=self.get_timestamp()
+            timestamp=get_timestamp()
         )
         embed.set_author(
             name=f"{soul_select.title()} Souls Stats",
             icon_url=ctx.author.avatar_url
         )
-        embed.set_thumbnail(url=self.get_soul_thumbnail(soul_select))
+        embed.set_thumbnail(url=get_soul_thumbnail(soul_select))
 
         try:
             user_souls = users.find_one({
@@ -570,7 +461,7 @@ class Beta(commands.Cog):
 
         except KeyError:
             embed = discord.Embed(
-                color=self.colour,
+                color=colour,
                 title=f"Invalid soul",
                 description=f"You do not own any of this soul"
             )
@@ -579,7 +470,7 @@ class Beta(commands.Cog):
 
         except TypeError:
             embed = discord.Embed(
-                color=self.colour,
+                color=colour,
                 title=f"Invalid soul",
                 description=f"You do not own any of this soul"
             )
@@ -588,21 +479,21 @@ class Beta(commands.Cog):
 
         souls_formatted = []
 
-        for soul in user_souls:
+        for s in user_souls:
             souls_formatted.append(
-                [soul["slot"], soul["grade"], soul["level"], soul["exp"], soul["lvl_exp_next"], soul["equipped"]]
+                [s["slot"], s["grade"], s["level"], s["exp"], s["lvl_exp_next"], s["equipped"]]
             )
 
-        for soul in sorted(souls_formatted, key=lambda x: x[0], reverse=True):
+        for s in sorted(souls_formatted, key=lambda x: x[0], reverse=True):
 
             try:
-                shiki = soul[5].title()
+                shiki = s[5].title()
             except AttributeError:
                 shiki = "`None`"
 
             embed.add_field(
-                name=f"`[Slot {soul[0]}]` | Grade {soul[1]}",
-                value=f"Level: `{soul[2]}/15` :: Exp: `{soul[3]}/{soul[4]}`\n"
+                name=f"`[Slot {s[0]}]` | Grade {s[1]}",
+                value=f"Level: `{s[2]}/15` :: Exp: `{s[3]}/{s[4]}`\n"
                       f"Equipped to: {shiki}",
                 inline=False
             )

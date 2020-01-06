@@ -2,29 +2,14 @@
 Startup Module
 Miketsu, 2020
 """
+
 import asyncio
-import os
-from datetime import datetime
 from itertools import cycle
 from math import ceil
 
-import pytz
-from discord.ext import tasks, commands
-from pushbullet import Pushbullet
+from discord.ext import commands, tasks
 
-from cogs.ext.database import get_collections
-from cogs.ext.processes import *
-
-# Pushbullet
-pb = Pushbullet(api_key=str(os.environ.get("PUSHBULLET")))
-
-# Collections
-changelogs = get_collections("changelogs")
-config = get_collections("config")
-guilds = get_collections("guilds")
-
-# Instantiations
-id_guild = int(os.environ.get("SERVER"))
+from cogs.ext.initialize import *
 
 
 class Startup(commands.Cog):
@@ -33,32 +18,13 @@ class Startup(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-        self.colour = config.find_one({"var": 1}, {"_id": 0, "embed_color": 1})["embed_color"]
-        self.timezone = config.find_one({"var": 1}, {"_id": 0, "timezone": 1})["timezone"]
-
-        self.statuses = cycle(config.find_one({"list": 1}, {"_id": 0, "statuses": 1})["statuses"])
-        
-        self.commands_fake = [
-            "daily", "weekly", "profile", "set", "buy", "summon", "explore", "explores", "chapter", "card", "realms",
-            "rcollect", "evolve", "friendship", "ships", "leaderboard", "shikigami", "shikigamis", "shrine", "sail",
-            "pray", "stat", "frames", "wish", "wishlist", "fulfill", "parade", "collections", "shards", "cards",
-            "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange", "bento", "raidable",
-            "souls [beta]"
-        ]
-
-        self.commands_others = [
-            "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait",
-            "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report"
-        ]
-
-    def get_timestamp(self):
-        return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+        self.statuses = cycle(listings_1["statuses"])
     
     @commands.Cog.listener()
     async def on_ready(self):
 
         bot_info = await self.client.application_info()
-        time_now = datetime.now(tz=pytz.timezone(self.timezone))
+        time_now = datetime.now(tz=pytz.timezone(timezone))
 
         print("Initializing...")
         print("-------")
@@ -67,24 +33,24 @@ class Startup(commands.Cog):
         print("Time now: {}".format(time_now.strftime("%d.%b %Y %H:%M:%S")))
         print("-------")
         try:
-            self.change_status.start()
+            self.status_change.start()
         except RuntimeError:
-            pb.push_note("Miketsu Bot", "Experience a hiccup while changing my status ~1")
+            pb.push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~1")
         print("-------")
 
     @tasks.loop(seconds=1200)
-    async def change_status(self):
+    async def status_change(self):
 
         try:
             await self.client.change_presence(activity=discord.Game(next(self.statuses)))
         except RuntimeError:
-            pb.push_note("Miketsu Bot", "Experience a hiccup on changing my status ~2")
+            pb.push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~2")
 
     @commands.command(aliases=["info", "i"])
-    async def show_message_greetings(self, ctx):
+    async def help_info(self, ctx):
 
         embed = discord.Embed(
-            color=self.colour,
+            color=colour,
             description=f"To see my commands, type *`{self.prefix}help`*"
         )
         embed.set_author(
@@ -94,21 +60,21 @@ class Startup(commands.Cog):
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["h", "help"])
-    async def show_message_help(self, ctx):
+    async def help_show(self, ctx):
 
         embed = discord.Embed(
             title="help, h",
-            color=self.colour,
+            color=colour,
             description=f"append my command prefix symbol *`{self.prefix}`*"
         )
         embed.add_field(
             name="fake Onmyoji",
-            value=f"*{', '.join(sorted(self.commands_fake))}*",
+            value=f"*{', '.join(sorted(commands_fake))}*",
             inline=False
         )
         embed.add_field(
             name="Others / Utility",
-            value=f"*{', '.join(sorted(self.commands_others))}*",
+            value=f"*{', '.join(sorted(commands_others))}*",
             inline=False
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
@@ -116,18 +82,18 @@ class Startup(commands.Cog):
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["suggest", "report"])
-    async def collect_suggestions(self, ctx, *, content):
-
-        query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1})
-        id_scroll = query["channels"]["scroll-of-everything"]
-        scroll_channel = self.client.get_channel(int(id_scroll))
+    async def suggestions_collect(self, ctx, *, content):
 
         embed = discord.Embed(
-            color=self.colour,
+            color=colour,
             title="📨 New Suggestion/Report",
-            timestamp=self.get_timestamp()
+            timestamp=get_timestamp()
         )
-        embed.add_field(name="Content", value=f"{content}", inline=False)
+        embed.add_field(
+            name="Content",
+            value=f"{content}",
+            inline=False
+        )
 
         try:
             link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
@@ -138,13 +104,16 @@ class Startup(commands.Cog):
             embed.description = f"From: {ctx.author.mention}\n" \
                                 f"Submitted through: Direct Message"
 
+        scroll_channel = self.client.get_channel(int(id_scroll))
         msg = await process_msg_submit(scroll_channel, None, embed)
         await process_msg_reaction_add(msg, "📌")
         await process_msg_reaction_add(ctx.message, "📩")
 
-    @commands.command(aliases=["changelog", "changelogs"])
+    @commands.command(aliases=["changelogs", "changelog"])
     @commands.guild_only()
-    async def show_changelogs(self, ctx):
+    async def changelog_show(self, ctx):
+
+        commands_others.append("changelogs")
 
         changelog_lines = changelogs.find_one({"logs": 1}, {"_id": 0, "details": 1})["details"][:200]
         changelog_lines_formatted = []
@@ -152,9 +121,9 @@ class Startup(commands.Cog):
         for line in reversed(changelog_lines):
             changelog_lines_formatted.append(f"• {line}\n")
 
-        await self.show_changelogs_paginate(ctx, changelog_lines_formatted)
+        await self.changelog_show_paginate(ctx, changelog_lines_formatted)
 
-    async def show_changelogs_paginate(self, ctx, formatted_list):
+    async def changelog_show_paginate(self, ctx, formatted_list):
 
         page, max_lines = 1, 20
         page_total = ceil(len(formatted_list) / max_lines)
@@ -167,7 +136,7 @@ class Startup(commands.Cog):
             start = end - max_lines
             description = "".join(formatted_list[start:end])
 
-            embed_new = discord.Embed(color=self.colour, title="Bot changelogs", description=description)
+            embed_new = discord.Embed(color=colour, title="Bot changelogs", description=description)
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
@@ -199,16 +168,9 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["changelog_add"])
     @commands.is_owner()
-    async def add_changelogs(self, ctx, *, args):
+    async def changelog_add_line(self, ctx, *, args):
 
-        comment = args
-        changelogs.update_one({
-            "logs": 1,
-        }, {
-            "$push": {
-                "details": comment
-            }
-        })
+        changelogs.update_one({"logs": 1}, {"$push": {"details": args}})
         await process_msg_reaction_add(ctx.message, "✅")
 
 
