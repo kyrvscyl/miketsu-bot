@@ -209,7 +209,7 @@ for card in realms.find({}, {"_id": 0}):
 """SOULS"""
 
 souls_all = []
-soul_dungeons = list(range(1, 11))
+soul_dungeons = [f"{x}" for x in list(range(1, 11))]
 
 for soul in souls.find({}, {"_id": 0, "name": 1}):
     souls_all.append(soul["name"])

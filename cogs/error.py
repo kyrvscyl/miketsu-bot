@@ -413,10 +413,10 @@ class Error(commands.Cog):
             elif str(ctx.command) == "post_message_user":
                 embed = discord.Embed(
                     colour=colour,
-                    title="say",
+                    title="dm",
                     description="allows me to message a user"
                 )
-                embed.add_field(name="Format", value=f"*`{self.prefix}say <@member or member_id> <any message>`*")
+                embed.add_field(name="Format", value=f"*`{self.prefix}dm <@member or member_id> <any message>`*")
                 await ctx.channel.send(embed=embed)
 
             elif str(ctx.command) == "show_cycle_quest1":
