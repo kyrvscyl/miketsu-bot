@@ -141,8 +141,9 @@ class Startup(commands.Cog):
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
-        await process_msg_reaction_add(msg, "⬅")
-        await process_msg_reaction_add(msg, "➡")
+        emoji_arrows = ["⬅", "➡"]
+        for emoji in emoji_arrows:
+            await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -154,9 +155,9 @@ class Startup(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == "➡":
+                if str(reaction.emoji) == emoji_arrows[1]:
                     page += 1
-                elif str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == emoji_arrows[0]:
                     page -= 1
                 if page == 0:
                     page = page_total

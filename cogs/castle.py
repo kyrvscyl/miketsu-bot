@@ -429,7 +429,7 @@ class Castle(commands.Cog):
                     title="Invalid floor number",
                     description="available floors: 1-6 only"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
                 return
 
             if image_link.lower() == "default":
@@ -446,7 +446,7 @@ class Castle(commands.Cog):
                     colour=colour,
                     description=f"portrait already exists, use `{self.prefix}frame edit <...>`"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif floor not in [1, 2, 3, 4, 5, 6]:
                 embed = discord.Embed(
@@ -454,7 +454,7 @@ class Castle(commands.Cog):
                     title="Invalid floor number",
                     description="available floors: 1-6 only"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
                 return
 
             elif arg1.lower() == "others":
@@ -494,7 +494,7 @@ class Castle(commands.Cog):
 
         async with ctx.channel.typing():
             embed = discord.Embed(colour=colour, title="Processing the image.. ")
-            msg1 = await ctx.channel.send(embed=embed)
+            msg1 = await process_msg_submit(ctx.channel, None, embed)
             await asyncio.sleep(2)
             embed = discord.Embed(
                 colour=colour,
@@ -683,7 +683,7 @@ class Castle(commands.Cog):
         try:
             embed = discord.Embed(
                 color=ctx.author.colour,
-                title=f"{lengthen_code(member['#'])} : {member['name']}",
+                title=f"{lengthen_code_3(member['#'])} : {member['name']}",
                 timestamp=get_timestamp()
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
@@ -717,8 +717,10 @@ class Castle(commands.Cog):
 
             embed.set_image(url=link)
             msg = await process_msg_submit(ctx.channel, None, embed)
-            await process_msg_reaction_add(msg, "⬅")
-            await process_msg_reaction_add(msg, "➡")
+
+            emoji_arrows = ["⬅", "➡"]
+            for emoji in emoji_arrows:
+                await process_msg_reaction_add(msg, emoji)
 
             def check(r, u):
                 return str(r.emoji) in ["⬅", "➡"] and msg.id == r.message.id and u.id != self.client.user.id
@@ -728,7 +730,7 @@ class Castle(commands.Cog):
                 try:
                     await self.client.wait_for("reaction_add", timeout=180, check=check)
                 except asyncio.TimeoutError:
-                    await msg.clear_reactions()
+                    await process_msg_reaction_clear(msg)
                     break
                 else:
                     links = member["lineup"]
@@ -769,7 +771,7 @@ class Castle(commands.Cog):
         project = {"_id": 0, "#": 1, "name": 1}
 
         for duelist in duelists.find(find_query, project).sort([("#", 1)]):
-            number = lengthen_code(duelist["#"])
+            number = lengthen_code_3(duelist["#"])
             formatted_list.append(f"`{number}:` | {duelist['name']}\n")
 
         noun = pluralize("duelist", len(formatted_list))
@@ -783,7 +785,7 @@ class Castle(commands.Cog):
         project = {"_id": 0, "#": 1, "name": 1}
 
         for duelist in duelists.find(find_query, project).sort([("name_lower", 1)]):
-            number = lengthen_code(duelist["#"])
+            number = lengthen_code_3(duelist["#"])
             formatted_list.append(f"`{number}:` | {duelist['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
@@ -996,8 +998,9 @@ class Castle(commands.Cog):
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, content, embed_new_create(page))
-        await process_msg_reaction_add(msg, "⬅")
-        await process_msg_reaction_add(msg, "➡")
+        emoji_arrows = ["⬅", "➡"]
+        for emoji in emoji_arrows:
+            await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -1009,9 +1012,9 @@ class Castle(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == "➡":
+                if str(reaction.emoji) == emoji_arrows[1]:
                     page += 1
-                elif str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == emoji_arrows[0]:
                     page -= 1
                 if page == 0:
                     page = page_total

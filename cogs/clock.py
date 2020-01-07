@@ -222,7 +222,7 @@ class Clock(commands.Cog):
     @commands.guild_only()
     async def clock_start_manual(self, ctx):
         config.update_one({"var": 1}, {"$set": {"clock": False}})
-        await ctx.message.add_reaction("✅")
+        await process_msg_reaction_add(ctx.message, "✅")
         await self.clock_start()
 
     async def clock_start(self):
@@ -308,7 +308,7 @@ class Clock(commands.Cog):
                 if day_week.lower() == "mon":
                     await Economy(self.client).perform_reset_rewards_weekly()
 
-                await Economy(self.client).frame_automate()
+                await Frames(self.client).frame_automate()
                 await self.perform_penalize_streak()
                 await Frames(self.client).achievements_process_daily()
 
@@ -337,7 +337,7 @@ class Clock(commands.Cog):
                 value="activate, deactivate",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
         
         elif len(args) == 1 and args[0].lower() in ["activate", "a"]:
             embed = discord.Embed(
@@ -361,7 +361,7 @@ class Clock(commands.Cog):
                       "*`;events act now cc`* - activates this week",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif len(args) == 1 and args[0].lower() in ["deactivate", "d"]:
             embed = discord.Embed(
@@ -379,7 +379,7 @@ class Clock(commands.Cog):
                 value="*`;events d cc`*\n",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif len(args) == 3 and args[0].lower() in ["activate", "a"] \
                 and args[1].lower() in ["now", "next"] and args[2].lower() in ["cc", "ft"]:
@@ -395,13 +395,13 @@ class Clock(commands.Cog):
                     description="this event is already deactivated",
                     color=colour
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             else:
-                await ctx.message.add_reaction("✅")
+                await process_msg_reaction_add(ctx.message, "✅")
 
         else:
-            await ctx.message.add_reaction("❌")
+            await process_msg_reaction_add(ctx.message, "❌")
 
     async def events_manipulate_activate(self, ctx, event, timing):
 
@@ -455,25 +455,25 @@ class Clock(commands.Cog):
             name="Action",
             value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{id_headlines}>"
         )
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["test2"])
     @commands.is_owner()
     async def manual_process_achievements_hourly(self, ctx):
-        await ctx.message.add_reaction("✅")
+        await process_msg_reaction_add(ctx.message, "✅")
         await Frames(self.client).achievements_process_hourly()
 
     @commands.command(aliases=["test4"])
     @commands.is_owner()
     async def manual_process_achievements_daily(self, ctx):
-        await ctx.message.add_reaction("✅")
+        await process_msg_reaction_add(ctx.message, "✅")
         await Frames(self.client).achievements_process_daily()
 
     @commands.command(aliases=["test3"])
     @commands.is_owner()
     async def manual_process_frames_daily(self, ctx):
-        await ctx.message.add_reaction("✅")
-        await Economy(self.client).frame_automate()
+        await process_msg_reaction_add(ctx.message, "✅")
+        await Frames(self.client).frame_automate()
         await self.perform_penalize_streak()
 
 

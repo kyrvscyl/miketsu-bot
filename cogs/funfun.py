@@ -179,19 +179,20 @@ class Funfun(commands.Cog):
             return embed
 
         msg = await ctx.channel.send(embed=generate_stickers_embed(page))
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
+        emoji_arrows = ["⬅", "➡"]
+        for emoji in emoji_arrows:
+            await process_msg_reaction_add(msg, emoji)
 
         while True:
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=30, check=check)
             except asyncio.TimeoutError:
-                await msg.clear_reactions()
+                await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == "➡":
+                if str(reaction.emoji) == emoji_arrows[1]:
                     page += 1
-                elif str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == emoji_arrows[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
@@ -208,17 +209,17 @@ class Funfun(commands.Cog):
 
         if alias in self.actions:
             embed = discord.Embed(color=ctx.author.colour, title=f"Alias `{alias}` is already taken", )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif link[:20] == "https://i.imgur.com/" and link[-4:] == ".png":
             stickers.insert_one({"alias": alias, "link": link})
             embed = discord.Embed(color=ctx.author.colour, title=f"New sticker added with alias: `{alias}`")
             embed.set_image(url=link)
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             self.generate_new_stickers()
 
         else:
-            await ctx.message.add_reaction("❌")
+            await process_msg_reaction_add(ctx.message, "❌")
 
     @commands.Cog.listener()
     async def on_message(self, message):

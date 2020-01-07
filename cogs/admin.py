@@ -84,7 +84,7 @@ class Admin(commands.Cog):
             )
             embed_created.set_thumbnail(url=ctx.guild.icon_url)
             embed_created.set_footer(
-                text=f"#{channel_memo_name}-{lengthen_memo(memos_count + 1)}",
+                text=f"#{channel_memo_name}-{lengthen_code_4(memos_count + 1)}",
                 icon_url=user.avatar_url
             )
             if link is not None:
@@ -786,7 +786,7 @@ class Admin(commands.Cog):
         project = {"_id": 0, "name": 1, "status_update": 1, "#": 1}
 
         for member in members.find(find_query, project).sort([("status_update", 1)]):
-            number = lengthen_code(member["#"])
+            number = lengthen_code_3(member["#"])
             status_update_formatted = member["status_update"].strftime("%d.%b %y")
             formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
@@ -803,7 +803,7 @@ class Admin(commands.Cog):
         for member in members.find(find_query, project).sort([("total_feats", -1)]):
             role = self.shorten_code(member["role"])
             status = self.shorten_code(member["status"])
-            number = lengthen_code(member["#"])
+            number = lengthen_code_3(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("member", len(formatted_list))
@@ -819,7 +819,7 @@ class Admin(commands.Cog):
         for member in members.find(find_query, project).sort([("name_lower", 1)]):
             role = self.shorten_code(member["role"])
             status = self.shorten_code(member["status"])
-            number = lengthen_code(member["#"])
+            number = lengthen_code_3(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
@@ -896,7 +896,7 @@ class Admin(commands.Cog):
         for member in members.find(find_query, project).sort(sort):
             role = self.shorten_code(member["role"])
             status = self.shorten_code(member["status"])
-            number = lengthen_code(member["#"])
+            number = lengthen_code_3(member["#"])
             name = member['name']
             formatted_list.append(f"`{number}: {role}` | `{status}` | {name} \n")
 
@@ -911,7 +911,7 @@ class Admin(commands.Cog):
         project = {"_id": 0, "name": 1, "status_update": 1, "#": 1, "role": 1}
 
         for member in members.find(filter_query, project).sort([("status_update", 1)]):
-            number = lengthen_code(member["#"])
+            number = lengthen_code_3(member["#"])
             status_update_formatted = member["status_update"].strftime("%d.%b %y")
             formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
@@ -1040,8 +1040,9 @@ class Admin(commands.Cog):
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, caption, embed_new_create(page))
-        await process_msg_reaction_add(msg, "⬅")
-        await process_msg_reaction_add(msg, "➡")
+        emoji_arrows = ["⬅", "➡"]
+        for emoji in emoji_arrows:
+            await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -1053,9 +1054,9 @@ class Admin(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == "➡":
+                if str(reaction.emoji) == emoji_arrows[1]:
                     page += 1
-                elif str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == emoji_arrows[0]:
                     page -= 1
                 if page == 0:
                     page = page_total

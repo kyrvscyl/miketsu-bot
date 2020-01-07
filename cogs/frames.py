@@ -4,6 +4,7 @@ Miketsu, 2020
 """
 
 import asyncio
+import random
 from math import ceil
 
 from PIL import Image
@@ -17,6 +18,11 @@ class Frames(commands.Cog):
     def __init__(self, client):
         self.client = client
 
+        self.steal_adverb = listings_1["steal_adverb"]
+        self.steal_verb = listings_1["steal_verb"]
+        self.steal_noun = listings_1["steal_noun"]
+        self.steal_comment = listings_1["steal_comment"]
+
         self.total_sp = shikigamis.count_documents({"rarity": "SP"})
         self.total_ssr = shikigamis.count_documents({"rarity": "SSR"})
         self.total_sr = shikigamis.count_documents({"rarity": "SR"})
@@ -28,7 +34,109 @@ class Frames(commands.Cog):
 
         for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
             self.medal_achievements.append([m['name'], m['required']])
-    
+
+    async def frame_automate(self):
+
+        print("Calculating frames distribution")
+        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        guild = spell_spam_channel.guild
+
+        await self.frame_automate_starlight(guild, spell_spam_channel)
+        await asyncio.sleep(1)
+        await self.frame_automate_blazing(guild, spell_spam_channel)
+
+    async def frame_automate_starlight(self, guild, spell_spam_channel):
+        starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
+
+        streak_list = []
+        for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
+            streak_list.append((user["user_id"], user["SSR_current"]))
+
+        streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
+        starlight_new = guild.get_member(int(streak_list_new[0][0]))
+        starlight_current = starlight_role.members[0]
+
+        if len(starlight_role.members) == 0:
+            await starlight_new.add_roles(starlight_role)
+            await asyncio.sleep(3)
+
+            description = \
+                f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
+                f"earned themselves the Rare Starlight Sky Frame!\n\n" \
+                f"🍀 No SSR streak record of {streak_list_new[0][1]} summons!"
+
+            embed = discord.Embed(
+                color=0xac330f,
+                title="📨 Hall of Framers update",
+                description=description,
+                timestamp=get_timestamp()
+            )
+            embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
+            await spell_spam_channel.send(embed=embed)
+            await frame_acquisition(starlight_new, "Starlight Sky", 2500, spell_spam_channel)
+
+        if starlight_current == starlight_new:
+            jades = 2000
+            users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": jades}})
+            await perform_add_log("jades", jades, starlight_current.id)
+            msg = f"{starlight_current.mention} has earned {jades:,d}{e_j} " \
+                  f"for wielding the Starlight Sky frame for a day!"
+            await spell_spam_channel.send(msg)
+
+        else:
+            await starlight_new.add_roles(starlight_role)
+            await asyncio.sleep(3)
+            await starlight_current.remove_roles(starlight_role)
+            await asyncio.sleep(3)
+
+            description = \
+                f"{starlight_new.mention} {random.choice(self.steal_adverb)} {random.choice(self.steal_verb)} " \
+                f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
+                f"{random.choice(self.steal_noun)}!! {random.choice(self.steal_comment)}\n\n" \
+                f"🍀 No SSR streak record of {streak_list_new[0][1]} summons! " \
+                f"Cuts in three fourths every reset!"
+
+            embed = discord.Embed(
+                color=0xac330f,
+                title="📨 Hall of Framers update",
+                description=description,
+                timestamp=get_timestamp()
+            )
+            embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
+            await spell_spam_channel.send(embed=embed)
+            await frame_acquisition(starlight_new, "Starlight Sky", 2500, spell_spam_channel)
+
+    async def frame_automate_blazing(self, guild, spell_spam_channel):
+
+        blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
+        blazing_users = []
+
+        for member in blazing_role.members:
+            blazing_users.append(f"{member.display_name}")
+
+            users.update_one({
+                "user_id": str(member.id)
+            }, {
+                "$inc": {
+                    "amulets": 10
+                }
+            })
+            await perform_add_log("amulets", 10, member.id)
+
+        embed = discord.Embed(
+            title="Blazing Sun Frame Update",
+            description=f"completed the SSR shikigami collection\n"
+                        f"earns 10{e_a} every reset",
+            color=colour,
+            timestamp=get_timestamp()
+        )
+        embed.add_field(
+            name="Frame Wielders",
+            value=f"{', '.join(blazing_users)}"
+        )
+        embed.set_thumbnail(url=get_frame_thumbnail("Blazing Sun"))
+        await spell_spam_channel.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_message(self, message):
 
@@ -60,7 +168,7 @@ class Frames(commands.Cog):
             "link": link
         }
         frames.insert_one(profile)
-        await ctx.message.add_reaction("✅")
+        await process_msg_reaction_add(ctx.message, "✅")
         await self.achievements_generate_frame_images_newly()
 
     async def achievements_generate_frame_images_newly(self):
@@ -134,7 +242,7 @@ class Frames(commands.Cog):
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
 
-        async def create_new_embed_page(page_new):
+        async def embed_new_create(page_new):
             end = page_new * 5
             start = end - 5
             embed = discord.Embed(
@@ -159,20 +267,21 @@ class Frames(commands.Cog):
 
             return embed
 
-        msg = await ctx.channel.send(embed=await create_new_embed_page(1))
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
+        msg = await ctx.channel.send(embed=await embed_new_create(1))
+        emoji_arrows = ["⬅", "➡"]
+        for emoji in emoji_arrows:
+            await process_msg_reaction_add(msg, emoji)
 
         while True:
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
             except asyncio.TimeoutError:
-                await msg.clear_reactions()
+                await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == "➡":
+                if str(reaction.emoji) == emoji_arrows[1]:
                     page += 1
-                elif str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == emoji_arrows[0]:
                     page -= 1
 
                 if page == 0:
@@ -180,7 +289,7 @@ class Frames(commands.Cog):
                 elif page > page_total:
                     page = 1
 
-                await msg.edit(embed=await create_new_embed_page(page))
+                await msg.edit(embed=await embed_new_create(page))
 
     async def get_frames_image(self, page_frames):
         try:

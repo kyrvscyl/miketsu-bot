@@ -90,7 +90,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}r <name#discriminator>`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "raid_perform":
                 embed = discord.Embed(
@@ -103,7 +103,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}r <name#discriminator>`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "shikigami_list_show_collected":
                 embed = discord.Embed(
@@ -115,7 +115,7 @@ class Error(commands.Cog):
                     value=f"*`{self.prefix}shikilist <rarity>`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "shikigami_show_post_shiki":
                 embed = discord.Embed(
@@ -127,7 +127,7 @@ class Error(commands.Cog):
                     value=f"*`{self.prefix}shikigami <shikigami>`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "raid_perform_calculation":
                 embed = discord.Embed(
@@ -153,7 +153,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}rc <name#discriminator>`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_memorandum":
                 embed = discord.Embed(
@@ -171,7 +171,7 @@ class Error(commands.Cog):
                           f"enter any non-image link text to remove the memorandum's embedded image",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "suggestions_collect":
                 embed = discord.Embed(
@@ -184,7 +184,7 @@ class Error(commands.Cog):
                     name="Example", value=f"*`{self.prefix}suggest add new in-game stickers!`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in ["perform_exploration"]:
                 embed = discord.Embed(
@@ -204,7 +204,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}explore <last | unfinished | unf>`*\n",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
             elif str(ctx.command) == "stat_shikigami":
@@ -214,7 +214,7 @@ class Error(commands.Cog):
                     description="shows shikigami pulls statistics"
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}stat tamamonomae`*", inline=False)
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "sticker_add_new":
                 embed = discord.Embed(
@@ -232,7 +232,7 @@ class Error(commands.Cog):
                     value=f"*`{self.prefix}ns feelinhurt https://i.imgur.com/371bCEa.png`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "shikigami_shrine":
                 embed = discord.Embed(
@@ -249,7 +249,7 @@ class Error(commands.Cog):
                     value=f"*`{self.prefix}shrine exchange`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "leaderboard_show":
                 embed = discord.Embed(
@@ -262,7 +262,7 @@ class Error(commands.Cog):
                     inline=False
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}leaderboard friendship`*", inline=False)
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
                 "shikigami_image_show_collected"
@@ -275,7 +275,7 @@ class Error(commands.Cog):
                     name="Format", inline=False,
                     value=f"*`{self.prefix}collection <rarity> <optional: @member>`*"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
                 "shikigami_show_post_shiki"
@@ -288,7 +288,7 @@ class Error(commands.Cog):
                     name="Format", inline=False,
                     value=f"*`{self.prefix}shiki <shikigami>`*"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
                 "shikigami_show_post_shikis"
@@ -301,7 +301,7 @@ class Error(commands.Cog):
                     name="Format", inline=False,
                     value=f"*`{self.prefix}shikis <rarity> <optional: @member>`*"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in ["shikigami_show_post_shards"]:
                 embed = discord.Embed(
@@ -312,7 +312,7 @@ class Error(commands.Cog):
                     name="Format", inline=False,
                     value=f"*`{self.prefix}shards <rarity> <optional: @member>`*"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "profile_change_shikigami_main":
                 embed = discord.Embed(
@@ -320,7 +320,7 @@ class Error(commands.Cog):
                     description="changes your profile display thumbnail"
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}set inferno ibaraki`*", inline=False)
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "summon_perform_mystery":
                 embed = discord.Embed(
@@ -346,7 +346,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}sm <1 or 10>`*\n",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
                 "bounty_query",
@@ -367,7 +367,7 @@ class Error(commands.Cog):
                           f"*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "castle_portrait_customize":
                 embed = discord.Embed(
@@ -381,7 +381,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}portrait <edit/add>`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_memorandum":
                 embed = discord.Embed(
@@ -399,7 +399,7 @@ class Error(commands.Cog):
                     value=f"*`{self.prefix}announce #headlines @Patronus reminder to...`*",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_message_channel":
                 embed = discord.Embed(
@@ -408,7 +408,7 @@ class Error(commands.Cog):
                     description="allows me to repeat a text message"
                 )
                 embed.add_field(name="Format", value=f"*`{self.prefix}say <#channel or channel_id> <any message>`*")
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_message_user":
                 embed = discord.Embed(
@@ -417,7 +417,7 @@ class Error(commands.Cog):
                     description="allows me to message a user"
                 )
                 embed.add_field(name="Format", value=f"*`{self.prefix}dm <@member or member_id> <any message>`*")
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "show_cycle_quest1":
                 embed = discord.Embed(
@@ -429,13 +429,13 @@ class Error(commands.Cog):
                     name="Format", value=f"*`{self.prefix}cycle <cycle#1> <optional: @member>`*"
                 )
                 embed.add_field(name="Example", value=f"*`{self.prefix}cycle 1`*")
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_book_reference":
-                await ctx.message.add_reaction("❌")
+                await process_msg_reaction_add(ctx.message, "❌")
 
             elif str(ctx.command) in ["post_patch_notes"]:
-                await ctx.message.add_reaction("❌")
+                await process_msg_reaction_add(ctx.message, "❌")
 
             else:
                 await self.submit_error(ctx, error, "MissingRequiredArgument")
@@ -455,7 +455,7 @@ class Error(commands.Cog):
                     title="Invalid input",
                     description="tag a valid channel"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif isinstance(error, commands.BadArgument):
 
@@ -478,7 +478,7 @@ class Error(commands.Cog):
                         title="Invalid member", colour=colour,
                         description="That member does not exist or does not have a profile in this guild"
                     )
-                    await ctx.channel.send(embed=embed)
+                    await process_msg_submit(ctx.channel, None, embed)
 
                 else:
                     await self.submit_error(ctx, error, "BadArgument")
@@ -498,21 +498,21 @@ class Error(commands.Cog):
                     description=f"You have used up all your prayers today 🙏",
                     timestamp=get_timestamp()
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "raid_perform":
                 embed = discord.Embed(
                     title=f"Insufficient realm tickets", colour=colour,
                     description="purchase at the shop or get your daily rewards"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "perform_parade":
                 embed = discord.Embed(
                     title="Insufficient parade tickets", colour=colour,
                     description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "encounter_search":
                 embed = discord.Embed(
@@ -520,14 +520,14 @@ class Error(commands.Cog):
                     title="Insufficient tickets",
                     description=f"purchase at the shop to obtain more"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_message_user":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
                     description=f"Missing required roles"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "castle_wander":
                 embed = discord.Embed(
@@ -536,7 +536,7 @@ class Error(commands.Cog):
                     description="usable only at the castle's channels with valid floors\n"
                                 "check the channel topics for the floor number\n"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in ["perform_exploration"]:
                 embed = discord.Embed(
@@ -556,7 +556,7 @@ class Error(commands.Cog):
                           f"*`{self.prefix}explore <last | unfinished | unf>`*\n",
                     inline=False
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
             elif isinstance(error, commands.NoPrivateMessage):
@@ -564,7 +564,7 @@ class Error(commands.Cog):
                     title="Invalid channel", colour=colour,
                     description="This command can only be used inside the guild"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             else:
                 await self.submit_error(ctx, error, "CheckFailure")
@@ -583,7 +583,7 @@ class Error(commands.Cog):
             ]:
                 return
 
-            if str(ctx.command) == "spawn_random_sushi":
+            if str(ctx.command) == "sushi_bento_serve":
 
                 role = guilds.find_one({"server": str(id_guild)}, {
                     "_id": 0, "roles.sushchefs": 1
@@ -599,7 +599,7 @@ class Error(commands.Cog):
                     name="Next serving",
                     value=f"In {int(error.retry_after / 60)} {pluralize('minute', int(error.retry_after / 60))}"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             else:
                 await self.submit_error(ctx, error, "CommandOnCooldown")
@@ -623,18 +623,18 @@ class Error(commands.Cog):
                     title="Invalid syntax", colour=colour,
                     description="Provide a valid channel"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) == "post_message_user":
                 embed = discord.Embed(
                     title="Invalid syntax", colour=colour,
                     description="Provide a valid member ID or tag them"
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
                 "perform_parade",
-                "spawn_random_sushi",
+                "sushi_bento_serve",
                 "raid_perform"
             ]:
                 return

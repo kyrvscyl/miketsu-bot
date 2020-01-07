@@ -33,7 +33,7 @@ class Beta(commands.Cog):
                 value=f"*`{self.prefix}souls <name>`*\n"
                       f"*`{self.prefix}souls <1-10>`*"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif args.lower() is not None and args in souls_all:
             await self.process_souls_show_users(ctx, ctx.author, args.lower())
@@ -160,7 +160,7 @@ class Beta(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                await msg.clear_reactions()
+                await process_msg_reaction_clear(msg)
                 break
             else:
                 roll = random.uniform(0, 100)
@@ -177,7 +177,7 @@ class Beta(commands.Cog):
                     })
                     progress.append("❌")
                     await msg.edit(embed=embed_new_create(rounds, "~~"))
-                    await msg.clear_reactions()
+                    await process_msg_reaction_clear(msg)
                     break
                 else:
                     explores.update_one({
@@ -196,7 +196,7 @@ class Beta(commands.Cog):
                     if last_souls["required"] == last_souls["clears"]:
                         embed_complete = embed_new_create(rounds, "~~")
                         await self.process_souls_explore_rewards(embed_complete, user, stage, msg, ctx, unlocked)
-                        await msg.clear_reactions()
+                        await process_msg_reaction_clear(msg)
                         break
 
                     else:
@@ -465,7 +465,7 @@ class Beta(commands.Cog):
                 title=f"Invalid soul",
                 description=f"You do not own any of this soul"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             return
 
         except TypeError:
@@ -474,7 +474,7 @@ class Beta(commands.Cog):
                 title=f"Invalid soul",
                 description=f"You do not own any of this soul"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             return
 
         souls_formatted = []
@@ -498,7 +498,7 @@ class Beta(commands.Cog):
                 inline=False
             )
 
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["rca"])
     @commands.is_owner()
@@ -513,7 +513,7 @@ class Beta(commands.Cog):
             "link": args[4]
         }
         realms.insert_one(profile)
-        await ctx.message.add_reaction("✅")
+        await process_msg_reaction_add(ctx.message, "✅")
 
 
 def setup(client):

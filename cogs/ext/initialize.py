@@ -30,34 +30,41 @@ pb = Pushbullet(api_key=api_key)
 books = get_collections("books")
 bosses = get_collections("bosses")
 bounties = get_collections("bounties")
-config = get_collections("config")
-duelists = get_collections("duelists")
-
 changelogs = get_collections("changelogs")
+config = get_collections("config")
+
+duelists = get_collections("duelists")
 events = get_collections("events")
 explores = get_collections("explores")
 frames = get_collections("frames")
 guilds = get_collections("guilds")
+
+hints = get_collections("hints")
 logs = get_collections("logs")
-sortings = get_collections("sortings")
 members = get_collections("members")
 memos = get_collections("memos")
+owls = get_collections("owls")
+patronus = get_collections("patronus")
 portraits = get_collections("portraits")
 quests = get_collections("quests")
-realms = get_collections("realms")
 
+realms = get_collections("realms")
 reminders = get_collections("reminders")
+sendoffs = get_collections("sendoffs")
 shikigamis = get_collections("shikigamis")
+
 ships = get_collections("ships")
+shoots = get_collections("shoots")
+sortings = get_collections("sortings")
 souls = get_collections("souls")
+stickers = get_collections("stickers")
 streaks = get_collections("streaks")
 
+thieves = get_collections("thieves")
 users = get_collections("users")
+weather = get_collections("weathers")
 weathers = get_collections("weathers")
 zones = get_collections("zones")
-
-shoots = get_collections("shoots")
-stickers = get_collections("stickers")
 
 
 """CONFIGURATION"""
@@ -152,6 +159,8 @@ e_s = emojis["s"]
 e_t = emojis["t"]
 e_x = emojis["x"]
 
+e_fp = emojis["fp"]
+
 
 """SUMMON POOL"""
 
@@ -163,6 +172,7 @@ pool_n = []
 pool_ssn = []
 
 pool_shrine = []
+
 pool_all = []
 pool_all_mystery = []
 pool_all_broken = []
@@ -201,9 +211,13 @@ pool_all.extend(pool_all_broken)
 """REALMS"""
 
 realm_cards = []
+listings_cards = []
 
 for card in realms.find({}, {"_id": 0}):
     realm_cards.append(f"{card['name'].lower()}")
+    listings_cards.append([card["name"], card["rewards"], card["base"], card['link']["6"]])
+
+
 
 
 """SOULS"""
@@ -239,7 +253,7 @@ for trade in trading_list:
 """FUNCTIONS"""
 
 
-def lengthen_code(index):
+def lengthen_code_3(index):
     prefix = "#{}"
     if index < 10:
         prefix = "#00{}"
@@ -248,7 +262,16 @@ def lengthen_code(index):
     return prefix.format(index)
 
 
-def lengthen_memo(index):
+def lengthen_code_2(x):
+    prefix = "#{}"
+    if x < 10:
+        prefix = "0{}"
+    elif x < 100:
+        prefix = "{}"
+    return prefix.format(x)
+
+
+def lengthen_code_4(index):
     prefix = "{}"
     if index < 10:
         prefix = "000{}"
@@ -340,6 +363,10 @@ def pluralize(singular, count):
         return singular + "s"
     else:
         return singular
+
+
+def get_shikigami_display(u):
+    return users.find_one({"user_id": str(u.id)}, {"_id": 0, "display": 1})["display"]
 
 
 def get_thumbnail_shikigami(shiki, evolution):
@@ -440,6 +467,67 @@ def shikigami_push_user(user_id, shiki, evolve, shards):
     })
 
 
+async def shikigami_process_levelup(user_id, shiki):
+
+    profile = users.find_one({
+        "user_id": str(user_id), "shikigami.name": shiki}, {
+        "_id": 0,
+        "shikigami.$": 1,
+    })
+    experience = profile["shikigami"][0]["exp"]
+    level = profile["shikigami"][0]["level"]
+    level_end = int(experience ** 0.400515000062462)
+
+    if level > level_end:
+        users.update_one({
+            "user_id": str(user_id), "shikigami.name": shiki}, {
+            "$set": {
+                "shikigami.$.level": level_end
+            }
+        })
+
+    if level < level_end:
+        level_next = 5 * (round(((level + 2) ** (1 / 0.400515000062462)) / 5))
+        users.update_one({
+            "user_id": str(user_id), "shikigami.name": shiki
+        }, {
+            "$set": {
+                "shikigami.$.level_exp_next": level_next,
+                "shikigami.$.level": level_end
+            }
+        })
+        if level_end == 40:
+            users.update_one({
+                "user_id": str(user_id), "shikigami.name": shiki
+            }, {
+                "$set": {
+                    "shikigami.$.level_exp_next": 10000,
+                    "shikigami.$.exp": 10000
+                }
+            })
+
+
+async def shikigami_post_approximate_results(ctx, query):
+    shikigamis_search = shikigamis.find({
+        "name": {"$regex": f"^{query[:2].lower()}"}
+    }, {"_id": 0, "name": 1})
+
+    listings_shikigamis = []
+    for result in shikigamis_search:
+        listings_shikigamis.append(f"{result['name'].title()}")
+
+    embed = discord.Embed(
+        title="Invalid shikigami", colour=colour,
+        description=f"check the spelling of the shikigami"
+    )
+    embed.add_field(
+        name="Possible matches",
+        value="*{}*".format(", ".join(listings_shikigamis)),
+        inline=False
+    )
+    await process_msg_submit(ctx.channel, None, embed)
+
+
 async def perform_add_log(currency, amount, user_id):
 
     if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
@@ -461,6 +549,61 @@ async def perform_add_log(currency, amount, user_id):
             }
         }
     })
+
+
+async def frame_acquisition(user, frame_name, jades, channel):
+
+    for entry in users.aggregate([
+        {
+            "$match": {
+                "user_id": str(user.id)
+            }
+        }, {
+            "$unwind": {
+                "path": "$achievements"
+            }
+        }, {
+            "$project": {
+                "achievements": 1
+            }
+        }, {
+            "$match": {
+                "achievements.name": frame_name
+            }
+        }, {
+            "$count": "count"
+        }
+    ]):
+        if entry["count"] != 0:
+            return
+
+    users.update_one({
+        "user_id": str(user.id)}, {
+        "$push": {
+            "achievements": {
+                "name": frame_name,
+                "date_acquired": get_time()
+            }
+        },
+        "$inc": {
+            "jades": jades
+        }
+    })
+    await perform_add_log("jades", jades, user.id)
+    intro_caption = " The "
+    if frame_name[:3] == "The":
+        intro_caption = " "
+
+    embed = discord.Embed(
+        color=user.colour,
+        title="Frame acquisition",
+        description=f"{user.mention} has obtained{intro_caption}{frame_name} frame!\n"
+                    f"Acquired {jades:,d}{e_j} as bonus rewards!",
+        timestamp=get_timestamp()
+    )
+    embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+    embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+    await channel.send(embed=embed)
 
 
 async def process_msg_delete(message, delay):

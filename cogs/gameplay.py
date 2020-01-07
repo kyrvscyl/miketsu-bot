@@ -170,7 +170,7 @@ class Gameplay(commands.Cog):
             value="*{}*".format(", ".join(approximate_results)),
             inline=False
         )
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
         
     async def perform_add_log(self, currency, amount, user_id):
     
@@ -361,10 +361,10 @@ class Gameplay(commands.Cog):
             try:
                 await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                await search_msg.clear_reactions()
+                await process_msg_reaction_clear(search_msg)
                 return
             else:
-                await search_msg.clear_reactions()
+                await process_msg_reaction_clear(search_msg)
                 await search_msg.edit(
                     embed=create_embed(top_shikigamis, dead_shikigamis, "accepted", None, cleared_waves, "", [])
                 )
@@ -463,7 +463,7 @@ class Gameplay(commands.Cog):
 
                 answer = await self.client.wait_for("message", timeout=60, check=check_if_valid_shikigami)
             except asyncio.TimeoutError:
-                await search_msg.clear_reactions()
+                await process_msg_reaction_clear(search_msg)
                 return
             except KeyError:
                 embed1 = discord.Embed(
@@ -629,7 +629,7 @@ class Gameplay(commands.Cog):
             value=f"*`{self.prefix}encounter`*",
             inline=False
         )
-        await ctx.channel.send(embed=embed)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["raid", "r"])
     @commands.check(check_if_user_has_raid_tickets)
@@ -640,7 +640,7 @@ class Gameplay(commands.Cog):
             raise discord.ext.commands.MissingRequiredArgument(ctx.author)
 
         elif victim.name in ctx.author.name:
-            await ctx.message.add_reaction("❌")
+            await process_msg_reaction_add(ctx.message, "❌")
 
         elif victim.bot or victim.id == ctx.author.id:
             return
@@ -658,7 +658,7 @@ class Gameplay(commands.Cog):
                         name="Realm is under protection",
                         icon_url=victim.avatar_url
                     )
-                    await ctx.channel.send(embed=embed)
+                    await process_msg_submit(ctx.channel, None, embed)
 
                 elif raid_count < 4:
 
@@ -679,7 +679,7 @@ class Gameplay(commands.Cog):
                             title=f"Invalid chosen realm", colour=colour,
                             description=f"You can only raid realms with ±{range_diff:,d} of your level",
                         )
-                        await ctx.channel.send(embed=embed)
+                        await process_msg_submit(ctx.channel, None, embed)
 
             except AttributeError:
                 raise discord.ext.commands.BadArgument(ctx.author)
@@ -720,7 +720,7 @@ class Gameplay(commands.Cog):
                 )
                 embed.set_footer(text=raider.display_name, icon_url=raider.avatar_url)
                 await self.raid_perform_attack_giverewards_as_winner_raider(raider, coins, jades, medals, exp)
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             else:
                 coins, jades, medals, exp = 50000, 100, 50, 20
@@ -736,7 +736,7 @@ class Gameplay(commands.Cog):
                 )
                 embed.set_footer(text=raider.display_name, icon_url=raider.avatar_url)
                 await self.raid_perform_attack_giverewards_as_winner_victim(victim, raider, coins, jades, medals, exp)
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
         except KeyError:
             raise discord.ext.commands.BadArgument(ctx.author)
@@ -796,7 +796,7 @@ class Gameplay(commands.Cog):
                 color=raider.colour,
                 title=f"{raider.display_name} vs {victim.display_name} :: {total_chance}%"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         except KeyError:
             raise discord.ext.commands.BadArgument(ctx.author)
@@ -810,7 +810,7 @@ class Gameplay(commands.Cog):
 
         name = arg1.replace("_", " ").lower()
         if name not in pool_all:
-            await self.shikigami_post_approximate_results(ctx, name)
+            await shikigami_post_approximate_results(ctx, name)
 
         elif emoji is None:
             embed = discord.Embed(
@@ -818,12 +818,12 @@ class Gameplay(commands.Cog):
                 title="No emojis provided",
                 description="specify emojis to change the shikigami's identity"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
         elif emoji is not None:
             x = shikigamis.update_one({"name": name}, {"$set": {"demon_quiz": emoji}})
             if x.modified_count != 0:
-                await ctx.message.add_reaction("✅")
+                await process_msg_reaction_add(ctx.message, "✅")
 
     @commands.command(aliases=["encounter", "enc"])
     @commands.check(check_if_user_has_encounter_tickets)
@@ -978,7 +978,7 @@ class Gameplay(commands.Cog):
             )
             embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
             await search_msg.edit(embed=embed)
-            await search_msg.clear_reactions()
+            await process_msg_reaction_clear(search_msg)
 
         else:
             cost_item_current = users.find_one({"user_id": str(user.id)}, {"_id": 0, cost_item: 1})[cost_item]
@@ -1010,7 +1010,7 @@ class Gameplay(commands.Cog):
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
-                await search_msg.clear_reactions()
+                await process_msg_reaction_clear(search_msg)
             else:
                 embed = discord.Embed(
                     color=user.colour,
@@ -1020,7 +1020,7 @@ class Gameplay(commands.Cog):
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await search_msg.edit(embed=embed)
-                await search_msg.clear_reactions()
+                await process_msg_reaction_clear(search_msg)
 
     async def encounter_roll_boss(self, discoverer, ctx, search_msg):
 
@@ -1124,8 +1124,8 @@ class Gameplay(commands.Cog):
 
             except asyncio.TimeoutError:
                 embed = discord.Embed(title="🎌 Assembly ends!", colour=colour)
-                await search_msg.clear_reactions()
-                await ctx.channel.send(embed=embed)
+                await process_msg_reaction_clear(search_msg)
+                await process_msg_submit(ctx.channel, None, embed)
                 break
 
             else:
@@ -1168,13 +1168,13 @@ class Gameplay(commands.Cog):
                 title="Encounter Boss", colour=colour,
                 description=f"No players have joined the assembly.\nThe rare boss {boss_select} has fled."
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             self.status_set(False)
 
         else:
             await asyncio.sleep(3)
             embed = discord.Embed(title=f"Battle with {boss_select} starts!", colour=colour)
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
             boss_profile = bosses.find_one({
                 "boss": boss_select}, {
@@ -1216,7 +1216,7 @@ class Gameplay(commands.Cog):
                 description=f"*{player_.mention} "
                             f"{next(self.attack_verb)} {boss_select}, dealing {round(player_dmg):,d} damage!*"
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             await asyncio.sleep(1)
 
         boss_profile_new = bosses.find_one({
@@ -1261,7 +1261,7 @@ class Gameplay(commands.Cog):
                 }
             })
 
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             self.client.get_command("encounter_search").reset_cooldown(ctx)
             self.status_set(False)
 
@@ -1314,7 +1314,7 @@ class Gameplay(commands.Cog):
             embed = discord.Embed(
                 title=f"The Rare Boss {boss_select} has been defeated!", colour=colour
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             await self.encounter_roll_boss_defeat(boss_select, rewards_zip, boss_url, boss_profile_new, ctx)
 
     async def encounter_roll_boss_defeat(self, boss_select, rewards_zip, boss_url, boss_profile_new, ctx):
@@ -1387,7 +1387,7 @@ class Gameplay(commands.Cog):
             })
 
             await asyncio.sleep(3)
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
             await asyncio.sleep(2)
             user = ctx.guild.get_member(int(discoverer))
             description = f"{user.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
@@ -1396,7 +1396,7 @@ class Gameplay(commands.Cog):
                 colour=colour,
                 description=description, timestamp=get_timestamp()
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
         except AttributeError:
             pass
 
@@ -1502,7 +1502,7 @@ class Gameplay(commands.Cog):
                     description=boss_description,
                     timestamp=get_timestamp()
                 )
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
             elif query not in self.demons:
                 raise AttributeError
@@ -1549,7 +1549,7 @@ class Gameplay(commands.Cog):
                     timestamp=get_timestamp()
                 )
                 embed.set_thumbnail(url=boss_url)
-                await ctx.channel.send(embed=embed)
+                await process_msg_submit(ctx.channel, None, embed)
 
         except AttributeError:
             embed = discord.Embed(
@@ -1564,7 +1564,7 @@ class Gameplay(commands.Cog):
                       f"*`{self.prefix}binfo all`*",
                 inline=False
             )
-            await ctx.channel.send(embed=embed)
+            await process_msg_submit(ctx.channel, None, embed)
 
 
 def setup(client):

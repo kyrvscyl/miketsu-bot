@@ -502,9 +502,9 @@ class Embeds(commands.Cog):
         headlines = self.client.get_channel(int(request["headlines"]))
         gift_game = self.client.get_channel(int(request["gift-game"]))
         sorting = self.client.get_channel(int(request["sorting"]))
-        patronus = ctx.guild.get_role(int(request['patronus_role']))
+        patronus_role = ctx.guild.get_role(int(request['patronus_role']))
 
-        description = f"{patronus.mention}, Time for another Gift Game!\n​ "
+        description = f"{patronus_role.mention}, Time for another Gift Game!\n​ "
 
         embed = discord.Embed(
             colour=discord.Colour(0x50e3c2),

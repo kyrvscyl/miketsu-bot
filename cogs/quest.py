@@ -4,27 +4,13 @@ Miketsu, 2020
 """
 
 import asyncio
-import os
 import random
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-import discord
-import pytz
 from discord.ext import commands
-from discord_webhook import DiscordWebhook, DiscordEmbed
+from discord_webhook import DiscordEmbed, DiscordWebhook
 
-from cogs.ext.database import get_collections
-
-# Collections
-config = get_collections("config")
-guilds = get_collections("guilds")
-hints = get_collections("hints")
-owls = get_collections("owls")
-patronus = get_collections("patronus")
-quests = get_collections("quests")
-sendoffs = get_collections("sendoffs")
-thieves = get_collections("thieves")
-weather = get_collections("weathers")
+from cogs.ext.initialize import *
 
 # Dictionary
 flexibility_category = config.find_one({"dict": 2}, {"_id": 0, "flexibility_category": 1})["flexibility_category"]
@@ -305,7 +291,7 @@ class Quest(commands.Cog):
                 )
                 await update_hint_quest1(user, path, cycle, h)
                 await penalize_quest1(user, cycle, points=10)
-                await ctx.message.add_reaction("✅")
+                await process_msg_reaction_add(ctx.message, "✅")
                 await user.send(embed=embed)
 
             except IndexError:
@@ -1034,8 +1020,9 @@ class Expecto(commands.Cog):
         embed1.set_image(url=link)
 
         msg = await ctx.channel.send(embed=embed1)
-        await msg.add_reaction("⬅")
-        await msg.add_reaction("➡")
+        emoji_arrows = ["⬅", "➡"]
+        for emoji in emoji_arrows:
+            await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -1060,12 +1047,12 @@ class Expecto(commands.Cog):
             try:
                 reaction, user = await self.client.wait_for("reaction_add", timeout=60, check=check)
             except asyncio.TimeoutError:
-                await msg.clear_reactions()
+                await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == "➡":
+                if str(reaction.emoji) == emoji_arrows[1]:
                     page += 1
-                elif str(reaction.emoji) == "⬅":
+                elif str(reaction.emoji) == emoji_arrows[0]:
                     page -= 1
                 await msg.edit(embed=create_embed(page))
 
@@ -1147,7 +1134,7 @@ class Expecto(commands.Cog):
                         value=f"{wand['length']} inches, {wand['flexibility']}, {wand['core'].replace(' ', '-')}-cored,"
                               f" {wand['wood']} wand"
                     )
-                    await ctx.channel.send(embed=embed)
+                    await process_msg_submit(ctx.channel, None, embed)
 
                 except ValueError:
                     await ctx.channel.send(f"Use `{self.prefix}cycle <cycle#> <@mention>.")
@@ -1194,7 +1181,7 @@ class Expecto(commands.Cog):
                 icon_url=ctx.message.author.avatar_url
             )
             await ctx.message.author.send(embed=embed)
-            await ctx.message.add_reaction("✅")
+            await process_msg_reaction_add(ctx.message, "✅")
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -1205,8 +1192,8 @@ class Expecto(commands.Cog):
         elif self.client.get_user(payload.user_id).bot is True:
             return
 
-        server = self.client.get_guild(payload.guild_id)
-        role_dolphin = discord.utils.get(server.roles, name="🐬")
+        server_ = self.client.get_guild(payload.guild_id)
+        role_dolphin = discord.utils.get(server_.roles, name="🐬")
         user = self.client.get_user(payload.user_id)
 
         if user in role_dolphin.members:
@@ -1218,7 +1205,7 @@ class Expecto(commands.Cog):
         })
 
         if str(payload.emoji) == "🐬" and payload.message_id == int(request["messages"]["quests"]):
-            member = server.get_member(user.id)
+            member = server_.get_member(user.id)
 
             if quests.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
                 profile = {"user_id": str(payload.user_id), "server": str(payload.guild_id), "quest1": []}
@@ -1281,9 +1268,9 @@ class Expecto(commands.Cog):
                 and "envelope" in msg and reaction.message.author == self.client.user:
 
             cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
-            server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
+            server_ = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             request = guilds.find_one({
-                "server": server["server"]}, {
+                "server": server_["server"]}, {
                 "_id": 0, "channels.welcome": 1, "channels.sorting-hat": 1
             })
 
@@ -1295,18 +1282,18 @@ class Expecto(commands.Cog):
                 title="Acceptance Letter",
                 description=description
             )
-            embed.set_thumbnail(url=self.client.get_guild(int(server["server"])).icon_url)
+            embed.set_thumbnail(url=self.client.get_guild(int(server_["server"])).icon_url)
             await user.send(embed=embed)
             await self.update_path_quest1(user, cycle, path_new="path1")
             await penalize_quest1(user, cycle, points=20)
 
         elif str(reaction.emoji) == "✉" and "returned with" in msg and reaction.message.author == self.client.user:
 
-            server = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
+            server_ = quests.find_one({"user_id": str(user.id)}, {"_id": 0, "server": 1})
             cycle, path, timestamp, user_hints, actions, purchase = get_data_quest1(user.id)
             description = get_responses_quest1("send_off")["letter"].format(user.name)
             embed = discord.Embed(color=0xffff80, description=description)
-            embed.set_thumbnail(url=self.client.get_guild(int(server["server"])).icon_url)
+            embed.set_thumbnail(url=self.client.get_guild(int(server_["server"])).icon_url)
 
             if path != "path0":
                 await Expecto(self.client).update_path_quest1(user, cycle, path_new="path25")
@@ -1510,7 +1497,7 @@ class Expecto(commands.Cog):
                         await asyncio.sleep(2)
                         await secret_response(ctx.channel.name, msg)
                         await asyncio.sleep(3)
-                        await ctx.channel.send(embed=embed)
+                        await process_msg_submit(ctx.channel, None, embed)
                         await asyncio.sleep(2)
                         await ctx.message.delete()
 
