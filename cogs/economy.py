@@ -195,12 +195,14 @@ class Economy(commands.Cog):
 
     async def realm_card_show_user_post(self, member, ctx):
 
-        listings_cards_user = []
-        for d in users.find_one({"user_id": str(member.id)}, {"_id": 0, "cards": 1})["cards"]:
-            listings_cards_user.append(
-                f"[x{d['count']}] Grade `{d['grade']} 🌟` | {get_emoji_cards(d['name'])} {d['name'].title()}\n"
+        listings_cards_user = users.find_one({"user_id": str(member.id)}, {"_id": 0, "cards": 1})["cards"]
+        listings_cards_user_formatted = []
+
+        for d in sorted(listings_cards_user, key=lambda x: x['grade'], reverse=True):
+            listings_cards_user_formatted.append(
+                f"`[x{d['count']}]` Grade `{d['grade']} 🌟` | {get_emoji_cards(d['name'])} {d['name'].title()}\n"
             )
-        await self.realm_card_show_user_post_paginate(ctx, member, listings_cards_user)
+        await self.realm_card_show_user_post_paginate(ctx, member, listings_cards_user_formatted)
 
     async def realm_card_show_user_post_paginate(self, ctx, member, list_formatted):
 
@@ -716,7 +718,7 @@ class Economy(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour, title=f"Wish fulfilled", timestamp=get_timestamp(),
                     description=f"Donated 1 {shikigami_name.title()} shard to {member.mention}\n"
-                                f"Also acquired `{friendship}{e_f}` and `{friendship_pass}{e_fp}`",
+                                f"Also acquired `{friendship}`{e_f} and `{friendship_pass}`{e_fp}",
                 )
                 embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                 embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
@@ -949,7 +951,7 @@ class Economy(commands.Cog):
         users.update_one({"user_id": str(user.id)}, {"$inc": {"parade_tickets": -1}})
         await perform_add_log("parade_tickets", -1, user.id)
 
-        dimensions, beans, beaned_shikigamis, parade_pull, timeout = 7, 10, [], [], 10
+        dimensions, beans, beaned_shikigamis, parade_pull, timeout = 7, 10, [], [], 25
 
         for x in range(1, 50):
             roll = random.uniform(0, 100)

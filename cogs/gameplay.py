@@ -346,7 +346,6 @@ class Gameplay(commands.Cog):
                             name="Bonus Reward",
                             value=f"Grade {card_grade} {card_reward.title()}"
                         )
-
             return embed
 
         await search_msg.edit(
