@@ -479,7 +479,7 @@ class Economy(commands.Cog):
             description = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(
-                color=user.colour,
+                color=ctx.author.colour,
                 title=title,
                 description=f"{description}",
                 timestamp=get_timestamp()
