@@ -675,7 +675,7 @@ class Economy(commands.Cog):
             await process_msg_reaction_add(ctx.message, "❌")
 
         else:
-            shikigami_name = query["wish"]
+            shikigami_name = query
             user_shikigami = users.find_one({
                 "user_id": str(user.id),
                 "shikigami.name": shikigami_name
