@@ -4,7 +4,6 @@ Miketsu, 2020
 """
 
 import asyncio
-import random
 from datetime import timedelta
 
 from discord.ext import commands

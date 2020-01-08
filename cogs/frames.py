@@ -4,7 +4,6 @@ Miketsu, 2020
 """
 
 import asyncio
-import random
 from math import ceil
 
 from PIL import Image
@@ -155,7 +154,8 @@ class Frames(commands.Cog):
 
             if match == len(greet):
                 await message.add_reaction("🎄")
-                await self.achievements_process_announce(message.author, "Tree in Winter", jades)
+                spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+                await frame_acquisition(message.author, "Tree in Winter", jades, spell_spam_channel)
 
     @commands.command(aliases=["af"])
     @commands.check(check_if_developer_team)

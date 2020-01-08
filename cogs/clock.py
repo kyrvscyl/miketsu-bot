@@ -4,17 +4,16 @@ Miketsu, 2020
 """
 
 import asyncio
-import random
 import sys
 from datetime import timedelta
 from itertools import cycle
 
 from discord.ext import commands
 
-from cogs.economy import Economy
+from cogs.development import Development
+from cogs.encounter import Encounter
 from cogs.ext.initialize import *
 from cogs.frames import Frames
-from cogs.gameplay import Gameplay
 from cogs.quest import Expecto, owls_restock
 
 
@@ -27,6 +26,7 @@ class Clock(commands.Cog):
         self.captions = cycle(events.find_one({"event": "showdown bidding"}, {"_id": 1, "comments": 1})["comments"])
 
     def get_emoji_clock(self, hours, minutes):
+
         if int(minutes) >= 30:
             emoji_clock_index = (int(hours) * 2) + 2
         else:
@@ -54,14 +54,6 @@ class Clock(commands.Cog):
             weathers.update_one({"weather2": {"$type": "string"}}, {"$set": {"weather2": weather2}})
 
         return weather1, weather2
-
-    def pluralize(self, singular, count):
-        if count > 1:
-            if singular[-1:] == "s":
-                return singular + "es"
-            return singular + "s"
-        else:
-            return singular
 
     async def perform_announce_netherworld(self):
 
@@ -136,6 +128,7 @@ class Clock(commands.Cog):
             pass
 
     async def perform_delete_secret_channels(self):
+
         query = guilds.find({}, {"_id": 0, "eeylops-owl-emporium": 1, "ollivanders": 1, "gringotts-bank": 1})
         print("Deleting exposed secret channels")
 
@@ -192,28 +185,6 @@ class Clock(commands.Cog):
         quests.update_many({"quest1.purchase": False}, {"$set": {"quest1.$.purchase": True}})
         print(f"Resetting all quest1 purchases to True")
 
-    async def perform_add_log(self, currency, amount, user_id):
-
-        if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-            profile = {"user_id": str(user_id), "logs": []}
-            logs.insert_one(profile)
-
-        logs.update_one({
-            "user_id": str(user_id)
-        }, {
-            "$push": {
-                "logs": {
-                    "$each": [{
-                        "currency": currency,
-                        "amount": amount,
-                        "date": get_time(),
-                    }],
-                    "$position": 0,
-                    "$slice": 200
-                }
-            }
-        })
-
     @commands.Cog.listener()
     async def on_ready(self):
         await self.clock_start()
@@ -244,7 +215,8 @@ class Clock(commands.Cog):
                     pb.push_note("Miketsu Bot", "Stopping a concurrent function")
                     break
                 except:
-                    pb.push_note("Miketsu Bot", "Ignoring exception on clock processing")
+                    pb.push_note("Miketsu Bot", "Ignoring exception on clock processing ~10s")
+                    await asyncio.sleep(10)
                     continue
 
     async def clock_update(self):
@@ -302,11 +274,11 @@ class Clock(commands.Cog):
                 await self.perform_announce_netherworld()
 
             if hour_minute == "00:00":
-                await Gameplay(self.client).boss_daily_reset_check()
-                await Economy(self.client).perform_reset_rewards_daily()
+                await Encounter(self.client).boss_daily_reset_check()
+                await Development(self.client).perform_reset_rewards_daily()
 
                 if day_week.lower() == "mon":
-                    await Economy(self.client).perform_reset_rewards_weekly()
+                    await Development(self.client).perform_reset_rewards_weekly()
 
                 await Frames(self.client).frame_automate()
                 await self.perform_penalize_streak()

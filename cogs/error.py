@@ -314,7 +314,7 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "profile_change_shikigami_main":
+            elif str(ctx.command) == "profile_change_shikigami":
                 embed = discord.Embed(
                     title="display", colour=colour,
                     description="changes your profile display thumbnail"

@@ -3,7 +3,6 @@ Funfun Module
 Miketsu, 2020
 """
 import asyncio
-import random
 import re
 from itertools import cycle
 

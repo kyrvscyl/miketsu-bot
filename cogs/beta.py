@@ -3,10 +3,9 @@ Error Module
 Miketsu, 2020
 """
 import asyncio
-import random
 from math import ceil, floor
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -63,21 +62,13 @@ class Beta(commands.Cog):
         })
         await perform_add_log("sushi", -sushi_required, user.id)
 
-        def get_shikigami_stats(user_id, shiki):
-            p = users.find_one({
-                "user_id": str(user_id), "shikigami.name": shiki
-            }, {
-                "_id": 0,
-                "shikigami.$": 1
-            })
-            return p["shikigami"][0]["level"], p["shikigami"][0]["evolved"], p["shikigami"][0]["exp"], \
-                   p["shikigami"][0]["level_exp_next"]
-
 
         user_profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1, "exploration": 1})
         user_level = user_profile["level"]
         shikigami_set = user_profile["display"]
-        shikigami_level, shikigami_evolved, shikigami_exp, shikigami_exp_x = get_shikigami_stats(user.id, shikigami_set)
+        shikigami_level, shikigami_evolved, shikigami_exp, shikigami_exp_x = get_shikigami_stats_2(
+            user.id, shikigami_set
+        )
 
         thumbnail = get_thumbnail_shikigami(shikigami_set, get_evo_link(shikigami_evolved))
 
@@ -256,7 +247,7 @@ class Beta(commands.Cog):
             return floor(index/6)
 
         def generate_shikigami_list(text):
-            font = ImageFont.truetype('data/marker_felt_wide.ttf', 20)
+
             im = Image.new('RGBA', (w, 22), (255, 0, 0, 0))
             outline = ImageDraw.Draw(im)
             outline.text((x_outline, y_outline + 1), text, font=font, fill=(255, 255, 255, 128))

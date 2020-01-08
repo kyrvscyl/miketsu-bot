@@ -8,7 +8,7 @@ import urllib.request
 from itertools import cycle
 from math import ceil
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from discord.ext import commands
 from discord_webhook import DiscordEmbed, DiscordWebhook
 
@@ -941,7 +941,7 @@ class Castle(commands.Cog):
             return a, b
 
         def generate_shikigami_list(listings, text, color_fill):
-            font = ImageFont.truetype('data/marker_felt_wide.ttf', 20)
+
             im = Image.new('RGBA', (90 * max_cols, 20 + (ceil(len(listings) / max_cols) * 90)), (255, 0, 0, 0))
             outline = ImageDraw.Draw(im)
             outline.text((x, y), text, font=font, fill=color_fill)
@@ -975,17 +975,17 @@ class Castle(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
-    async def management_duel_profile_paginate_embeds(self, ctx, formatted_list, content):
+    async def management_duel_profile_paginate_embeds(self, ctx, listings_formatted, content):
 
         page, max_lines = 1, 20
-        page_total = ceil(len(formatted_list) / max_lines)
+        page_total = ceil(len(listings_formatted) / max_lines)
         if page_total == 0:
             page_total = 1
 
         def embed_new_create(page_new):
             end = page_new * max_lines
             start = end - max_lines
-            description_new = "".join(formatted_list[start:end])
+            description_new = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(
                 color=ctx.author.colour,

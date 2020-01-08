@@ -4,10 +4,12 @@ Miketsu, 2020
 """
 
 import os
+import random
 from datetime import datetime
 
 import discord
 import pytz
+from PIL import ImageFont
 from pushbullet import Pushbullet
 
 from cogs.ext.database import get_collections
@@ -84,7 +86,7 @@ server = guilds.find_one({"server": str(id_guild)}, {"_id": 0})
 
 timezone = variables["timezone"]
 colour = variables["embed_color"]
-
+font = ImageFont.truetype('data/marker_felt_wide.ttf', 30)
 
 """LISTINGS"""
 
@@ -103,8 +105,8 @@ commands_fake = [
 ]
 
 commands_others = [
-    "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait",
-    "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report"
+    "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait", "clear"
+    "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report", "patch", "dm"
 ]
 
 
@@ -163,6 +165,8 @@ e_fp = emojis["fp"]
 
 
 """SUMMON POOL"""
+
+rarities = listings_1["rarities"]
 
 pool_sp = []
 pool_ssr = []
@@ -344,6 +348,22 @@ def check_if_user_has_sushi_2(ctx, required):
     return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
 
 
+def get_shikigami_stats(user_id, shiki):
+    stats = users.find_one({"user_id": str(user_id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
+    return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"]
+
+
+def get_shikigami_stats_2(user_id, shiki):
+    p = users.find_one({
+        "user_id": str(user_id), "shikigami.name": shiki
+    }, {
+        "_id": 0,
+        "shikigami.$": 1
+    })
+    return p["shikigami"][0]["level"], p["shikigami"][0]["evolved"], p["shikigami"][0]["exp"], \
+           p["shikigami"][0]["level_exp_next"]
+
+
 def get_time():
     return datetime.now(tz=pytz.timezone(timezone))
 
@@ -448,7 +468,20 @@ def hours_minutes(td):
     return td.seconds // 3600, (td.seconds // 60) % 60
 
 
+def get_random_shikigami(r):
+    dictionary = {
+        "SP": pool_sp,
+        "SSR": pool_ssr,
+        "SR": pool_sr,
+        "R": pool_r,
+        "N": pool_n,
+        "SSN": pool_ssn
+    }
+    return random.choice(dictionary[r])
+
+
 def shikigami_push_user(user_id, shiki, evolve, shards):
+
     users.update_one({
         "user_id": str(user_id)}, {
         "$push": {
@@ -467,7 +500,45 @@ def shikigami_push_user(user_id, shiki, evolve, shards):
     })
 
 
-async def shikigami_process_levelup(user_id, shiki):
+def exploration_check_add_unlocked(user, chapter):
+
+    if users.find_one({
+        "user_id": str(user.id)}, {
+        "_id": 0, "exploration": 1
+    })["exploration"] == chapter:
+        users.update_one({
+            "user_id": str(user.id),
+            "exploration": {
+                "$lt": 28
+            }
+        }, {
+            "$inc": {
+                "exploration": 1
+            }
+        })
+
+
+def shikigami_experience_add(user, shikigami_name, exp):
+
+    shikigami_add_exp = users.update_one({
+        "user_id": str(user.id),
+        "$and": [{
+            "shikigami": {
+                "$elemMatch": {
+                    "name": shikigami_name,
+                    "level": {"$lt": 40}}
+            }}]
+    }, {
+        "$inc": {
+            "shikigami.$.exp": exp
+        }
+    })
+
+    if shikigami_add_exp.modified_count > 0:
+        shikigami_process_levelup(user.id, shikigami_name)
+
+
+def shikigami_process_levelup(user_id, shiki):
 
     profile = users.find_one({
         "user_id": str(user_id), "shikigami.name": shiki}, {
