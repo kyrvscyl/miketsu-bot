@@ -103,8 +103,8 @@ commands_fake = [
 ]
 
 commands_others = [
-    "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait",
-    "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report"
+    "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait", "clear"
+    "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report", "patch", "dm"
 ]
 
 
@@ -163,6 +163,8 @@ e_fp = emojis["fp"]
 
 
 """SUMMON POOL"""
+
+rarities = listings_1["rarities"]
 
 pool_sp = []
 pool_ssr = []
@@ -449,6 +451,7 @@ def hours_minutes(td):
 
 
 def shikigami_push_user(user_id, shiki, evolve, shards):
+
     users.update_one({
         "user_id": str(user_id)}, {
         "$push": {

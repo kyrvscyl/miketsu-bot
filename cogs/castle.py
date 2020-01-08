@@ -975,17 +975,17 @@ class Castle(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
-    async def management_duel_profile_paginate_embeds(self, ctx, formatted_list, content):
+    async def management_duel_profile_paginate_embeds(self, ctx, listings_formatted, content):
 
         page, max_lines = 1, 20
-        page_total = ceil(len(formatted_list) / max_lines)
+        page_total = ceil(len(listings_formatted) / max_lines)
         if page_total == 0:
             page_total = 1
 
         def embed_new_create(page_new):
             end = page_new * max_lines
             start = end - max_lines
-            description_new = "".join(formatted_list[start:end])
+            description_new = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(
                 color=ctx.author.colour,

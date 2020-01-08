@@ -5,6 +5,7 @@ Miketsu, 2020
 
 import asyncio
 import re
+import urllib.request
 from math import ceil
 
 from discord.ext import commands
@@ -36,6 +37,45 @@ class Admin(commands.Cog):
 
     def shorten_code(self, key):
         return self.shortened[key]
+
+    @commands.command(aliases=["patch"])
+    @commands.check(check_if_user_has_any_admin_roles)
+    async def post_patch_notes(self, ctx, arg1, *, args):
+
+        guild = self.client.get_guild(int(id_guild))
+        request = guilds.find_one({"server": str(guild.id)}, {"_id": 0, "channels": 1})
+        headlines_id = request["channels"]["headlines"]
+        headlines_channel = self.client.get_channel(int(headlines_id))
+
+        link = f"https://pastebin.com/raw/{arg1}"
+        f = urllib.request.urlopen(link)
+        text = f.read().decode('utf-8')
+        split_text = text.replace("\r", "\\n").split("\n")
+        cap = 1500
+        max_embeds = ceil(len(text) / cap)
+
+        lines = 0
+        lines_start = 0
+        description_length = 0
+        lines_end = len(split_text)
+
+        for x in range(0, max_embeds):
+            for entry in split_text[lines_start:lines_end]:
+                description_length += len(entry)
+                if description_length > cap:
+                    break
+                lines += 1
+
+            description = "".join(split_text[lines_start:lines]).replace("\\n", "\n")
+            lines_start = lines
+            description_length = 0
+
+            embed = discord.Embed(color=ctx.author.colour, description=description)
+            if max_embeds - 1 == x:
+                embed.set_image(url=args)
+
+            await headlines_channel.send(embed=embed)
+            await asyncio.sleep(1)
 
     @commands.command(aliases=["memo"])
     @commands.guild_only()
@@ -220,7 +260,7 @@ class Admin(commands.Cog):
         except discord.errors.HTTPException:
             pass
 
-    @commands.command(aliases=["m", "manage"])
+    @commands.command(aliases=["manage", "m"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
     async def management_guild(self, ctx, *args):

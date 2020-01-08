@@ -2,9 +2,8 @@
 Embeds Module
 Miketsu, 2020
 """
+
 import asyncio
-import urllib.request
-from math import ceil
 
 from discord.ext import commands
 
@@ -22,47 +21,61 @@ class Embeds(commands.Cog):
         for role_select_msg in sortings.find({"title": {"$ne": "Quest Selection & Acceptance"}}, {"_id": 0}):
             self.msg_id_list.append(role_select_msg["msg_id"])
 
-    @commands.command(aliases=["patch"])
-    @commands.check(check_if_user_has_any_admin_roles)
-    async def post_patch_notes(self, ctx, arg1, *, args):
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
 
-        guild = self.client.get_guild(int(id_guild))
-        request = guilds.find_one({"server": str(guild.id)}, {"_id": 0, "channels": 1})
-        headlines_id = request["channels"]["headlines"]
-        headlines_channel = self.client.get_channel(int(headlines_id))
+        if self.client.get_user(int(payload.user_id)).bot:
+            return
 
-        link = f"https://pastebin.com/raw/{arg1}"
-        f = urllib.request.urlopen(link)
-        text = f.read().decode('utf-8')
-        split_text = text.replace("\r", "\\n").split("\n")
-        cap = 1500
-        max_embeds = ceil(len(text) / cap)
+        request = guilds.find_one({
+            "server": f"{id_guild}"}, {
+            "_id": 0,
+            "channels": 1,
+            "messages": 1,
+            "links": 1
+        })
 
-        lines = 0
-        lines_start = 0
-        description_length = 0
-        lines_end = len(split_text)
+        msg_banner = request["messages"]["banner"]
+        banners = request["links"]["banners"]
 
-        for x in range(0, max_embeds):
-            for entry in split_text[lines_start:lines_end]:
-                description_length += len(entry)
-                if description_length > cap:
-                    break
-                lines += 1
+        if str(payload.message_id) == msg_banner and str(payload.emoji) in ["⬅", "➡"]:
 
-            description = "".join(split_text[lines_start:lines]).replace("\\n", "\n")
-            lines_start = lines
-            description_length = 0
+            welcome_id = request["channels"]["welcome"]
+            welcome_channel = self.client.get_channel(int(welcome_id))
+            banner_msg = await welcome_channel.fetch_message(int(request["messages"]["banner"]))
 
-            embed = discord.Embed(color=ctx.author.colour, description=description)
-            if max_embeds - 1 == x:
-                embed.set_image(url=args)
+            current_thumbnail = banner_msg.embeds[0].image.url
+            current_index = banners.index(current_thumbnail)
 
-            await headlines_channel.send(embed=embed)
-            await asyncio.sleep(1)
+            def get_new_banner(index):
+                if str(payload.emoji) == "⬅":
+                    new_index = index - 1
+                    if index < 0:
+                        return len(banners) - 1
+                    else:
+                        return new_index
+                else:
+                    new_index = index + 1
+                    print(index)
+                    if index >= len(banners) - 1:
+                        return 0
+                    else:
+                        return new_index
+
+            embed6 = discord.Embed(
+                colour=discord.Colour(0xffd6ab),
+                title="🎏 Banner"
+            )
+            embed6.set_image(
+                url=banners[get_new_banner(current_index)]
+            )
+            embed6.set_footer(
+                text="Assets: Official Onmyoji art; Designed by: xann#8194"
+            )
+            await banner_msg.edit(embed=embed6)
 
     @commands.command(aliases=["welcome"])
-    @commands.check(check_if_user_has_any_admin_roles)
+    @commands.is_owner()
     async def edit_message_welcome(self, ctx):
 
         request = guilds.find_one({
@@ -273,61 +286,8 @@ class Embeds(commands.Cog):
         await msg_invite.edit(content="Our invite link: https://discord.gg/H6N8AHB")
         await ctx.message.delete()
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-
-        if self.client.get_user(int(payload.user_id)).bot:
-            return
-
-        request = guilds.find_one({
-            "server": f"{id_guild}"}, {
-            "_id": 0,
-            "channels": 1,
-            "messages": 1,
-            "links": 1
-        })
-
-        msg_banner = request["messages"]["banner"]
-        banners = request["links"]["banners"]
-
-        if str(payload.message_id) == msg_banner and str(payload.emoji) in ["⬅", "➡"]:
-
-            welcome_id = request["channels"]["welcome"]
-            welcome_channel = self.client.get_channel(int(welcome_id))
-            banner_msg = await welcome_channel.fetch_message(int(request["messages"]["banner"]))
-
-            current_thumbnail = banner_msg.embeds[0].image.url
-            current_index = banners.index(current_thumbnail)
-
-            def get_new_banner(index):
-                if str(payload.emoji) == "⬅":
-                    new_index = index - 1
-                    if index < 0:
-                        return len(banners) - 1
-                    else:
-                        return new_index
-                else:
-                    new_index = index + 1
-                    print(index)
-                    if index >= len(banners) - 1:
-                        return 0
-                    else:
-                        return new_index
-
-            embed6 = discord.Embed(
-                colour=discord.Colour(0xffd6ab),
-                title="🎏 Banner"
-            )
-            embed6.set_image(
-                url=banners[get_new_banner(current_index)]
-            )
-            embed6.set_footer(
-                text="Assets: Official Onmyoji art; Designed by: xann#8194"
-            )
-            await banner_msg.edit(embed=embed6)
-
     @commands.command(aliases=["beasts"])
-    @commands.check(check_if_user_has_any_admin_roles)
+    @commands.is_owner()
     async def edit_message_beasts_selection(self, ctx):
 
         guild_roles = ctx.guild.roles
