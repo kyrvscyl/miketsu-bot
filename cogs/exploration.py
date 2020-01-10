@@ -349,7 +349,7 @@ class Exploration(commands.Cog):
                 shikigami_pool_count[shikigami_shard] += 1
                 i += 1
 
-        shards_reward = list(shikigami_pool.items())
+        shards_reward = list(shikigami_pool_count.items())
         await self.perform_exploration_issue_shard_rewards(user_id, shards_reward)
 
         link = await self.perform_exploration_generate_shards(user_id, shards_reward)
