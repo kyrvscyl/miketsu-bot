@@ -531,8 +531,10 @@ class Souls(commands.Cog):
             if users.find_one({"user_id": str(user.id), f"souls.{s}": {"$type": "object"}}, {"_id": 0}) is None:
                 users.update_one({"user_id": str(user.id)}, {"$set": {f"souls.{s}": []}})
 
-            x = users.update_one({
-                "user_id": str(user.id), "$and": [{f"souls.{s}": {"$elemMatch": {"slot": slot}}}]
+            users.update_one({
+                "user_id": str(user.id), "$and": [{
+                    f"souls.{s}": {"$elemMatch": {"slot": slot, "grade": {"$lt": 6}}}
+                }]
             }, {
                 "$inc": {
                     f"souls.{s}.$.exp": experience
@@ -564,26 +566,28 @@ class Souls(commands.Cog):
             f"souls.{soul_name}.$": 1
         })
 
-        if soul_data["souls"][soul_name][0]["exp"] >= soul_data["souls"][soul_name][0]["lvl_exp_next"]:
+        if soul_data["souls"][soul_name][0]["exp"] > soul_data["souls"][soul_name][0]["lvl_exp_next"]:
+
             def get_lvl_exp_next_new(g):
                 dictionary = {
-                    1: 0,
-                    2: 7000,
-                    3: 21000,
-                    4: 63000,
-                    5: 189000,
-                    6: 567000
+                    1: 7000,
+                    2: 21000,
+                    3: 63000,
+                    4: 189000,
+                    5: 567000,
+                    6: 567000,
                 }
                 return dictionary[g]
 
-            grade_next = soul_data["souls"][soul_name][0]["grade"] + 1
-            lvl_exp_next_new = get_lvl_exp_next_new(grade_next)
+            grade = soul_data["souls"][soul_name][0]["grade"]
+            lvl_exp_next_new = get_lvl_exp_next_new(grade + 1)
             users.update_one({
                 "user_id": str(user.id),
                 "$and": [{f"souls.{soul_name}": {"$elemMatch": {"slot": slot}}}]
             }, {
                 "$set": {
                     f"souls.{soul_name}.$.lvl_exp_next": lvl_exp_next_new,
+                    f"souls.{soul_name}.$.exp": lvl_exp_next_new,
                 },
                 "$inc": {
                     f"souls.{soul_name}.$.grade": 1
