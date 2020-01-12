@@ -531,7 +531,7 @@ class Souls(commands.Cog):
             if users.find_one({"user_id": str(user.id), f"souls.{s}": {"$type": "object"}}, {"_id": 0}) is None:
                 users.update_one({"user_id": str(user.id)}, {"$set": {f"souls.{s}": []}})
 
-            users.update_one({
+            x = users.update_one({
                 "user_id": str(user.id), "$and": [{
                     f"souls.{s}": {"$elemMatch": {"slot": slot, "grade": {"$lt": 6}}}
                 }]

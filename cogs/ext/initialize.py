@@ -29,7 +29,7 @@ api_key = str(os.environ.get("PUSHBULLET"))
 
 try:
     pb = pushbullet.Pushbullet(api_key=api_key)
-except pushbullet.errors.PushbulletError:
+except (pushbullet.errors.PushbulletError, pushbullet.errors.PushError):
     pb_status = False
 
 
