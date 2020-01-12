@@ -10,7 +10,8 @@ from datetime import datetime
 import discord
 import pytz
 from PIL import ImageFont
-from pushbullet import Pushbullet
+
+import pushbullet
 
 from cogs.ext.database import get_collections
 
@@ -23,8 +24,14 @@ time_start = datetime.now()
 
 """PUSHBULLET"""
 
+pb_status = True
 api_key = str(os.environ.get("PUSHBULLET"))
-pb = Pushbullet(api_key=api_key)
+
+try:
+    pb = pushbullet.Pushbullet(api_key=api_key)
+except pushbullet.errors.PushbulletError:
+    pb_status = False
+
 
 
 """COLLECTIONS"""

@@ -37,8 +37,7 @@ class Automation(commands.Cog):
             channel_id = payload.data["channel_id"]
 
         except KeyError:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            pb.push_note("Miketsu Bot", f"{exc_type}, Line {exc_tb.tb_lineno}")
+            pass
 
         else:
             if str(channel_id) == id_shard_trading and pinned is True:
@@ -95,8 +94,7 @@ class Automation(commands.Cog):
                 msg_bot_intro = query["letters"]["bot_intro"]
 
             except KeyError:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                pb.push_note("Miketsu Bot", f"{exc_type}, Line {exc_tb.tb_lineno}")
+                pass
 
             else:
                 embed3 = discord.Embed(
