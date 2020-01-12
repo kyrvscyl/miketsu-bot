@@ -561,7 +561,7 @@ class Souls(commands.Cog):
             "$and": [{f"souls.{soul_name}": {"$elemMatch": {"slot": slot}}}]
         }, {
             "_id": 0,
-            f"souls.{soul_name}": 1
+            f"souls.{soul_name}.$": 1
         })
         if soul_data["souls"][soul_name][0]["exp"] >= soul_data["souls"][soul_name][0]["lvl_exp_next"]:
             def get_lvl_exp_next_new(g):
