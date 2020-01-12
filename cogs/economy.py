@@ -40,7 +40,7 @@ class Economy(commands.Cog):
             colour=colour, timestamp=get_timestamp(),
             description=f"• claim yours using `{self.prefix}daily`\n"
                         f"• check your income using `{self.prefix}sail`\n"
-                        f"• wish for a shikigami shard using `{self.prefix}wish"
+                        f"• wish for a shikigami shard using `{self.prefix}wish`"
         )
         spell_spam_channel = self.client.get_channel(int(id_spell_spam))
         await process_msg_submit(spell_spam_channel, None, embed)

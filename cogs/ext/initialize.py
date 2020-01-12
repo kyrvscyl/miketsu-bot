@@ -101,7 +101,7 @@ commands_fake = [
     "rcollect", "evolve", "friendship", "ships", "leaderboard", "shikigami", "shikigamis", "shrine", "sail",
     "pray", "stat", "frames", "wish", "wishlist", "fulfill", "parade", "collections", "shards", "cards",
     "raid", "raidc", "encounter", "netherworld", "bossinfo", "ship", "fpchange", "bento", "raidable",
-    "souls [beta]"
+    "souls [beta]", "equip"
 ]
 
 commands_others = [

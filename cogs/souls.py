@@ -337,6 +337,7 @@ class Souls(commands.Cog):
 
                     else:
                         rounds += 1
+                        await process_msg_reaction_remove(msg, str(reaction.emoji), user)
                         await msg.edit(embed=embed_new_create(rounds, ""))
 
     async def process_souls_explore_rewards(self, embed, user, stage, msg, ctx, unlocked):
@@ -590,60 +591,67 @@ class Souls(commands.Cog):
             for x in user_souls:
                 soul_pagination.append(x)
 
-            def embed_new_create(soul_select_new):
+            if soul_select not in soul_pagination:
+                embed = discord.Embed(
+                    color=colour, title=f"Invalid soul", description=f"You do not own any of this soul"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
 
-                souls_formatted = []
-                for s in user_souls[soul_select_new]:
-                    souls_formatted.append(
-                        [s["slot"], s["grade"], s["level"], s["exp"], s["lvl_exp_next"], s["equipped"]]
-                    )
+            else:
+                def embed_new_create(soul_select_new):
 
-                embed_new = discord.Embed(color=user.colour, timestamp=get_timestamp())
-                embed_new.set_author(name=f"{soul_select_new.title()} Souls Stats", icon_url=user.avatar_url)
-                embed_new.set_thumbnail(url=get_soul_thumbnail(soul_select_new))
+                    souls_formatted = []
+                    for s in user_souls[soul_select_new]:
+                        souls_formatted.append(
+                            [s["slot"], s["grade"], s["exp"], s["lvl_exp_next"], s["equipped"]]
+                        )
 
-                for s in sorted(souls_formatted, key=lambda z: z[0], reverse=False):
+                    embed_new = discord.Embed(color=user.colour, timestamp=get_timestamp())
+                    embed_new.set_author(name=f"{soul_select_new.title()} Souls Stats", icon_url=user.avatar_url)
+                    embed_new.set_thumbnail(url=get_soul_thumbnail(soul_select_new))
 
+                    for s in sorted(souls_formatted, key=lambda z: z[0], reverse=False):
+
+                        try:
+                            shiki = s[4].title()
+                        except AttributeError:
+                            shiki = "`None`"
+
+                        embed_new.add_field(
+                            name=f"`[Slot {s[0]}]` | Grade {s[1]}", inline=False,
+                            value=f"Experience: `{s[2]}/{s[3]}`\n"
+                                  f"Equipped to: {shiki}",
+                        )
+                    return embed_new
+
+                page = soul_pagination.index(soul_select)
+                page_total = len(soul_pagination) - 1
+                msg = await process_msg_submit(ctx.channel, None, embed_new_create(soul_select))
+
+                emojis_valid = ["⬅", "➡"]
+                for emoji in emojis_valid:
+                    await process_msg_reaction_add(msg, emoji)
+
+                def check(r, u):
+                    return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_valid
+
+                while True:
                     try:
-                        shiki = s[5].title()
-                    except AttributeError:
-                        shiki = "`None`"
-
-                    embed_new.add_field(
-                        name=f"`[Slot {s[0]}]` | Grade {s[1]}", inline=False,
-                        value=f"Experience: `{s[3]}/{s[4]}`\n"
-                              f"Equipped to: {shiki}",
-                    )
-                return embed_new
-
-            page = soul_pagination.index(soul_select)
-            page_total = len(soul_pagination) - 1
-            msg = await process_msg_submit(ctx.channel, None, embed_new_create(soul_select))
-
-            emojis_valid = ["⬅", "➡"]
-            for emoji in emojis_valid:
-                await process_msg_reaction_add(msg, emoji)
-
-            def check(r, u):
-                return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_valid
-
-            while True:
-                try:
-                    reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
-                except asyncio.TimeoutError:
-                    await process_msg_reaction_clear(msg)
-                    break
-                else:
-                    if str(reaction.emoji) == emojis_valid[1]:
-                        page += 1
-                    elif str(reaction.emoji) == emojis_valid[0]:
-                        page -= 1
-                    if page == 0:
-                        page = page_total
-                    elif page > page_total:
-                        page = 1
-                    await process_msg_edit(msg, None, embed_new_create(soul_pagination[page]))
-                    await process_msg_reaction_remove(msg, str(reaction.emoji), user)
+                        reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
+                    except asyncio.TimeoutError:
+                        await process_msg_reaction_clear(msg)
+                        break
+                    else:
+                        if str(reaction.emoji) == emojis_valid[1]:
+                            page += 1
+                        elif str(reaction.emoji) == emojis_valid[0]:
+                            page -= 1
+                        if page == 0:
+                            page = page_total
+                        elif page > page_total:
+                            page = 1
+                        await process_msg_edit(msg, None, embed_new_create(soul_pagination[page]))
+                        await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
 
 def setup(client):
