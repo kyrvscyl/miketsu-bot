@@ -499,6 +499,15 @@ class Souls(commands.Cog):
 
         scales = 0
         scales_rev = 0
+        if int(stage) >= 8:
+            scales += random.choice([0, 0, 1, 2])
+            if int(stage) >= 9:
+                scales += random.choice([1, 1, 2])
+                scales_rev += random.choice([0, 0, 1])
+            if int(stage) == 0:
+                scales_rev += random.choice([1, 1, 1, 2, 2])
+
+        users.update_one({"user_id": str(user.id)}, {"$inc": {"scales": scales, "scales_rev": scales_rev}})
 
         embed.add_field(
             name="Rewards",
