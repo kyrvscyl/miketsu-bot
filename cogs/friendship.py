@@ -33,11 +33,12 @@ class Friendship(commands.Cog):
 
     async def friendship_check_sail_post(self, user, channel):
 
-        request = ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{user.id}.*"}})
-        ships_count = request.count_documents({})
+        find_query = {"level": {"$gt": 1}, "code": {"$regex": f".*{user.id}.*"}}
+        query = ships.find(find_query, {"_id": 0})
+        ships_count = query.count_documents({find_query})
         total_rewards = 0
 
-        for ship in request:
+        for ship in query:
             total_rewards += ship["level"] * 25
 
         embed = discord.Embed(

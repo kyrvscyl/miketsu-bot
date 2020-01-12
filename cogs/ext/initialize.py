@@ -8,10 +8,9 @@ import random
 from datetime import datetime
 
 import discord
+import pushbullet
 import pytz
 from PIL import ImageFont
-
-import pushbullet
 
 from cogs.ext.database import get_collections
 
@@ -20,18 +19,6 @@ from cogs.ext.database import get_collections
 version = "1.7.beta"
 command_prefix = ";"
 time_start = datetime.now()
-
-
-"""PUSHBULLET"""
-
-pb_status = True
-api_key = str(os.environ.get("PUSHBULLET"))
-
-try:
-    pb = pushbullet.Pushbullet(api_key=api_key)
-except (pushbullet.errors.PushbulletError, pushbullet.errors.PushError):
-    pb_status = False
-
 
 
 """COLLECTIONS"""
@@ -822,3 +809,17 @@ async def process_channel_delete(channel):
         pass
     except discord.errors.HTTPException:
         pass
+
+
+def push_note(title, content):
+
+    api_key = str(os.environ.get("PUSHBULLET"))
+    try:
+        pb = pushbullet.Pushbullet(api_key=api_key)
+    except pushbullet.errors.PushbulletError:
+        pass
+    else:
+        try:
+            pb.push_note(title, content)
+        except pushbullet.errors.PushError:
+            pass

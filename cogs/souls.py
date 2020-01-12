@@ -445,7 +445,7 @@ class Souls(commands.Cog):
             rotation = slot * 45
             exp_multiplier = generate_exp_soul(int(stage))
 
-            exp_total = 30
+            exp_total = 9
             for e in range(1, exp_multiplier):
                 exp_total *= 3
 

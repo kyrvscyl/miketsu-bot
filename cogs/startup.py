@@ -35,8 +35,7 @@ class Startup(commands.Cog):
         try:
             self.status_change.start()
         except RuntimeError:
-            if pb_status is True:
-                pb.push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~1")
+            push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~1")
         print("-------")
 
     @tasks.loop(seconds=1200)
@@ -45,8 +44,7 @@ class Startup(commands.Cog):
         try:
             await self.client.change_presence(activity=discord.Game(next(self.statuses)))
         except RuntimeError:
-            if pb_status is True:
-                pb.push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~2")
+            push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~2")
 
     @commands.command(aliases=["info", "i"])
     async def help_info(self, ctx):
