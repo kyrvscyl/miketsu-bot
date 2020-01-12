@@ -11,7 +11,6 @@ from math import ceil, floor
 from PIL import Image, ImageDraw
 from discord.ext import commands
 
-from cogs.development import Development
 from cogs.ext.initialize import *
 
 
@@ -94,19 +93,47 @@ class Encounter(commands.Cog):
             }, {
                 "$inc": {
                     "cards.$.count": 1
-                    }
                 }
+            }
             )
         return card_rewards, grade
-    
+
+    async def encounter_perform_reset_boss(self):
+
+        bosses.update_many({}, {
+            "$set": {
+                "discoverer": 0,
+                "level": 0,
+                "damage_cap": 0,
+                "total_hp": 0,
+                "current_hp": 0,
+                "challengers": [],
+                "rewards": {}
+            }
+        })
+
     async def boss_daily_reset_check(self):
 
         print("Checking if boss will be reset")
-        survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count()
-        discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count()
-    
+        survivability = bosses.find({"current_hp": {"$gt": 0}}, {"_id": 1}).count_documents({})
+        discoverability = bosses.find({"discoverer": {"$eq": 0}}, {"_id": 1}).count_documents({})
+
         if survivability == 0 and discoverability == 0:
-            await Development(self.client).perform_reset_boss()
+            await self.encounter_perform_reset_boss()
+
+    async def perform_announce_netherworld(self):
+
+        users.update_many({}, {"$set": {"nether_pass": True}})
+
+        content = f"<@&{id_boss_busters}>"
+        embed = discord.Embed(
+            color=colour, timestamp=get_timestamp(),
+            title="Netherworld gates update",
+            description=f"The gates of Netherworld have reset\n"
+                        f"use `{self.prefix}enc` to explore them by chance"
+        )
+        spell_spam_channel = self.client.get_channel(int(id_spell_spam))
+        await process_msg_submit(spell_spam_channel, content, embed)
 
     @commands.command(aliases=["netherworld", "nw"])
     @commands.guild_only()
@@ -419,10 +446,12 @@ class Encounter(commands.Cog):
                 )
 
     async def encounter_roll_netherworld_generate_shards(self, user_id, shards_reward):
+
+        font = font_create(30)
+
         try:
             if len(shards_reward) == 0:
                 return ""
-
             images = []
 
             x, y = 1, 60

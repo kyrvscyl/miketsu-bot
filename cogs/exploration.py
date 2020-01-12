@@ -1,10 +1,11 @@
 """
-Realm Module
+Exploration Module
 Miketsu, 2020
 """
 
 import asyncio
-from math import ceil
+from collections import Counter
+from math import ceil, exp
 
 from PIL import Image, ImageDraw
 from discord.ext import commands
@@ -176,7 +177,7 @@ class Exploration(commands.Cog):
         shikigami_name = user_profile["display"]
         experience = 5 * round((chapter + 1) / 2)
 
-        shikigami_level, shikigami_evolved = get_shikigami_stats(user.id, shikigami_name)
+        shikigami_level, shikigami_evolved, shikigami_souls = get_shikigami_stats(user.id, shikigami_name)
         thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
         self.push_new_exploration(user, chapter, spirits)
 
@@ -184,7 +185,58 @@ class Exploration(commands.Cog):
         if shikigami_evolved is True:
             evo_adjustment = 0.75
 
-        total_chance = user_level + shikigami_level - chapter * evo_adjustment
+        def get_souls_added_chance():
+
+            listings_souls = []
+            grade_total = 0
+            chance_set = 0
+            for result in users.aggregate([
+                {
+                    '$match': {
+                        'user_id': str(user.id)
+                    }
+                }, {
+                    '$project': {
+                        'souls': 1
+                    }
+                }, {
+                    '$project': {
+                        'souls': {
+                            '$objectToArray': '$souls'
+                        }
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$souls'
+                    }
+                }, {
+                    '$unwind': {
+                        'path': '$souls.v'
+                    }
+                }, {
+                    '$match': {
+                        'souls.v.equipped': shikigami_name
+                    }
+                }
+            ]):
+                grade_total += result["souls"]["v"]["slot"]
+                listings_souls.append(result["souls"]["k"])
+
+            soul_count = dict(Counter(listings_souls))
+
+            for a in soul_count:
+                if soul_count[a] == 1:
+                    continue
+                elif soul_count[a] == 2:
+                    chance_set += 1.85
+                elif soul_count[a] == 4:
+                    chance_set += 6.475
+
+            total = 0.696138186504516 * exp(grade_total * 0.0783) + chance_set
+            return random.uniform(total * 0.98, total)
+
+        soul_adjustment = get_souls_added_chance()
+        total_chance = user_level + shikigami_level - chapter * evo_adjustment + soul_adjustment
         if total_chance <= 40:
             total_chance = 40
 
@@ -368,6 +420,7 @@ class Exploration(commands.Cog):
 
         images = []
         x, y = 1, 60
+        font = font_create(30)
 
         def generate_shikigami_with_shard(shikigami_thumbnail_select, shards_count):
 

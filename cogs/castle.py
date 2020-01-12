@@ -10,7 +10,6 @@ from math import ceil
 
 from PIL import Image, ImageDraw
 from discord.ext import commands
-from discord_webhook import DiscordEmbed, DiscordWebhook
 
 from cogs.ext.initialize import *
 
@@ -18,361 +17,86 @@ from cogs.ext.initialize import *
 class Castle(commands.Cog):
 
     def __init__(self, client):
+
         self.client = client
         self.prefix = self.client.command_prefix
 
-        self.lists_souls = []
-        self.lists_souls_raw = []
-
         self.duel_fields = listings_1["duel_fields"]
+
         self.primary_emojis = dictionaries["primary_emojis"]
         self.primary_roles = listings_1["primary_roles"]
 
-        for s in books.find({"section": "sbs", "index": {"$nin": ["1", "2", "3"]}}, {"_id": 0, "index": 1}):
-            self.lists_souls.append("`{}`".format(s["index"].lower()))
-            self.lists_souls_raw.append(s["index"].lower())
-    
-    def get_emoji_primary_role(self, role):
+    def castle_get_emoji_primary_role(self, role):
         return self.primary_emojis[role]
-    
-    def create_webhook_post(self, webhooks, book):
-
-        bukkuman = webhooks[0]
-        webhook = DiscordWebhook(
-            content=book['content'],
-            url=bukkuman.url,
-            avatar_url="https://i.imgur.com/5FflHQ5.jpg",
-            username="Professor Bukkuman"
-        )
-
-        def generate_embed_value_1(dictionary, key):
-            try:
-                value = dictionary[key]
-            except KeyError:
-                value = None
-            return value
-
-        try:
-            for entry in book["embeds"]:
-                embed = DiscordEmbed(color=generate_embed_value_1(entry, "color"))
-                try:
-                    embed.title = generate_embed_value_1(entry, "title")
-                except AttributeError:
-                    pass
-                except TypeError:
-                    pass
-
-                try:
-                    embed.description = generate_embed_value_1(entry, "description").replace("\\n", "\n")
-                except AttributeError:
-                    pass
-                except TypeError:
-                    pass
-
-                try:
-                    embed.set_thumbnail(url=generate_embed_value_1(entry, "thumbnail")["url"])
-                except TypeError:
-                    pass
-
-                try:
-                    embed.set_image(url=generate_embed_value_1(entry, "image")["url"])
-                except TypeError:
-                    pass
-
-                try:
-                    for field in entry["fields"]:
-                        embed.add_embed_field(
-                            name=field["name"],
-                            value=field["value"].replace("\\n", "\n"),
-                            inline=False
-                        )
-                except KeyError:
-                    pass
-
-                try:
-                    user_id = generate_embed_value_1(entry, "author")["icon_url"]
-                    user = self.client.get_user(int(user_id))
-                    embed.set_author(
-                        name=generate_embed_value_1(entry, "author")["name"],
-                        icon_url=str(user.avatar_url_as(format="jpg", size=128))
-                    )
-                except ValueError:
-                    return
-                except TypeError:
-                    pass
-                except AttributeError:
-                    pass
-
-                try:
-                    user_id = generate_embed_value_1(entry, "footer")["text"]
-                    user = self.client.get_user(int(user_id))
-                    embed.set_footer(
-                        text=f"Guide by {user.name}",
-                        icon_url=str(user.avatar_url_as(format="jpg", size=128))
-                    )
-                except ValueError:
-                    embed.set_footer(
-                        text=generate_embed_value_1(entry, "footer")["text"]
-                    )
-                except TypeError:
-                    pass
-                except AttributeError:
-                    pass
-
-                webhook.add_embed(embed)
-
-        except KeyError:
-            pass
-
-        return webhook
-
-    async def post_process_books(self, ctx, query):
-        books.update_one(query, {"$inc": {"borrows": 1}})
-        await process_msg_delete(ctx.message, None)
-
-    @commands.command(aliases=["guides"])
-    @commands.guild_only()
-    async def post_table_of_content(self, ctx):
-
-        if check_if_reference_section(ctx):
-
-            await self.post_table_of_content_reference(ctx.channel)
-            await process_msg_delete(ctx.message, None)
-
-        elif check_if_restricted_section(ctx):
-
-            await self.post_table_of_content_restricted(ctx.channel)
-            await process_msg_delete(ctx.message, None)
-
-        else:
-            request = guilds.find_one({"server": str(ctx.guild.id)}, {
-                "channels.restricted-section": 1, "channels.reference-section": 1
-            })
-
-            reference_section = f"{request['channels']['reference-section']}"
-            restricted_section = f"{request['channels']['restricted-section']}"
-
-            embed = discord.Embed(
-                title="guides, guide", colour=discord.Colour(0xffe6a7),
-                description="show the guild's game guides collection, usable only at the library"
-            )
-            embed.add_field(name="Libraries", value=f"<#{reference_section}>, <#{restricted_section}>")
-            await process_msg_submit(ctx.channel, None, embed)
-
-    async def post_table_of_content_restricted(self, channel):
-        try:
-            webhooks = await channel.webhooks()
-            bukkuman = webhooks[0]
-            webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
-        except AttributeError:
-            return False
-
-        description = \
-            "• To open a book use `;open [section] [index]`\n" \
-            "• Example: `;open da 8`"
-
-        embed = DiscordEmbed(
-            title=":bookmark: Table of Contents",
-            colour=discord.Colour(0xa0c29a),
-            description=description
-        )
-        embed.add_embed_field(
-            name=":notebook: Defense Against The Dark Arts `[DA]`",
-            value="• `[1]` Wind Kirin\n"
-                  "• `[2]` Fire Kirin\n"
-                  "• `[3]` Lightning Kirin\n"
-                  "• `[4]` Water Kirin\n"
-                  "• `[5]` Namazu\n"
-                  "• `[6]` Oboroguruma\n"
-                  "• `[7]` Odokuro\n"
-                  "• `[8]` Shinkirou\n"
-                  "• `[9]` Tsuchigumo\n"
-        )
-        embed.add_embed_field(
-            name=":notebook: Fantastic Beasts and How to Deal with Them `[FB]`",
-            value="• `[1]` Winged Tsukinohime Guide\n"
-                  "• `[2]` Song of the Isle and Sorrow Guide\n"
-        )
-        embed.add_embed_field(
-            name=":notebook: The Dark Arts Outsmarted `[DAO]`",
-            value="• `[1]` True Orochi Co-op Carry"
-        )
-        webhook.add_embed(embed)
-        webhook.execute()
-        return True
-
-    async def post_table_of_content_reference(self, channel):
-        try:
-            webhooks = await channel.webhooks()
-            bukkuman = webhooks[0]
-            webhook = DiscordWebhook(url=bukkuman.url, avatar_url="https://i.imgur.com/5FflHQ5.jpg")
-        except AttributeError:
-            return False
-
-        lists_souls_formatted = ", ".join(self.lists_souls)
-        description = \
-            "• To open a book use `;open [section] [index]`\n" \
-            "• Example: `;open sbs 3`"
-
-        embed = DiscordEmbed(
-            title=":bookmark: Table of Magical Contents",
-            colour=discord.Colour(0xa0c29a),
-            description=description
-        )
-        embed.add_embed_field(
-            name=":book: The Standard Book of Souls - Year 1 `[SBS]`",
-            value="{}".format(lists_souls_formatted)
-        )
-        embed.add_embed_field(
-            name=":book: The Standard Book of Souls - Year 5 `[SBS]`",
-            value="• `[1]` Souls 10 Speed Run (24-25s)\n"
-                  "• `[2]` Souls 10 Speed Run (20-21s)\n"
-                  "• `[3]` Souls Moan Team Varieties"
-        )
-        embed.add_embed_field(
-            name=":closed_book: Secret Duelling Books `[SDB]`",
-            value="• `[1]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
-                  "• `[2]` Curses & Counter-Curses by zu(IA)uz - Book 1\n"
-                  "• `[3]` What if by Quinlynn - Book 1\n"
-                  "• `[4]` What if by Quinlynn - Book 2"
-        )
-        embed.add_embed_field(
-            name=":books: Assorted Books `[AB]`",
-            value="• `[1]` Advanced Realm-Making\n"
-                  "• `[2]` A Beginner's Guide to Shikigami Affection\n"
-                  "• `[3]` Predicting the Unpredictable: Summon Odds\n"
-                  "• `[4]` Spellman's Syllabary: Contractions"
-        )
-        webhook.add_embed(embed)
-        webhook.execute()
-        return True
-
-    @commands.command(aliases=["open"])
-    @commands.guild_only()
-    async def post_book_reference(self, ctx, arg1, *, args="None"):
-
-        if check_if_reference_section(ctx):
-
-            webhooks = await ctx.channel.webhooks()
-            query = {"section": arg1.lower(), "index": args.lower()}
-
-            if arg1.lower() == "pb" and args.lower() == "bgt":
-                query = {"section": arg1.lower(), "index": "0"}
-
-            book = books.find_one(query, {"_id": 0})
-
-            if arg1.lower() in ["ab", "sbs"] and args.lower() in ["3"]:
-
-                opener = urllib.request.build_opener()
-                opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-                urllib.request.install_opener(opener)
-                urllib.request.urlretrieve(book["attachment"], book["address"])
-
-                file = discord.File(book["address"], filename=book["filename"])
-                contributor = self.client.get_user(int(book["contributor"]))
-                await ctx.channel.send(
-                    content=f"{book['content']} {contributor}",
-                    file=file
-                )
-                await self.post_process_books(ctx, query)
-
-            elif book is not None:
-
-                webhook = self.create_webhook_post(webhooks, book)
-                webhook.execute()
-                await self.post_process_books(ctx, query)
-
-        elif check_if_restricted_section(ctx):
-
-            webhooks = await ctx.channel.webhooks()
-            query = {"section": arg1.lower(), "index": args.lower()}
-            book = books.find_one(query, {"_id": 0})
-
-            if arg1.lower() in ["fb"] and args.lower() in ["1", "2"]:
-
-                opener = urllib.request.build_opener()
-                opener.addheaders = [('User-agent', 'Mozilla/5.0')]
-                urllib.request.install_opener(opener)
-                urllib.request.urlretrieve(book["attachment"], book["address"])
-
-                file = discord.File(book["address"], filename=book["filename"])
-                await ctx.channel.send(
-                    content=f"{book['content']}",
-                    file=file
-                )
-                await self.post_process_books(ctx, query)
-
-            elif book is not None:
-
-                webhook = self.create_webhook_post(webhooks, book)
-                webhook.execute()
-                await self.post_process_books(ctx, query)
 
     @commands.command(aliases=["portraits"])
     @commands.guild_only()
     async def castle_portrait_show_all(self, ctx):
 
-        count = portraits.count({})
+        user = ctx.author
+        count = portraits.count_documents({})
         portraits_listings = {}
 
-        def generate_value_floors(floor):
+        def generate_value_floors(f):
             try:
-                value = ", ".join(portraits_listings[str(floor)])
+                portraits_listings[str(f)]
             except KeyError:
-                value = None
-            return value
+                return None
+            return ", ".join(portraits_listings[str(f)])
 
         embed = discord.Embed(
-            title="Patronus Portraits", 
-            color=ctx.author.colour,
+            title="Patronus Portraits", color=user.colour, timestamp=get_timestamp(),
             description=f"There are {count} frames hanging in the castle"
         )
 
-        for x in reversed(range(1, 8)):
-            floor_frames = []
-            for frame in portraits.find({"floor": x}, {"_id": 0, "floor": 1, "in_game_name": 1}):
-                floor_frames.append(frame["in_game_name"])
-                entry = {str(x): floor_frames}
-                portraits_listings.update(entry)
+        for floor in reversed(range(1, 8)):
 
-            embed.add_field(name=f"Floor {x}", value="*{}*".format(generate_value_floors(x)), inline=False)
+            floor_frames = []
+            for frame in portraits.find({"floor": floor}, {"_id": 0, "floor": 1, "in_game_name": 1}):
+                floor_frames.append(frame["in_game_name"])
+                portraits_listings.update({str(floor): floor_frames})
+
+            embed.add_field(name=f"Floor {floor}", value="*{}*".format(generate_value_floors(floor)), inline=False)
 
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["wander", "w"])
-    @commands.check(check_if_valid_and_castle)
     @commands.guild_only()
-    async def castle_wander(self, ctx):
+    @commands.check(check_if_valid_and_castle)
+    async def castle_portraits_wander(self, ctx):
 
         try:
             floor_num = int(ctx.channel.topic[:1])
+        except ValueError:
+            pass
+        else:
             floor_frames = cycle(list(portraits.find({"floor": floor_num}, {"_id": 0})))
 
             def embed_new_create():
-                frame_preview = next(floor_frames)
-                find_role = frame_preview["role"]
-                in_game_name = frame_preview["in_game_name"]
-                image_link = frame_preview["image_link"] + "?size=2048"
-                floor = frame_preview["floor"]
-                frame_number = frame_preview["frame"]
-                description = frame_preview["description"].replace("\\n", "\n")
+                preview_frame = next(floor_frames)
+
+                find_role, in_game_name = preview_frame["role"], preview_frame["in_game_name"]
+                floor, frame_number = preview_frame["floor"], preview_frame["frame"]
+
+                image_link = preview_frame["image_link"] + "?size=2048"
+                description = preview_frame["description"].replace("\\n", "\n")
 
                 embed_new = discord.Embed(
-                    color=ctx.author.colour,
-                    title=f"{self.get_emoji_primary_role(find_role)} {in_game_name}",
-                    description=description
+                    color=colour, title=f"{self.castle_get_emoji_primary_role(find_role)} {in_game_name}",
+                    description=description, timestamp=get_timestamp()
                 )
                 embed_new.set_image(url=image_link)
-                embed_new.set_footer(
-                    text=f"Floor {floor} | Frame {frame_number}"
-                )
+                embed_new.set_footer(text=f"Floor {floor} | Frame {frame_number}")
                 return embed_new
 
             msg = await process_msg_submit(ctx.channel, None, embed_new_create())
-            await process_msg_reaction_add(msg, "➡")
+
+            emoji_arrows = ["➡"]
+            for emoji in emoji_arrows:
+                await process_msg_reaction_add(msg, emoji)
 
             def check(r, u):
-                return u != self.client.user and r.message.id == msg.id
+                return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emoji_arrows
 
             while True:
                 try:
@@ -381,123 +105,126 @@ class Castle(commands.Cog):
                     await process_msg_reaction_clear(msg)
                     break
                 else:
-                    if str(reaction.emoji) == "➡":
+                    if str(reaction.emoji) == emoji_arrows[0]:
                         await process_msg_edit(msg, None, embed_new_create())
-                        
-        except ValueError:
-            return
 
     @commands.command(aliases=["portrait"])
     @commands.guild_only()
-    async def castle_portrait_customize(self, ctx, arg1, *, args=None):
+    async def castle_portraits_customize(self, ctx, arg1=None, *, args=None):
 
-        if arg1.lower() not in ["edit", "add"]:
+        user = ctx.author
+
+        if arg1 is None:
+
             embed = discord.Embed(
-                title="portrait add, portrait edit", 
-                colour=colour,
+                title="portrait, portraits", colour=colour,
+                description=f"customize your own guild portrait\n"
+                            f"appears in the castle's floors via `{self.prefix}wander`"
+            )
+            embed.add_field(
+                name="Example", inline=False,
+                value=f"*`;portraits`*\n"
+                      f"*`{self.prefix}portrait <edit/add>`*",
+            )
+            await process_msg_submit(ctx.channel, None, embed)
+
+        elif arg1.lower() in ["edit", "add"] and args is None:
+
+            embed = discord.Embed(
+                title="portrait add, portrait edit", colour=colour,
                 description=f"use `add` first before using `edit`\n"
                             f"use square photos for best results"
             )
             embed.add_field(
-                name="Format",
-                value=f"*`{self.prefix}portrait add <name> <floor#1-7> <img_link/default> <desc.>`*",
-                inline=False
+                name="Format", inline=False,
+                value=f"*`{self.prefix}portrait add <name> <floor#1-7> <img_link]/default> <desc.>`*",
             )
             embed.add_field(
-                name="Example",
-                value=f"*`{self.prefix}portrait add xann 6 default Headless`*",
-                inline=False
+                name="Example", inline=False,
+                value=f"*`{self.prefix}portrait add xann 6 default Devil`*",
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-        elif arg1.lower() in ["edit", "add"]:
-            frame_id = str(ctx.author.id)
-            user_roles = ctx.guild.get_member(ctx.author.id).roles
-            frame_profile = portraits.find_one({"frame_id": str(frame_id)}, {"_id": 0})
+        elif arg1.lower() in ["edit", "add"] and args is not None:
 
-            argument = args.split(" ", 3)
-            in_game_name = argument[0]
-            image_link = argument[2]
-            description = argument[3].replace("\\n", "\n")
-            frame_num = portraits.count() + 1
+            args_split = args.split(" ", 3)
 
             try:
-                floor = int(argument[1])
+                floor = int(args_split[1])
             except ValueError:
-                embed = discord.Embed(
-                    colour=colour,
-                    title="Invalid floor number",
-                    description="available floors: 1-6 only"
-                )
+                embed = discord.Embed(colour=colour, title="Invalid floor#", description="available floors: 1-6 only")
                 await process_msg_submit(ctx.channel, None, embed)
-                return
+            else:
+                name = args_split[0]
+                image_link = args_split[2]
+                caption = args_split[3].replace("\\n", "\n")
 
-            if image_link.lower() == "default":
-                image_link = ctx.author.avatar_url
+                if image_link.lower() == "default":
+                    image_link = user.avatar_url
 
-            find_role = ""
-            for role in reversed(user_roles):
-                if role.name in self.primary_roles:
-                    find_role = role.name
-                    break
+                find_role = ""
+                for role in reversed(ctx.guild.get_member(user.id).roles):
+                    if role.name in self.primary_roles:
+                        find_role = role.name
+                        break
 
-            if frame_profile is not None:
-                embed = discord.Embed(
-                    colour=colour,
-                    description=f"portrait already exists, use `{self.prefix}frame edit <...>`"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
+                query = portraits.find_one({"frame_id": str(user.id)}, {"_id": 0})
 
-            elif floor not in [1, 2, 3, 4, 5, 6]:
-                embed = discord.Embed(
-                    colour=colour,
-                    title="Invalid floor number",
-                    description="available floors: 1-6 only"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-                return
+                if query is not None:
+                    embed = discord.Embed(
+                        colour=colour, description=f"portrait already exists, use `{self.prefix}frame edit`"
+                    )
+                    await process_msg_submit(ctx.channel, None, embed)
 
-            elif arg1.lower() == "others":
-                attachment_link = await self.castle_portrait_customize_process(
-                    str(image_link), in_game_name, "Head", ctx, description, floor, frame_num
-                )
+                elif floor not in list(range(1, 7)):
+                    embed = discord.Embed(
+                        colour=colour, title="Invalid floor#", description=f"available floors: {list(range(1, 7))}"
+                    )
+                    await process_msg_submit(ctx.channel, None, embed)
 
-                profile = {
-                    "frame_id": None,
-                    "floor": floor,
-                    "frame": frame_num,
-                    "in_game_name": in_game_name,
-                    "role": "Head",
-                    "image_link": attachment_link,
-                    "description": description
-                }
-                portraits.insert_one(profile)
+                elif arg1.lower() in ["others"]:
 
-            elif arg1.lower() == "edit" and frame_profile is not None:
-                attachment_link = await self.castle_portrait_customize_process(
-                    str(image_link), in_game_name, find_role, ctx, description, floor, frame_num
-                )
-                portraits.update_one({
-                    "frame_id": str(ctx.author.id)}, {
-                    "$set": {
+                    frame_num = portraits.count_documents({}) + 1
+                    link = await self.castle_portraits_customize_process(
+                        str(image_link), name, "Head", ctx, caption, floor, frame_num, user
+                    )
+                    portraits.insert_one({
+                        "frame_id": None,
                         "floor": floor,
                         "frame": frame_num,
-                        "in_game_name": in_game_name,
-                        "role": find_role,
-                        "image_link": attachment_link,
-                        "description": description
+                        "in_game_name": name,
+                        "role": "Head",
+                        "image_link": link,
+                        "description": caption
+                    })
 
-                    }
-                })
+                elif arg1.lower() in ["edit"] and query is not None:
 
-    async def castle_portrait_customize_process(self, img_link, ign, find_role, ctx, description, floor, frame_num):
+                    frame_num = portraits.count_documents({}) + 1
+                    link = await self.castle_portraits_customize_process(
+                        str(image_link), name, find_role, ctx, caption, floor, frame_num, user
+                    )
+                    portraits.update_one({
+                        "frame_id": str(ctx.author.id)}, {
+                        "$set": {
+                            "floor": floor,
+                            "frame": frame_num,
+                            "in_game_name": name,
+                            "role": find_role,
+                            "image_link": link,
+                            "description": caption
+
+                        }
+                    })
+
+    async def castle_portraits_customize_process(self, img_link, name, role, ctx, caption, floor, num, user):
 
         async with ctx.channel.typing():
-            embed = discord.Embed(colour=colour, title="Processing the image.. ")
+            embed = discord.Embed(colour=colour, title="Processing the image..", timestamp=get_timestamp())
             msg1 = await process_msg_submit(ctx.channel, None, embed)
             await asyncio.sleep(2)
             embed = discord.Embed(
-                colour=colour,
+                colour=colour, timestamp=get_timestamp(),
                 title="Adding a fancy frame based on your highest primary server role.."
             )
             await process_msg_edit(msg1, None, embed)
@@ -505,36 +232,32 @@ class Castle(commands.Cog):
             opener = urllib.request.build_opener()
             opener.addheaders = [('User-agent', 'Mozilla/5.0')]
             urllib.request.install_opener(opener)
-            temp_address = f"temp/{ign}_temp.jpg"
+            temp_address = f"temp/{name}_temp.jpg"
             urllib.request.urlretrieve(img_link, temp_address)
-            role_frame = f"data/frames/{find_role.lower()}.png"
+            role_frame = f"data/frames/{role.lower()}.png"
 
             background = Image.open(temp_address)
             width, height = background.size
             new_foreground = Image.open(role_frame).resize((width, height), Image.NEAREST)
             background.paste(new_foreground, (0, 0), new_foreground)
 
-            new_address = f"temp/{ign}.png"
+            new_address = f"temp/{name}.png"
             background.save(new_address)
 
-            new_photo = discord.File(new_address, filename=f"{ign}.png")
+            new_photo = discord.File(new_address, filename=f"{name}.png")
             hosting_channel = self.client.get_channel(int(id_hosting))
-            msg = await hosting_channel.send(file=new_photo)
+            msg = await process_msg_submit_file(hosting_channel, new_photo)
 
             await asyncio.sleep(3)
-            await asyncio.sleep(2)
 
             attachment_link = msg.attachments[0].url
 
             embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"{self.get_emoji_primary_role(find_role)} {ign}",
-                description=description
+                color=user.colour, timestamp=get_timestamp(),
+                title=f"{self.castle_get_emoji_primary_role(role)} {name}", description=caption
             )
             embed.set_image(url=attachment_link)
-            embed.set_footer(
-                text=f"Floor {floor} | Frame# {frame_num}"
-            )
+            embed.set_footer(text=f"Floor {floor} | Frame# {num}")
             await process_msg_submit(ctx.channel, None, embed)
             await asyncio.sleep(2)
             await process_msg_delete(msg1, None)
@@ -544,154 +267,186 @@ class Castle(commands.Cog):
     @commands.command(aliases=["duel", "d"])
     @commands.guild_only()
     @commands.check(check_if_channel_is_pvp)
-    async def management_duel(self, ctx, *args):
+    async def castle_duel(self, ctx, *args):
 
-        if len(args) == 0 or args[0].lower() in ["help", "h"]:
+        invoke = "duel"
+        args_v = ["help", "add", "delete", "update", "show"]
+
+        if args[0].lower() in [args_v[0], args_v[0][:1]]:
+
             embed = discord.Embed(
-                title="duel, d", colour=colour,
-                description="shows the help prompt for the first 3 arguments"
+                title=f"{invoke}, {invoke[:1]}", colour=colour,
+                description="recognizable first arguments for this command"
             )
-            embed.add_field(name="Arguments", value="*add, update, show, delete*", inline=False)
-            embed.add_field(name=f"Example", value=f"*`{self.prefix}duel add`*", inline=False)
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif args[0].lower() == "add" and len(args) <= 1:
-            embed = discord.Embed(
-                title="duel add, d a", colour=colour,
-                description="add a new duelist in the database"
-            )
-            embed.add_field(name="Format", value=f"*`{self.prefix}duel add <name>`*", inline=False)
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif args[0].lower() == ["delete", "d"] and len(args) <= 1:
-            embed = discord.Embed(
-                title="duel delete, d d", colour=colour,
-                description="removes a duelist in the database"
-            )
-            embed.add_field(name="Format", value=f"*`{self.prefix}duel delete <exact_name>`*", inline=False)
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif args[0].lower() in ["add", "a"] and len(args) == 2:
-            await self.management_duel_profile_member_add(ctx, args)
-
-        elif args[0].lower() in ["delete", "d"] and len(args) == 2:
-            await self.management_duel_profile_member_delete(ctx, args)
-
-        elif args[0].lower() in ["update", "u"] and len(args) <= 1:
-            embed = discord.Embed(
-                title="duel update, d u", colour=colour,
-                description="updates a duelist's profile"
-            )
-            embed.add_field(name="Format", value=f"*`{self.prefix}d u <name or id> <field> <value>`*")
+            embed.add_field(name="Arguments", inline=False, value=f"*{', '.join(args_v)}*", )
             embed.add_field(
-                name="field :: value",
-                value=f"• **name** :: <new_name>\n"
-                      f"• **notes** :: *<any member notes>*\n"
-                      f"• **ban/unban** :: *<shikigami>*\n"
-                      f"• **core/uncore** :: *<shikigami>*\n"
-                      f"• **lineup** :: *attach a photo upon sending*",
-                inline=False
-            )
-            embed.add_field(
-                name="Example",
-                value=f"*`{self.prefix}d u 1 ban enma`*\n"
-                      f"*`{self.prefix}d u 100 notes benefits more on upper-hand teams`*",
-                inline=False
+                name="Example", inline=False,
+                value=f"*`{self.prefix}{invoke} {random.choice(args_v)}`*",
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-        elif args[0].lower() in ["update", "u"] and len(args) == 2:
-            fields_formatted = []
-            for field in self.duel_fields:
-                fields_formatted.append(f"`{field}`")
+        elif args[0].lower() in [args_v[1], args_v[1][:1]]:
 
-            embed = discord.Embed(
-                colour=colour,
-                title="No field and value provided",
-                description=f"Valid fields: *{', '.join(fields_formatted)}*"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+            if len(args) <= 1:
 
-        elif args[0].lower() in ["update", "u"] and args[2].lower() not in self.duel_fields and len(args) >= 3:
-            fields_formatted = []
-            for field in self.duel_fields:
-                fields_formatted.append(f"`{field}`")
+                embed = discord.Embed(
+                    title=f"{invoke} {args_v[1]}, {invoke[:1]} {args_v[1][:1]}", colour=colour,
+                    description="add a new duelist in the database"
+                )
+                embed.add_field(name="Format", value=f"*`{self.prefix}{invoke} {args_v[1]} <name>`*", inline=False)
+                await process_msg_submit(ctx.channel, None, embed)
 
-            embed = discord.Embed(
-                colour=colour,
-                title="Invalid field update request",
-                description=f"Valid fields: *{', '.join(fields_formatted)}*"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+            elif len(args) == 2:
+                await self.castle_duel_profile_member_add(ctx, args)
 
-        elif args[0].lower() in ["update", "u"] and len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
-            await self.management_duel_profile_update_field(ctx, args)
+            else:
+                await process_msg_reaction_add(ctx.message, "❌")
 
-        elif args[0].lower() in ["update", "u"] and args[2].lower() in self.duel_fields and len(args) == 3:
-            embed = discord.Embed(
-                colour=colour,
-                title="Invalid field update request",
-                description=f"No value provided for the field {args[2].lower()}"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+        elif args[0].lower() in [args_v[2], args_v[2][:1]]:
 
-        elif args[0].lower() in ["update", "u"] and len(args) >= 4 and args[2].lower() in self.duel_fields:
-            await self.management_duel_profile_update_field(ctx, args)
+            if len(args) <= 1:
 
-        elif args[0].lower() in ["show", "s"] and len(args) == 1:
-            embed = discord.Embed(
-                title="duel show, d s", colour=colour,
-                description="queries the duelists database"
-            )
-            embed.add_field(
-                name="Formats",
-                value=f"• *`{self.prefix}d s all <opt: [<startswith>]>`*\n"
-                      f"• *`{self.prefix}d s <name or id_num>`*",
-                inline=False
-            )
-            embed.add_field(
-                name="Examples",
-                value=f"• *`{self.prefix}d s all`*\n"
-                      f"• *`{self.prefix}d s all aki`*\n"
-                      f"• *`{self.prefix}d s 120`*\n",
-                inline=False
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+                embed = discord.Embed(
+                    title=f"{invoke} {args_v[2]}, {invoke[:1]} d", colour=colour,
+                    description="removes a duelist in the database"
+                )
+                embed.add_field(
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}{invoke} {args_v[2]} <exact_name>`*"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
 
-        elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() == "all":
-            await self.management_duel_profile_show_all(ctx)
+            elif len(args) == 2:
+                await self.castle_duel_profile_member_delete(ctx, args)
 
-        elif args[0].lower() in ["show", "s"] and len(args) == 3 and args[1].lower() == "all":
-            await self.management_duel_profile_show_startswith(ctx, args)
+            else:
+                await process_msg_reaction_add(ctx.message, "❌")
 
-        elif args[0].lower() in ["show", "s"] and len(args) == 2 and args[1].lower() != "all":
-            await self.management_duel_profile_show_profile(ctx, args)
+        elif args[0].lower() in [args_v[3], args_v[3][:1]]:
+
+            if len(args) <= 1:
+                embed = discord.Embed(
+                    title=f"{invoke} {args_v[3]}, {invoke[:1]} {args_v[3][:1]}", colour=colour,
+                    description="updates a duelist's profile"
+                )
+                embed.add_field(
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} <name or id> <field> <value>`*"
+                )
+                embed.add_field(
+                    name="field :: value", inline=False,
+                    value=f"• **name** :: <new_name>\n"
+                          f"• **notes** :: *<any member notes>*\n"
+                          f"• **ban/unban** :: *<shikigami>*\n"
+                          f"• **core/uncore** :: *<shikigami>*\n"
+                          f"• **lineup** :: *attach a photo upon sending*",
+                )
+                embed.add_field(
+                    name="Example", inline=False,
+                    value=f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 1 ban enma`*\n"
+                          f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 100 notes benefits more on first turners`*",
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif len(args) == 2:
+
+                fields_formatted = []
+                for field in self.duel_fields:
+                    fields_formatted.append(f"`{field}`")
+
+                embed = discord.Embed(
+                    colour=colour, title="No field and value provided",
+                    description=f"Valid fields: *{', '.join(fields_formatted)}*"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif args[2].lower() not in self.duel_fields and len(args) >= 3:
+
+                fields_formatted = []
+                for field in self.duel_fields:
+                    fields_formatted.append(f"`{field}`")
+
+                embed = discord.Embed(
+                    colour=colour,
+                    title="Invalid field update request",
+                    description=f"Valid fields: *{', '.join(fields_formatted)}*"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif len(args) == 3 and args[2].lower() in ["lineup", "lineups"]:
+                await self.castle_duel_profile_update_field(ctx, args)
+
+            elif len(args) == 3 and args[2].lower() in self.duel_fields:
+                embed = discord.Embed(
+                    colour=colour, title="Invalid field update request",
+                    description=f"No value provided for the field {args[2].lower()}"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif len(args) >= 4 and args[2].lower() in self.duel_fields:
+                await self.castle_duel_profile_update_field(ctx, args)
+
+            else:
+                await process_msg_reaction_add(ctx.message, "❌")
+
+        elif args[0].lower() in [args_v[4], args_v[4][:1]]:
+
+            if len(args) == 1:
+                embed = discord.Embed(
+                    title=f"{invoke} {args_v[4]}, {invoke[:1]} {args_v[4][:1]}", colour=colour,
+                    description="queries the duelists database"
+                )
+                embed.add_field(
+                    name="Formats", inline=False,
+                    value=f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all <opt: [<startswith>]>`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} <name or id_num>`*",
+                )
+                embed.add_field(
+                    name="Examples", inline=False,
+                    value=f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all aki`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} 120`*\n",
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif len(args) == 2 and args[1].lower() == "all":
+                await self.castle_duel_profile_show_all(ctx)
+
+            elif len(args) == 3 and args[1].lower() == "all":
+                await self.castle_duel_profile_show_startswith(ctx, args)
+
+            elif len(args) == 2 and args[1].lower() != "all":
+                await self.castle_duel_profile_show_profile(ctx, args, invoke, args_v)
+
+            else:
+                await process_msg_reaction_add(ctx.message, "❌")
 
         else:
             await process_msg_reaction_add(ctx.message, "❌")
 
-    async def management_duel_profile_show_profile(self, ctx, args):
+    async def castle_duel_profile_show_profile(self, ctx, args, invoke, args_v):
+
         try:
             name_id = int(args[1])
-            query = {"#": name_id}
-            member = duelists.find_one(query, {"_id": 0})
-
         except ValueError:
             query = {"name_lower": args[1].lower()}
             member = duelists.find_one(query, {"_id": 0})
+        else:
+            query = {"#": name_id}
+            member = duelists.find_one(query, {"_id": 0})
 
-        try:
+        if member is None:
+            await self.castle_duel_profile_show_approximate(ctx, args[1])
+
+        else:
+            code, name, bans, cores = member['#'], member['name'], member['ban'], member['core']
+
             embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"{lengthen_code_3(member['#'])} : {member['name']}",
-                timestamp=get_timestamp()
+                color=ctx.author.colour, timestamp=get_timestamp(),
+                title=f"{lengthen_code_3(code)} : {name}",
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.add_field(
-                name="📸 Stats",
-                value=f"Bans: {len(member['ban'])} | Cores: {len(member['core'])}",
-                inline=False
-            )
+            embed.add_field(name="📸 Stats", inline=False, value=f"Bans: {len(bans)} | Cores: {len(cores)}", )
 
             if not member["notes"]:
                 embed.add_field(name="🗒 Notes", value="No notes yet.")
@@ -701,11 +456,10 @@ class Castle(commands.Cog):
                 for note in member["notes"]:
                     entry = f"[{note['time'].strftime('%d.%b %y')} | {note['member']}]: {note['note']}\n"
                     notes += entry
-
                 embed.add_field(name="🗒 Notes", value=notes)
 
             if len(member["ban"]) != member["ban_count"] or len(member["core"]) != member["core_count"]:
-                link = await self.management_duel_profile_generate_image(member["ban"], member["core"], ctx)
+                link = await self.castle_duel_profile_generate_image(member["ban"], member["core"], ctx)
                 duelists.update_one(query, {
                     "$set": {
                         "link": link,
@@ -723,7 +477,7 @@ class Castle(commands.Cog):
                 await process_msg_reaction_add(msg, emoji)
 
             def check(r, u):
-                return str(r.emoji) in ["⬅", "➡"] and msg.id == r.message.id and u.id != self.client.user.id
+                return str(r.emoji) in emoji_arrows and msg.id == r.message.id and u.id != self.client.user.id
 
             page = 0
             while True:
@@ -735,11 +489,11 @@ class Castle(commands.Cog):
                 else:
                     links = member["lineup"]
 
-                    def generate_embed_lineup(x):
+                    def embed_new_create_lineup(x):
+
                         embed_new = discord.Embed(
-                            title=f"🖼 Lineup Archives for {member['name']}",
-                            color=ctx.author.colour,
-                            timestamp=get_timestamp()
+                            title=f"🖼 Lineup Archives for {name}",
+                            color=ctx.author.colour, timestamp=get_timestamp()
                         )
                         if len(links) > 0:
                             embed_new.set_image(url=links[page - 1])
@@ -747,8 +501,8 @@ class Castle(commands.Cog):
                         else:
                             embed_new.description = f"this duelist has no lineup records yet\n\n" \
                                                     f"to add, use " \
-                                                    f"*`{self.prefix}duel update <ID/name> lineup`*\n" \
-                                                    f"send it with an image uploaded in the message"
+                                                    f"*`{self.prefix}{invoke} {args_v[3]} <ID/name> lineup`*\n" \
+                                                    f"send it with an image uploaded with the message"
                             embed_new.set_footer(text=f"Page: {x} of 1")
 
                         return embed_new
@@ -759,58 +513,52 @@ class Castle(commands.Cog):
                     elif page < 1:
                         page = len(links) - 1
 
-                    await process_msg_edit(msg, None, generate_embed_lineup(page))
+                    await process_msg_edit(msg, None, embed_new_create_lineup(page))
 
-        except TypeError:
-            await self.management_duel_profile_show_approximate(ctx, args[1])
+    async def castle_duel_profile_show_all(self, ctx):
 
-    async def management_duel_profile_show_all(self, ctx):
-
-        formatted_list = []
+        listings_formatted = []
         find_query = {}
         project = {"_id": 0, "#": 1, "name": 1}
 
         for duelist in duelists.find(find_query, project).sort([("#", 1)]):
             number = lengthen_code_3(duelist["#"])
-            formatted_list.append(f"`{number}:` | {duelist['name']}\n")
+            listings_formatted.append(f"`{number}:` | {duelist['name']}\n")
 
-        noun = pluralize("duelist", len(formatted_list))
-        content = f"There are {len(formatted_list)} registered {noun}"
-        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
+        noun = pluralize("duelist", len(listings_formatted))
+        content = f"There are {len(listings_formatted)} registered {noun}"
+        await self.castle_duel_profile_paginate_embeds(ctx, listings_formatted, content)
 
-    async def management_duel_profile_show_startswith(self, ctx, args):
+    async def castle_duel_profile_show_startswith(self, ctx, args):
 
-        formatted_list = []
+        listings_formatted = []
         find_query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
         project = {"_id": 0, "#": 1, "name": 1}
 
         for duelist in duelists.find(find_query, project).sort([("name_lower", 1)]):
             number = lengthen_code_3(duelist["#"])
-            formatted_list.append(f"`{number}:` | {duelist['name']}\n")
+            listings_formatted.append(f"`{number}:` | {duelist['name']}\n")
 
-        noun = pluralize("result", len(formatted_list))
-        content = f"I've got {len(formatted_list)} {noun} for duelists starting with __{args[2].lower()}__"
-        await self.management_duel_profile_paginate_embeds(ctx, formatted_list, content)
+        noun = pluralize("result", len(listings_formatted))
+        content = f"I've got {len(listings_formatted)} {noun} for duelists starting with __{args[2].lower()}__"
+        await self.castle_duel_profile_paginate_embeds(ctx, listings_formatted, content)
 
-    async def management_duel_profile_show_approximate(self, ctx, member_name):
+    async def castle_duel_profile_show_approximate(self, ctx, member_name):
+
         members_search = duelists.find({"name_lower": {"$regex": f"^{member_name[:2].lower()}"}}, {"_id": 0})
 
-        approximate_results = []
+        results_approximate = []
         for result in members_search:
-            approximate_results.append(f"{result['#']}/{result['name_lower']}")
+            results_approximate.append(f"{result['#']}/{result['name_lower']}")
 
         embed = discord.Embed(
-            colour=colour,
-            title="Invalid query",
+            colour=colour, title="Invalid query",
             description=f"the ID/name `{member_name}` returned no results"
         )
-        embed.add_field(
-            name="Possible matches",
-            value="*{}*".format(", ".join(approximate_results))
-        )
+        embed.add_field(name="Possible matches", value="*{}*".format(", ".join(results_approximate)))
         await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_duel_profile_update_field(self, ctx, args):
+    async def castle_duel_profile_update_field(self, ctx, args):
         try:
             name_id = int(args[1])
             find_query = {"#": name_id}
@@ -822,7 +570,7 @@ class Castle(commands.Cog):
             name = args[1].lower()
 
         if duelists.find_one({"name_lower": name}) is None or duelists.find_one({"#": name_id}) is None:
-            await self.management_duel_profile_show_approximate(ctx, args[1])
+            await self.castle_duel_profile_show_approximate(ctx, args[1])
 
         elif args[2].lower() in ["notes", "note"]:
             duelists.update_one(find_query, {
@@ -882,7 +630,8 @@ class Castle(commands.Cog):
         else:
             await process_msg_reaction_add(ctx.message, "❌")
 
-    async def management_duel_profile_member_delete(self, ctx, args):
+    async def castle_duel_profile_member_delete(self, ctx, args):
+
         if duelists.find_one({"name": args[1]}) is not None:
             duelists.delete_one({"name": args[1]})
             await process_msg_reaction_add(ctx.message, "✅")
@@ -893,14 +642,13 @@ class Castle(commands.Cog):
                 name_id += 1
 
         else:
-            await self.management_duel_profile_show_approximate(ctx, args[1])
+            await self.castle_duel_profile_show_approximate(ctx, args[1])
 
-    async def management_duel_profile_member_add(self, ctx, args):
+    async def castle_duel_profile_member_add(self, ctx, args):
 
         if duelists.find_one({"name_lower": args[1].lower()}) is None:
-
-            profile = {
-                "#": duelists.count() + 1,
+            duelists.insert_one({
+                "#": duelists.count_documents({}) + 1,
                 "name": args[1],
                 "name_lower": args[1].lower(),
                 "ban": [],
@@ -911,8 +659,7 @@ class Castle(commands.Cog):
                 "notes": [],
                 "link": None,
                 "last_update": get_time()
-            }
-            duelists.insert_one(profile)
+            })
             await process_msg_reaction_add(ctx.message, "✅")
 
         else:
@@ -922,7 +669,7 @@ class Castle(commands.Cog):
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_duel_profile_generate_image(self, bans, cores, ctx):
+    async def castle_duel_profile_generate_image(self, bans, cores, ctx):
 
         bans_address = []
         for name in bans:
@@ -932,8 +679,8 @@ class Castle(commands.Cog):
         for name in cores:
             cores_address.append(f"data/shikigamis/{name}_pre.jpg")
 
-        x, y = 4, 0
-        max_cols = 7
+        x, y, max_cols = 4, 0, 7
+        font = font_create(30)
 
         def get_coordinates(c):
             a = (c * 90 - (ceil(c / max_cols) - 1) * max_cols * 90) - 90
@@ -960,8 +707,7 @@ class Castle(commands.Cog):
         im_cores = generate_shikigami_list(cores_address, "Core Shikigamis", font_color)
 
         widths, heights = zip(*(i.size for i in [im_bans, im_cores]))
-        max_height = max(heights)
-        max_width = max(widths)
+        max_height, max_width = max(heights), max(widths)
 
         temp_address = f"temp/{ctx.message.id}.png"
         combined_img = Image.new('RGBA', (max_width, (max_height * 2) + 7), (255, 0, 0, 0))
@@ -971,11 +717,12 @@ class Castle(commands.Cog):
 
         new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await hosting_channel.send(file=new_photo)
+        msg = await process_msg_submit_file(hosting_channel, new_photo)
         attachment_link = msg.attachments[0].url
+
         return attachment_link
 
-    async def management_duel_profile_paginate_embeds(self, ctx, listings_formatted, content):
+    async def castle_duel_profile_paginate_embeds(self, ctx, listings_formatted, content):
 
         page, max_lines = 1, 20
         page_total = ceil(len(listings_formatted) / max_lines)
@@ -988,22 +735,21 @@ class Castle(commands.Cog):
             description_new = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(
-                color=ctx.author.colour,
-                title="🎌 Secret Duelling Book",
-                description=f"{description_new}",
-                timestamp=get_timestamp()
+                color=ctx.author.colour, timestamp=get_timestamp(),
+                title="🎌 Secret Duelling Book", description=f"{description_new}",
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             embed_new.set_thumbnail(url=ctx.guild.icon_url)
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, content, embed_new_create(page))
+
         emoji_arrows = ["⬅", "➡"]
         for emoji in emoji_arrows:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emoji_arrows
 
         while True:
             try:

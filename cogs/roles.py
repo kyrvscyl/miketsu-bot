@@ -1,7 +1,8 @@
 """
-Embeds Module
+Roles Module
 Miketsu, 2020
 """
+
 import asyncio
 
 from discord.ext import commands
@@ -129,6 +130,72 @@ class Roles(commands.Cog):
 
         roles_msg = await sorting_channel.fetch_message(int(msg_id))
         await roles_msg.edit(embed=embed)
+
+    @commands.command(aliases=["sorting"])
+    @commands.is_owner()
+    async def post_sorting_messages(self, ctx):
+
+        request = guilds.find_one({
+            "server": f"{id_guild}"}, {
+            "_id": 0, "channels": 1
+        })
+
+        sorting_id = request["channels"]["sorting-hat"]
+        sorting_channel = self.client.get_channel(int(sorting_id))
+
+        guild = self.client.get_guild(int(id_guild))
+
+        for document in sortings.find({}, {"_id": 0}):
+
+            embed = discord.Embed(
+                title=document["title"],
+                description=document["description"].replace('\\n', '\n'),
+                timestamp=get_timestamp(),
+                color=document["color"]
+            )
+
+            members_count = []
+            role_emojis = []
+            for field in document["fields"]:
+
+                role_id = field["role_id"]
+                role = discord.utils.get(ctx.guild.roles, id=int(role_id))
+                role_emojis.append(field["emoji"])
+                count = len(role.members)
+                members_count.append(count)
+
+                if document["title"] != "Role Color Selection":
+                    embed.add_field(
+                        name=f"{field['emoji']} {field['role']} [{count}]",
+                        value=f"{field['description']}"
+                    )
+
+                else:
+                    embed.add_field(
+                        name=f"{field['emoji']} {field['role']} [{count}]",
+                        value="<@&{}>{}".format(field['role_id'], field['description'])
+                    )
+
+            if document["multiple"] is False:
+                embed.set_footer(text=f"{sum(members_count)}/{len(guild.members)} sorted members")
+            else:
+                embed.set_footer(text=f"{sum(members_count)} special roles issued")
+
+            query = sortings.find_one({"title": document["title"]}, {"_id": 0})
+            msg = await sorting_channel.fetch_message(int(query["msg_id"]))
+
+            emoji_existing = []
+            for emoji1 in msg.reactions:
+                emoji_existing.append(emoji1)
+
+            for emoji2 in role_emojis:
+                if emoji2 not in emoji_existing:
+                    await msg.add_reaction(emoji2)
+
+            await msg.edit(embed=embed)
+            await asyncio.sleep(2)
+
+        await ctx.message.delete()
 
 
 def setup(client):

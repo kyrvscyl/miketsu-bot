@@ -2,6 +2,7 @@
 Raid Module
 Miketsu, 2020
 """
+
 import asyncio
 from math import ceil
 

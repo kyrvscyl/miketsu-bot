@@ -1,4 +1,4 @@
-"""
+""""
 Initialize Module
 Miketsu, 2020
 """
@@ -86,7 +86,7 @@ server = guilds.find_one({"server": str(id_guild)}, {"_id": 0})
 
 timezone = variables["timezone"]
 colour = variables["embed_color"]
-font = ImageFont.truetype('data/marker_felt_wide.ttf', 30)
+librarian_img = variables["librarian_img"]
 
 """LISTINGS"""
 
@@ -136,12 +136,16 @@ id_restricted = server["channels"]["restricted-section"]
 id_auror_dept = server["channels"]["auror-department"]
 id_office = server["channels"]["headmasters-office"]
 id_shard_trading = server["channels"]["shard-trading"]
+id_welcome = server["channels"]["welcome"]
+id_absence_app = server["channels"]["absence-applications"]
 
 """ROLES"""
 
 id_boss_busters = server["roles"]["boss_busters"]
 id_silver_sickles = server["roles"]["silver_sickles"]
 id_shard_seeker = server["roles"]["shard_seekers"]
+id_golden_galleons = server["roles"]["golden_galleons"]
+id_seers = server["roles"]["seers"]
 
 """EMOJIS"""
 
@@ -154,15 +158,17 @@ e_6 = emojis["6"]
 e_a = emojis["a"]
 e_b = emojis["b"]
 e_c = emojis["c"]
+e_e = emojis["e"]
 e_f = emojis["f"]
 e_j = emojis["j"]
 e_m = emojis["m"]
+e_p = emojis["p"]
+e_r = emojis["r"]
 e_s = emojis["s"]
 e_t = emojis["t"]
 e_x = emojis["x"]
 
 e_fp = emojis["fp"]
-
 
 """SUMMON POOL"""
 
@@ -182,7 +188,7 @@ pool_all_mystery = []
 pool_all_broken = []
 
 trading_list = []
-purchasable_frames = []
+
 trading_list_formatted = []
 
 for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
@@ -221,9 +227,6 @@ for card in realms.find({}, {"_id": 0}):
     realm_cards.append(f"{card['name'].lower()}")
     listings_cards.append([card["name"], card["rewards"], card["base"], card['link']["6"]])
 
-
-
-
 """SOULS"""
 
 souls_all = []
@@ -234,8 +237,11 @@ for soul in souls.find({}, {"_id": 0, "name": 1}):
 
 """SHOP"""
 
+seller_img = variables["seller_img"]
+shop_frames = []
+
 for doc in frames.find({"purchase": True}, {"_id": 1, "name": 1}):
-    purchasable_frames.append(doc["name"].lower())
+    shop_frames.append(doc["name"].lower())
 
 for _offer in mystic_shop:
     for _amount in mystic_shop[_offer]:
@@ -253,8 +259,12 @@ for trade in trading_list:
         f"{trade[4]} {trade[5]}\n"
     )
 
-
 """FUNCTIONS"""
+
+
+def get_offer_and_cost(seq):
+    return mystic_shop[seq[0]][seq[1]]["offer"][0], mystic_shop[seq[0]][seq[1]]["offer"][1], \
+           mystic_shop[seq[0]][seq[1]]["cost"][0], mystic_shop[seq[0]][seq[1]]["cost"][1]
 
 
 def lengthen_code_3(index):
@@ -284,6 +294,10 @@ def lengthen_code_4(index):
     elif index < 1000:
         prefix = "0{}"
     return prefix.format(index)
+
+
+def font_create(size):
+    return ImageFont.truetype('data/marker_felt_wide.ttf', size)
 
 
 def check_if_valid_and_castle(ctx):
@@ -350,7 +364,10 @@ def check_if_user_has_sushi_2(ctx, required):
 
 def get_shikigami_stats(user_id, shiki):
     stats = users.find_one({"user_id": str(user_id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
-    return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"]
+    try:
+        return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"], stats["shikigami"][0]["souls"]
+    except KeyError:
+        return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"], {}
 
 
 def get_shikigami_stats_2(user_id, shiki):
@@ -494,7 +511,7 @@ def shikigami_push_user(user_id, shiki, evolve, shards):
                 "shards": shards,
                 "level": 1,
                 "exp": 0,
-                "level_exp_next": 6
+                "level_exp_next": 6,
             }
         }
     })
@@ -579,6 +596,7 @@ def shikigami_process_levelup(user_id, shiki):
 
 
 async def shikigami_post_approximate_results(ctx, query):
+
     shikigamis_search = shikigamis.find({
         "name": {"$regex": f"^{query[:2].lower()}"}
     }, {"_id": 0, "name": 1})
@@ -686,6 +704,17 @@ async def process_msg_delete(message, delay):
         pass
 
 
+async def process_msg_submit_file(channel, file):
+    try:
+        return await channel.send(file=file)
+    except AttributeError:
+        pass
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
 async def process_msg_submit(channel, content, embed):
     try:
         return await channel.send(content=content, embed=embed)
@@ -728,6 +757,61 @@ async def process_msg_reaction_clear(message):
     try:
         await message.clear_reactions()
     except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_msg_purge(channel, amount):
+    try:
+        await channel.purge(limit=amount + 1)
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_msg_pin(message):
+    try:
+        await message.pin()
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.NotFound:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_role_add(member, role):
+    try:
+        await member.add_roles(role)
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_channel_edit(channel, name):
+    try:
+        await channel.edit(name=name)
+    except AttributeError:
+        pass
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.NotFound:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_channel_delete(channel):
+    try:
+        await channel.delete()
+    except AttributeError:
+        pass
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.NotFound:
         pass
     except discord.errors.HTTPException:
         pass

@@ -34,7 +34,7 @@ class Friendship(commands.Cog):
     async def friendship_check_sail_post(self, user, channel):
 
         request = ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{user.id}.*"}})
-        ships_count = request.count()
+        ships_count = request.count_documents({})
         total_rewards = 0
 
         for ship in request:

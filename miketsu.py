@@ -12,9 +12,10 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 client = commands.Bot(command_prefix=command_prefix, case_insensitive=True)
 client.remove_command("help")
 
+config.update_one({"var": 1}, {"$set": {"clock": False}})
+
 
 def cogs_extension_startup():
-
     for filename in sorted(os.listdir("./cogs")):
         if filename.endswith(".py"):
             try:

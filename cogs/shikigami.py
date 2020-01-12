@@ -2,6 +2,7 @@
 Shikigami Module
 Miketsu, 2020
 """
+
 import asyncio
 from math import ceil
 
@@ -276,7 +277,7 @@ class Shikigami(commands.Cog):
     async def shikigami_show_post_shards_generate(self, user_shikis, user_unc, pool_rarity_select, rarity, member):
 
         images = []
-
+        font = font_create(30)
         x, y = 1, 60
 
         def generate_shikigami_with_shard(shikigami_thumbnail_select, shards_count):
@@ -394,14 +395,57 @@ class Shikigami(commands.Cog):
         else:
             await self.shikigami_show_post_shiki_user(user, user_shikigami, shiki, ctx)
 
-    async def shikigami_show_post_shiki_user(self, user, user_shikigami, shiki, ctx):
+    async def shikigami_show_post_shiki_user(self, user, user_shikigami, shikigami_name, ctx):
 
         shiki_profile = user_shikigami["shikigami"]
         evolve = "pre"
         if shiki_profile[0]["evolved"] is True:
             evolve = "evo"
 
-        thumbnail = get_thumbnail_shikigami(shiki, evolve)
+        thumbnail = get_thumbnail_shikigami(shikigami_name, evolve)
+
+        listings_souls_slots = []
+        listings_souls = []
+
+        for result in users.aggregate([
+            {
+                '$match': {
+                    'user_id': str(user.id)
+                }
+            }, {
+                '$project': {
+                    'souls': 1
+                }
+            }, {
+                '$project': {
+                    'souls': {
+                        '$objectToArray': '$souls'
+                    }
+                }
+            }, {
+                '$unwind': {
+                    'path': '$souls'
+                }
+            }, {
+                '$unwind': {
+                    'path': '$souls.v'
+                }
+            }, {
+                '$match': {
+                    'souls.v.equipped': shikigami_name
+                }
+            }
+        ]):
+            listings_souls.append([
+                result["souls"]["k"], result["souls"]["v"]["grade"], result["souls"]["v"]["slot"]
+            ])
+            listings_souls_slots.append(result["souls"]["v"]["slot"])
+
+        for i in range(1, 7):
+            if i not in listings_souls_slots:
+                listings_souls.append([None, 0, i])
+
+        listings_souls = sorted(listings_souls, key=lambda z: z[2], reverse=False)
 
         embed = discord.Embed(
             colour=user.colour,
@@ -414,13 +458,94 @@ class Shikigami(commands.Cog):
                         f"```",
             timestamp=get_timestamp()
         )
+
         embed.set_thumbnail(url=thumbnail)
         embed.set_author(
-            name=f"{user.display_name}'s {shiki.title()}",
+            name=f"{user.display_name}'s {shikigami_name.title()}",
             icon_url=user.avatar_url
         )
         embed.set_footer(text=f"Rarity: {shiki_profile[0]['rarity']}")
-        await process_msg_submit(ctx.channel, None, embed)
+        msg = await process_msg_submit(ctx.channel, None, embed)
+
+        emojis_valid = ["🏵️"]
+        for emoji in emojis_valid:
+            await process_msg_reaction_add(msg, emoji)
+
+        def check(r, u):
+            return u != self.client.user and str(r.emoji) in emojis_valid and r.message.id == msg.id
+
+        try:
+            await self.client.wait_for("reaction_add", timeout=10, check=check)
+        except asyncio.TimeoutError:
+            await process_msg_reaction_clear(msg)
+        else:
+            link = await self.shikigami_show_post_shiki_user_soul_generate(ctx, shikigami_name, evolve, listings_souls)
+            embed.set_image(url=link)
+            await process_msg_edit(msg, None, embed)
+            await process_msg_reaction_clear(msg)
+
+    async def shikigami_show_post_shiki_user_soul_generate(self, ctx, shikigami_name, evo, listings_souls):
+
+        width, height, d, height_base = int(348.48), int(348.48), 72, 17
+        width_hex, height_hex = 1.95 * 96, 1.7 * 96
+
+        im = Image.new('RGBA', (width, height), (255, 0, 0, 0))
+        bd = Image.open("data/raw/souls.png").resize((width, height), Image.ANTIALIAS)
+        shiki_im = Image.open(f"data/shikigamis/{shikigami_name}_{evo}.jpg")
+
+        x_coor = int((width / 2) - (90 / 2))
+        y_coor = int((height / 2) - (90 / 2))
+
+        im.paste(shiki_im, (x_coor, y_coor))
+        im.paste(bd, (0, 0), bd)
+
+        def create_magatama_grade(g, magatama_raw):
+            im_new = Image.new('RGBA', (w + (35 * (g - 1)), h), (255, 0, 0, 0))
+
+            def get_new_coor_magatama(i):
+                return (i - 1) * 35, 0
+
+            for y in list(range(1, g + 1)):
+                im_new.paste(magatama_raw, get_new_coor_magatama(y), magatama_raw)
+
+        def get_soul_coordinates(s):
+            soul_coordinates_plot = {
+                "1": [((width - 90) / 2) - (d / 2), ((height - height_hex) / 2) - (d / 2)],
+                "2": [((width - width_hex) / 2) - (d / 2) + 2, (height / 2) - (d / 2)],
+                "3": [((width - 90) / 2) - (d / 2), (((height - height_hex) / 2) + height_hex) - (d / 2)],
+                "4": [(((width - 90) / 2) + 94) - (d / 2), (((height - height_hex) / 2) + height_hex) - (d / 2)],
+                "5": [((width - width_hex) / 2) - (d / 2) + 2 + width_hex, (height / 2) - (d / 2)],
+                "6": [(((width - 90) / 2) + 94) - (d / 2), ((height - height_hex) / 2) - (d / 2)],
+            }
+            return int(soul_coordinates_plot[s][0]), int(soul_coordinates_plot[s][1])
+
+        for index, q in enumerate(range(1, 7)):
+            if listings_souls[index][0] is not None:
+                im_magatama = Image.open("data/raw/magatama.png")
+                w, h = im_magatama.size
+                create_magatama_grade(listings_souls[index][1], im_magatama)
+
+                h_percent = (height_base / float(im_magatama.size[1]))
+                w_size = int((float(im_magatama.size[0]) * float(h_percent)))
+                x = im_magatama.resize((w_size, height_base), Image.ANTIALIAS)
+                souls_im = Image.open(f"data/souls/{listings_souls[index][0]}.png").resize((d, d), Image.ANTIALIAS)
+                im.paste(souls_im, (get_soul_coordinates(str(index + 1))), souls_im)
+                im.paste(
+                    x,
+                    (
+                        get_soul_coordinates(str(index + 1))[0] + int(d / 2) - int(w_size / 2),
+                        get_soul_coordinates(str(index + 1))[1] + d - height_base
+                    ),
+                    x
+                )
+
+        address = f"temp/{ctx.author.id}.png"
+        im.save(address, quality=95)
+        new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
+        hosting_channel = self.client.get_channel(int(id_hosting))
+        msg = await process_msg_submit_file(hosting_channel, new_photo)
+        attachment_link = msg.attachments[0].url
+        return attachment_link
 
     @commands.command(aliases=["shikis", "shikigamis"])
     @commands.guild_only()
@@ -495,8 +620,8 @@ class Shikigami(commands.Cog):
     async def shikigami_show_post_shikis_generate(self, user_shikis, user_unc, pool_rarity_select, rarity, member):
 
         images = []
-
         x, y = 1, 60
+        font = font_create(30)
 
         def generate_shikigami_with_count(shikigami_thumbnail_select, owned_count):
 

@@ -16,6 +16,7 @@ from cogs.ext.initialize import *
 class Admin(commands.Cog):
 
     def __init__(self, client):
+
         self.client = client
         self.prefix = self.client.command_prefix
 
@@ -29,383 +30,298 @@ class Admin(commands.Cog):
         self.status_code = dictionaries["status_code"]
         self.code_status = dictionaries["code_status"]
 
-    def get_guild_quest_converted(self, key):
-        return self.status_code[str(key)]
-
-    def get_status(self, key):
-        return self.code_status[str(key)]
-
-    def shorten_code(self, key):
+    def get_shortened_code(self, key):
         return self.shortened[key]
 
     @commands.command(aliases=["patch"])
+    @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def post_patch_notes(self, ctx, arg1, *, args):
+    async def admin_post_patch_notes(self, ctx, key, *, link_image):
 
-        guild = self.client.get_guild(int(id_guild))
-        request = guilds.find_one({"server": str(guild.id)}, {"_id": 0, "channels": 1})
-        headlines_id = request["channels"]["headlines"]
-        headlines_channel = self.client.get_channel(int(headlines_id))
+        user = ctx.author
+        headlines_channel = self.client.get_channel(int(id_headlines))
+        link_pastebin, cap = f"https://pastebin.com/raw/{key}", 1500
 
-        link = f"https://pastebin.com/raw/{arg1}"
-        f = urllib.request.urlopen(link)
+        f = urllib.request.urlopen(link_pastebin)
         text = f.read().decode('utf-8')
-        split_text = text.replace("\r", "\\n").split("\n")
-        cap = 1500
-        max_embeds = ceil(len(text) / cap)
+        text_split = text.replace("\r", "\\n").split("\n")
+        embeds_max = ceil(len(text) / cap)
 
-        lines = 0
-        lines_start = 0
-        description_length = 0
-        lines_end = len(split_text)
+        lines, lines_start, description_length = 0, 0, 0
+        lines_end = len(text_split)
 
-        for x in range(0, max_embeds):
-            for entry in split_text[lines_start:lines_end]:
-                description_length += len(entry)
+        for n in range(0, embeds_max):
+
+            for line in text_split[lines_start:lines_end]:
+                description_length += len(line)
                 if description_length > cap:
                     break
                 lines += 1
 
-            description = "".join(split_text[lines_start:lines]).replace("\\n", "\n")
+            description = "".join(text_split[lines_start:lines]).replace("\\n", "\n")
             lines_start = lines
             description_length = 0
 
-            embed = discord.Embed(color=ctx.author.colour, description=description)
-            if max_embeds - 1 == x:
-                embed.set_image(url=args)
+            embed = discord.Embed(color=user.colour, description=description)
+            if embeds_max - 1 == n:
+                embed.set_image(url=link_image)
 
             await headlines_channel.send(embed=embed)
             await asyncio.sleep(1)
 
+        await process_msg_reaction_add(ctx.message, "✅")
+
     @commands.command(aliases=["memo"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def post_memorandum(self, ctx, channel_target: discord.TextChannel = None):
+    async def admin_post_memorandum(self, ctx, channel_target: discord.TextChannel = None):
 
         user = ctx.author
 
         if channel_target is None:
             raise commands.MissingRequiredArgument(user)
 
-        query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1, "roles": 1})
+        elif channel_target is not None:
 
-        link_default = "https://media.discordapp.net/attachments/580859502379794452/646734006624190486/image0.png"
-        memos_count = memos.count()
+            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0})
+            memos_count = memos.count_documents({})
 
-        try:
             id_head = query["roles"]["head"]
             id_channel_memo = query["channels"]["memorandum"]
-        except KeyError:
-            return
+            link_image_memo = query["links"]["memo"]
 
-        channel_memo = self.client.get_channel(int(id_channel_memo))
+            memo_channel = self.client.get_channel(int(id_channel_memo))
+            memo_channel_name = "memorandum"
 
-        try:
-            channel_memo_name = channel_memo.name
-        except AttributeError:
-            channel_memo_name = "memorandum"
+            if memo_channel is not None:
+                memo_channel_name = memo_channel.name
 
-        details = [
-            "Step 1: <Optional> Enter message content (useful for pinging roles)",
-            "Step 2: <Optional> Enter the embed title",
-            "Step 3: <Required> Enter the embed description:\n\nNote: Maximum of 2000 characters",
-            link_default
-        ]
+            details = [
+                "Step 1: <Required> Enter message content (useful for pinging roles)",
+                "Step 2: <Required> Enter the embed title",
+                "Step 3: <Required> Enter the embed description:\n\nNote: Maximum of 2000 characters",
+                link_image_memo
+            ]
 
-        def create_content(c):
-            return c
+            def create_content(c):
+                return c
 
-        def create_embed(title, description, link):
-            embed_created = discord.Embed(
-                colour=user.colour,
-                title=title,
-                description=description,
-                timestamp=get_timestamp()
+            def embed_new_create(t, d, link):
+
+                embed_new = discord.Embed(colour=user.colour, title=t, description=d, timestamp=get_timestamp())
+                embed_new.set_thumbnail(url=ctx.guild.icon_url)
+                embed_new.set_footer(
+                    text=f"#{memo_channel_name}-{lengthen_code_4(memos_count + 1)}",
+                    icon_url=user.avatar_url
+                )
+                if link is not None:
+                    embed_new.set_image(url=link)
+
+                return embed_new
+
+            msg = await process_msg_submit(
+                ctx.channel, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
             )
-            embed_created.set_thumbnail(url=ctx.guild.icon_url)
-            embed_created.set_footer(
-                text=f"#{channel_memo_name}-{lengthen_code_4(memos_count + 1)}",
-                icon_url=user.avatar_url
-            )
-            if link is not None:
-                embed_created.set_image(url=link)
 
-            return embed_created
+            def check(m):
+                return m.author == ctx.author and m.channel.id == ctx.channel.id
 
-        msg = await process_msg_submit(
-            ctx.channel,
-            create_content(details[0]),
-            create_embed(details[1], details[2], details[3])
-        )
-
-        def check(m):
-            return m.author == ctx.author and m.channel.id == ctx.channel.id
-
-        for index, item in enumerate(details):
-            try:
-                answer = await self.client.wait_for("message", timeout=120, check=check)
-            except asyncio.TimeoutError:
-                break
-            else:
-                details[index] = answer.content
-                await process_msg_reaction_add(answer, "✅")
-
+            for index, item in enumerate(details):
                 try:
-                    await process_msg_edit(
-                        msg,
-                        create_content(details[0]),
-                        create_embed(details[1], details[2], details[3])
-                    )
-                except discord.errors.HTTPException:
-                    details[index] = None
-                    await process_msg_edit(
-                        msg,
-                        create_content(details[0]),
-                        create_embed(details[1], details[2], None)
-                    )
+                    answer = await self.client.wait_for("message", timeout=120, check=check)
+                except asyncio.TimeoutError:
+                    break
+                else:
+                    details[index] = answer.content
+                    await process_msg_reaction_add(answer, "✅")
 
-        document = {
-            "#": memos_count + 1,
-            "timestamp": get_time(),
-            "user_id": str(ctx.author.id),
-            "content": details[0],
-            "title": details[1],
-            "description": details[2],
-            "image": details[3],
-        }
-        memos.insert_one(document)
+                    try:
+                        await process_msg_edit(
+                            msg, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
+                        )
+                    except discord.errors.HTTPException:
+                        details[index] = None
+                        await process_msg_edit(
+                            msg, create_content(details[0]), embed_new_create(details[1], details[2], None)
+                        )
 
-        embed = discord.Embed(
-            colour=ctx.author.colour,
-            title="Confirm issuance",
-            description="Do you want to send the memo drafted above?\nAnnounces immediately",
-            timestamp=get_timestamp()
-        )
-        embed.set_footer(
-            text=f"{ctx.author.display_name}",
-            icon_url=ctx.author.avatar_url
-        )
+            memos.insert_one({
+                "#": memos_count + 1,
+                "timestamp": get_time(),
+                "user_id": str(ctx.author.id),
+                "content": details[0],
+                "title": details[1],
+                "description": details[2],
+                "image": details[3],
+            })
 
-        msg1 = await process_msg_submit(ctx.channel, None, embed)
-        await process_msg_reaction_add(msg1, "✅")
-
-        def check2(r, u):
-            return u == ctx.author and str(r.emoji) == "✅" and msg1.id == r.message.id
-
-        try:
-            await self.client.wait_for("reaction_add", check=check2, timeout=15)
-        except asyncio.TimeoutError:
-            return
-        else:
-            await process_msg_submit(
-                channel_target,
-                create_content(details[0]),
-                create_embed(details[1], details[2], details[3])
+            embed = discord.Embed(
+                colour=ctx.author.colour, timestamp=get_timestamp(),
+                title="Confirm issuance",
+                description="Do you want to send the memo drafted above?\nAnnounces immediately",
             )
-            await process_msg_submit(
-                channel_memo,
-                f"*<@&{id_head}>, a new memo has been issued:*" + "\n" + create_content(details[0]),
-                create_embed(details[1], details[2], details[3])
-            )
+            embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+
+            msg1 = await process_msg_submit(ctx.channel, None, embed)
+            await process_msg_reaction_add(msg1, "✅")
+
+            def check2(r, u):
+                return u == ctx.author and str(r.emoji) == "✅" and msg1.id == r.message.id
+
+            try:
+                await self.client.wait_for("reaction_add", check=check2, timeout=15)
+            except asyncio.TimeoutError:
+                return
+            else:
+                await process_msg_submit(
+                    channel_target, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
+                )
+                await process_msg_submit(
+                    memo_channel,
+                    f"*<@&{id_head}>, a new memo has been issued:*" + "\n" + create_content(details[0]),
+                    embed_new_create(details[1], details[2], details[3])
+                )
 
     @commands.command(aliases=["say"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def post_message_channel(self, ctx, id_channel, *, message):
+    async def admin_post_message_textchannel(self, ctx, id_channel, *, content):
 
+        user = ctx.author
         channel_id = re.sub("[<>#]", "", id_channel)
         channel_target = self.client.get_channel(int(channel_id))
 
         if channel_target is None:
-            embed = discord.Embed(
-                colour=ctx.author.colour,
-                description="the specified channel was not found."
-            )
-            await process_msg_submit(ctx.channel, None, embed)
-            await process_msg_reaction_add(ctx.message, "❌")
+            raise commands.UserInputError(user)
 
         else:
-            await process_msg_submit(channel_target, message, None)
+            await process_msg_submit(channel_target, content, None)
             await process_msg_reaction_add(ctx.message, "✅")
 
     @commands.command(aliases=["dm"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def post_message_user(self, ctx, id_member, *, message):
+    async def admin_post_message_user(self, ctx, id_member, *, content):
 
+        user = ctx.author
         member_id = re.sub("[<>@&!]", "", id_member)
         member = ctx.guild.get_member(int(member_id))
 
         if member is None:
-            embed = discord.Embed(
-                colour=ctx.author.colour,
-                description="the specified member was not found."
-            )
-            await process_msg_submit(ctx.channel, None, embed)
-            await process_msg_reaction_add(ctx.message, "❌")
+            raise commands.CommandInvokeError(user)
 
         else:
-            await process_msg_submit(member, message, None)
+            await process_msg_submit(member, content, None)
             await process_msg_reaction_add(ctx.message, "✅")
-    
+
     @commands.command(aliases=["clear"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def purge_messages(self, ctx, amount=2):
-        
-        try:
-            await ctx.channel.purge(limit=amount + 1)
-        except discord.errors.Forbidden:
-            pass
-        except discord.errors.HTTPException:
-            pass
+    async def admin_purge_messages(self, ctx, amount=2):
+
+        await process_msg_purge(ctx.channel, amount)
 
     @commands.command(aliases=["manage", "m"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def management_guild(self, ctx, *args):
+    async def admin_manage_guild(self, ctx, *args):
 
-        if args[0].lower() in ["help", "h"]:
+        invoke = "manage"
+        args_v = ["help", "add", "delete", "update", "show"]
 
-            if len(args) >= 1:
-                embed = discord.Embed(
-                    title="manage, m", 
-                    colour=colour,
-                    description="shows the help prompt for the first 4 arguments"
-                )
-                embed.add_field(
-                    name="Arguments", 
-                    value="*add, update, show, delete, stats*", 
-                    inline=False
-                )
-                embed.add_field(
-                    name="Example", 
-                    value=f"*`{self.prefix}manage add`*", 
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
+        if args[0].lower() in [args_v[0], args_v[0][:1]]:
 
-            else:
-                await process_msg_reaction_add(ctx.message, "❌")
+            embed = discord.Embed(
+                title=f"{invoke}, {invoke[:1]}", colour=colour,
+                description="recognizable first arguments for this command"
+            )
+            embed.add_field(name="Arguments", inline=False, value=f"*{', '.join(args_v)}*", )
+            embed.add_field(
+                name="Example", inline=False,
+                value=f"*`{self.prefix}{invoke} {random.choice(args_v)}`*",
+            )
+            await process_msg_submit(ctx.channel, None, embed)
 
-        elif args[0].lower() in ["add", "a"]:
+        elif args[0].lower() in [args_v[1], args_v[1][:1]]:
 
             if len(args) <= 2:
                 embed = discord.Embed(
-                    title="manage add, m a",
-                    colour=colour,
-                    description="adds a new guild member in the database"
+                    title=f"{invoke} {args_v[1]}, {invoke[:1]} {args_v[1][:1]}", colour=colour,
+                    description="adds a new user in the database"
                 )
                 embed.add_field(
-                    name="Format",
-                    value=f"*`{self.prefix}manage add <role> <name>`*",
-                    inline=False
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}{invoke} {args_v[1]} <role> <name>`*"
                 )
-                embed.add_field(
-                    name="Roles",
-                    value=f"*{', '.join(self.roles)}*", inline=False
-                )
+                embed.add_field(name="Roles", inline=False, value=f"*{', '.join(self.roles)}*")
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif len(args) == 3 and args[1].lower() in self.roles:
-                await self.management_guild_add_member(ctx, args)
+                await self.admin_manage_guild_add_member(ctx, args)
 
             else:
                 await process_msg_reaction_add(ctx.message, "❌")
 
-        elif args[0].lower() in ["delete", "del", "d"]:
+        elif args[0].lower() in [args_v[2], args_v[2][:1]]:
 
             if len(args) <= 1:
                 embed = discord.Embed(
-                    title="manage delete, m d",
-                    colour=colour,
+                    title=f"{invoke} {args_v[2]}, {invoke[:1]} {args_v[2][:1]}", colour=colour,
                     description="removes a member in the database"
                 )
                 embed.add_field(
-                    name="Format",
-                    value=f"*`{self.prefix}manage delete <exact_name>`*",
-                    inline=False
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}{invoke} {args_v[2]} <exact_name>`*"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif len(args) == 2:
-                await self.management_guild_add_delete(ctx, args)
+                await self.admin_manage_guild_add_delete(ctx, args)
 
             else:
                 await process_msg_reaction_add(ctx.message, "❌")
 
-        elif args[0].lower() in ["update", "u"]:
+        elif args[0].lower() in [args_v[3], args_v[3][:1]]:
 
             if len(args) <= 1:
                 embed = discord.Embed(
-                    title="manage update, m u", colour=colour,
+                    title=f"{invoke} {args_v[3]}, {invoke[:1]} {args_v[3][:1]}", colour=colour,
                     description="updates a guild member's profile"
                 )
                 embed.add_field(
-                    name="field :: value",
-                    value=f"• **name** :: <new_name>\n"
+                    name="field :: value", inline=False,
+                    value=f"• **name** :: <exact_name>\n"
                           f"• **notes** :: *<any officer notes>*\n"
                           f"• **role** :: *{', '.join(self.roles)}*\n"
-                          f"• **status** :: *{', '.join(self.member_status)}*",
-                    inline=False
+                          f"• **status** :: *{', '.join(self.member_status)}*"
                 )
                 embed.add_field(
-                    name="Format",
-                    value=f"*`{self.prefix}m u <name or id> <field> <value>`*",
-                    inline=False
+                    name="Format", inline=False,
+                    value=f"*`{self.prefix}{args_v[3]} {args_v[3][:1]} <name or id> <field> <value>`*"
                 )
                 embed.add_field(
-                    name="Batch updating",
-                    value="available for inactives & semi-actives [pluralized form]",
-                    inline=False
+                    name="Batch updating", inline=False,
+                    value="available for inactives & semi-actives [pluralized form]"
                 )
                 embed.add_field(
-                    name="Example",
-                    value=f"*`{self.prefix}m u 1 role member`*\n"
-                          f"*`{self.prefix}m u 100 notes alt account`*\n"
-                          f"*`{self.prefix}m u inactives`*",
-                    inline=False
+                    name="Example", inline=False,
+                    value=f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 1 role member`*\n"
+                          f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 100 notes alt account`*\n"
+                          f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} inactives`*"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif args[1].lower() in list(self.status_batch) and len(args) == 2:
-                await self.management_guild_update_performance(
-                    ctx, args[1].lower()[:-1], self.status_batch[args[1].lower()]
-                )
+            elif len(args) == 2 and args[1].lower() == "feats":
+                await self.admin_manage_guild_update_feats(ctx, ctx.author)
 
-            elif args[1].lower() == "feats" and len(args) == 2:
-                await self.management_guild_update_feats(ctx)
-
-            elif len(args) == 2:
-                fields_formatted = []
-                for field in self.fields:
-                    fields_formatted.append(f"{field}")
-
-                embed = discord.Embed(
-                    colour=colour,
-                    title="Invalid `update` syntax",
-                    description="no field and value provided"
-                )
-                embed.add_field(
-                    name="Valid fields",
-                    value="*" + ', '.join(fields_formatted) + "*"
-                )
-                embed.add_field(
-                    name="Example",
-                    value=f"*`{self.prefix}m u 1 role member`*\n",
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif args[2].lower() not in self.fields and len(args) >= 3:
+            elif len(args) >= 3 and args[2].lower() not in self.fields:
 
                 fields_formatted = []
                 for field in self.fields:
-                    fields_formatted.append(f"{field}")
+                    fields_formatted.append(f"`{field}`")
 
                 embed = discord.Embed(
-                    colour=colour,
-                    title="Invalid `update` syntax",
+                    colour=colour, title=f"Invalid `{args_v[3]}` syntax",
                     description="field entered is not valid"
                 )
                 embed.add_field(
@@ -414,21 +330,43 @@ class Admin(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif args[2].lower() in self.fields and len(args) == 3:
+            elif len(args) == 2 and args[1].lower() in list(self.status_batch):
+                await self.admin_manage_guild_update_performance(
+                    ctx, args[1].lower()[:-1], self.status_batch[args[1].lower()], ctx.author
+                )
+
+            elif len(args) == 2:
+
+                fields_formatted = []
+                for field in self.fields:
+                    fields_formatted.append(f"`{field}`")
+
                 embed = discord.Embed(
-                    colour=colour,
-                    title="Invalid `update` syntax",
+                    colour=colour, title=f"Invalid `{args_v[3]}` syntax",
+                    description="no field and value provided"
+                )
+                embed.add_field(name="Valid fields", value="*" + ', '.join(fields_formatted) + "*")
+                embed.add_field(
+                    name="Example", inline=False,
+                    value=f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 1 role member`*\n",
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif len(args) == 3 and args[2].lower() in self.fields:
+
+                embed = discord.Embed(
+                    colour=colour, title=f"Invalid `{args_v[3]}` syntax",
                     description="no value provided for the field"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif len(args) >= 4 and args[2].lower() in self.fields:
-                await self.management_guild_update_field(ctx, args)
+                await self.admin_manage_guild_update_field(ctx, args)
 
             else:
                 await process_msg_reaction_add(ctx.message, "❌")
 
-        elif args[0].lower() in ["show", "s"]:
+        elif args[0].lower() in [args_v[4], args_v[4][:1]]:
 
             if len(args) == 1:
                 embed = discord.Embed(
@@ -487,42 +425,37 @@ class Admin(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
+            elif len(args) == 2 and args[1].lower() == "stats":
+                await self.admin_manage_guild_show_stats(ctx)
+
             elif len(args) == 2 and args[1].lower() == "all":
-                await self.management_guild_show_all(ctx, [("name_lower", 1)])
+                await self.admin_manage_guild_show_all(ctx, [("name_lower", 1)])
 
             elif len(args) == 3 and args[1].lower() == "all" and args[2].lower() in ["abc", "123"]:
 
                 if args[2].lower() == "abc":
-                    await self.management_guild_show_all(ctx, [("name_lower", 1)])
+                    await self.admin_manage_guild_show_all(ctx, [("name_lower", 1)])
 
                 elif args[2].lower() == "123":
-                    await self.management_guild_show_all(ctx, [("#", 1)])
+                    await self.admin_manage_guild_show_all(ctx, [("#", 1)])
 
                 else:
                     await process_msg_reaction_add(ctx.message, "❌")
 
             elif len(args) == 3 and args[1].lower() == "all" and args[2].lower() == "guild":
-                await self.management_guild_show_current_members(ctx)
+                await self.admin_manage_guild_show_current_members(ctx)
 
             elif len(args) == 3 and args[1].lower() == "all":
-                await self.management_guild_show_startswith(ctx, args)
+                await self.admin_manage_guild_show_startswith(ctx, args)
 
             elif len(args) == 2 and args[1].lower() != "all" and args[1].lower() not in self.fields:
-                await self.management_guild_show_profile(ctx, args)
+                await self.admin_manage_guild_show_profile(ctx, args)
 
             elif len(args) == 3 and args[1].lower() == "status" and args[2].lower() in self.member_status:
-                await self.management_guild_show_field_status(ctx, args)
+                await self.admin_manage_guild_show_field_status(ctx, args)
 
             elif len(args) == 3 and args[1].lower() == "role" and args[2].lower() in self.roles:
-                await self.management_guild_show_field_role(ctx, args)
-
-            else:
-                await process_msg_reaction_add(ctx.message, "❌")
-
-        elif args[0].lower() in ["stats"]:
-
-            if len(args) >= 1:
-                await self.management_guild_show_stats(ctx)
+                await self.admin_manage_guild_show_field_role(ctx, args)
 
             else:
                 await process_msg_reaction_add(ctx.message, "❌")
@@ -530,29 +463,23 @@ class Admin(commands.Cog):
         else:
             await process_msg_reaction_add(ctx.message, "❌")
 
-    async def management_guild_update_feats(self, ctx):
+    async def admin_manage_guild_update_feats(self, ctx, user):
 
-        embed = discord.Embed(
-            colour=colour,
-            title="opening the environment for batch updating of `inactives`.."
-        )
-
+        embed = discord.Embed(colour=colour, title="initializing batch updating of feats..")
         msg = await process_msg_submit(ctx.channel, None, embed)
         await asyncio.sleep(3)
 
         embed = discord.Embed(
-            colour=colour,
-            title="enter stop/skip to exit the environment or skip a member, respectively.."
+            colour=user.colour,
+            title="enter `stop`/`skip` to exit the update or skip a member, respectively.."
         )
         await process_msg_edit(msg, None, embed)
         await asyncio.sleep(3)
 
         embed = discord.Embed(
-            color=ctx.author.colour,
-            title="Performing initial calculations ...",
-            description="iterating first..."
+            color=user.colour, title="Performing initial calculations..",
+            description="iterating through the list..."
         )
-
         msg = await process_msg_submit(ctx.channel, "Enter the total feats for: ", embed)
 
         def check(m):
@@ -570,15 +497,14 @@ class Admin(commands.Cog):
                     raise KeyError
             return m.author == ctx.message.author and m.channel == ctx.channel
 
-        find_query = {"role": {"$in": ["officer", "member", "leader"]}}
-        project = {
-            "_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "total_feats": 1, "weekly_gq": 1, "status_update": 1
-        }
+        for member in members.find({
+            "role": {"$in": ["officer", "member", "leader"]}
+        }, {
+            "_id": 0, "name_lower": 0, "notes": 0
+        }).sort([("total_feats", 1)]):
 
-        for member in members.find(find_query, project).sort([("total_feats", 1)]):
             embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
+                color=ctx.author.colour, title=f"#{member['#']} : {member['name']} | 🎀 {member['role']}"
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(
@@ -599,7 +525,7 @@ class Admin(commands.Cog):
                 except IndexError:
                     break
                 except TypeError:
-                    embed = discord.Embed(colour=colour, title="Exiting environment..")
+                    embed = discord.Embed(colour=colour, title="Exiting..")
                     msg = await process_msg_submit(ctx.channel, None, embed)
                     await process_msg_reaction_add(msg, "✅")
                     i = "cancel"
@@ -608,10 +534,10 @@ class Admin(commands.Cog):
                     embed = discord.Embed(colour=colour, title="Invalid input")
                     msg = await process_msg_submit(ctx.channel, None, embed)
                     await asyncio.sleep(2)
-                    await msg.delete()
+                    await process_msg_delete(msg, 0)
                     i = 0
                 except asyncio.TimeoutError:
-                    embed = discord.Embed(colour=colour, title="Timeout! Exiting...")
+                    embed = discord.Embed(colour=colour, title="Timeout! Exiting..")
                     msg = await process_msg_submit(ctx.channel, None, embed)
                     await asyncio.sleep(1)
                     await process_msg_reaction_add(msg, "✅")
@@ -629,25 +555,29 @@ class Admin(commands.Cog):
             else:
                 continue
 
-    async def management_guild_update_field(self, ctx, args):
+    async def admin_manage_guild_update_field(self, ctx, args):
+
         try:
             reference_id = int(args[1])
-            find_query = {"#": reference_id}
-            name = "kyrvscyl"
-
         except ValueError:
             find_query = {"name_lower": args[1].lower()}
             reference_id = 1
             name = args[1].lower()
+        else:
+            find_query = {"#": reference_id}
+            name = "kyrvscyl"
 
         if members.find_one({"name_lower": name}) is None or members.find_one({"#": reference_id}) is None:
-            await self.management_guild_show_approximate(ctx, args[1])
+            await self.admin_manage_guild_show_approximate(ctx, args[1])
 
-        elif args[2].lower() == "status" and args[3].lower() in self.member_status:
+        elif args[2].lower() in ["status"] and args[3].lower() in self.member_status:
             update = {"status": args[3].lower(), "status_update": get_time()}
 
             if args[3].lower() in ["active", "inactive", "semi-active"]:
-                update.update({"weekly_gq": self.get_guild_quest_converted(args[3].lower()), "role": "member"})
+                def get_status_code(key):
+                    return self.status_code[str(key)]
+
+                update.update({"weekly_gq": get_status_code(args[3].lower()), "role": "member"})
 
             if args[3].lower() in ["away", "left", "kicked"]:
                 update.update({"role": "ex-member"})
@@ -667,38 +597,45 @@ class Admin(commands.Cog):
             })
             await process_msg_reaction_add(ctx.message, "✅")
 
-        elif args[2].lower() == "name":
+        elif args[2].lower() in ["name"]:
             members.update_one(find_query, {"$set": {"name": args[3], "name_lower": args[3].lower()}})
             await process_msg_reaction_add(ctx.message, "✅")
 
-        elif args[2].lower() == "role" and args[3].lower() in self.roles:
+        elif args[2].lower() in ["role"] and args[3].lower() in self.roles:
             members.update_one(find_query, {"$set": {"role": args[3].lower()}})
             await process_msg_reaction_add(ctx.message, "✅")
 
             embed = discord.Embed(
-                colour=colour,
-                title="Role updating notice",
+                colour=colour, title="Role updating notice",
                 description="changes in roles may require to adjust their statuses as well"
             )
             msg = await process_msg_submit(ctx.channel, None, embed)
-            await msg.delete(delay=7)
+            await process_msg_delete(msg, 7)
 
-        elif args[2].lower() == "tfeat":
+        elif args[2].lower() in ["tfeat"]:
+
             try:
                 total_feat_new = int(args[3])
+            except ValueError:
+                await process_msg_reaction_add(ctx.message, "❌")
+            else:
                 members.update_one(find_query, {"$set": {"total_feats": total_feat_new}})
                 await process_msg_reaction_add(ctx.message, "✅")
 
-            except ValueError:
-                await process_msg_reaction_add(ctx.message, "❌")
+        elif args[2].lower() in ["gq"]:
 
-        elif args[2].lower() == "gq":
             try:
                 value = int(args[3])
+            except ValueError:
+                await process_msg_reaction_add(ctx.message, "❌")
+            else:
+                def get_code_status(key):
+                    return self.code_status[str(key)]
+
                 if value in [30, 60, 90]:
                     members.update_one(find_query, {
                         "$set": dict(
-                            status=self.get_status(value),
+                            status=get_code_status(value),
                             status_update=get_time(),
                             weekly_gq=value
                         )
@@ -706,16 +643,13 @@ class Admin(commands.Cog):
                 else:
                     await process_msg_reaction_add(ctx.message, "❌")
 
-            except ValueError:
-                await process_msg_reaction_add(ctx.message, "❌")
-
         else:
             await process_msg_reaction_add(ctx.message, "❌")
 
-    async def management_guild_update_performance(self, ctx, status, weekly_gq):
+    async def admin_manage_guild_update_performance(self, ctx, status, weekly_gq, user):
 
         embed = discord.Embed(
-            color=ctx.author.colour,
+            color=ctx.author.colour, title="Batch updating",
             description=f"enter the ID/names of the {status} members separated by spaces"
         )
         embed.add_field(name="Example", value="*`kyrvsycl xann happybunny shaly, 5, 7, 172`*")
@@ -729,31 +663,34 @@ class Admin(commands.Cog):
                 submitted_list = await self.client.wait_for("message", timeout=360, check=check)
             except asyncio.TimeoutError:
                 embed = discord.Embed(
-                    colour=colour, title="Batch update cancelled",
-                    description=f"the submission time lapsed"
+                    colour=colour, title="Batch updating cancelled", description=f"the submission time lapsed"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
                 return
             else:
                 accepted, not_accepted, already_inactive = [], [], []
+
                 for member in submitted_list.content.split(" "):
+
                     try:
                         search = int(member)
-                        find_query = {"#": search}
                     except ValueError:
                         search = member.lower()
                         find_query = {"name_lower": search}
+                    else:
+                        find_query = {"#": search}
 
                     if members.find_one(find_query) is not None:
-                        profile = members.find_one(find_query, {"_id": 0, "name": 1, "status": 1})
-                        if profile["status"] == status:
-                            already_inactive.append(profile["name"])
+                        query = members.find_one(find_query, {"_id": 0, "name": 1, "status": 1})
+
+                        if query["status"] == status:
+                            already_inactive.append(query["name"])
                         else:
-                            accepted.append(profile["name"])
+                            accepted.append(query["name"])
                     else:
                         not_accepted.append(member)
 
-        values = [already_inactive, accepted, not_accepted, ]
+        values = [already_inactive, accepted, not_accepted]
         values_formatted = []
 
         for value in values:
@@ -769,18 +706,15 @@ class Admin(commands.Cog):
         )
         embed.add_field(
             name=f"{len(not_accepted)} already inactive {pluralize('member', len(not_accepted))}",
-            value=values_formatted[0],
-            inline=False
+            value=values_formatted[0], inline=False
         )
         embed.add_field(
             name=f"{len(accepted)} new inactive {pluralize('member', len(accepted))}",
-            value=values_formatted[1],
-            inline=False
+            value=values_formatted[1], inline=False
         )
         embed.add_field(
             name=f"{len(not_accepted)} invalid {pluralize('member', len(not_accepted))}",
-            value=values_formatted[2],
-            inline=False
+            value=values_formatted[2], inline=False
         )
         msg = await process_msg_submit(ctx.channel, None, embed)
         await process_msg_reaction_add(msg, "✅")
@@ -792,11 +726,10 @@ class Admin(commands.Cog):
             await self.client.wait_for("reaction_add", timeout=timeout, check=check)
         except asyncio.TimeoutError:
             embed = discord.Embed(
-                colour=colour,
-                description=f"there was no confirmation received",
-                title="Batch update cancelled",
-                timestamp=get_timestamp()
+                colour=user.colour, description=f"there was no confirmation received",
+                title="Batch update cancelled", timestamp=get_timestamp()
             )
+            embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
             await process_msg_submit(ctx.channel, None, embed)
         else:
             async with ctx.channel.typing():
@@ -811,113 +744,88 @@ class Admin(commands.Cog):
                     })
 
                 embed = discord.Embed(
-                    colour=ctx.author.colour,
-                    title=f"{status.capitalize()} list batch update successful",
-                    description=", ".join(accepted),
-                    timestamp=get_timestamp()
+                    colour=user.colour, title=f"{status.capitalize()} list batch update successful",
+                    description=", ".join(accepted), timestamp=get_timestamp()
                 )
                 embed.set_footer(text=f"{len(accepted)} inactive {pluralize('member', len(accepted))}")
                 await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_guild_show_field_status(self, ctx, args):
+    async def admin_manage_guild_show_field_status(self, ctx, args):
 
-        formatted_list = []
+        listings_formatted = []
         find_query = {"status": args[2]}
         project = {"_id": 0, "name": 1, "status_update": 1, "#": 1}
 
         for member in members.find(find_query, project).sort([("status_update", 1)]):
             number = lengthen_code_3(member["#"])
             status_update_formatted = member["status_update"].strftime("%d.%b %y")
-            formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
+            listings_formatted.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
-        noun = pluralize("result", len(formatted_list))
-        content = f"I've got {len(formatted_list)} {noun} for members with status {args[2].lower()}"
-        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+        noun = pluralize("result", len(listings_formatted))
+        content = f"I've got {len(listings_formatted)} {noun} for members with status {args[2].lower()}"
+        await self.admin_manage_guild_paginate_embeds(ctx, listings_formatted, content)
 
-    async def management_guild_show_current_members(self, ctx):
+    async def admin_manage_guild_show_current_members(self, ctx):
 
         formatted_list = []
         find_query = {"role": {"$in": ["officer", "member", "leader", "trader"]}}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort([("total_feats", -1)]):
-            role = self.shorten_code(member["role"])
-            status = self.shorten_code(member["status"])
+            role = self.get_shortened_code(member["role"])
+            status = self.get_shortened_code(member["status"])
             number = lengthen_code_3(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("member", len(formatted_list))
         content = f"There are {len(formatted_list)} {noun} currently in the guild"
-        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+        await self.admin_manage_guild_paginate_embeds(ctx, formatted_list, content)
 
-    async def management_guild_show_startswith(self, ctx, args):
+    async def admin_manage_guild_show_startswith(self, ctx, args):
 
         formatted_list = []
         find_query = {"name_lower": {"$regex": f"^{args[2].lower()}"}}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort([("name_lower", 1)]):
-            role = self.shorten_code(member["role"])
-            status = self.shorten_code(member["status"])
+            role = self.get_shortened_code(member["role"])
+            status = self.get_shortened_code(member["status"])
             number = lengthen_code_3(member["#"])
             formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
 
         noun = pluralize("result", len(formatted_list))
         content = f"I've got {len(formatted_list)} {noun} for names starting with __{args[2].lower()}__"
-        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+        await self.admin_manage_guild_paginate_embeds(ctx, formatted_list, content)
 
-    async def management_guild_show_stats(self, ctx):
+    async def admin_manage_guild_show_stats(self, ctx):
 
-        guild_members_all = members.count({
-            "role": {
-                "$in": ["officer", "member", "leader", "trader"]}
-        })
-        guild_members_actv = members.count({
-            "role": {
-                "$in": ["officer", "member", "leader", "trader"]},
-            "status": "active"
-        })
-        guild_members_inac = members.count({
-            "role": {
-                "$in": ["officer", "member", "leader", "trader"]},
-            "status": "inactive"
-        })
-        guild_members_onlv = members.count({
-            "role": {
-                "$in": ["officer", "member", "leader", "trader"]},
-            "status": "on-leave"
-        })
-        guild_members_smac = members.count({
-            "role": {
-                "$in": ["officer", "member", "leader", "trader"]},
-            "status": "semi-active"
-        })
-        guild_members_away = members.count({
-            "role": "ex-member", "status": "away"
-        })
-        guild_applicants = members.count({
-            "role": "applicant"
-        })
-        guild_blacklists = members.count({
-            "role": "blacklist"
-        })
-        guild_traders = members.count({
-            "role": "trader"
-        })
+        query_in_guild = {"$in": ["officer", "member", "leader", "trader"]}
+
+        members_all = members.count_documents({"role": query_in_guild})
+
+        members_actv = members.count_documents({"role": query_in_guild, "status": "active"})
+        members_inac = members.count_documents({"role": query_in_guild, "status": "inactive"})
+        members_onlv = members.count_documents({"role": query_in_guild, "status": "on-leave"})
+        members_smac = members.count_documents({"role": query_in_guild, "status": "semi-active"})
+        members_away = members.count_documents({"role": "ex-member", "status": "away"})
+
+        users_apl = members.count_documents({"role": "applicant"})
+        users_blk = members.count_documents({"role": "blacklist"})
+        users_trd = members.count_documents({"role": "trader"})
 
         description = \
             f"```" \
-            f"• Total Accounts    :: {members.count():,d}\n" \
-            f"• Guild Occupancy   :: {guild_members_all:,d}/170\n" \
-            f"  • Traders         :: {guild_traders:,d}\n" \
-            f"  • Active          :: {guild_members_actv:,d}\n" \
-            f"  • Semi-active     :: {guild_members_smac:,d}\n" \
-            f"  • Inactive        :: {guild_members_inac:,d}\n" \
-            f"  • On-leave        :: {guild_members_onlv:,d}\n" \
-            f"  • Away            :: {guild_members_away:,d}\n" \
-            f"  • ~ GQ/week       :: {guild_members_actv * 90 + guild_members_smac * 30:,d}\n" \
-            f"• Applicants        :: {guild_applicants:,d}\n" \
-            f"• Blacklisted       :: {guild_blacklists:,d}" \
+            f"• Total Accounts    :: {members.count_documents({}):,d}\n" \
+            f"• Guild Occupancy   :: {members_all:,d}/170\n" \
+            f"  • Traders         :: {users_trd:,d}\n" \
+            f"  • Active          :: {members_actv:,d}\n" \
+            f"  • Semi-active     :: {members_smac:,d}\n" \
+            f"  • Inactive        :: {members_inac:,d}\n" \
+            f"  • On-leave        :: {members_onlv:,d}\n" \
+            f"  • Away            :: {members_away:,d}\n" \
+            f"  • ~ GQ/week       :: {members_actv * 90 + members_smac * 30:,d}\n" \
+            f"• Applicants        :: {users_apl:,d}\n" \
+            f"• Blacklisted       :: {users_blk:,d}" \
             f"```"
 
         embed = discord.Embed(
@@ -927,60 +835,65 @@ class Admin(commands.Cog):
         embed.set_thumbnail(url=ctx.guild.icon_url)
         await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_guild_show_all(self, ctx, sort):
+    async def admin_manage_guild_show_all(self, ctx, sort):
 
-        formatted_list = []
+        listings_formatted = []
         find_query = {}
         project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
 
         for member in members.find(find_query, project).sort(sort):
-            role = self.shorten_code(member["role"])
-            status = self.shorten_code(member["status"])
+            role = self.get_shortened_code(member["role"])
+            status = self.get_shortened_code(member["status"])
             number = lengthen_code_3(member["#"])
             name = member['name']
-            formatted_list.append(f"`{number}: {role}` | `{status}` | {name} \n")
+            listings_formatted.append(f"`{number}: {role}` | `{status}` | {name} \n")
 
-        noun = pluralize("account", len(formatted_list))
-        content = f"There are {len(formatted_list)} registered {noun}"
-        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+        noun = pluralize("account", len(listings_formatted))
+        content = f"There are {len(listings_formatted)} registered {noun}"
+        await self.admin_manage_guild_paginate_embeds(ctx, listings_formatted, content)
 
-    async def management_guild_show_field_role(self, ctx, args):
+    async def admin_manage_guild_show_field_role(self, ctx, args):
 
-        formatted_list = []
+        listings_formatted = []
         filter_query = {"role": args[2]}
         project = {"_id": 0, "name": 1, "status_update": 1, "#": 1, "role": 1}
 
         for member in members.find(filter_query, project).sort([("status_update", 1)]):
             number = lengthen_code_3(member["#"])
             status_update_formatted = member["status_update"].strftime("%d.%b %y")
-            formatted_list.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
+            listings_formatted.append(f"`{number}: {status_update_formatted}` | {member['name']}\n")
 
-        noun = pluralize("result", len(formatted_list))
-        content = f"I've got {len(formatted_list)} {noun} for members with role {args[2].lower()}"
-        await self.management_guild_paginate_embeds(ctx, formatted_list, content)
+        noun = pluralize("result", len(listings_formatted))
+        content = f"I've got {len(listings_formatted)} {noun} for members with role {args[2].lower()}"
+        await self.admin_manage_guild_paginate_embeds(ctx, listings_formatted, content)
 
-    async def management_guild_show_profile(self, ctx, args):
+    async def admin_manage_guild_show_profile(self, ctx, args):
+
         try:
             name_id = int(args[1])
-            member = members.find_one({"#": name_id}, {"_id": 0})
-
         except ValueError:
             member = members.find_one({"name_lower": args[1].lower()}, {"_id": 0})
+        else:
+            member = members.find_one({"#": name_id}, {"_id": 0})
 
-        try:
+        if member is None:
+            await self.admin_manage_guild_show_approximate(ctx, args[1])
+        else:
+            code, name, role = member['#'], member['name'], member['role']
+            status = member["status"]
+            status_update = member['status_update']
+
             def get_emoji_role(x):
                 return self.roles_emoji[x]
 
+            role_emoji = get_emoji_role(member['role'])
+
             embed = discord.Embed(
-                color=ctx.author.colour,
-                title=f"#{member['#']} : {member['name']} | {get_emoji_role(member['role'])} {member['role'].title()}",
-                timestamp=get_timestamp()
+                color=ctx.author.colour, timestamp=get_timestamp(),
+                title=f"#{code} : {name} | {role_emoji} {role.title()}",
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
-            embed.add_field(
-                name="⛳ Status",
-                value=f"{member['status'].title()} [{member['status_update'].strftime('%d.%b %y')}]"
-            )
+            embed.add_field(name="⛳ Status", value=f"{status.title()} [{status_update.strftime('%d.%b %y')}]")
 
             if not member["notes"]:
                 embed.add_field(name="🗒 Notes", value="No notes yet.")
@@ -994,32 +907,26 @@ class Admin(commands.Cog):
                 embed.add_field(name="🗒 Notes", value=notes, inline=False)
             await process_msg_submit(ctx.channel, None, embed)
 
-        except TypeError:
-            await self.management_guild_show_approximate(ctx, args[1])
+    async def admin_manage_guild_show_approximate(self, ctx, member_name):
 
-    async def management_guild_show_approximate(self, ctx, query):
-        members_search = members.find({"name_lower": {"$regex": f"^{query[:2].lower()}"}}, {"_id": 0})
+        members_search = members.find({"name_lower": {"$regex": f"^{member_name[:2].lower()}"}}, {"_id": 0})
 
-        approximate_results = []
+        results_approximate = []
         for result in members_search:
-            approximate_results.append(f"{result['#']}/{result['name']}")
+            results_approximate.append(f"{result['#']}/{result['name']}")
 
         embed = discord.Embed(
-            colour=colour,
-            title="Invalid query",
-            description=f"The ID/name `{query}` returned no results"
+            colour=colour, title="Invalid query",
+            description=f"The ID/name `{member_name}` returned no results"
         )
-        embed.add_field(
-            name="Possible matches",
-            value="*{}*".format(", ".join(approximate_results))
-        )
+        embed.add_field(name="Possible matches", value="*{}*".format(", ".join(results_approximate)))
         await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_guild_add_member(self, ctx, args):
-        if members.find_one({"name_lower": args[2].lower()}) is None:
+    async def admin_manage_guild_add_member(self, ctx, args):
 
-            profile = {
-                "#": members.count() + 1,
+        if members.find_one({"name_lower": args[2].lower()}) is None:
+            members.insert_one({
+                "#": members.count_documents({}) + 1,
                 "name": args[2],
                 "role": args[1].lower(),
                 "status": "active",
@@ -1028,8 +935,7 @@ class Admin(commands.Cog):
                 "total_feats": 0,
                 "weekly_gq": 30,
                 "status_update": get_time()
-            }
-            members.insert_one(profile)
+            })
             await process_msg_reaction_add(ctx.message, "✅")
 
         else:
@@ -1039,8 +945,10 @@ class Admin(commands.Cog):
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_guild_add_delete(self, ctx, args):
+    async def admin_manage_guild_add_delete(self, ctx, args):
+
         if members.find_one({"name": args[1]}) is not None:
+
             members.delete_one({"name": args[1]})
             await process_msg_reaction_add(ctx.message, "✅")
 
@@ -1051,13 +959,12 @@ class Admin(commands.Cog):
 
         else:
             embed = discord.Embed(
-                colour=colour,
-                title="Invalid user",
+                colour=colour, title="Invalid user",
                 descrption="Input the exact name including the letter cases"
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-    async def management_guild_paginate_embeds(self, ctx, list_formatted, caption):
+    async def admin_manage_guild_paginate_embeds(self, ctx, list_formatted, caption):
 
         page, lines_max = 1, 20
         page_total = ceil(len(list_formatted) / lines_max)
@@ -1065,27 +972,27 @@ class Admin(commands.Cog):
             page_total = 1
 
         def embed_new_create(page_new):
+
             end = page_new * lines_max
             start = end - lines_max
             description_new = "".join(list_formatted[start:end])
 
             embed_new = discord.Embed(
-                color=ctx.author.colour,
-                title="🔱 Guild Registry",
-                description=f"{description_new}",
-                timestamp=get_timestamp()
+                color=ctx.author.colour, title="🔱 Guild Registry",
+                description=f"{description_new}", timestamp=get_timestamp()
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             embed_new.set_thumbnail(url=ctx.guild.icon_url)
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, caption, embed_new_create(page))
+
         emoji_arrows = ["⬅", "➡"]
         for emoji in emoji_arrows:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emoji_arrows
 
         while True:
             try:

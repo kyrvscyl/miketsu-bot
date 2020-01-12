@@ -18,6 +18,30 @@ class Summon(commands.Cog):
 
         self.summon_captions = cycle(listings_1["summon_captions"])
 
+    async def perform_penalize_streak(self):
+
+        for streak in streaks.find({}, {"_id": 0}):
+            current_streak = streak["SSR_current"]
+            new_streak = int(current_streak * (3 / 4))
+
+            if new_streak > 1:
+                streaks.update_one({
+                    "user_id": streak["user_id"]}, {
+                    "$set": {
+                        "SSR_current": new_streak,
+                        "SSR_record": new_streak
+                    }
+                })
+
+            else:
+                streaks.update_one({
+                    "user_id": streak["user_id"]}, {
+                    "$set": {
+                        "SSR_current": 0,
+                        "SSR_record": 0
+                    }
+                })
+
     @commands.command(aliases=["summon", "s"])
     @commands.guild_only()
     async def summon_perform(self, ctx, *, shikigami_name=None):

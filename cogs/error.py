@@ -21,29 +21,76 @@ class Error(commands.Cog):
             "cogs_extension_reload",
             "cogs_extension_shutdown",
             "cogs_extension_unload",
-            "compensate_economy_items",
-            "compensate_increase_level",
-            "compensate_increase_shikigami_level",
-            "compensate_push_shikigami_manually",
+            "development_perform_reset",
+            "development_shikigami_add",
+            "development_compensate_items",
+            "development_compensate_increase_level_user",
+            "development_compensate_increase_level_shikigami",
+            "development_compensate_push_shikigami",
+            "development_manual_achievements_process_daily",
+            "development_manual_achievements_process_hourly",
+            "development_manual_frame_automate",
             "edit_message_quest_selection",
             "edit_special_roles",
-            "manual_process_achievements_daily",
-            "manual_process_achievements_hourly",
-            "manual_process_frames_daily",
             "post_message_quest1",
             "post_sorting_messages",
             "realm_card_add",
+            "development_perform_reset",
+            "edit_message_welcome",
+            "post_sorting_messages"
+        ]
+
+        self.functions_admin = [
+            "admin_post_patch_notes",
+            "admin_post_memorandum",
+            "admin_post_message_textchannel",
+            "admin_post_message_user",
+            "admin_purge_messages",
+            "admin_manage_guild",
+            "clock_start_manual"
+        ]
+
+        self.functions_guild_only = [
+            "admin_post_patch_notes",
+            "admin_post_memorandum",
+            "admin_post_message_textchannel",
+            "admin_post_message_user",
+            "admin_purge_messages",
+            "admin_manage_guild"
+            "castle_portrait_show_all",
+            "castle_portraits_wander",
+            "castle_portraits_customize",
+            "castle_duel",
+            "economy_sushi_bento",
+            "economy_sushi_bento_serve",
+            "economy_wish_perform",
+            "economy_wish_show_list",
+            "economy_wish_fulfill",
+            "economy_stat_shikigami",
+            "economy_perform_parade",
+            "economy_pray_use",
+            "economy_claim_rewards_daily",
+            "economy_claim_rewards_weekly",
+            "economy_profile_show",
+            "economy_shop_buy_items_show_all",
+            "economy_shop_buy_items",
+            "economy_logs_show"
+        ]
+
+        self.functions_with_cooldown = [
+            "economy_sushi_bento_serve",
+            "economy_perform_parade",
+            "economy_pray_use"
+        ]
+
+        self.functions_development = [
+            "development_shikigami_add"
         ]
 
         self.functions_ignore_check = [
-            "edit_special_roles"
-            "encounter_add_quiz",
-            "events_manipulate",
-            "management_guild",
-            "perform_reset",
-            "post_memorandum",
-            "post_message_user",
-            "purge_messages",
+            "castle_portraits_wander",
+            "economy_perform_parade",
+            "economy_pray_use"
         ]
     
     async def submit_error(self, ctx, error, exception):
@@ -155,21 +202,14 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "post_memorandum":
-                embed = discord.Embed(
-                    title="memo",
-                    colour=colour,
-                    description="submit an official paperwork memo"
-                )
+            elif str(ctx.command) == "admin_post_memorandum":
+
+                embed = discord.Embed(title="memo", colour=colour, description="submit a paperwork memorandum")
+                embed.add_field(name="Format", value=f"*`{self.prefix}memo <#channel>`*", inline=False)
                 embed.add_field(
-                    name="Format", value=f"*`{self.prefix}memo <#channel>`*",
-                    inline=False
-                )
-                embed.add_field(
-                    name="Notes",
+                    name="Notes", inline=False,
                     value=f"follow the step by step procedure\n"
-                          f"enter any non-image link text to remove the memorandum's embedded image",
-                    inline=False
+                          f"enter any non-image link text to remove the memorandum's embed image"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -207,7 +247,7 @@ class Error(commands.Cog):
                 await process_msg_submit(ctx.channel, None, embed)
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
-            elif str(ctx.command) == "stat_shikigami":
+            elif str(ctx.command) == "economy_stat_shikigami":
                 embed = discord.Embed(
                     title="stats",
                     colour=colour,
@@ -349,9 +389,9 @@ class Error(commands.Cog):
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
-                "bounty_query",
-                "bounty_add_location",
-                "bounty_add_alias"
+                "economy_bounty_query",
+                "economy_bounty_add_location",
+                "economy_bounty_add_alias"
             ]:
                 embed = discord.Embed(
                     title="bounty, b",
@@ -369,21 +409,7 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "castle_portrait_customize":
-                embed = discord.Embed(
-                    title="portrait, portraits", colour=colour,
-                    description=f"customize your own guild portrait\n"
-                                f"appears in the castle's floors via `{self.prefix}wander`"
-                )
-                embed.add_field(
-                    name="Example",
-                    value=f"*`;portraits`*\n"
-                          f"*`{self.prefix}portrait <edit/add>`*",
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) == "post_memorandum":
+            elif str(ctx.command) == "admin_post_memorandum":
                 embed = discord.Embed(
                     title="announce", colour=colour,
                     description="sends an embed message\n"
@@ -401,7 +427,7 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "post_message_channel":
+            elif str(ctx.command) == "admin_post_message_textchannel":
                 embed = discord.Embed(
                     colour=colour,
                     title="say",
@@ -410,7 +436,7 @@ class Error(commands.Cog):
                 embed.add_field(name="Format", value=f"*`{self.prefix}say <#channel or channel_id> <any message>`*")
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "post_message_user":
+            elif str(ctx.command) == "admin_post_message_user":
                 embed = discord.Embed(
                     colour=colour,
                     title="dm",
@@ -431,10 +457,10 @@ class Error(commands.Cog):
                 embed.add_field(name="Example", value=f"*`{self.prefix}cycle 1`*")
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "post_book_reference":
+            elif str(ctx.command) == "castle_post_guides_book_open":
                 await process_msg_reaction_add(ctx.message, "❌")
 
-            elif str(ctx.command) in ["post_patch_notes"]:
+            elif str(ctx.command) in ["admin_post_patch_notes"]:
                 await process_msg_reaction_add(ctx.message, "❌")
 
             else:
@@ -443,18 +469,18 @@ class Error(commands.Cog):
         elif isinstance(error, commands.UserInputError):
 
             if str(ctx.command) in [
-                "wish_grant",
+                "economy_wish_fulfill",
                 "friendship_change_name",
                 "friendship_check_sail"
             ]:
                 return
 
-            elif str(ctx.command) in ["post_memorandum "]:
-                embed = discord.Embed(
-                    colour=colour,
-                    title="Invalid input",
-                    description="tag a valid channel"
-                )
+            # Invalid channel
+            elif str(ctx.command) in [
+                "admin_post_memorandum",
+                "admin_post_message_textchannel"
+            ]:
+                embed = discord.Embed(colour=colour, title="Invalid channel", description="tag a valid channel")
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif isinstance(error, commands.BadArgument):
@@ -462,13 +488,13 @@ class Error(commands.Cog):
                 if str(ctx.command) in [
                     "raid_perform",
                     "raid_perform_calculation",
-                    "profile_show",
+                    "economy_profile_show",
                     "friendship_give",
-                    "wish_grant",
+                    "economy_wish_fulfill",
                     "friendship_change_name",
                     "friendship_ship",
                     "shikigami_list_show_collected",
-                    "logs_show",
+                    "economy_logs_show",
                     "perform_exploration_check_clears",
                     "friendship_check_sail",
                     "shikigami_show_post_shikis",
@@ -488,10 +514,10 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CheckFailure):
 
-            if str(ctx.command) in self.functions_is_owner:
+            if str(ctx.command) in self.functions_is_owner or str(ctx.command) in self.functions_ignore_check:
                 return
 
-            elif str(ctx.command) == "pray_use":
+            elif str(ctx.command) == "economy_pray_use":
                 embed = discord.Embed(
                     colour=colour,
                     title=f"Insufficient prayers",
@@ -507,7 +533,7 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "perform_parade":
+            elif str(ctx.command) == "economy_perform_parade":
                 embed = discord.Embed(
                     title="Insufficient parade tickets", colour=colour,
                     description=f"{ctx.author.mention}, claim your dailies to acquire tickets"
@@ -522,14 +548,14 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "post_message_user":
+            elif str(ctx.command) == "admin_post_message_user":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
                     description=f"Missing required roles"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "castle_wander":
+            elif str(ctx.command) == "castle_portraits_wander":
                 embed = discord.Embed(
                     title="wander, w",
                     colour=colour,
@@ -575,15 +601,15 @@ class Error(commands.Cog):
                 "encounter_search",
                 "summon_perform_mystery",
                 "friendship_give",
-                "perform_parade",
-                "pray_use",
+                "economy_perform_parade",
+                "economy_pray_use",
                 "perform_exploration",
                 "summon_perform_broken",
                 "shikigami_shrine"
             ]:
                 return
 
-            if str(ctx.command) == "sushi_bento_serve":
+            if str(ctx.command) == "economy_sushi_bento_serve":
 
                 role = guilds.find_one({"server": str(id_guild)}, {
                     "_id": 0, "roles.sushchefs": 1
@@ -618,23 +644,16 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CommandInvokeError):
 
-            if str(ctx.command) == "post_message_channel":
+            if str(ctx.command) == ["admin_post_message_user"]:
                 embed = discord.Embed(
-                    title="Invalid syntax", colour=colour,
-                    description="Provide a valid channel"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) == "post_message_user":
-                embed = discord.Embed(
-                    title="Invalid syntax", colour=colour,
+                    title="Invalid member", colour=colour,
                     description="Provide a valid member ID or tag them"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif str(ctx.command) in [
-                "perform_parade",
-                "sushi_bento_serve",
+                "economy_perform_parade",
+                "economy_sushi_bento_serve",
                 "raid_perform"
             ]:
                 return
