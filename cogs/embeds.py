@@ -251,7 +251,7 @@ class Embeds(commands.Cog):
         await msg_events.edit(embed=embed5)
         await msg_banner.edit(embed=embed6)
         await msg_invite.edit(content="Our invite link: https://discord.gg/H6N8AHB")
-        await ctx.message.delete()
+        await process_msg_delete(ctx.message, 0)
         await process_msg_delete(ctx.message, 0)
 
 

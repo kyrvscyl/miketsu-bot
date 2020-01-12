@@ -176,32 +176,6 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "raid_perform_calculation":
-                embed = discord.Embed(
-                    title="raidcalc, raidc, rc", colour=colour,
-                    description="calculates your odds of winning"
-                )
-                embed.add_field(
-                    name="Mechanics",
-                    value="```"
-                          "Base Chance :: + 50 %\n"
-                          "Δ Level     :: ± 15 %\n"
-                          "Δ Medal     :: ± 15 %\n"
-                          "Δ SP        :: ±  9 %\n"
-                          "Δ SSR       :: ±  7 %\n"
-                          "Δ SR        :: ±  3 %\n"
-                          "Δ R         :: ±  1 %\n"
-                          "```",
-                    inline=False
-                )
-                embed.add_field(
-                    name="Formats",
-                    value=f"*`{self.prefix}raidc @member`*\n"
-                          f"*`{self.prefix}rc <name#discriminator>`*",
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
             elif str(ctx.command) == "admin_post_memorandum":
 
                 embed = discord.Embed(title="memo", colour=colour, description="submit a paperwork memorandum")
@@ -274,49 +248,6 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "shikigami_shrine":
-                embed = discord.Embed(
-                    title="shrine", colour=colour,
-                    description="exchange your shikigamis for talismans to acquire exclusive shikigamis"
-                )
-                embed.add_field(
-                    name="Arguments",
-                    value=f"*sacrifice, exchange*",
-                    inline=False
-                )
-                embed.add_field(
-                    name="Example",
-                    value=f"*`{self.prefix}shrine exchange`*",
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) == "leaderboard_show":
-                embed = discord.Embed(
-                    title="leaderboard, lb", colour=colour,
-                    description="shows various leaderboards"
-                )
-                embed.add_field(
-                    name="Arguments",
-                    value=f"*SP, SSR, SR, SSN, level, medals, amulets, friendship, ships, streak, frames*",
-                    inline=False
-                )
-                embed.add_field(name="Example", value=f"*`{self.prefix}leaderboard friendship`*", inline=False)
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) in [
-                "shikigami_image_show_collected"
-            ]:
-                embed = discord.Embed(
-                    title="collection, col", colour=colour,
-                    description="shows your or tagged member's shikigami pulls by rarity without the count"
-                )
-                embed.add_field(
-                    name="Format", inline=False,
-                    value=f"*`{self.prefix}collection <rarity> <optional: @member>`*"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
             elif str(ctx.command) in [
                 "shikigami_show_post_shiki"
             ]:
@@ -327,85 +258,6 @@ class Error(commands.Cog):
                 embed.add_field(
                     name="Format", inline=False,
                     value=f"*`{self.prefix}shiki <shikigami>`*"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) in [
-                "shikigami_show_post_shikis"
-            ]:
-                embed = discord.Embed(
-                    title="shikigamis, shikis", colour=colour,
-                    description="shows your or tagged member's shikigami pulls by rarity"
-                )
-                embed.add_field(
-                    name="Format", inline=False,
-                    value=f"*`{self.prefix}shikis <rarity> <optional: @member>`*"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) in ["shikigami_show_post_shards"]:
-                embed = discord.Embed(
-                    title="shards", colour=colour,
-                    description="shows your or tagged member's shikigami shards count by rarity"
-                )
-                embed.add_field(
-                    name="Format", inline=False,
-                    value=f"*`{self.prefix}shards <rarity> <optional: @member>`*"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) == "profile_change_shikigami":
-                embed = discord.Embed(
-                    title="display", colour=colour,
-                    description="changes your profile display thumbnail"
-                )
-                embed.add_field(name="Example", value=f"*`{self.prefix}set inferno ibaraki`*", inline=False)
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) == "summon_perform_mystery":
-                embed = discord.Embed(
-                    title="summon, s", colour=colour,
-                    description="simulates summon and collect shikigamis"
-                )
-                embed.add_field(
-                    name="Shard Requirement",
-                    value=f"```"
-                          "SP    ::   15\n"
-                          "SSR   ::   12\n"
-                          "SR    ::    9\n"
-                          "R     ::    6\n"
-                          "N     ::    3\n"
-                          "SSN   ::   12\n"
-                          "```",
-                    inline=False
-                )
-                embed.add_field(
-                    name="Formats",
-                    value=f"*`{self.prefix}summon <shikigami>`*\n"
-                          f"*`{self.prefix}sb`*\n"
-                          f"*`{self.prefix}sm <1 or 10>`*\n",
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif str(ctx.command) in [
-                "economy_bounty_query",
-                "economy_bounty_add_location",
-                "economy_bounty_add_alias"
-            ]:
-                embed = discord.Embed(
-                    title="bounty, b",
-                    colour=colour,
-                    description="search shikigami bounty locations or modify them"
-                )
-                embed.add_field(
-                    name="Format",
-                    value=f"*"
-                          f"`{self.prefix}bounty <shikigami>`\n"
-                          f"`{self.prefix}baa <shikigami_name> <new alias/keyword>`\n"
-                          f"`{self.prefix}bal <shikigami_name> <new location>`"
-                          f"*",
-                    inline=False
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 

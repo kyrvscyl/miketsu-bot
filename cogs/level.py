@@ -2,14 +2,10 @@
 Level Module
 Miketsu, 2020
 """
+
 from discord.ext import commands
 
 from cogs.ext.initialize import *
-
-# Collections
-users = get_collections("users")
-config = get_collections("config")
-
 
 
 class Level(commands.Cog):
@@ -18,20 +14,19 @@ class Level(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-    async def level_add_experience(self, user, exp):
+    async def level_add_experience(self, user, experience):
 
         if users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})["level"] == 60:
             return
         else:
-            users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": exp}})
+            users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": experience}})
 
     async def level_add_level(self, user, ctx):
 
-        profile = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
+        query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
 
-        exp = profile["experience"]
-        level = profile["level"]
-        level_end = int(exp ** 0.3556302501)
+        experience, level = query["experience"], query["level"]
+        level_end = int(experience ** 0.3556302501)
 
         if level > level_end:
             users.update_one({"user_id": str(user.id)}, {"$set": {"level": level_end}})
@@ -75,15 +70,12 @@ class Level(commands.Cog):
                 await perform_add_log("amulets", amulets, user.id)
                 await perform_add_log("coins", coins, user.id)
 
-            try:
-                await ctx.add_reaction(e_x)
-            except discord.errors.HTTPException:
-                pass
+            await process_msg_reaction_add(ctx.message, e_x)
 
     async def level_create_user(self, user):
 
         if users.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-            profile = {
+            users.insert_one({
                 "user_id": str(user.id),
                 "experience": 0,
                 "level": 1,
@@ -128,13 +120,12 @@ class Level(commands.Cog):
                 "scales": 0,
                 "scales_rev": 0,
                 "souls_unlocked": 1
-            }
-            users.insert_one(profile)
+            })
 
     async def perform_add_log(self, currency, amount, user_id):
+
         if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-            profile = {"user_id": str(user_id), "logs": []}
-            logs.insert_one(profile)
+            logs.insert_one({"user_id": str(user_id), "logs": []})
 
         logs.update_one({
             "user_id": str(user_id)

@@ -5,7 +5,6 @@ Miketsu, 2020
 
 import asyncio
 from itertools import cycle
-from math import ceil
 
 from discord.ext import commands, tasks
 
@@ -28,15 +27,14 @@ class Startup(commands.Cog):
 
         print("Initializing...")
         print("-------")
-        print("Logged in as {}".format(self.client.user))
-        print("Hi! {}!".format(self.client.get_user(bot_info.owner.id)))
-        print("Time now: {}".format(time_now.strftime("%d.%b %Y %H:%M:%S")))
+        print(f"Logged in as {self.client.user}")
+        print(f"Hi! {self.client.get_user(bot_info.owner.id)}!")
+        print(f"Time now: {time_now.strftime('%d.%b %Y %H:%M:%S')}")
         print("-------")
         try:
             self.status_change.start()
         except RuntimeError:
-            if pb_status is True:
-                pb.push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~1")
+            push_note("Exception occurred", "Experienced a hiccup while changing my status ~1")
         print("-------")
 
     @tasks.loop(seconds=1200)
@@ -45,8 +43,7 @@ class Startup(commands.Cog):
         try:
             await self.client.change_presence(activity=discord.Game(next(self.statuses)))
         except RuntimeError:
-            if pb_status is True:
-                pb.push_note("Miketsu Bot", "Experienced a hiccup while changing my status ~2")
+            push_note("Exception occurred", "Experienced a hiccup while changing my status ~2")
 
     @commands.command(aliases=["info", "i"])
     async def help_info(self, ctx):
@@ -65,36 +62,30 @@ class Startup(commands.Cog):
     async def help_show(self, ctx):
 
         embed = discord.Embed(
-            title="help, h",
-            color=colour,
+            title="help, h", color=colour,
             description=f"append my command prefix symbol *`{self.prefix}`*"
         )
         embed.add_field(
-            name="fake Onmyoji",
+            name="fake Onmyoji", inline=False,
             value=f"*{', '.join(sorted(commands_fake))}*",
-            inline=False
         )
         embed.add_field(
-            name="Others / Utility",
+            name="Others / Utility", inline=False,
             value=f"*{', '.join(sorted(commands_others))}*",
-            inline=False
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
-        embed.set_footer(text="*Head commands, **#pvp-fair exclusive")
+        embed.set_footer(text="*Head commands, **#pvp-fair")
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["suggest", "report"])
     async def suggestions_collect(self, ctx, *, content):
 
         embed = discord.Embed(
-            color=colour,
+            color=colour, timestamp=get_timestamp(),
             title="📨 New Suggestion/Report",
-            timestamp=get_timestamp()
         )
         embed.add_field(
-            name="Content",
-            value=f"{content}",
-            inline=False
+            name="Content", inline=False, value=f"{content}",
         )
 
         try:
@@ -115,8 +106,6 @@ class Startup(commands.Cog):
     @commands.guild_only()
     async def changelog_show(self, ctx):
 
-        commands_others.append("changelogs")
-
         changelog_lines = changelogs.find_one({"logs": 1}, {"_id": 0, "details": 1})["details"][:200]
         changelog_lines_formatted = []
 
@@ -125,10 +114,10 @@ class Startup(commands.Cog):
 
         await self.changelog_show_paginate(ctx, changelog_lines_formatted)
 
-    async def changelog_show_paginate(self, ctx, formatted_list):
+    async def changelog_show_paginate(self, ctx, listings_formatted):
 
         page, max_lines = 1, 20
-        page_total = ceil(len(formatted_list) / max_lines)
+        page_total = ceil(len(listings_formatted) / max_lines)
 
         if page_total == 0:
             page_total = 1
@@ -136,19 +125,20 @@ class Startup(commands.Cog):
         def embed_new_create(page_new):
             end = page * max_lines
             start = end - max_lines
-            description = "".join(formatted_list[start:end])
+            description = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(color=colour, title="Bot changelogs", description=description)
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -157,9 +147,9 @@ class Startup(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
@@ -171,10 +161,13 @@ class Startup(commands.Cog):
 
     @commands.command(aliases=["changelog_add"])
     @commands.is_owner()
-    async def changelog_add_line(self, ctx, *, args):
+    async def changelog_add_line(self, ctx, *, args=None):
 
-        changelogs.update_one({"logs": 1}, {"$push": {"details": args}})
-        await process_msg_reaction_add(ctx.message, "✅")
+        if args is not None:
+            x = changelogs.update_one({"logs": 1}, {"$push": {"details": args}})
+
+            if x.modified_count != 0:
+                await process_msg_reaction_add(ctx.message, "✅")
 
 
 def setup(client):

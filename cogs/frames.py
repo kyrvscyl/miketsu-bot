@@ -4,7 +4,6 @@ Miketsu, 2020
 """
 
 import asyncio
-from math import ceil
 
 from PIL import Image
 from discord.ext import commands
@@ -203,9 +202,9 @@ class Frames(commands.Cog):
 
         address = f"temp/frames1.png"
         new_im.save(address)
-        new_photo = discord.File(address, filename=f"frames1.png")
+        image_file = discord.File(address, filename=f"frames1.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await hosting_channel.send(file=new_photo)
+        msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
 
         if len(frames_listings[start - 1:]) != 1:
@@ -336,9 +335,9 @@ class Frames(commands.Cog):
 
         address = f"temp/frames1.png"
         new_im.save(address)
-        new_photo = discord.File(address, filename=f"frames1.png")
+        image_file = discord.File(address, filename=f"frames1.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await hosting_channel.send(file=new_photo)
+        msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
 
         request = config.find_one({"list": 1}, {"_id": 0, "frames_listings": 1, "frames_imaged": 1})

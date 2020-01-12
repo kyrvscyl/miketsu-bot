@@ -5,13 +5,15 @@ Miketsu, 2020
 
 import os
 import random
+from collections import Counter
 from datetime import datetime
+from math import ceil, exp
 
 import discord
-import pytz
-from PIL import ImageFont
-
 import pushbullet
+import pytz
+from PIL import ImageDraw
+from PIL import ImageFont
 
 from cogs.ext.database import get_collections
 
@@ -20,18 +22,6 @@ from cogs.ext.database import get_collections
 version = "1.7.beta"
 command_prefix = ";"
 time_start = datetime.now()
-
-
-"""PUSHBULLET"""
-
-pb_status = True
-api_key = str(os.environ.get("PUSHBULLET"))
-
-try:
-    pb = pushbullet.Pushbullet(api_key=api_key)
-except (pushbullet.errors.PushbulletError, pushbullet.errors.PushError):
-    pb_status = False
-
 
 
 """COLLECTIONS"""
@@ -369,8 +359,8 @@ def check_if_user_has_sushi_2(ctx, required):
     return users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "sushi": 1})["sushi"] >= required
 
 
-def get_shikigami_stats(user_id, shiki):
-    stats = users.find_one({"user_id": str(user_id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
+def get_shikigami_stats(user, shiki):
+    stats = users.find_one({"user_id": str(user.id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
     try:
         return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"], stats["shikigami"][0]["souls"]
     except KeyError:
@@ -443,11 +433,6 @@ def check_if_reference_section(ctx):
     )["channels"]["reference-section"]
 
 
-def get_shard_requirement(shiki):
-    rarity = shikigamis.find_one({"name": shiki.lower()}, {"_id": 0, "rarity": 1})["rarity"]
-    return shard_requirement[rarity], rarity
-
-
 def get_evo_requirement(r):
     return evo_requirement[r]
 
@@ -468,6 +453,29 @@ def get_emoji_cards(x):
     return cards_realm[x]
 
 
+def generate_shikigami_with_shard(shikigami_draw, shards_count, font, x, y):
+    outline = ImageDraw.Draw(shikigami_draw)
+    outline.text((x - 1, y - 1), str(shards_count), font=font, fill="black")
+    outline.text((x + 1, y - 1), str(shards_count), font=font, fill="black")
+    outline.text((x - 1, y + 1), str(shards_count), font=font, fill="black")
+    outline.text((x + 1, y + 1), str(shards_count), font=font, fill="black")
+    outline.text((x, y), str(shards_count), font=font)
+
+    return shikigami_draw
+
+
+def get_image_variables(x, cols, rows):
+    total_shikis = len(x)
+    h = ceil(total_shikis / cols) * 90
+    return rows, h
+
+
+def get_shiki_tile_coordinates(c, cols, rows):
+    a = (c * 90 - (ceil(c / cols) - 1) * rows) - 90
+    b = (ceil(c / cols) * 90) - 90
+    return a, b
+
+
 def get_variables(r):
     dictionary = {
         "SP": [90 * 6, 6],
@@ -476,6 +484,18 @@ def get_variables(r):
         "R": [90 * 8, 8],
         "N": [90 * 6, 6],
         "SSN": [90 * 7, 7]
+    }
+    return dictionary[r][0], dictionary[r][1]
+
+
+def get_pool_rarity(r):
+    dictionary = {
+        "SP": pool_sp,
+        "SSR": pool_ssr,
+        "SR": pool_sr,
+        "R": pool_r,
+        "N": pool_n,
+        "SSN": pool_ssn,
     }
     return dictionary[r]
 
@@ -542,8 +562,7 @@ def exploration_check_add_unlocked(user, chapter):
         })
 
 
-def shikigami_experience_add(user, shikigami_name, exp):
-
+def shikigami_experience_add(user, shikigami_name, experience):
     shikigami_add_exp = users.update_one({
         "user_id": str(user.id),
         "$and": [{
@@ -554,7 +573,7 @@ def shikigami_experience_add(user, shikigami_name, exp):
             }}]
     }, {
         "$inc": {
-            "shikigami.$.exp": exp
+            "shikigami.$.exp": experience
         }
     })
 
@@ -699,7 +718,7 @@ async def frame_acquisition(user, frame_name, jades, channel):
     )
     embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
     embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
-    await channel.send(embed=embed)
+    await process_msg_submit(channel, None, embed)
 
 
 async def process_msg_delete(message, delay):
@@ -789,6 +808,15 @@ async def process_msg_pin(message):
         pass
 
 
+async def process_role_remove(member, role):
+    try:
+        await member.remove_roles(role)
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
 async def process_role_add(member, role):
     try:
         await member.add_roles(role)
@@ -822,3 +850,78 @@ async def process_channel_delete(channel):
         pass
     except discord.errors.HTTPException:
         pass
+
+
+def push_note(title, content):
+
+    api_key = str(os.environ.get("PUSHBULLET"))
+    try:
+        pb = pushbullet.Pushbullet(api_key=api_key)
+    except pushbullet.errors.PushbulletError:
+        pass
+    else:
+        try:
+            pb.push_note(title, content)
+        except pushbullet.errors.PushError:
+            pass
+
+
+def get_clear_chance(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
+    grade_total, soul_set_chance, listings_souls = 0, 0, []
+    query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1})
+
+    user_level = query["level"]
+    shikigami_name = query["display"]
+    shikigami_level, shikigami_evo, shikigami_souls = get_shikigami_stats(user, shikigami_name)
+
+    if shikigami_evo is True:
+        evo_adj = evo_adj_max
+
+    for result in users.aggregate([
+        {
+            '$match': {'user_id': str(user.id)}
+        }, {
+            '$project': {'souls': 1}
+        }, {
+            '$project': {'souls': {'$objectToArray': '$souls'}}
+        }, {
+            '$unwind': {'path': '$souls'}
+        }, {
+            '$unwind': {'path': '$souls.v'}
+        }, {
+            '$match': {'souls.v.equipped': shikigami_name}
+        }
+    ]):
+        grade_total += result["souls"]["v"]["slot"]
+        listings_souls.append(result["souls"]["k"])
+
+    soul_count = dict(Counter(listings_souls))
+
+    for a in soul_count:
+        if soul_count[a] == 1:
+            continue
+        elif soul_count[a] == 2:
+            soul_set_chance += 1.85
+        elif soul_count[a] == 4:
+            soul_set_chance += 6.475
+
+    total_soul = 0.696138186504516 * exp(grade_total * 0.0783) + soul_set_chance
+    total_soul_adj = random.uniform(total_soul * 0.98, total_soul) + random.uniform(adj[0], adj[1])
+
+    total_chance = user_level + shikigami_level - stage_ref * evo_adj + total_soul_adj
+
+    if total_chance <= min_chance:
+        total_chance = min_chance
+
+    return total_chance, shikigami_name, shikigami_evo
+
+
+def get_shiki_exp_lvl_next_sushi(user, shikigami_name):
+    x = users.find_one({
+        "user_id": str(user.id),
+        "shikigami.name": shikigami_name
+    }, {
+        "_id": 0, "shikigami.$": 1, "sushi": 1
+    })
+
+    return x["shikigami"][0]['exp'], x["shikigami"][0]['level_exp_next'], x["shikigami"][0]['level'], x["sushi"]

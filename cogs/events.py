@@ -66,7 +66,7 @@ class Events(commands.Cog):
                 if reminder_new["next"] > reminder["end"]:
                     events.update_one({"code": reminder["code"], "status": True}, {"$set": {"status": False}})
 
-    @commands.command(aliases=["events", "event", "e"])
+    @commands.command(aliases=["events", "e"])
     @commands.check(check_if_user_has_any_admin_roles)
     async def events_manipulate(self, ctx, *args):
 
@@ -101,8 +101,8 @@ class Events(commands.Cog):
             )
             embed.add_field(
                 name="Example",
-                value="*`;events act next cc`* - next Wed patch\n"
-                      "*`;events act now cc`* - activates this week",
+                value="*`;events a next cc`* - next Wed patch\n"
+                      "*`;events a now cc`* - activates this week",
                 inline=False
             )
             await process_msg_submit(ctx.channel, None, embed)

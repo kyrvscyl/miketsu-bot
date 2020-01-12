@@ -6,7 +6,6 @@ Miketsu, 2020
 import asyncio
 from datetime import timedelta
 from itertools import cycle
-from math import ceil
 
 from discord.ext import commands
 
@@ -16,6 +15,7 @@ from cogs.ext.initialize import *
 class Friendship(commands.Cog):
 
     def __init__(self, client):
+
         self.client = client
         self.prefix = self.client.command_prefix
 
@@ -33,23 +33,23 @@ class Friendship(commands.Cog):
 
     async def friendship_check_sail_post(self, user, channel):
 
-        request = ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{user.id}.*"}})
-        ships_count = request.count_documents({})
+        find_query = {"level": {"$gt": 1}, "code": {"$regex": f".*{user.id}.*"}}
+        query = ships.find(find_query, {"_id": 0})
+        ships_count = ships.count_documents({find_query})
         total_rewards = 0
 
-        for ship in request:
+        for ship in query:
             total_rewards += ship["level"] * 25
 
         embed = discord.Embed(
-            color=user.colour,
+            color=user.colour, timestamp=get_timestamp(),
             description=f"Your total daily ship sail rewards: {total_rewards:,d}{e_j}",
-            timestamp=get_timestamp()
         )
         embed.set_footer(
             text=f"{ships_count} {pluralize('ship', ships_count)}",
             icon_url=user.avatar_url
         )
-        await channel.send(embed=embed)
+        await process_msg_submit(channel, None, embed)
 
     @commands.command(aliases=["ships"])
     @commands.guild_only()
@@ -63,30 +63,28 @@ class Friendship(commands.Cog):
 
     async def friendship_ship_show_generate(self, member, ctx):
 
-        ships_listings = []
+        listings_formatted = []
         for ship in ships.find({"code": {"$regex": f".*{member.id}.*"}}, {"_id": 0}):
             ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"], ship['cards']]
-            ships_listings.append(ship_entry)
+            listings_formatted.append(ship_entry)
 
-        await self.friendship_ship_show_paginate(ships_listings, member, ctx)
+        await self.friendship_ship_show_paginate(listings_formatted, member, ctx)
 
-    async def friendship_ship_show_paginate(self, formatted_list, member, ctx):
+    async def friendship_ship_show_paginate(self, listings_formatted, member, ctx):
 
-        page = 1
-        max_lines = 5
-        page_total = ceil(len(formatted_list) / max_lines)
+        page, max_lines = 1, 5
+        page_total = ceil(len(listings_formatted) / max_lines)
         if page_total == 0:
             page_total = 1
 
         def embed_new_create(page_new):
             end = page_new * 5
             start = end - 5
-            total_ships = len(formatted_list)
+            total_ships = len(listings_formatted)
 
             embed_new = discord.Embed(
-                color=member.colour,
+                color=member.colour, timestamp=get_timestamp(),
                 title=f"🚢 {member.display_name}'s ships [{total_ships} {pluralize('ship', total_ships)}]",
-                timestamp=get_timestamp()
             )
             embed_new.set_footer(
                 text=f"Page {page_new} of {page_total}",
@@ -96,8 +94,8 @@ class Friendship(commands.Cog):
             while start < end:
                 try:
                     caption = ""
-                    timestamp = formatted_list[start][4]["timestamp"]
-                    collection = formatted_list[start][4]["collected"]
+                    timestamp = listings_formatted[start][4]["timestamp"]
+                    collection = listings_formatted[start][4]["collected"]
 
                     if timestamp is not None and collection is False:
 
@@ -112,8 +110,8 @@ class Friendship(commands.Cog):
                             caption = ", `claim now!`"
 
                     embed_new.add_field(
-                        name=f"`Lvl.{formatted_list[start][3]}` {formatted_list[start][2]}{caption}",
-                        value=f"<@{formatted_list[start][0]}> & <@{formatted_list[start][1]}>",
+                        name=f"`Lvl.{listings_formatted[start][3]}` {listings_formatted[start][2]}{caption}",
+                        value=f"<@{listings_formatted[start][0]}> & <@{listings_formatted[start][1]}>",
                         inline=False
                     )
                     start += 1
@@ -121,13 +119,14 @@ class Friendship(commands.Cog):
                     break
             return embed_new
 
-        def check_pagination(r, u):
-            return u != self.client.user and r.message.id == msg.id
-
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
+
+        def check_pagination(r, u):
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -136,15 +135,16 @@ class Friendship(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
                 await process_msg_edit(msg, None, embed_new_create(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
     @commands.command(aliases=["ship"])
     @commands.guild_only()
@@ -158,11 +158,10 @@ class Friendship(commands.Cog):
                                 f"to change your ship's name use *`{self.prefix}fpchange`*"
                 )
                 embed.add_field(
-                    name="Formats",
+                    name="Formats", inline=False,
                     value=f"*• `{self.prefix}ship <@member>`*\n"
                           f"*• `{self.prefix}ship <@member> <@member>`*\n"
                           f"*• `{self.prefix}ships`*",
-                    inline=False
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 

@@ -4,10 +4,8 @@ Miketsu, 2020
 """
 
 import asyncio
-from collections import Counter
-from math import ceil, exp
 
-from PIL import Image, ImageDraw
+from PIL import Image
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -143,7 +141,7 @@ class Exploration(commands.Cog):
 
                     elif query is not None:
                         chapter = query["explores"][0]["chapter"]
-                        await self.perform_exploration_by_chapter(chapter, user, ctx, user_profile)
+                        await self.perform_exploration_by_chapter(chapter, user, ctx)
 
             else:
                 if chapter > user_profile["exploration"]:
@@ -155,7 +153,7 @@ class Exploration(commands.Cog):
                     await process_msg_submit(ctx.channel, None, embed)
 
                 elif chapter in range(1, (zones.count_documents({}) + 1)):
-                    await self.perform_exploration_by_chapter(chapter, user, ctx, user_profile)
+                    await self.perform_exploration_by_chapter(chapter, user, ctx)
 
                 else:
                     embed = discord.Embed(
@@ -168,77 +166,16 @@ class Exploration(commands.Cog):
             finally:
                 self.client.get_command("perform_exploration").reset_cooldown(ctx)
 
-    async def perform_exploration_by_chapter(self, chapter, user, ctx, user_profile):
+    async def perform_exploration_by_chapter(self, chapter, user, ctx):
 
         zone = zones.find_one({"chapter": chapter}, {"_id": 0})
-        spirits = zone["spirits"]
-        sushi_required = zone["sushi_required"]
-        user_level = user_profile["level"]
-        shikigami_name = user_profile["display"]
+        spirits, sushi_required = zone["spirits"], zone["sushi_required"]
         experience = 5 * round((chapter + 1) / 2)
 
-        shikigami_level, shikigami_evolved, shikigami_souls = get_shikigami_stats(user.id, shikigami_name)
-        thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
         self.push_new_exploration(user, chapter, spirits)
 
-        evo_adjustment = 1
-        if shikigami_evolved is True:
-            evo_adjustment = 0.75
-
-        def get_souls_added_chance():
-
-            listings_souls = []
-            grade_total = 0
-            chance_set = 0
-            for result in users.aggregate([
-                {
-                    '$match': {
-                        'user_id': str(user.id)
-                    }
-                }, {
-                    '$project': {
-                        'souls': 1
-                    }
-                }, {
-                    '$project': {
-                        'souls': {
-                            '$objectToArray': '$souls'
-                        }
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$souls'
-                    }
-                }, {
-                    '$unwind': {
-                        'path': '$souls.v'
-                    }
-                }, {
-                    '$match': {
-                        'souls.v.equipped': shikigami_name
-                    }
-                }
-            ]):
-                grade_total += result["souls"]["v"]["slot"]
-                listings_souls.append(result["souls"]["k"])
-
-            soul_count = dict(Counter(listings_souls))
-
-            for a in soul_count:
-                if soul_count[a] == 1:
-                    continue
-                elif soul_count[a] == 2:
-                    chance_set += 1.85
-                elif soul_count[a] == 4:
-                    chance_set += 6.475
-
-            total = 0.696138186504516 * exp(grade_total * 0.0783) + chance_set
-            return random.uniform(total * 0.98, total)
-
-        soul_adjustment = get_souls_added_chance()
-        total_chance = user_level + shikigami_level - chapter * evo_adjustment + soul_adjustment
-        if total_chance <= 40:
-            total_chance = 40
+        total_chance, shikigami_name, shikigami_evolved = get_clear_chance(user, 40, chapter, [0, 0], 0.75, 1)
+        thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
 
         adjusted_chance = random.uniform(total_chance * 0.95, total_chance)
 
@@ -252,14 +189,7 @@ class Exploration(commands.Cog):
             if exploration_stage_new > spirits:
                 exploration_stage_new = spirits
 
-            user_profile_new = users.find_one({
-                "user_id": str(user.id), "shikigami.name": user_profile["display"]
-            }, {
-                "_id": 0, "shikigami.$": 1, "sushi": 1
-            })
-            exp_new = user_profile_new["shikigami"][0]['exp']
-            level_exp_next = user_profile_new["shikigami"][0]['level_exp_next']
-            shiki_level = user_profile_new["shikigami"][0]['level']
+            shiki_exp, shiki_exp_next, shiki_lvl, user_sushi = get_shiki_exp_lvl_next_sushi(user, shikigami_name)
 
             embed_new = discord.Embed(
                 color=ctx.author.colour,
@@ -268,8 +198,8 @@ class Exploration(commands.Cog):
                 timestamp=get_timestamp()
             )
             embed_new.add_field(
-                name=f"Shikigami: {shikigami_name.title()} | {user_profile_new['sushi']} {e_s}",
-                value=f"Level: {shiki_level} | Experience: {exp_new}/{level_exp_next}\n"
+                name=f"Shikigami: {shikigami_name.title()} | {user_sushi} {e_s}",
+                value=f"Level: {shiki_lvl} | Experience: {shiki_exp}/{shiki_exp_next}\n"
                       f"Clear Chance: ~{round(total_chance, 2)}%"
             )
             embed_new.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
@@ -418,56 +348,31 @@ class Exploration(commands.Cog):
 
     async def perform_exploration_generate_shards(self, user_id, shards_reward):
 
-        images = []
-        x, y = 1, 60
-        font = font_create(30)
-
-        def generate_shikigami_with_shard(shikigami_thumbnail_select, shards_count):
-
-            outline = ImageDraw.Draw(shikigami_thumbnail_select)
-            outline.text((x - 1, y - 1), str(shards_count), font=font, fill="black")
-            outline.text((x + 1, y - 1), str(shards_count), font=font, fill="black")
-            outline.text((x - 1, y + 1), str(shards_count), font=font, fill="black")
-            outline.text((x + 1, y + 1), str(shards_count), font=font, fill="black")
-            outline.text((x, y), str(shards_count), font=font)
-
-            return shikigami_thumbnail_select
+        images, font = [], font_create(30)
+        x, y, cols = 1, 60, 8
+        rows = 90 * cols
 
         for entry in shards_reward:
             if entry[1] != 0:
                 address = f"data/shikigamis/{entry[0]}_pre.jpg"
 
                 shikigami_thumbnail = Image.open(address)
-                shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1])
+                shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1], font, x, y)
                 images.append(shikigami_image_final)
             else:
                 continue
 
-        dimensions = 90
-        max_c = 8
-        w = 90 * max_c
-
-        def get_image_variables(h):
-            total_frames = len(h)
-            h = ceil(total_frames / max_c) * dimensions
-            return w, h
-
-        width, height = get_image_variables(images)
+        width, height = get_image_variables(images, cols, rows)
         new_im = Image.new("RGBA", (width, height))
 
-        def get_coordinates(c):
-            a = (c * dimensions - (ceil(c / max_c) - 1) * (dimensions * max_c)) - dimensions
-            b = (ceil(c / max_c) * dimensions) - dimensions
-            return a, b
-
         for index, item in enumerate(images):
-            new_im.paste(images[index], (get_coordinates(index + 1)))
+            new_im.paste(images[index], (get_shiki_tile_coordinates(index + 1, cols, rows)))
 
         address = f"temp/{user_id}.png"
         new_im.save(address)
-        new_photo = discord.File(address, filename=f"{user_id}.png")
+        image_file = discord.File(address, filename=f"{user_id}.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await hosting_channel.send(file=new_photo)
+        msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
         return attachment_link
 

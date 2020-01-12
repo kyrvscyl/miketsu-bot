@@ -5,7 +5,6 @@ Miketsu, 2020
 
 import asyncio
 from datetime import timedelta
-from math import ceil, exp
 
 from discord.ext import commands
 
@@ -21,10 +20,10 @@ class Realm(commands.Cog):
     @commands.guild_only()
     async def realm_card_show_all(self, ctx):
 
-        page = 1
-        page_total = len(listings_cards)
+        page, page_total = 1, len(listings_cards)
 
         def embed_new_create(page_new):
+
             embed_new = discord.Embed(
                 title="realms", color=colour,
                 description="equip cards with your ships to obtained shared rewards"
@@ -38,9 +37,7 @@ class Realm(commands.Cog):
 
                 for y in range(1, 7):
                     rewards = int(card_details[2] * exp(0.3868 * y))
-                    field_value.append(
-                        f"`Grade {y} 🌟` :: {get_emoji(reward)}`~ +{rewards:,d}`\n"
-                    )
+                    field_value.append(f"`Grade {y} 🌟` :: {get_emoji(reward)}`~ +{rewards:,d}`\n")
 
                 embed_new.set_thumbnail(url=card_details[3])
                 embed_new.add_field(
@@ -54,14 +51,12 @@ class Realm(commands.Cog):
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(1))
 
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return msg.id == r.message.id and \
-                   str(r.emoji) in emoji_arrows and \
-                   u.id == ctx.author.id
+            return msg.id == r.message.id and str(r.emoji) in emojis_add and u.id == ctx.author.id
 
         while True:
             try:
@@ -70,16 +65,15 @@ class Realm(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
                 await process_msg_edit(msg, None, embed_new_create(page))
-                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
     @commands.command(aliases=["cards"])
     @commands.guild_only()
@@ -122,14 +116,12 @@ class Realm(commands.Cog):
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
 
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return msg.id == r.message.id and \
-                   str(r.emoji) in emoji_arrows and \
-                   u.id == ctx.author.id
+            return msg.id == r.message.id and str(r.emoji) in emojis_add and u.id == ctx.author.id
 
         while True:
             try:
@@ -138,9 +130,9 @@ class Realm(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
@@ -149,20 +141,24 @@ class Realm(commands.Cog):
                 await process_msg_edit(msg, None, embed_new_create(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
+    async def realm_card_use_help(self, ctx):
+
+        embed = discord.Embed(
+            color=colour, title="card, c",
+            description=f"equip your ship with cards to obtain rewards"
+        )
+        embed.add_field(name="Formats", value=f"*`{self.prefix}card use <@member>`*\n")
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["card", "c"])
     @commands.guild_only()
     async def realm_card_use(self, ctx, arg1=None, *, member: discord.Member = None):
 
         if arg1 is None and member is None:
-            embed = discord.Embed(
-                color=colour, title="card, c",
-                description=f"equip your ship with cards to obtain rewards"
-            )
-            embed.add_field(name="Formats", value=f"*`{self.prefix}card use <@member>`*\n")
-            await process_msg_submit(ctx.channel, None, embed)
+            await self.realm_card_use_help(ctx)
 
         elif arg1.lower() in ["use", "u"] and member is None:
-            await process_msg_reaction_add(ctx.message, "❌")
+            await self.realm_card_use_help(ctx)
 
         elif arg1.lower() in ["use", "u"] and member is not None:
 
@@ -172,8 +168,8 @@ class Realm(commands.Cog):
 
             if ship_data is None:
                 embed = discord.Embed(
-                    colour=colour, title="Invalid ship",
-                    description=f"that ship has sunk before it was even fully built"
+                    colour=user.colour, title="Invalid ship", timestamp=get_timestamp(),
+                    description=f"That ship has sunk before it was even fully built"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -183,9 +179,7 @@ class Realm(commands.Cog):
                     await process_msg_reaction_add(ctx.message, "🛳")
 
                 elif ship_data["cards"]["equipped"] is False:
-
-                    user_cards = []
-                    user_cards_description = []
+                    user_cards, user_cards_description = [], []
 
                     for d in users.find_one({"user_id": str(user.id)}, {"_id": 0, "cards": 1})["cards"]:
                         if d["count"] > 0:
@@ -193,10 +187,10 @@ class Realm(commands.Cog):
                             user_cards_description.append(f"{d['name']}/{d['grade']} [x{d['count']}]")
 
                     embed = discord.Embed(
-                        color=colour, title="Realm card selection",
+                        color=ctx.colour, title="Realm card selection", timestamp=get_timestamp(),
                         description=f"enter a valid realm card and grade (ex. moon/4)"
                     )
-                    embed.add_field(name="Available cards", value=f"*{', '.join(user_cards_description)}*")
+                    embed.add_field(name="Available cards", value=f"*{', '.join(user_cards_description[:25])}*")
                     await process_msg_submit(ctx.channel, None, embed)
 
                     def check(m):
@@ -208,8 +202,7 @@ class Realm(commands.Cog):
                         return
                     else:
                         name_grade = message.content.lower().split("/")
-                        name = name_grade[0]
-                        grade = int(name_grade[1])
+                        name, grade = name_grade[0], int(name_grade[1])
 
                         ships.update_one({
                             "code": code
@@ -228,33 +221,38 @@ class Realm(commands.Cog):
                         })
                         await process_msg_reaction_add(message, "✅")
 
+    async def realm_card_collect_help(self, ctx):
+
+        embed = discord.Embed(
+            colour=colour, title="rcollect, rcol", description=f"collect your cruise rewards"
+        )
+        embed.add_field(name="Format", value=f"*`{self.prefix}rcollect <@member>`*")
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["rcollect", "rcol"])
     @commands.guild_only()
     async def realm_card_collect(self, ctx, *, member: discord.Member = None):
 
+        user = ctx.author
+
         try:
-            user = ctx.author
             code = get_bond(user.id, member.id)
-
         except (AttributeError, TypeError):
-            embed = discord.Embed(colour=colour, title="rcollect, rcol", description=f"collect your cruise rewards")
-            embed.add_field(name="Format", value=f"*`{self.prefix}rcollect <@member>`*")
-            await process_msg_submit(ctx.channel, None, embed)
-
+            await self.realm_card_collect_help(ctx)
         else:
             ship_data = ships.find_one({"code": code}, {"_id": 0})
 
             if ship_data is None:
                 embed = discord.Embed(
-                    colour=colour, title="Invalid ship",
-                    description=f"that ship has sunk before it was even fully built"
+                    colour=user.colour, title="Invalid ship", timestamp=get_timestamp(),
+                    description=f"That ship has sunk before it was even fully built"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif ship_data["cards"]["collected"] is True or ship_data["cards"]["equipped"] is False:
                 embed = discord.Embed(
-                    colour=colour, title="Invalid collection",
-                    description=f"the ship has not yet been deployed for cruise"
+                    colour=user.colour, title="Invalid collection", timestamp=get_timestamp(),
+                    description=f"The ship has not yet been deployed for cruise"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -267,18 +265,16 @@ class Realm(commands.Cog):
 
                 if now < delta:
                     embed = discord.Embed(
-                        colour=colour, title="Invalid collection",
-                        description=f"the ship has not yet returned from its cruise"
+                        colour=user.colour, title="Invalid collection", timestamp=get_timestamp(),
+                        description=f"The ship has not yet returned from its cruise"
                     )
                     await process_msg_submit(ctx.channel, None, embed)
 
                 elif now >= delta:
                     card_data = realms.find_one({"name": card_name}, {"_id": 0})
 
-                    rewards = card_data["rewards"]
-                    base = card_data["base"]
-                    grade = ship_data["cards"]["grade"]
-                    level = int(ship_data['level'])
+                    rewards, base = card_data["rewards"], card_data["base"]
+                    grade, level = ship_data["cards"]["grade"], int(ship_data['level'])
                     link = card_data["link"][str(grade)]
 
                     shipper1 = ctx.guild.get_member(int(ship_data["shipper1"]))

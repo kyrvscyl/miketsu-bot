@@ -3,9 +3,7 @@ Leaderboard Module
 Miketsu, 2020
 """
 
-
 import asyncio
-from math import ceil
 
 from discord.ext import commands
 
@@ -14,14 +12,32 @@ from cogs.ext.initialize import *
 
 class Leaderboard(commands.Cog):
     def __init__(self, client):
+
         self.client = client
         self.prefix = self.client.command_prefix
+
+    async def leaderboard_show_help(self, ctx):
+
+        embed = discord.Embed(
+            title="leaderboard, lb", colour=colour,
+            description="shows various leaderboards"
+        )
+        embed.add_field(
+            name="Arguments",
+            value=f"*SP, SSR, SR, SSN, level, medals, amulets, friendship, ships, streak, frames*",
+            inline=False
+        )
+        embed.add_field(name="Example", value=f"*`{self.prefix}leaderboard friendship`*", inline=False)
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["leaderboard", "lb"])
     @commands.guild_only()
     async def leaderboard_show(self, ctx, *, args):
 
-        if args.lower() in ["ssr"]:
+        if len(args) == 0:
+            await self.leaderboard_show_help(ctx)
+
+        elif args.lower() in ["ssr"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SSR": 1})
             await self.leaderboard_post_record_users(ctx, query, f"{e_2} LeaderBoard", "SSR")
 
@@ -49,12 +65,6 @@ class Leaderboard(commands.Cog):
             query = users.find({}, {"_id": 0, "user_id": 1, "friendship": 1})
             await self.leaderboard_post_record_users(ctx, query, f"{e_f} Friendship LeaderBoard", "friendship")
 
-        elif args.lower() in ["streak", "ssrstreak"]:
-            query = streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1})
-            await self.leaderboard_post_record_users(
-                ctx, query, f"No {e_2} Summon Streak LeaderBoard", "SSR_current"
-            )
-
         elif args.lower() in ["level"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "level": 1})
             await self.leaderboard_post_record_users(ctx, query, f"{e_x} Level LeaderBoard", "level")
@@ -67,68 +77,71 @@ class Leaderboard(commands.Cog):
             query = ships.find({}, {"_id": 0, "points": 1, "ship_name": 1})
             await self.leaderboard_post_record_ships(ctx, query, "🚢 Ships LeaderBoard")
 
+        elif args.lower() in ["streak", "ssrstreak"]:
+            query = streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1})
+            await self.leaderboard_post_record_users(
+                ctx, query, f"No {e_2} Summon Streak LeaderBoard", "SSR_current"
+            )
+
     async def leaderboard_post_record_users(self, ctx, query, title, key):
 
-        raw_list = []
-        formatted_list = []
+        listings, listings_formatted = [], []
 
         for user in query:
             try:
                 member_name = self.client.get_user(int(user["user_id"])).display_name
-                if isinstance(user[key], list):
-                    raw_list.append((member_name, len(user[key])))
-                else:
-                    raw_list.append((member_name, user[key]))
             except AttributeError:
                 continue
+            else:
+                if isinstance(user[key], list):
+                    listings.append((member_name, len(user[key])))
+                else:
+                    listings.append((member_name, user[key]))
 
-        for user in sorted(raw_list, key=lambda x: x[1], reverse=True):
-            formatted_list.append(f"🔸{user[0]}, x{user[1]:,d}\n")
+        for user in sorted(listings, key=lambda x: x[1], reverse=True):
+            listings_formatted.append(f"🔸{user[0]}, x{user[1]:,d}\n")
 
-        await self.leaderboard_paginate(title, ctx, formatted_list)
+        await self.leaderboard_paginate(title, ctx, listings_formatted)
 
     async def leaderboard_post_record_ships(self, ctx, query, title):
 
-        raw_list = []
-        formatted_list = []
+        listings, listings_formatted = [], []
 
         for ship in query:
-            raw_list.append((ship["ship_name"], ship["points"]))
+            listings.append((ship["ship_name"], ship["points"]))
 
-        for ship in sorted(raw_list, key=lambda x: x[1], reverse=True):
-            formatted_list.append(f"🔸{ship[0]}, x{ship[1]} {e_f} \n")
+        for ship in sorted(listings, key=lambda x: x[1], reverse=True):
+            listings_formatted.append(f"🔸{ship[0]}, x{ship[1]} {e_f} \n")
 
-        await self.leaderboard_paginate(title, ctx, formatted_list)
+        await self.leaderboard_paginate(title, ctx, listings_formatted)
 
-    async def leaderboard_paginate(self, title, ctx, formatted_list):
+    async def leaderboard_paginate(self, title, ctx, listings_formatted):
 
-        page = 1
-        max_lines = 15
-        page_total = ceil(len(formatted_list) / max_lines)
+        page, max_lines = 1, 15
+        page_total = ceil(len(listings_formatted) / max_lines)
         if page_total == 0:
             page_total = 1
 
         def embed_new_create(page_new):
             end = page * max_lines
             start = end - max_lines
-            description = "".join(formatted_list[start:end])
+            description = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(
-                color=ctx.author.colour,
-                title=title,
-                description=f"{description}",
-                timestamp=get_timestamp()
+                color=ctx.author.colour, title=title,
+                description=f"{description}", timestamp=get_timestamp()
             )
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -137,17 +150,17 @@ class Leaderboard(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
                 await process_msg_edit(msg, None, embed_new_create(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
 
 def setup(client):
     client.add_cog(Leaderboard(client))
-

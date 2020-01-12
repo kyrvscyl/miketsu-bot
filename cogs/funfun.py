@@ -2,6 +2,7 @@
 Funfun Module
 Miketsu, 2020
 """
+
 import asyncio
 import re
 from itertools import cycle
@@ -14,7 +15,9 @@ from cogs.ext.initialize import *
 class Funfun(commands.Cog):
 
     def __init__(self, client):
+
         self.client = client
+        self.prefix = self.client.command_prefix
 
         self.actions = []
         self.stickers_list = []
@@ -26,6 +29,7 @@ class Funfun(commands.Cog):
         self.generate_new_stickers()
 
     def generate_new_stickers(self):
+
         self.actions.clear()
         self.stickers_list.clear()
 
@@ -34,6 +38,7 @@ class Funfun(commands.Cog):
             self.actions.append(sticker["alias"])
 
     async def mike_how_hot(self, guild, channel, msg):
+
         msg_formatted = msg.lower().split(" ")
     
         for word in msg_formatted:
@@ -58,17 +63,13 @@ class Funfun(commands.Cog):
                     color=member.colour,
                     title=f"**{member.display_name}** is **{hot:.2f}%** hot {emoji}"
                 )
-                await channel.send(embed=embed)
+                await process_msg_submit(channel, None, embed)
                 break
     
     async def mikes_shoot_post_process(self, user, victim, winner, response, channel):
     
         if shoots.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-            profile = {
-                "user_id": str(user.id),
-                "victim": []
-            }
-            shoots.insert_one(profile)
+            shoots.insert_one({"user_id": str(user.id), "victim": []})
     
         if shoots.find_one({"user_id": str(user.id), "victim.user_id": str(victim.id)}, {"_id": 0}) is None:
             shoots.update_one({
@@ -86,21 +87,15 @@ class Funfun(commands.Cog):
     
         if winner.id == user.id:
             increment = {"victim.$.successes": 1, "victim.$.fails": 0}
-    
-            shoots.update_one({
-                "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-                "$inc": increment
-            }
-            )
-    
+            shoots.update_one({"user_id": str(user.id), "victim.user_id": str(victim.id)}, {"$inc": increment})
+
             query = shoots.find_one({
-                "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
-                "_id": 0,
-                "victim.$": 1
+                "user_id": str(user.id), "victim.user_id": str(victim.id)
+            }, {
+                "_id": 0, "victim.$": 1
             })
-            successes = query["victim"][0]["successes"]
-            fails = query["victim"][0]["fails"]
-    
+            successes, fails = query["victim"][0]["successes"], query["victim"][0]["fails"]
+
             embed.set_footer(
                 text=f"{successes}/{successes + fails} successful {pluralize('shooting', successes + fails)}",
                 icon_url=user.avatar_url
@@ -112,8 +107,7 @@ class Funfun(commands.Cog):
             shoots.update_one({
                 "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
                 "$inc": increment
-            }
-            )
+            })
             query = shoots.find_one({
                 "user_id": str(user.id), "victim.user_id": str(victim.id)}, {
                 "_id": 0,
@@ -121,15 +115,16 @@ class Funfun(commands.Cog):
             })
             successes = query["victim"][0]["successes"]
             fails = query["victim"][0]["fails"]
-    
+
             embed.set_footer(
                 text=f"{fails}/{successes + fails} failed {pluralize('shooting', successes + fails)}",
                 icon_url=user.avatar_url
             )
-    
-        await channel.send(embed=embed)
+
+        await process_msg_submit(channel, None, embed)
     
     async def mike_shoot(self, user, guild, channel, args):
+
         msg_formatted = args.lower().split(" ")
 
         for word in msg_formatted:
@@ -155,9 +150,7 @@ class Funfun(commands.Cog):
     @commands.guild_only()
     async def sticker_help(self, ctx):
 
-        quotient = int(len(self.stickers_list) / 2)
-        page = 1
-        page_total = 2
+        page, page_total, quotient = 1, 2, int(len(self.stickers_list) / 2)
 
         def check(r, u):
             return u != self.client.user and r.message.id == msg.id
@@ -177,9 +170,10 @@ class Funfun(commands.Cog):
             embed.set_footer(text=f"Page {y}")
             return embed
 
-        msg = await ctx.channel.send(embed=generate_stickers_embed(page))
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        msg = await process_msg_submit(ctx.channel, None, generate_stickers_embed(page))
+
+        emoji_add = ["⬅", "➡"]
+        for emoji in emoji_add:
             await process_msg_reaction_add(msg, emoji)
 
         while True:
@@ -189,15 +183,16 @@ class Funfun(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emoji_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emoji_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await msg.edit(embed=generate_stickers_embed(page))
+                await process_msg_edit(msg, None, generate_stickers_embed(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
     @commands.command(aliases=["newsticker", "ns"])
     @commands.guild_only()
@@ -244,13 +239,11 @@ class Funfun(commands.Cog):
 
                 try:
                     if len(message.content) == 4:
-                        embed = discord.Embed(
-                            colour=discord.Colour(0xffe6a7),
-                            description=next(self.reactions)
-                        )
-                        msg = await message.channel.send(embed=embed)
-                        await msg.delete(delay=15)
-                        await message.delete(delay=15)
+                        embed = discord.Embed(colour=discord.Colour(0xffe6a7), description=next(self.reactions))
+
+                        msg = await process_msg_submit(message.channel, None, embed)
+                        await process_msg_delete(msg, 15)
+                        await process_msg_delete(message, 15)
 
                     elif message.content.lower().split(" ", 2)[1] == "shoot":
                         await self.mike_shoot(message.author, message.guild, message.channel, message.content)
@@ -264,33 +257,25 @@ class Funfun(commands.Cog):
             else:
                 x = users.update_one({
                     "user_id": str(user.id),
-                    "stickers": {
-                        "$lt": 21
-                    },
-                    "level": {
-                        "$lt": 60
-                    }
+                    "stickers": {"$lt": 21},
+                    "level": {"$lt": 60}
                 }, {
                     "$inc": {
                         "experience": 20
                     }})
                 sticker_url = stickers.find_one({"alias": sticker_recognized}, {"_id": 0, "link": 1})["link"]
+
                 comment = " "
                 if x.modified_count > 0:
                     comment = ", +20exp"
-                    users.update_one({
-                        "user_id": str(user.id)
-                    }, {
-                        "$inc": {
-                            "stickers": 1
-                        }
-                    })
+                    users.update_one({"user_id": str(user.id)}, {"$inc": {"stickers": 1}})
 
                 embed = discord.Embed(color=user.colour)
                 embed.set_footer(text=f"{user.display_name}{comment}", icon_url=user.avatar_url)
                 embed.set_image(url=sticker_url)
-                await message.channel.send(embed=embed)
-                await message.delete()
+
+                await process_msg_submit(message.channel, None, embed)
+                await process_msg_delete(message, 0)
 
 
 def setup(client):

@@ -6,7 +6,6 @@ Miketsu, 2020
 import asyncio
 import collections
 from itertools import cycle
-from math import ceil
 
 from PIL import Image, ImageOps
 from discord.ext import commands, tasks
@@ -642,9 +641,9 @@ class Economy(commands.Cog):
 
         address = f"temp/{ctx.author.id}.png"
         new_im.save(address)
-        new_photo = discord.File(address, filename=f"{ctx.message.id}.png")
+        image_file = discord.File(address, filename=f"{ctx.message.id}.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await hosting_channel.send(file=new_photo)
+        msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
 
         return attachment_link
@@ -746,7 +745,7 @@ class Economy(commands.Cog):
                     description=f"{next(self.prayer_ignored)}", timestamp=get_timestamp()
                 )
                 embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
-                await msg.edit(embed=embed)
+                await process_msg_edit(msg, None, embed)
             else:
                 amount, rewards = get_rewards(str(reaction.emoji))
                 embed = discord.Embed(
@@ -1004,9 +1003,9 @@ class Economy(commands.Cog):
 
         address = f"temp/{member.id}.png"
         new_im.save(address)
-        new_photo = discord.File(address, filename=f"{member.id}.png")
+        image_file = discord.File(address, filename=f"{member.id}.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await hosting_channel.send(file=new_photo)
+        msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
         return attachment_link
 
@@ -1146,7 +1145,7 @@ class Economy(commands.Cog):
             )
             embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
             embed.set_thumbnail(url=seller_img)
-            await msg.edit(embed=embed)
+            await process_msg_edit(msg, None, embed)
             await process_msg_reaction_clear(msg)
             return False
         else:

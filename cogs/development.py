@@ -192,7 +192,7 @@ class Development(commands.Cog):
 
         await process_msg_reaction_add(ctx.message, "✅")
         await Frames(self.client).frame_automate()
-        await Summon(self.client).perform_penalize_streak()
+        await Summon(self.client).summon_perform_streak_penalize()
 
 
 def setup(client):

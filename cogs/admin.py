@@ -6,7 +6,6 @@ Miketsu, 2020
 import asyncio
 import re
 import urllib.request
-from math import ceil
 
 from discord.ext import commands
 

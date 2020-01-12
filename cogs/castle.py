@@ -6,9 +6,8 @@ Miketsu, 2020
 import asyncio
 import urllib.request
 from itertools import cycle
-from math import ceil
 
-from PIL import Image, ImageDraw
+from PIL import Image
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -244,9 +243,9 @@ class Castle(commands.Cog):
             new_address = f"temp/{name}.png"
             background.save(new_address)
 
-            new_photo = discord.File(new_address, filename=f"{name}.png")
+            image_file = discord.File(new_address, filename=f"{name}.png")
             hosting_channel = self.client.get_channel(int(id_hosting))
-            msg = await process_msg_submit_file(hosting_channel, new_photo)
+            msg = await process_msg_submit_file(hosting_channel, image_file)
 
             await asyncio.sleep(3)
 
@@ -715,9 +714,9 @@ class Castle(commands.Cog):
         combined_img.paste(im_cores, (0, int(max_height) + 7))
         combined_img.save(temp_address)
 
-        new_photo = discord.File(temp_address, filename=f"{ctx.message.id}.png")
+        image_file = discord.File(temp_address, filename=f"{ctx.message.id}.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg = await process_msg_submit_file(hosting_channel, new_photo)
+        msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
 
         return attachment_link

@@ -3,8 +3,6 @@ Automation Module
 Miketsu, 2020
 """
 
-import sys
-
 from discord.ext import commands
 
 from cogs.ext.initialize import *

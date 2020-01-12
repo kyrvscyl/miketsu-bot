@@ -1351,7 +1351,7 @@ class Expecto(commands.Cog):
 
             if actions > 3:
                 if ctx.message.content in [f"{self.prefix}knock", f"{self.prefix}inquire"]:
-                    await ctx.message.delete()
+                    await process_msg_delete(ctx.message, 0)
 
             elif ctx.message.content == f"{self.prefix}knock":
                 if path == "path6":
@@ -1363,7 +1363,7 @@ class Expecto(commands.Cog):
                 msg = responses["knock"][0]
                 topic = responses["knock"][1]
                 await ctx.channel.edit(topic=topic)
-                await ctx.message.delete()
+                await process_msg_delete(ctx.message, 0)
                 await secret_response(ctx.channel.name, msg)
                 await penalize_quest1(user, cycle, points=15)
 
@@ -1376,7 +1376,7 @@ class Expecto(commands.Cog):
                 responses = get_responses_quest1("eeylops_owl")["inquire"]
                 msg, topic = responses[actions]
                 await ctx.channel.edit(topic=topic)
-                await ctx.message.delete()
+                await process_msg_delete(ctx.message, 0)
                 await action_update_quest1(user, cycle, actions=1)
                 await penalize_quest1(user, cycle, points=15)
                 await secret_response(ctx.channel.name, msg)
@@ -1406,13 +1406,13 @@ class Expecto(commands.Cog):
                 msg = responses["purchasing"]["max_actions"]
                 await penalize_quest1(user, cycle, points=20)
                 await user.send(msg)
-                await ctx.message.delete()
+                await process_msg_delete(ctx.message, 0)
 
             elif owl_buy not in owls_list:
                 msg = responses["purchasing"]["invalid_owl"]
                 await penalize_quest1(user, cycle, points=20)
                 await secret_response(ctx.channel.name, msg)
-                await ctx.message.delete()
+                await process_msg_delete(ctx.message, 0)
 
             elif owl_buy in owls_list:
                 purchaser_id = owls.find_one({"type": f"{owl_buy}"}, {"_id": 0, "purchaser": 1})["purchaser"]
@@ -1425,7 +1425,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=75)
                     await secret_response(ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
-                    await ctx.message.delete()
+                    await process_msg_delete(ctx.message, 0)
 
                 elif user not in role_galleons.members:
                     msg = responses["purchasing"]["no_moneybag"][0].format(user.mention)
@@ -1434,7 +1434,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=10)
                     await secret_response(ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
-                    await ctx.message.delete()
+                    await process_msg_delete(ctx.message, 0)
 
                     quests.update_one({
                         "user_id": str(user.id), "quest1.cycle": cycle}, {
@@ -1451,7 +1451,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=20)
                     await secret_response(ctx.channel.name, msg)
                     await ctx.channel.edit(topic=topic)
-                    await ctx.message.delete()
+                    await process_msg_delete(ctx.message, 0)
 
                     quests.update_one({
                         "user_id": str(user.id), "quest1.cycle": cycle}, {
@@ -1498,7 +1498,7 @@ class Expecto(commands.Cog):
                         await asyncio.sleep(3)
                         await process_msg_submit(ctx.channel, None, embed)
                         await asyncio.sleep(2)
-                        await ctx.message.delete()
+                        await process_msg_delete(ctx.message, 0)
 
     async def create_emporium(self, category, guild, msg, message, user):
 
@@ -1750,7 +1750,7 @@ class Expecto(commands.Cog):
                         )
                         embed.set_footer(text="Confirm purchase? Y/N")
 
-                        msg_confirm = await channel.send(embed=embed)
+                        msg_confirm = await process_msg_submit(channel, None, embed)
 
                         def check(_answer):
                             return user.id == _answer.author.id \
