@@ -29,7 +29,7 @@ class Souls(commands.Cog):
                 title="soul", color=colour,
                 description=f"equip your shikigami with souls to obtain bonus rewards",
             )
-            embed.add_field(name="Formats", inline=False, value=f"*`{self.prefix}soul 6 watcher`*")
+            embed.add_field(name="Formats", inline=False, value=f"*`{self.prefix}equip 6 watcher`*")
             await process_msg_submit(ctx.channel, None, embed)
 
         elif args not in souls_all:
@@ -563,6 +563,7 @@ class Souls(commands.Cog):
             "_id": 0,
             f"souls.{soul_name}.$": 1
         })
+
         if soul_data["souls"][soul_name][0]["exp"] >= soul_data["souls"][soul_name][0]["lvl_exp_next"]:
             def get_lvl_exp_next_new(g):
                 dictionary = {
@@ -582,7 +583,10 @@ class Souls(commands.Cog):
                 "$and": [{f"souls.{soul_name}": {"$elemMatch": {"slot": slot}}}]
             }, {
                 "$set": {
-                    f"souls.{soul_name}.$.lvl_exp_next": lvl_exp_next_new
+                    f"souls.{soul_name}.$.lvl_exp_next": lvl_exp_next_new,
+                },
+                "$inc": {
+                    f"souls.{soul_name}.$.grade": 1
                 }
             })
 
