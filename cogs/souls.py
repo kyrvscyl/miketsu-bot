@@ -554,7 +554,7 @@ class Souls(commands.Cog):
             "_id": 0,
             f"souls.{soul_name}": 1
         })
-        if soul_data["souls"][soul_name][0]["lvl_exp_next"] >= soul_data["souls"][soul_name][0]["exp"]:
+        if soul_data["souls"][soul_name][0]["exp"] >= soul_data["souls"][soul_name][0]["lvl_exp_next"]:
             def get_lvl_exp_next_new(g):
                 dictionary = {
                     1: 0,
