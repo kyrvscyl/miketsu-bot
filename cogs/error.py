@@ -392,14 +392,6 @@ class Error(commands.Cog):
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
-            elif str(ctx.command) == "encounter_search":
-                embed = discord.Embed(
-                    colour=ctx.author.colour,
-                    title="Insufficient tickets",
-                    description=f"purchase at the shop to obtain more"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
             elif str(ctx.command) == "admin_post_message_user":
                 embed = discord.Embed(
                     colour=ctx.author.colour,
@@ -450,7 +442,7 @@ class Error(commands.Cog):
         elif isinstance(error, commands.CommandOnCooldown):
 
             if str(ctx.command) in [
-                "encounter_search",
+                "enc_roll",
                 "summon_perform_mystery",
                 "friendship_give",
                 "economy_perform_parade",

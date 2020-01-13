@@ -33,7 +33,7 @@ class Development(commands.Cog):
             await process_msg_reaction_add(ctx.message, "✅")
 
         elif args == "boss":
-            await Encounter(self.client).encounter_perform_reset_boss()
+            await Encounter(self.client).enc_perform_reset_boss()
             await process_msg_reaction_add(ctx.message, "✅")
 
         elif args not in valid_arguments:

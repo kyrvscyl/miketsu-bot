@@ -70,6 +70,8 @@ class Summon(commands.Cog):
                 else:
                     await self.summon_perform_mystery(ctx, ctx.author, amulets_pulled)
 
+        self.client.get_command("summon_perform").reset_cooldown(ctx)
+
     async def summon_perform_shards(self, ctx, shikigami_name, user):
 
         shikigami_profile = users.find_one({
@@ -158,8 +160,6 @@ class Summon(commands.Cog):
 
             elif 0 < amulets_current < 5:
                 await self.summon_perform_broken_pull(ctx, user, amulets_current)
-
-        self.client.get_command("summon_perform_broken").reset_cooldown(ctx)
 
     async def summon_perform_broken_pull(self, ctx, user, amulets_pulled):
 

@@ -174,7 +174,8 @@ class Exploration(commands.Cog):
 
         self.push_new_exploration(user, chapter, spirits)
 
-        total_chance, shikigami_name, shikigami_evolved = get_clear_chance(user, 40, chapter, [0, 0], 0.75, 1)
+        total_chance, shikigami_name, shikigami_evolved = get_clear_chance_soul_explore(user, 40, chapter, [0, 0], 0.75,
+                                                                                        1)
         thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
 
         adjusted_chance = random.uniform(total_chance * 0.95, total_chance)

@@ -35,7 +35,7 @@ class Friendship(commands.Cog):
 
         find_query = {"level": {"$gt": 1}, "code": {"$regex": f".*{user.id}.*"}}
         query = ships.find(find_query, {"_id": 0})
-        ships_count = ships.count_documents({find_query})
+        ships_count = ships.count_documents(find_query)
         total_rewards = 0
 
         for ship in query:

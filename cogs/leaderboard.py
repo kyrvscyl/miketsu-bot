@@ -32,9 +32,9 @@ class Leaderboard(commands.Cog):
 
     @commands.command(aliases=["leaderboard", "lb"])
     @commands.guild_only()
-    async def leaderboard_show(self, ctx, *, args):
+    async def leaderboard_show(self, ctx, *, args=None):
 
-        if len(args) == 0:
+        if args is None:
             await self.leaderboard_show_help(ctx)
 
         elif args.lower() in ["ssr"]:

@@ -135,10 +135,10 @@ class Clock(commands.Cog):
                 await owls_restock()
 
             if hour_minute in ["06:00", "18:00"]:
-                await Encounter(self.client).perform_announce_netherworld()
+                await Encounter(self.client).enc_nether_announce()
 
             if hour_minute == "00:00":
-                await Encounter(self.client).boss_daily_reset_check()
+                await Encounter(self.client).enc_perform_reset_boss_check()
                 await Economy(self.client).economy_issue_rewards_reset_daily()
 
                 if get_time().strftime("%a").lower() == "mon":

@@ -173,7 +173,8 @@ class Souls(commands.Cog):
         users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": - sushi_required}})
         await perform_add_log("sushi", -sushi_required, user.id)
 
-        total_chance, shikigami_name, shikigami_evolved = get_clear_chance(user, 50, stage_adj, [2, 2.5], 0.75, 1)
+        total_chance, shikigami_name, shikigami_evolved = get_clear_chance_soul_explore(user, 50, stage_adj, [2, 2.5],
+                                                                                        0.75, 1)
         thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
         adjusted_chance = random.uniform(total_chance * 0.97, total_chance)
 

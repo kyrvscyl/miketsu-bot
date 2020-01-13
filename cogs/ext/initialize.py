@@ -360,7 +360,7 @@ def check_if_user_has_sushi_2(ctx, required):
 
 
 def get_shikigami_stats(user, shiki):
-    stats = users.find_one({"user_id": str(user.id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
+    stats = users.find_one({"user_id": str(user), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
     try:
         return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"], stats["shikigami"][0]["souls"]
     except KeyError:
@@ -866,7 +866,7 @@ def push_note(title, content):
             pass
 
 
-def get_clear_chance(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
+def get_clear_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
     grade_total, soul_set_chance, listings_souls = 0, 0, []
     query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1})
 
@@ -877,21 +877,14 @@ def get_clear_chance(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
     if shikigami_evo is True:
         evo_adj = evo_adj_max
 
-    for result in users.aggregate([
-        {
-            '$match': {'user_id': str(user.id)}
-        }, {
-            '$project': {'souls': 1}
-        }, {
-            '$project': {'souls': {'$objectToArray': '$souls'}}
-        }, {
-            '$unwind': {'path': '$souls'}
-        }, {
-            '$unwind': {'path': '$souls.v'}
-        }, {
-            '$match': {'souls.v.equipped': shikigami_name}
-        }
-    ]):
+    for result in users.aggregate([{
+        '$match': {'user_id': str(user.id)}}, {
+        '$project': {'souls': 1}}, {
+        '$project': {'souls': {'$objectToArray': '$souls'}}}, {
+        '$unwind': {'path': '$souls'}}, {
+        '$unwind': {'path': '$souls.v'}}, {
+        '$match': {'souls.v.equipped': shikigami_name}
+    }]):
         grade_total += result["souls"]["v"]["slot"]
         listings_souls.append(result["souls"]["k"])
 

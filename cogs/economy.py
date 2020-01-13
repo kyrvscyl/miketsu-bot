@@ -265,92 +265,93 @@ class Economy(commands.Cog):
                 await process_msg_edit(msg, None, embed_new_create(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
+    async def economy_wish_fulfill_help(self, ctx):
+
+        embed = discord.Embed(
+            color=ctx.author.colour, title=f"fulfill, ff",
+            description=f"fulfill a wish from a member in *`{self.prefix}wishlist`*\n"
+        )
+        embed.add_field(name="Format", value=f"*`{self.prefix}ff <@member>`*")
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["fulfill", "ff"])
     @commands.guild_only()
     async def economy_wish_fulfill(self, ctx, *, member: discord.Member = None):
 
-        user = ctx.author
-        query = users.find_one({"user_id": str(member.id)}, {"_id": 0, "wish": 1})["wish"]
-
         if member is None:
-            embed = discord.Embed(
-                color=ctx.author.colour, title=f"fulfill, ff",
-                description=f"fulfill a wish from a member in *`{self.prefix}wishlist`*\n"
-            )
-            embed.add_field(name="Format", value=f"*`{self.prefix}ff <@member>`*")
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif query is None:
-            embed = discord.Embed(
-                title="Invalid member", colour=colour,
-                description="that member doesn't exist or lacks a profile in this guild"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif query is True:
-            embed = discord.Embed(
-                color=user.colour, title=f"Invalid member",
-                description=f"member has not placed their daily wish yet",
-            )
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif query is False:
-            embed = discord.Embed(
-                color=user.colour, title=f"Wish fulfillment failed",
-                description=f"this member has their wish fulfilled already",
-            )
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif check_if_user_has_any_alt_roles(member):
-            await process_msg_reaction_add(ctx.message, "❌")
+            await self.economy_wish_fulfill_help(ctx)
 
         else:
-            shikigami_name = query
-            user_shikigami = users.find_one({
-                "user_id": str(user.id),
-                "shikigami.name": shikigami_name
-            }, {
-                "_id": 0, "shikigami.$": 1
-            })
+            user = ctx.author
+            query = users.find_one({"user_id": str(member.id)}, {"_id": 0, "wish": 1})["wish"]
 
-            if user_shikigami is None or user_shikigami["shikigami"][0]["shards"] == 0:
-                embed = discord.Embed(title=f"Insufficient shards", description=f"lacks a shard to donate")
-                await process_msg_submit(ctx.channel, None, embed)
+            if query is None:
+                raise commands.BadArgument(user)
 
-            elif user_shikigami["shikigami"][0]["shards"] > 0:
-                shard, friendship_pass, friendship = -1, 3, 10
-
-                users.update_one({
-                    "user_id": str(user.id), "shikigami.name": shikigami_name
-                }, {
-                    "$inc": {
-                        "shikigami.$.shards": shard,
-                        "friendship_pass": friendship_pass,
-                        "friendship": friendship
-                    }
-                })
-                await perform_add_log("friendship_pass", friendship_pass, user.id)
-                await perform_add_log("friendship", friendship, user.id)
-
-                users.update_one({
-                    "user_id": str(member.id),
-                    "shikigami.name": shikigami_name}, {
-                    "$inc": {
-                        "shikigami.$.shards": 1
-                    },
-                    "$set": {
-                        "wish": False
-                    }
-                })
-
+            elif query is True:
                 embed = discord.Embed(
-                    color=user.colour, title=f"Wish fulfilled", timestamp=get_timestamp(),
-                    description=f"Donated 1 {shikigami_name.title()} shard to {member.mention}\n"
-                                f"Also acquired `{friendship}`{e_f} and `{friendship_pass}`{e_fp}",
+                    color=user.colour, title=f"Invalid member",
+                    description=f"member has not placed their daily wish yet",
                 )
-                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
                 await process_msg_submit(ctx.channel, None, embed)
+
+            elif query is False:
+                embed = discord.Embed(
+                    color=user.colour, title=f"Wish fulfillment failed",
+                    description=f"this member has their wish fulfilled already",
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif check_if_user_has_any_alt_roles(member):
+                await process_msg_reaction_add(ctx.message, "❌")
+
+            else:
+                shikigami_name = query
+                user_shikigami = users.find_one({
+                    "user_id": str(user.id),
+                    "shikigami.name": shikigami_name
+                }, {
+                    "_id": 0, "shikigami.$": 1
+                })
+
+                if user_shikigami is None or user_shikigami["shikigami"][0]["shards"] == 0:
+                    embed = discord.Embed(title=f"Insufficient shards", description=f"lacks a shard to donate")
+                    await process_msg_submit(ctx.channel, None, embed)
+
+                elif user_shikigami["shikigami"][0]["shards"] > 0:
+                    shard, friendship_pass, friendship = -1, 3, 10
+
+                    users.update_one({
+                        "user_id": str(user.id), "shikigami.name": shikigami_name
+                    }, {
+                        "$inc": {
+                            "shikigami.$.shards": shard,
+                            "friendship_pass": friendship_pass,
+                            "friendship": friendship
+                        }
+                    })
+                    await perform_add_log("friendship_pass", friendship_pass, user.id)
+                    await perform_add_log("friendship", friendship, user.id)
+
+                    users.update_one({
+                        "user_id": str(member.id),
+                        "shikigami.name": shikigami_name}, {
+                        "$inc": {
+                            "shikigami.$.shards": 1
+                        },
+                        "$set": {
+                            "wish": False
+                        }
+                    })
+
+                    embed = discord.Embed(
+                        color=user.colour, title=f"Wish fulfilled", timestamp=get_timestamp(),
+                        description=f"Donated 1 {shikigami_name.title()} shard to {member.mention}\n"
+                                    f"Also acquired `{friendship}`{e_f} and `{friendship_pass}`{e_fp}",
+                    )
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
+                    await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["stat", "st"])
     @commands.guild_only()
