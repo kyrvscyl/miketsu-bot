@@ -360,7 +360,7 @@ def check_if_user_has_sushi_2(ctx, required):
 
 
 def get_shikigami_stats(user, shiki):
-    stats = users.find_one({"user_id": str(user), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
+    stats = users.find_one({"user_id": str(user.id), "shikigami.name": shiki}, {"_id": 0, "shikigami.$": 1})
     try:
         return stats["shikigami"][0]["level"], stats["shikigami"][0]["evolved"], stats["shikigami"][0]["souls"]
     except KeyError:

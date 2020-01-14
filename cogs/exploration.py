@@ -110,6 +110,7 @@ class Exploration(commands.Cog):
             await process_msg_submit(ctx.channel, None, embed)
 
         elif check_if_user_has_shiki_set:
+
             user_profile = users.find_one({"user_id": str(user.id)}, {"level": 1, "display": 1, "exploration": 1})
 
             try:
