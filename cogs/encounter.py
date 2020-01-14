@@ -547,7 +547,7 @@ class Encounter(commands.Cog):
                         else:
                             await self.enc_roll_treasure(user, ctx, msg)
 
-            self.client.get_command("enc_roll").reset_cooldown(ctx)
+        self.client.get_command("enc_roll").reset_cooldown(ctx)
 
     async def enc_roll_quiz(self, user, ctx, msg):
 
@@ -932,7 +932,7 @@ class Encounter(commands.Cog):
 
     async def enc_roll_boss_defeat(self, boss, rewards, url, boss_stats, ctx, discoverer2):
 
-        embed = discord.Embed(colour=ctx.author.colour, title="🎊 Boss defeat rewards!", timestamp=get_timestamp())
+        embed = discord.Embed(colour=discoverer2.colour, title="🎊 Boss defeat rewards!", timestamp=get_timestamp())
         embed.set_thumbnail(url=url)
 
         for reward in rewards:
@@ -960,7 +960,7 @@ class Encounter(commands.Cog):
                 await perform_add_log("coins", coins, user_id)
                 await perform_add_log("medals", medals, user_id)
 
-        for d in [ctx.guild.get_member(int(boss_stats["discoverer"])), discoverer2]:
+        for d in [ctx.guild.get_member(int(boss_stats["discoverer"])), discoverer2.id]:
 
             if d is not None:
                 jades, coins, medals, experience = 250, 150000, 150, 100
@@ -979,7 +979,6 @@ class Encounter(commands.Cog):
                 embed = discord.Embed(colour=d.colour, description=description, timestamp=get_timestamp())
                 await process_msg_submit(ctx.channel, None, embed)
 
-        self.client.get_command("enc_roll").reset_cooldown(ctx)
         users.update_many({"level": {"$gt": 60}}, {"$set": {"experience": 100000, "level_exp_next": 100000}})
         self.enc_roll_boss_status_set(False)
 
