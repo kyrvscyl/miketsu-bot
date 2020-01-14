@@ -187,7 +187,7 @@ class Realm(commands.Cog):
                             user_cards_description.append(f"{d['name']}/{d['grade']} [x{d['count']}]")
 
                     embed = discord.Embed(
-                        color=ctx.colour, title="Realm card selection", timestamp=get_timestamp(),
+                        color=user.colour, title="Realm card selection", timestamp=get_timestamp(),
                         description=f"enter a valid realm card and grade (ex. moon/4)"
                     )
                     embed.add_field(name="Available cards", value=f"*{', '.join(user_cards_description[:25])}*")
