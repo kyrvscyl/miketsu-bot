@@ -306,8 +306,7 @@ class Summon(commands.Cog):
             embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar_url)
 
         elif amulets_pulled == 1:
-            shikigami_pulled = shikigami_pulled[0][1]
-            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled, "pre"))
+            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled[0][1], "pre"))
 
         await process_msg_submit(ctx.channel, caption, embed)
         await self.summon_perform_mystery_pull_push(user, shikigami_pulled_count, amulets_pulled, shikigami_pulled)
