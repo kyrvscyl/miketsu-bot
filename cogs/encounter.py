@@ -496,7 +496,7 @@ class Encounter(commands.Cog):
                 }
             })
 
-    @commands.command(aliases=["encounter"])
+    @commands.command(aliases=["encounter", "enc"])
     @commands.cooldown(1, 180, commands.BucketType.user)
     @commands.guild_only()
     async def enc_roll(self, ctx):
@@ -928,7 +928,7 @@ class Encounter(commands.Cog):
 
             embed = discord.Embed(title=f"The Rare Boss {boss} has been defeated!", colour=discoverer.colour)
             await process_msg_submit(ctx.channel, None, embed)
-            await self.enc_roll_boss_defeat(boss, rewards_zip, url, boss_stats, ctx, discoverer)
+            await self.enc_roll_boss_defeat(boss, rewards_zip, url, boss_stats, ctx, discoverer.id)
 
     async def enc_roll_boss_defeat(self, boss, rewards, url, boss_stats, ctx, discoverer2):
 
