@@ -928,7 +928,7 @@ class Encounter(commands.Cog):
 
             embed = discord.Embed(title=f"The Rare Boss {boss} has been defeated!", colour=discoverer.colour)
             await process_msg_submit(ctx.channel, None, embed)
-            await self.enc_roll_boss_defeat(boss, rewards_zip, url, boss_stats, ctx, discoverer.id)
+            await self.enc_roll_boss_defeat(boss, rewards_zip, url, boss_stats, ctx, discoverer)
 
     async def enc_roll_boss_defeat(self, boss, rewards, url, boss_stats, ctx, discoverer2):
 
@@ -960,15 +960,15 @@ class Encounter(commands.Cog):
                 await perform_add_log("coins", coins, user_id)
                 await perform_add_log("medals", medals, user_id)
 
-        for d in [ctx.guild.get_member(int(boss_stats["discoverer"])), discoverer2.id]:
+        for d in [ctx.guild.get_member(int(boss_stats["discoverer"])), discoverer2]:
 
             if d is not None:
                 jades, coins, medals, experience = 250, 150000, 150, 100
-                users.update_one({"user_id": d}, {"$inc": {"jades": jades, "coins": coins, "medals": medals}})
-                users.update_one({"user_id": d, "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
-                await perform_add_log("jades", jades, d)
-                await perform_add_log("coins", coins, d)
-                await perform_add_log("medals", medals, d)
+                users.update_one({"user_id": str(d.id)}, {"$inc": {"jades": jades, "coins": coins, "medals": medals}})
+                users.update_one({"user_id": str(d.id), "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
+                await perform_add_log("jades", jades, str(d.id))
+                await perform_add_log("coins", coins, str(d.id))
+                await perform_add_log("medals", medals, str(d.id))
 
                 await asyncio.sleep(2)
                 await process_msg_submit(ctx.channel, None, embed)
