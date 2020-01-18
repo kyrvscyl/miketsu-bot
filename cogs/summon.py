@@ -129,7 +129,7 @@ class Summon(commands.Cog):
                     description=f"You acquired the {shikigami_rarity} shikigami {shikigami_name.title()}!",
                 )
                 embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
+                embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif shikigami_shard_current < shikigami_shards_required:
@@ -139,7 +139,7 @@ class Summon(commands.Cog):
                     title="Summon failed", colour=colour, timestamp=get_timestamp(),
                     description=f"You lack `{shikigami_shards_lacking}` {shikigami_name.title()} shards",
                 )
-                embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
+                embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
                 await process_msg_submit(ctx.channel, None, embed)
 
     async def summon_perform_broken(self, ctx, user):
@@ -306,7 +306,7 @@ class Summon(commands.Cog):
             embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar_url)
 
         elif amulets_pulled == 1:
-            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_pulled[0][1], "pre"))
+            embed.set_thumbnail(url=get_shikigami_url(shikigami_pulled[0][1], "pre"))
 
         await process_msg_submit(ctx.channel, caption, embed)
         await self.summon_perform_mystery_pull_push(user, shikigami_pulled_count, amulets_pulled, shikigami_pulled)

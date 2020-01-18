@@ -56,7 +56,7 @@ class Embeds(commands.Cog):
 
     @commands.command(aliases=["welcome"])
     @commands.is_owner()
-    async def edit_message_welcome(self, ctx):
+    async def embeds_welcome_edit(self, ctx):
 
         query = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0, "links": 1, "roles": 1})
 

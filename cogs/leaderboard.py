@@ -3,8 +3,6 @@ Leaderboard Module
 Miketsu, 2020
 """
 
-import asyncio
-
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -39,51 +37,51 @@ class Leaderboard(commands.Cog):
 
         elif args.lower() in ["ssr"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SSR": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_2} LeaderBoard", "SSR")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_2} LeaderBoard", "SSR")
 
         elif args.lower() in ["sp"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SP": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_1} LeaderBoard", "SP")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_1} LeaderBoard", "SP")
 
         elif args.lower() in ["sr"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SR": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_3} LeaderBoard", "SR")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_3} LeaderBoard", "SR")
 
         elif args.lower() in ["ssn"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "SSN": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_6} LeaderBoard", "SSN")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_6} LeaderBoard", "SSN")
 
         elif args.lower() in ["medal", "medals"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_m} Medal LeaderBoard", "medals")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_m} Medal LeaderBoard", "medals")
 
         elif args.lower() in ["amulet", "amulets"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "amulets_spent": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_a} Spender LeaderBoard", "amulets_spent")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_a} Spender LeaderBoard", "amulets_spent")
 
         elif args.lower() in ["friendship", "fp"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "friendship": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_f} Friendship LeaderBoard", "friendship")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_f} Friendship LeaderBoard", "friendship")
 
         elif args.lower() in ["level"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "level": 1})
-            await self.leaderboard_post_record_users(ctx, query, f"{e_x} Level LeaderBoard", "level")
+            await self.leaderboard_show_record_users(ctx, query, f"{e_x} Level LeaderBoard", "level")
 
         elif args.lower() in ["achievements", "frames"]:
             query = users.find({}, {"_id": 0, "user_id": 1, "achievements": 1})
-            await self.leaderboard_post_record_users(ctx, query, "🖼 Frames LeaderBoard", "achievements")
+            await self.leaderboard_show_record_users(ctx, query, "🖼 Frames LeaderBoard", "achievements")
 
         elif args.lower() in ["ship", "ships"]:
             query = ships.find({}, {"_id": 0, "points": 1, "ship_name": 1})
-            await self.leaderboard_post_record_ships(ctx, query, "🚢 Ships LeaderBoard")
+            await self.leaderboard_show_record_ships(ctx, query, "🚢 Ships LeaderBoard")
 
         elif args.lower() in ["streak", "ssrstreak"]:
             query = streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1})
-            await self.leaderboard_post_record_users(
+            await self.leaderboard_show_record_users(
                 ctx, query, f"No {e_2} Summon Streak LeaderBoard", "SSR_current"
             )
 
-    async def leaderboard_post_record_users(self, ctx, query, title, key):
+    async def leaderboard_show_record_users(self, ctx, query, title, key):
 
         listings, listings_formatted = [], []
 
@@ -101,9 +99,9 @@ class Leaderboard(commands.Cog):
         for user in sorted(listings, key=lambda x: x[1], reverse=True):
             listings_formatted.append(f"🔸{user[0]}, x{user[1]:,d}\n")
 
-        await self.leaderboard_paginate(title, ctx, listings_formatted)
+        await self.leaderboard_show_paginate(title, ctx, listings_formatted)
 
-    async def leaderboard_post_record_ships(self, ctx, query, title):
+    async def leaderboard_show_record_ships(self, ctx, query, title):
 
         listings, listings_formatted = [], []
 
@@ -113,9 +111,9 @@ class Leaderboard(commands.Cog):
         for ship in sorted(listings, key=lambda x: x[1], reverse=True):
             listings_formatted.append(f"🔸{ship[0]}, x{ship[1]} {e_f} \n")
 
-        await self.leaderboard_paginate(title, ctx, listings_formatted)
+        await self.leaderboard_show_paginate(title, ctx, listings_formatted)
 
-    async def leaderboard_paginate(self, title, ctx, listings_formatted):
+    async def leaderboard_show_paginate(self, title, ctx, listings_formatted):
 
         page, max_lines = 1, 15
         page_total = ceil(len(listings_formatted) / max_lines)

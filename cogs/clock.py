@@ -3,7 +3,6 @@ Clock Module
 Miketsu, 2020
 """
 
-import asyncio
 import sys
 
 from discord.ext import commands
@@ -119,18 +118,18 @@ class Clock(commands.Cog):
         if clock.name == clock_name:
             raise KeyboardInterrupt
         else:
-            await process_channel_edit(clock, clock_name)
+            await process_channel_edit(clock, clock_name, None)
 
         try:
             if minute_hand == "00":
                 await self.perform_penalize_score()
                 await self.perform_reset_actions()
                 await self.perform_reset_purchase()
-                await Expecto(self.client).send_off_report_quest1()
-                await Expecto(self.client).send_off_complete_quest1()
+                await Expecto(self.client).expecto_sendoff_report()
+                await Expecto(self.client).expecto_send_off_complete_quest1()
                 await self.perform_delete_secret_channels()
-                await Events(self.client).perform_announce_reminders_bidding(get_time().strftime("%b %d, %Y %H:%M"))
-                await Events(self.client).perform_announce_reminders()
+                await Events(self.client).events_reminders_announce_bidding(get_time().strftime("%b %d, %Y %H:%M"))
+                await Events(self.client).events_reminders_announce_others()
 
             if hour_minute in ["02:00", "08:00", "14:00", "20:00"]:
                 await owls_restock()

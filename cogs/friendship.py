@@ -3,9 +3,7 @@ Friendship Module
 Miketsu, 2020
 """
 
-import asyncio
 from datetime import timedelta
-from itertools import cycle
 
 from discord.ext import commands
 
@@ -19,17 +17,19 @@ class Friendship(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-        self.summon_captions = cycle(listings_1["summon_captions"])
-
     @commands.command(aliases=["sail"])
     @commands.guild_only()
     async def friendship_check_sail(self, ctx, *, member: discord.Member = None):
 
         if member is None:
             await self.friendship_check_sail_post(ctx.author, ctx.channel)
-
         else:
-            await self.friendship_check_sail_post(member, ctx.channel)
+            try:
+                member.id
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
+            else:
+                await self.friendship_check_sail_post(member, ctx.channel)
 
     async def friendship_check_sail_post(self, user, channel):
 
@@ -57,18 +57,22 @@ class Friendship(commands.Cog):
 
         if member is None:
             await self.friendship_ship_show_generate(ctx.author, ctx)
-
         else:
-            await self.friendship_ship_show_generate(member, ctx)
+            try:
+                member.id
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
+            else:
+                await self.friendship_ship_show_generate(member, ctx)
 
     async def friendship_ship_show_generate(self, member, ctx):
 
-        listings_formatted = []
+        listings = []
         for ship in ships.find({"code": {"$regex": f".*{member.id}.*"}}, {"_id": 0}):
             ship_entry = [ship["shipper1"], ship["shipper2"], ship["ship_name"], ship["level"], ship['cards']]
-            listings_formatted.append(ship_entry)
+            listings.append(ship_entry)
 
-        await self.friendship_ship_show_paginate(listings_formatted, member, ctx)
+        await self.friendship_ship_show_paginate(listings, member, ctx)
 
     async def friendship_ship_show_paginate(self, listings_formatted, member, ctx):
 
@@ -104,7 +108,7 @@ class Friendship(commands.Cog):
                         now = datetime.now(tz=pytz.timezone("UTC"))
 
                         if now < time_deployed_delta:
-                            hours, minutes = hours_minutes(time_deployed_delta - now)
+                            hours, minutes = get_hours_minutes(time_deployed_delta - now)
                             caption = f", `collect in {hours}h, {minutes}m`"
                         else:
                             caption = ", `claim now!`"
@@ -125,12 +129,12 @@ class Friendship(commands.Cog):
         for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
-        def check_pagination(r, u):
+        def check(r, u):
             return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
         while True:
             try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check_pagination)
+                reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
             except asyncio.TimeoutError:
                 await process_msg_reaction_clear(msg)
                 break
@@ -146,72 +150,83 @@ class Friendship(commands.Cog):
                 await process_msg_edit(msg, None, embed_new_create(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
+    async def friendship_ship_show_one_help(self, ctx):
+
+        embed = discord.Embed(
+            title="ship, ships", colour=colour,
+            description=f"shows a ship profile or your own list of ships\n"
+                        f"to change your ship's name use *`{self.prefix}fpchange`*"
+        )
+        embed.add_field(
+            name="Formats", inline=False,
+            value=f"*• `{self.prefix}ship <@member>`*\n"
+                  f"*• `{self.prefix}ship <@member> <@member>`*\n"
+                  f"*• `{self.prefix}ships`*",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["ship"])
     @commands.guild_only()
-    async def friendship_ship(self, ctx, query1: discord.Member = None, *, query2: discord.Member = None):
+    async def friendship_ship_show_one(self, ctx, member1: discord.Member = None, *, member2: discord.Member = None):
+
+        if member1 is None and member2 is None:
+            await self.friendship_ship_show_one_help(ctx)
 
         try:
-            if query1 is None and query2 is None:
-                embed = discord.Embed(
-                    title="ship, ships", colour=colour,
-                    description=f"shows a ship profile or your own list of ships\n"
-                                f"to change your ship's name use *`{self.prefix}fpchange`*"
-                )
-                embed.add_field(
-                    name="Formats", inline=False,
-                    value=f"*• `{self.prefix}ship <@member>`*\n"
-                          f"*• `{self.prefix}ship <@member> <@member>`*\n"
-                          f"*• `{self.prefix}ships`*",
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            elif query1 is not None and query2 is None:
-                code = get_bond(ctx.author.id, query1.id)
-                await self.friendship_post_ship(code, query1, ctx)
-
-            elif query1 is not None and query2 is not None:
-                code = get_bond(query1.id, query2.id)
-                await self.friendship_post_ship(code, query1, ctx)
+            if member1 is not None and member2 is None:
+                try:
+                    code = get_bond(ctx.author.id, member1.id)
+                except AttributeError:
+                    await process_msg_invalid_member(ctx)
+                else:
+                    await self.friendship_post_ship(code, member1, ctx)
+            else:
+                try:
+                    code = get_bond(member1.id, member2.id)
+                except AttributeError:
+                    await process_msg_invalid_member(ctx)
+                else:
+                    await self.friendship_post_ship(code, member1, ctx)
 
         except TypeError:
             embed = discord.Embed(
-                colour=colour,
-                title="Invalid ship",
-                description=f"that ship has sunk before it was even fully built"
+                colour=ctx.author, title="Invalid ship",
+                description=f"That ship has sunk before it was even fully built"
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-    async def friendship_post_ship(self, code, query1, ctx):
+    async def friendship_post_ship(self, code, member, ctx):
 
-        ship_profile = ships.find_one({"code": code}, {"_id": 0, })
+        query = ships.find_one({"code": code}, {"_id": 0, })
+        level, points, points_required = query["level"], query['points'], query['points_required']
 
-        list_rank = []
+        listings = []
         for entry in ships.find({}, {"code": 1, "points": 1}):
-            list_rank.append((entry["code"], entry["points"]))
+            listings.append((entry["code"], entry["points"]))
 
-        rank = (sorted(list_rank, key=lambda x: x[1], reverse=True)).index((code, ship_profile["points"])) + 1
+        rank = (sorted(listings, key=lambda x: x[1], reverse=True)).index((code, query["points"])) + 1
 
-        if ship_profile['level'] > 1:
-            rewards = str(ship_profile["level"] * 25) + " jades/reset"
+        if level > 1:
+            rewards = str(query["level"] * 25) + " jades/reset"
         else:
-            rewards = "Must be Level 2 & above"
+            rewards = "Must be Lvl 2 & above"
 
         description = f"```" \
-                      f"• Level:        :: {ship_profile['level']}/5\n" \
-                      f"• Total Points: :: {ship_profile['points']}/{ship_profile['points_required']}\n" \
+                      f"• Level:        :: {level}/5\n" \
+                      f"• Total Points: :: {points}/{points_required}\n" \
                       f"• Server Rank:  :: {rank}\n" \
                       f"• Rewards       :: {rewards}" \
                       f"```"
 
-        embed = discord.Embed(color=query1.colour, description=description, timestamp=get_timestamp())
+        embed = discord.Embed(color=member.colour, description=description, timestamp=get_timestamp())
         embed.set_author(
-            name=f"{ship_profile['ship_name']}",
-            icon_url=self.client.get_user(int(ship_profile["shipper1"])).avatar_url
+            name=f"{query['ship_name']}",
+            icon_url=self.client.get_user(int(query["shipper1"])).avatar_url
         )
-        embed.set_thumbnail(url=self.client.get_user(int(ship_profile['shipper2'])).avatar_url)
+        embed.set_thumbnail(url=self.client.get_user(int(query['shipper2'])).avatar_url)
 
         try:
-            time_deployed = get_time_converted(ship_profile["cards"]["timestamp"])
+            time_deployed = get_time_converted(query["cards"]["timestamp"])
         except TypeError:
             pass
         except AttributeError:
@@ -221,18 +236,37 @@ class Friendship(commands.Cog):
             now = datetime.now(tz=pytz.timezone("UTC"))
 
             if now < time_deployed_delta:
-                hours, minutes = hours_minutes(time_deployed_delta - now)
+                hours, minutes = get_hours_minutes(time_deployed_delta - now)
                 caption = f"Collect in {hours}h, {minutes}m"
             else:
                 caption = "claim now!"
 
             embed.add_field(
                 name=f"Equipped realm card",
-                value=f"{ship_profile['cards']['name'].title()} | "
-                      f"Grade {ship_profile['cards']['grade']} | "
+                value=f"{query['cards']['name'].title()} | "
+                      f"Grade {query['cards']['grade']} | "
                       f"{caption}"
             )
 
+        await process_msg_submit(ctx.channel, None, embed)
+
+    async def friendship_give_help(self, ctx):
+
+        embed = discord.Embed(
+            title="friendship, fp", colour=colour,
+            description=f"sends and receives friendship & builds ship that earns daily reward\n"
+                        f"built ships are shown using *`{self.prefix}ship`*"
+        )
+        embed.add_field(
+            name="Mechanics", inline=False,
+            value="```"
+                  "• Send hearts      ::  + 5\n"
+                  " * added ship exp  ::  + 5\n\n"
+                  "• Confirm receipt\n"
+                  " * Receiver        ::  + 3\n"
+                  " * added ship exp  ::  + 3```",
+        )
+        embed.add_field(name="Format", value=f"*`{self.prefix}friendship <@member>`*", inline=False)
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["friendship", "fp"])
@@ -241,28 +275,18 @@ class Friendship(commands.Cog):
     async def friendship_give(self, ctx, *, receiver: discord.Member = None):
 
         giver = ctx.author
-        profile = users.find_one({"user_id": str(giver.id)}, {"_id": 0, "friendship_pass": 1})
 
-        if receiver is None:
+        if not check_if_user_has_friendship_passes:
             embed = discord.Embed(
-                title="friendship, fp", colour=colour,
-                description=f"sends and receives friendship & builds ship that earns daily reward\n"
-                            f"built ships are shown using *`{self.prefix}ship`*"
+                colour=giver.colour, title="Insufficient friendship passes",
+                description=f"Fulfill wishes or claim your dailies to obtain more"
             )
-            embed.add_field(
-                name="Mechanics",
-                value="```"
-                      "• Send hearts      ::  + 5\n"
-                      " * added ship exp  ::  + 5\n\n"
-                      "• Confirm receipt < 2 min"
-                      "\n * Receiver        ::  + 3"
-                      "\n * added ship exp  ::  + 3```",
-                inline=False
-            )
-            embed.add_field(name="Format", value=f"*`{self.prefix}friendship <@member>`*", inline=False)
             await process_msg_submit(ctx.channel, None, embed)
 
-        elif receiver.bot is True or receiver == ctx.author:
+        if receiver is None:
+            await self.friendship_give_help(ctx)
+
+        elif receiver.bot is True or receiver == giver:
             return
 
         elif receiver.name == giver.name:
@@ -271,107 +295,108 @@ class Friendship(commands.Cog):
         elif check_if_user_has_any_alt_roles(receiver):
             await process_msg_reaction_add(ctx.message, "❌")
 
-        elif profile["friendship_pass"] < 1:
-            embed = discord.Embed(
-                colour=colour,
-                title="Insufficient friendship passes",
-                description=f"fulfill wishes or claim your dailies to obtain more"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif profile["friendship_pass"] > 0:
-            code = get_bond(giver.id, receiver.id)
-            users.update_one({
-                "user_id": str(giver.id)}, {
-                "$inc": {
-                    "friendship_pass": -1
-                }
-            })
-            await perform_add_log("friendship_pass", -1, giver)
-
-            if ships.find_one({"code": code}, {"_id": 0}) is None:
-                profile = {
-                    "code": code,
-                    "shipper1": str(ctx.author.id),
-                    "shipper2": str(receiver.id),
-                    "ship_name": f"{giver.name} and {receiver.name}'s ship",
-                    "level": 1,
-                    "points": 0,
-                    "points_required": 50,
-                    "cards": {
-                        "equipped": False,
-                        "name": None,
-                        "grade": None,
-                        "timestamp": None,
-                        "collected": None
-                    }
-                }
-                ships.insert_one(profile)
-
-            ships.update_one({"code": code}, {"$inc": {"points": 5}})
-            await self.friendship_give_check_levelup(ctx, code, giver)
-            users.update_one({"user_id": str(giver.id)}, {"$inc": {"friendship": 5}})
-            await perform_add_log("friendship", 5, giver)
-            await ctx.message.add_reaction(f"{e_f.replace('<', '').replace('>', '')}")
-
-            def check(r, u):
-                return u.id == receiver.id and str(r.emoji) == e_f and r.message.id == ctx.message.id
-
+        else:
             try:
-                await self.client.wait_for("reaction_add", timeout=120, check=check)
-            except asyncio.TimeoutError:
-                await self.friendship_give_check_levelup(ctx, code, giver)
-                await ctx.message.clear_reactions()
+                code = get_bond(giver.id, receiver.id)
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
             else:
-                ships.update_one({"code": code, "level": {"$lt": 5}}, {"$inc": {"points": 3}})
+                give, receive = 5, 3
+
+                users.update_one({"user_id": str(giver.id)}, {"$inc": {"friendship_pass": -1}})
+                await perform_add_log("friendship_pass", -1, giver)
+
+                if ships.find_one({"code": code}, {"_id": 0}) is None:
+                    ships.insert_one({
+                        "code": code,
+                        "shipper1": str(giver.id),
+                        "shipper2": str(receiver.id),
+                        "ship_name": f"{giver.name} and {receiver.name}'s ship",
+                        "level": 1,
+                        "points": 0,
+                        "points_required": 50,
+                        "cards": {
+                            "equipped": False,
+                            "name": None,
+                            "grade": None,
+                            "timestamp": None,
+                            "collected": None
+                        }
+                    })
+
+                ships.update_one({"code": code}, {"$inc": {"points": give}})
                 await self.friendship_give_check_levelup(ctx, code, giver)
-                users.update_one({"user_id": str(receiver.id)}, {"$inc": {"friendship": 3}})
-                await perform_add_log("friendship", 3, receiver)
-                await ctx.message.clear_reactions()
-                await process_msg_reaction_add(ctx.message, "✅")
+                users.update_one({"user_id": str(giver.id)}, {"$inc": {"friendship": give}})
+                await perform_add_log("friendship", give, giver)
+
+                emojis_add = [f"{e_f.replace('<', '').replace('>', '')}"]
+                for emoji in emojis_add:
+                    await process_msg_reaction_add(ctx.message, emoji)
+
+                def check(r, u):
+                    return u.id == receiver.id and str(r.emoji) == e_f and r.message.id == ctx.message.id
+
+                try:
+                    await self.client.wait_for("reaction_add", timeout=120, check=check)
+                except asyncio.TimeoutError:
+                    await self.friendship_give_check_levelup(ctx, code, giver)
+                    await ctx.message.clear_reactions()
+                else:
+                    ships.update_one({"code": code, "level": {"$lt": 5}}, {"$inc": {"points": receive}})
+                    await self.friendship_give_check_levelup(ctx, code, giver)
+                    users.update_one({"user_id": str(receiver.id)}, {"$inc": {"friendship": receive}})
+                    await perform_add_log("friendship", receive, receiver)
+                    await ctx.message.clear_reactions()
+                    await process_msg_reaction_add(ctx.message, "✅")
 
     async def friendship_give_check_levelup(self, ctx, code, giver):
-        ship = ships.find_one({
+
+        query = ships.find_one({
             "code": code}, {
             "_id": 0, "level": 1, "points": 1, "points_required": 1, "ship_name": 1
         })
-        bond_current = ship["points"]
-        level = ship["level"]
+        bond_current = query["points"]
+        level = query["level"]
 
         if level < 5:
-            if bond_current >= ship["points_required"]:
+            if bond_current >= query["points_required"]:
+
                 ships.update_one({"code": code}, {"$inc": {"level": 1}})
-                level_next = level + 1
+                lvl_next = level + 1
                 points_required = \
-                    round(-1.875 * (level_next ** 4) + 38.75 * (level_next ** 3) - 170.63 * (level_next ** 2)
-                          + 313.75 * level_next - 175)
+                    round(-1.875 * (lvl_next ** 4) + 38.75 * (lvl_next ** 3) - 170.63 * (lvl_next ** 2)
+                          + 313.75 * lvl_next - 175)
                 ships.update_one({"code": code}, {"$inc": {"points_required": points_required}})
 
-                if level_next == 5:
+                if lvl_next == 5:
                     ships.update_one({"code": code}, {"$set": {"points": 575, "points_required": 575}})
 
                 await self.friendship_post_ship(code, giver, ctx)
 
-    @commands.command(aliases=["fpchange", "fpc"])
-    @commands.guild_only()
-    async def friendship_change_name(self, ctx, receiver: discord.Member = None, *, new_name=None):
+    async def friendship_change_name_help(self, ctx):
 
         embed = discord.Embed(
             title="fpchange, fpc", colour=colour,
             description="changes your ship name with the mentioned member"
         )
         embed.add_field(name="Format", value=f"*• `{self.prefix}fpc <@member> <ship name>`*")
+        await process_msg_submit(ctx.channel, None, embed)
+
+    @commands.command(aliases=["fpchange", "fpc"])
+    @commands.guild_only()
+    async def friendship_change_name(self, ctx, receiver: discord.Member = None, *, new_name=None):
 
         if new_name is None:
-            await process_msg_submit(ctx.channel, None, embed)
-
-        try:
-            code = get_bond(ctx.author.id, receiver.id)
-            ships.update_one({"code": code}, {"$set": {"ship_name": new_name}})
-            await self.friendship_post_ship(code, ctx.author, ctx)
-
-        except AttributeError:
-            await process_msg_submit(ctx.channel, None, embed)
+            await self.friendship_change_name_help(ctx)
+        else:
+            giver = ctx.author
+            try:
+                code = get_bond(giver.id, receiver.id)
+            except AttributeError:
+                await self.friendship_change_name_help(ctx)
+            else:
+                ships.update_one({"code": code}, {"$set": {"ship_name": new_name}})
+                await self.friendship_post_ship(code, giver, ctx)
 
 
 def setup(client):

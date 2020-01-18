@@ -3,7 +3,6 @@ Encounter Module
 Miketsu, 2020
 """
 
-import asyncio
 from datetime import timedelta
 from itertools import cycle
 from math import floor
@@ -118,7 +117,7 @@ class Encounter(commands.Cog):
         grade_total, soul_set_chance, listings_souls = 0, 0, []
         query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1})
         user_level = query["level"]
-        shikigami_level, shikigami_evo, shikigami_souls = get_shikigami_stats(user, name)
+        shikigami_level, shikigami_evo, shikigami_souls = get_shikigami_stats_1(user.id, name)
 
         if shikigami_evo is True:
             evo_adj = evo_adj_max
@@ -446,7 +445,7 @@ class Encounter(commands.Cog):
             if entry[1] != 0:
                 address = f"data/shikigamis/{entry[0]}_pre.jpg"
                 shikigami_thumbnail = Image.open(address)
-                shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1], font, x, y)
+                shikigami_image_final = shikigami_shards_count_generate(shikigami_thumbnail, entry[1], font, x, y)
                 images.append(shikigami_image_final)
             else:
                 continue

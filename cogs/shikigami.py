@@ -3,8 +3,6 @@ Shikigami Module
 Miketsu, 2020
 """
 
-import asyncio
-
 from PIL import Image
 from discord.ext import commands
 
@@ -29,30 +27,6 @@ class Shikigami(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
-    async def shikigami_list_show_collected_help(self, ctx):
-
-        embed = discord.Embed(
-            title="shikilist, sl", colour=colour,
-            description="shows your shikigami listings by rarity "
-        )
-        embed.add_field(
-            name="Formats", inline=False,
-            value=f"*`{self.prefix}shikilist <rarity>`*",
-        )
-        await process_msg_submit(ctx.channel, None, embed)
-
-    async def shikigami_show_post_shards_help(self, ctx):
-
-        embed = discord.Embed(
-            title="shards", colour=colour,
-            description="shows your or tagged member's shikigami shards count by rarity"
-        )
-        embed.add_field(
-            name="Format", inline=False,
-            value=f"*`{self.prefix}shards <rarity> <optional: @member>`*"
-        )
-        await process_msg_submit(ctx.channel, None, embed)
-
     @commands.command(aliases=["collection", "col", "collections"])
     @commands.guild_only()
     async def shikigami_image_show_collected(self, ctx, rarity=None, *, member: discord.Member = None):
@@ -70,7 +44,12 @@ class Shikigami(commands.Cog):
                 await self.shikigami_show_post_collected(ctx.author, rarity_upper, ctx)
 
             else:
-                await self.shikigami_show_post_collected(member, rarity_upper, ctx)
+                try:
+                    member.id
+                except AttributeError:
+                    await process_msg_invalid_member(ctx)
+                else:
+                    await self.shikigami_show_post_collected(member, rarity_upper, ctx)
 
     async def shikigami_show_post_collected(self, member, rarity, ctx):
 
@@ -144,6 +123,18 @@ class Shikigami(commands.Cog):
 
         return attachment_link
 
+    async def shikigami_list_show_collected_help(self, ctx):
+
+        embed = discord.Embed(
+            title="shikilist, sl", colour=colour,
+            description="shows your shikigami listings by rarity "
+        )
+        embed.add_field(
+            name="Formats", inline=False,
+            value=f"*`{self.prefix}shikilist <rarity>`*",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["shikilist", "sl"])
     @commands.guild_only()
     async def shikigami_list_show_collected(self, ctx, rarity=None, *, member: discord.Member = None):
@@ -161,7 +152,12 @@ class Shikigami(commands.Cog):
                 await self.shikigami_list_post_collected(ctx.author, rarity_upper, ctx)
 
             else:
-                await self.shikigami_list_post_collected(member, rarity_upper, ctx)
+                try:
+                    member.id
+                except AttributeError:
+                    await process_msg_invalid_member(ctx)
+                else:
+                    await self.shikigami_list_post_collected(member, rarity_upper, ctx)
 
     async def shikigami_list_post_collected(self, member, rarity, ctx):
 
@@ -243,6 +239,18 @@ class Shikigami(commands.Cog):
                 await process_msg_edit(msg, None, embed_new_create(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
+    async def shikigami_show_post_shards_help(self, ctx):
+
+        embed = discord.Embed(
+            title="shards", colour=colour,
+            description="shows your or tagged member's shikigami shards count by rarity"
+        )
+        embed.add_field(
+            name="Format", inline=False,
+            value=f"*`{self.prefix}shards <rarity> <optional: @member>`*"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["shards"])
     @commands.guild_only()
     async def shikigami_show_post_shards(self, ctx, rarity=None, *, member: discord.Member = None):
@@ -260,7 +268,12 @@ class Shikigami(commands.Cog):
                 await self.shikigami_show_post_shards_user(ctx.author, rarity_upper, ctx)
 
             else:
-                await self.shikigami_show_post_shards_user(member, rarity_upper, ctx)
+                try:
+                    member.id
+                except AttributeError:
+                    await process_msg_invalid_member(ctx)
+                else:
+                    await self.shikigami_show_post_shards_user(member, rarity_upper, ctx)
 
     async def shikigami_show_post_shards_user(self, member, rarity, ctx):
 
@@ -308,25 +321,22 @@ class Shikigami(commands.Cog):
         def get_shard_uncollected(shikigami_name):
             try:
                 for result in users.aggregate([{
-                    '$match': {'user_id': str(member.id)}
-                }, {
-                    '$unwind': {'path': '$shikigami'}
-                }, {
-                    '$match': {'shikigami.rarity': rarity}
-                }, {
-                    '$project': {'_id': 0, 'shikigami.name': 1, 'shikigami.shards': 1}
-                }, {
-                    '$match': {'shikigami.name': shikigami_name}}
-                ]):
+                    '$match': {'user_id': str(member.id)}}, {
+                    '$unwind': {'path': '$shikigami'}}, {
+                    '$match': {'shikigami.rarity': rarity}}, {
+                    '$project': {'_id': 0, 'shikigami.name': 1, 'shikigami.shards': 1}}, {
+                    '$match': {'shikigami.name': shikigami_name}
+                }]):
                     return result["shikigami"]["shards"]
-
             except KeyError:
                 return 0
 
         images, font, x, y = [], font_create(30), 1, 60
         rows, cols = get_variables(rarity)
 
+        print(pool_rarity)
         width, height = get_image_variables(pool_rarity, cols, rows)
+        print(width, height)
         new_im = Image.new("RGBA", (width, height))
 
         for entry in shikis:
@@ -335,7 +345,7 @@ class Shikigami(commands.Cog):
                 address = f"data/shikigamis/{entry[0]}_evo.jpg"
 
             shikigami_thumbnail = Image.open(address)
-            shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[2], font, x, y)
+            shikigami_image_final = shikigami_shards_count_generate(shikigami_thumbnail, entry[2], font, x, y)
             images.append(shikigami_image_final)
 
         for entry in shikis_unc:
@@ -345,7 +355,7 @@ class Shikigami(commands.Cog):
                 count = 0
 
             shikigami_thumbnail = Image.open(address).convert("LA")
-            shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, count, font, x, y)
+            shikigami_image_final = shikigami_shards_count_generate(shikigami_thumbnail, count, font, x, y)
             images.append(shikigami_image_final)
 
         for index, item in enumerate(images):
@@ -408,7 +418,7 @@ class Shikigami(commands.Cog):
         if shiki_profile["evolved"] is True:
             evolve = "evo"
 
-        thumbnail = get_thumbnail_shikigami(shikigami_name, evolve)
+        thumbnail = get_shikigami_url(shikigami_name, evolve)
 
         for result in users.aggregate([{
             '$match': {'user_id': str(user.id)}
@@ -562,7 +572,12 @@ class Shikigami(commands.Cog):
                 await self.shikigami_show_post_shikis_user(ctx.author, rarity_upper, ctx)
 
             else:
-                await self.shikigami_show_post_shikis_user(member, rarity_upper, ctx)
+                try:
+                    member.id
+                except AttributeError:
+                    await process_msg_invalid_member(ctx)
+                else:
+                    await self.shikigami_show_post_shikis_user(member, rarity_upper, ctx)
 
     async def shikigami_show_post_shikis_user(self, member, rarity, ctx):
 
@@ -619,13 +634,13 @@ class Shikigami(commands.Cog):
                 address = f"data/shikigamis/{entry[0]}_evo.jpg"
 
             shikigami_thumbnail = Image.open(address)
-            shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[2], font, x, y)
+            shikigami_image_final = shikigami_shards_count_generate(shikigami_thumbnail, entry[2], font, x, y)
             images.append(shikigami_image_final)
 
         for entry in shikis_unc:
             address = f"data/shikigamis/{entry}_pre.jpg"
             shikigami_thumbnail = Image.open(address).convert("LA")
-            shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, 0, font, x, y)
+            shikigami_image_final = shikigami_shards_count_generate(shikigami_thumbnail, 0, font, x, y)
             images.append(shikigami_image_final)
 
         for index, item in enumerate(images):
@@ -730,7 +745,7 @@ class Shikigami(commands.Cog):
 
     @commands.command(aliases=["shrine", "shr"])
     @commands.guild_only()
-    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands.cooldown(1, 90, commands.BucketType.user)
     async def shikigami_shrine(self, ctx, action=None, *, shikigami_name=None):
 
         user = ctx.author
@@ -782,7 +797,7 @@ class Shikigami(commands.Cog):
                     colour=user.colour, timestamp=get_timestamp(), title=f"Specify amount",
                     description=f"You currently have {count_shikigami:,d} {shikigami_name_lower.title()}",
                 )
-                embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name_lower, "evo"))
+                embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
                 embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                 msg = await process_msg_submit(ctx.channel, None, embed)
 
@@ -800,7 +815,7 @@ class Shikigami(commands.Cog):
                         title="Invalid amount", colour=user.colour,
                         description=f"provide a valid integer", timestamp=get_timestamp()
                     )
-                    embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name_lower, "evo"))
+                    embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
                     embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                     await process_msg_edit(msg, None, embed)
 
@@ -823,7 +838,7 @@ class Shikigami(commands.Cog):
                             title="Shrine successful", colour=user.colour, timestamp=get_timestamp(),
                             description=f"You shrined {shikigami_name_lower.title()} for {final_talismans:,d}{e_t}",
                         )
-                        embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name_lower, "evo"))
+                        embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
                         embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                         await process_msg_edit(msg, None, embed)
 
@@ -832,7 +847,7 @@ class Shikigami(commands.Cog):
                             title="Insufficient shikigamis", colour=user.colour, timestamp=get_timestamp(),
                             description=f"You lack that amount of shikigami {shikigami_name_lower.title()}",
                         )
-                        embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name_lower, "evo"))
+                        embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
                         embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                         await process_msg_submit(ctx.channel, None, embed)
 
@@ -974,7 +989,7 @@ class Shikigami(commands.Cog):
                 description=f"Your {shikigami_name.title()} is already evolved",
             )
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "evo"))
+            embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "evo"))
             await process_msg_submit(ctx.channel, None, embed)
 
         elif evo is False:
@@ -1003,7 +1018,7 @@ class Shikigami(commands.Cog):
                                 f"Also acquired `{shards}` shards of this shikigami",
                 )
                 embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-                embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "evo"))
+                embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "evo"))
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif count <= 0:

@@ -3,7 +3,6 @@ Funfun Module
 Miketsu, 2020
 """
 
-import asyncio
 import re
 from itertools import cycle
 
@@ -37,14 +36,14 @@ class Funfun(commands.Cog):
             self.stickers_list.append("`{}`, ".format(sticker["alias"]))
             self.actions.append(sticker["alias"])
 
-    async def mike_how_hot(self, guild, channel, msg):
+    async def funfun_mike_how_hot(self, guild, channel, msg):
 
         msg_formatted = msg.lower().split(" ")
-    
+
         for word in msg_formatted:
-    
+
             if re.match(r"^<@![0-9]+>$", word) or re.match(r"^<@[0-9]+>$", word):
-    
+
                 user_id = re.sub("[<>@!]", "", word)
                 random.seed(int(user_id))
                 member = guild.get_member(int(user_id))
@@ -58,19 +57,19 @@ class Funfun(commands.Cog):
                     emoji = "💖"
                 if hot > 75:
                     emoji = "💞"
-    
+
                 embed = discord.Embed(
                     color=member.colour,
                     title=f"**{member.display_name}** is **{hot:.2f}%** hot {emoji}"
                 )
                 await process_msg_submit(channel, None, embed)
                 break
-    
-    async def mikes_shoot_post_process(self, user, victim, winner, response, channel):
-    
+
+    async def funfun_mikes_shoot_post_process(self, user, victim, winner, response, channel):
+
         if shoots.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
             shoots.insert_one({"user_id": str(user.id), "victim": []})
-    
+
         if shoots.find_one({"user_id": str(user.id), "victim.user_id": str(victim.id)}, {"_id": 0}) is None:
             shoots.update_one({
                 "user_id": str(user.id)}, {
@@ -122,8 +121,8 @@ class Funfun(commands.Cog):
             )
 
         await process_msg_submit(channel, None, embed)
-    
-    async def mike_shoot(self, user, guild, channel, args):
+
+    async def funfun_mike_shoot(self, user, guild, channel, args):
 
         msg_formatted = args.lower().split(" ")
 
@@ -139,16 +138,17 @@ class Funfun(commands.Cog):
 
                     if roll >= 45:
                         response = next(self.shoots_failed).format(user.mention)
-                        await self.mikes_shoot_post_process(user, member_target, member_target, response, channel)
+                        await self.funfun_mikes_shoot_post_process(user, member_target, member_target, response,
+                                                                   channel)
                     else:
                         response = next(self.shoots_success).format(member_target.mention)
-                        await self.mikes_shoot_post_process(user, member_target, user, response, channel)
+                        await self.funfun_mikes_shoot_post_process(user, member_target, user, response, channel)
 
                     break
 
     @commands.command(aliases=["sticker", "stickers"])
     @commands.guild_only()
-    async def sticker_help(self, ctx):
+    async def funfun_stickers_help(self, ctx):
 
         page, page_total, quotient = 1, 2, int(len(self.stickers_list) / 2)
 
@@ -194,26 +194,49 @@ class Funfun(commands.Cog):
                 await process_msg_edit(msg, None, generate_stickers_embed(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
+    async def funfun_stickers_add_new_help(self, ctx):
+
+        embed = discord.Embed(
+            title="newsticker, ns",
+            colour=colour,
+            description="add new stickers in the database"
+        )
+        embed.add_field(
+            name="Format",
+            value=f"*`{self.prefix}ns <alias> <imgur link & .png images only>`*",
+            inline=False
+        )
+        embed.add_field(
+            name="Example",
+            value=f"*`{self.prefix}ns feelinhurt https://i.imgur.com/371bCEa.png`*",
+            inline=False
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["newsticker", "ns"])
     @commands.guild_only()
-    async def sticker_add_new(self, ctx, arg1, *, args):
+    async def funfun_sticker_add_new(self, ctx, arg1, *, args):
 
-        alias = arg1.lower()
-        link = args
-
-        if alias in self.actions:
-            embed = discord.Embed(color=ctx.author.colour, title=f"Alias `{alias}` is already taken", )
-            await process_msg_submit(ctx.channel, None, embed)
-
-        elif link[:20] == "https://i.imgur.com/" and link[-4:] == ".png":
-            stickers.insert_one({"alias": alias, "link": link})
-            embed = discord.Embed(color=ctx.author.colour, title=f"New sticker added with alias: `{alias}`")
-            embed.set_image(url=link)
-            await process_msg_submit(ctx.channel, None, embed)
-            self.generate_new_stickers()
+        if arg1 is None or args is None:
+            await self.funfun_stickers_add_new_help(ctx)
 
         else:
-            await process_msg_reaction_add(ctx.message, "❌")
+            alias = arg1.lower()
+            link = args
+
+            if alias in self.actions:
+                embed = discord.Embed(color=ctx.author.colour, title=f"Alias `{alias}` is already taken", )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif link[:20] == "https://i.imgur.com/" and link[-4:] == ".png":
+                stickers.insert_one({"alias": alias, "link": link})
+                embed = discord.Embed(color=ctx.author.colour, title=f"New sticker added with alias: `{alias}`")
+                embed.set_image(url=link)
+                await process_msg_submit(ctx.channel, None, embed)
+                self.generate_new_stickers()
+
+            else:
+                await process_msg_reaction_add(ctx.message, "❌")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -246,10 +269,10 @@ class Funfun(commands.Cog):
                         await process_msg_delete(message, 15)
 
                     elif message.content.lower().split(" ", 2)[1] == "shoot":
-                        await self.mike_shoot(message.author, message.guild, message.channel, message.content)
+                        await self.funfun_mike_shoot(message.author, message.guild, message.channel, message.content)
 
                     elif message.content.lower().split(" ", 1)[1][:7] == "how hot":
-                        await self.mike_how_hot(message.guild, message.channel, message.content)
+                        await self.funfun_mike_how_hot(message.guild, message.channel, message.content)
 
                 except IndexError:
                     return

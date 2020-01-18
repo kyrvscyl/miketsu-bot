@@ -3,7 +3,6 @@ Souls Module
 Miketsu, 2020
 """
 
-import asyncio
 from math import floor
 
 from PIL import Image
@@ -87,7 +86,7 @@ class Souls(commands.Cog):
                     description=f"You do not own a `{soul_select.title()}` soul slot `#{slot}` yet",
                 )
                 embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
-                embed.set_thumbnail(url=get_soul_thumbnail(soul_select))
+                embed.set_thumbnail(url=get_soul_url(soul_select))
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif query is not None:
@@ -149,7 +148,7 @@ class Souls(commands.Cog):
 
     @commands.command(aliases=["soul"])
     @commands.guild_only()
-    async def souls(self, ctx, *, args=None):
+    async def souls_process(self, ctx, *, args=None):
 
         if args is None:
             await self.souls_help(ctx)
@@ -180,7 +179,7 @@ class Souls(commands.Cog):
 
         total_chance, shikigami_name, shikigami_evolved = get_chance_soul_explore(user, 50, stage_adj, [2, 2.5],
                                                                                   0.75, 1)
-        thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
+        thumbnail = get_shikigami_url(shikigami_name, get_evo_link(shikigami_evolved))
         adjusted_chance = random.uniform(total_chance * 0.97, total_chance)
 
         if explores.find_one({"user_id": str(user.id)}, {"_id": 0, "souls": 1}) is None:
@@ -528,7 +527,7 @@ class Souls(commands.Cog):
 
                     embed_new = discord.Embed(color=user.colour, timestamp=get_timestamp())
                     embed_new.set_author(name=f"{soul_select_new.title()} Souls Stats", icon_url=user.avatar_url)
-                    embed_new.set_thumbnail(url=get_soul_thumbnail(soul_select_new))
+                    embed_new.set_thumbnail(url=get_soul_url(soul_select_new))
 
                     for s in sorted(souls_formatted, key=lambda z: z[0], reverse=False):
 

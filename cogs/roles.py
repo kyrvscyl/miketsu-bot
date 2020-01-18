@@ -3,8 +3,6 @@ Roles Module
 Miketsu, 2020
 """
 
-import asyncio
-
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -127,7 +125,7 @@ class Roles(commands.Cog):
 
     @commands.command(aliases=["sorting"])
     @commands.is_owner()
-    async def post_sorting_messages(self, ctx):
+    async def roles_post_sorting_messages(self, ctx):
 
         guild = self.client.get_guild(int(id_guild))
         sorting_channel = self.client.get_channel(int(id_sorting))

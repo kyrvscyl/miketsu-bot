@@ -3,7 +3,6 @@ Castle Module
 Miketsu, 2020
 """
 
-import asyncio
 import urllib.request
 from itertools import cycle
 
@@ -59,53 +58,65 @@ class Castle(commands.Cog):
 
         await process_msg_submit(ctx.channel, None, embed)
 
+    async def castle_portraits_wander_help(self, ctx):
+
+        embed = discord.Embed(
+            title="wander, w", colour=colour,
+            description="usable only at the castle's channels with valid floors\n"
+                        "check the channel topics for the floor number\n"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["wander", "w"])
     @commands.guild_only()
-    @commands.check(check_if_valid_and_castle)
     async def castle_portraits_wander(self, ctx):
 
-        try:
-            floor_num = int(ctx.channel.topic[:1])
-        except ValueError:
-            pass
+        if not check_if_valid_and_castle:
+            await self.castle_portraits_wander_help(ctx)
+
         else:
-            floor_frames = cycle(list(portraits.find({"floor": floor_num}, {"_id": 0})))
+            try:
+                floor_num = int(ctx.channel.topic[:1])
+            except ValueError:
+                pass
+            else:
+                floor_frames = cycle(list(portraits.find({"floor": floor_num}, {"_id": 0})))
 
-            def embed_new_create():
-                preview_frame = next(floor_frames)
+                def embed_new_create():
+                    preview_frame = next(floor_frames)
 
-                find_role, in_game_name = preview_frame["role"], preview_frame["in_game_name"]
-                floor, frame_number = preview_frame["floor"], preview_frame["frame"]
+                    find_role, in_game_name = preview_frame["role"], preview_frame["in_game_name"]
+                    floor, frame_number = preview_frame["floor"], preview_frame["frame"]
 
-                image_link = preview_frame["image_link"] + "?size=2048"
-                description = preview_frame["description"].replace("\\n", "\n")
+                    image_link = preview_frame["image_link"] + "?size=2048"
+                    description = preview_frame["description"].replace("\\n", "\n")
 
-                embed_new = discord.Embed(
-                    color=colour, title=f"{self.castle_get_emoji_primary_role(find_role)} {in_game_name}",
-                    description=description, timestamp=get_timestamp()
-                )
-                embed_new.set_image(url=image_link)
-                embed_new.set_footer(text=f"Floor {floor} | Frame {frame_number}")
-                return embed_new
+                    embed_new = discord.Embed(
+                        color=colour, title=f"{self.castle_get_emoji_primary_role(find_role)} {in_game_name}",
+                        description=description, timestamp=get_timestamp()
+                    )
+                    embed_new.set_image(url=image_link)
+                    embed_new.set_footer(text=f"Floor {floor} | Frame {frame_number}")
+                    return embed_new
 
-            msg = await process_msg_submit(ctx.channel, None, embed_new_create())
+                msg = await process_msg_submit(ctx.channel, None, embed_new_create())
 
-            emojis_add = ["➡"]
-            for emoji in emojis_add:
-                await process_msg_reaction_add(msg, emoji)
+                emojis_add = ["➡"]
+                for emoji in emojis_add:
+                    await process_msg_reaction_add(msg, emoji)
 
-            def check(r, u):
-                return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
+                def check(r, u):
+                    return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
-            while True:
-                try:
-                    reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
-                except asyncio.TimeoutError:
-                    await process_msg_reaction_clear(msg)
-                    break
-                else:
-                    if str(reaction.emoji) == emojis_add[0]:
-                        await process_msg_edit(msg, None, embed_new_create())
+                while True:
+                    try:
+                        reaction, user = await self.client.wait_for("reaction_add", timeout=180, check=check)
+                    except asyncio.TimeoutError:
+                        await process_msg_reaction_clear(msg)
+                        break
+                    else:
+                        if str(reaction.emoji) == emojis_add[0]:
+                            await process_msg_edit(msg, None, embed_new_create())
 
     @commands.command(aliases=["portrait"])
     @commands.guild_only()
@@ -265,13 +276,15 @@ class Castle(commands.Cog):
 
     @commands.command(aliases=["duel", "d"])
     @commands.guild_only()
-    @commands.check(check_if_channel_is_pvp)
     async def castle_duel(self, ctx, *args):
 
         invoke = "duel"
         args_v = ["help", "add", "delete", "update", "show"]
 
-        if args[0].lower() in [args_v[0], args_v[0][:1]]:
+        if not check_if_channel_is_pvp:
+            return
+
+        elif args[0].lower() in [args_v[0], args_v[0][:1]]:
 
             embed = discord.Embed(
                 title=f"{invoke}, {invoke[:1]}", colour=colour,

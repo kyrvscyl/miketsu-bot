@@ -3,8 +3,6 @@ Exploration Module
 Miketsu, 2020
 """
 
-import asyncio
-
 from PIL import Image
 from discord.ext import commands
 
@@ -53,14 +51,19 @@ class Exploration(commands.Cog):
 
     @commands.command(aliases=["explores", "exps"])
     @commands.guild_only()
-    async def perform_exploration_check_clears(self, ctx, *, member: discord.Member = None):
+    async def exploration_check_clears(self, ctx, *, member: discord.Member = None):
 
         if member is None:
-            await self.perform_exploration_check_clears_post(ctx.author, ctx)
+            await self.exploration_check_clears_post(ctx.author, ctx)
         else:
-            await self.perform_exploration_check_clears_post(member, ctx)
+            try:
+                member.id
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
+            else:
+                await self.exploration_check_clears_post(member, ctx)
 
-    async def perform_exploration_check_clears_post(self, member, ctx):
+    async def exploration_check_clears_post(self, member, ctx):
 
         total_explorations = 0
         for result in explores.aggregate([{
@@ -81,15 +84,45 @@ class Exploration(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
+    async def exploration_help(self, ctx):
+
+        embed = discord.Embed(
+            title="explore, exp",
+            colour=colour,
+            description=f"explore unlocked chapters\n"
+                        f"consumes sushi, set a shikigami first via `{self.prefix}set`\n"
+        )
+        embed.add_field(
+            name="Clear chance parameters",
+            value="Onmyoji, shikigami, and chapter level, shikigami evolution, souls equipped",
+            inline=False
+        )
+        embed.add_field(
+            name="Formats",
+            value=f"*`{self.prefix}exp <unlocked chapter#>`*\n"
+                  f"*`{self.prefix}explore <last | unfinished | unf>`*\n",
+            inline=False
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["explore", "exp"])
     @commands.guild_only()
-    @commands.check(check_if_user_has_sushi_1)
     @commands.cooldown(1, 60, commands.BucketType.user)
-    async def perform_exploration(self, ctx, *, arg):
+    async def exploration_process(self, ctx, *, arg=None):
 
         user = ctx.author
 
-        if not check_if_user_has_shiki_set:
+        if arg is None:
+            await self.exploration_help(ctx)
+
+        elif not check_if_user_has_sushi_1:
+            embed = discord.Embed(
+                title=f"Insufficient sushi", colour=user.colour,
+                description=f"Get food from bento or from {self.prefix}hungry"
+            )
+            await process_msg_submit(ctx.channel, None, embed)
+
+        elif not check_if_user_has_shiki_set:
             embed = discord.Embed(
                 color=user.colour, title="Invalid shikigami",
                 description=f"set a shikigami first using `{self.prefix}set`",
@@ -98,15 +131,14 @@ class Exploration(commands.Cog):
 
         elif check_if_user_has_shiki_set:
 
-            user_profile = users.find_one({"user_id": str(user.id)}, {"level": 1, "display": 1, "exploration": 1})
-
             try:
                 chapter = int(arg)
             except ValueError:
 
                 if arg.lower() not in ["last", "unf", "unfinished"]:
                     embed = discord.Embed(
-                        color=user.colour, title="Invalid chapter", description=f"That is not a valid chapter",
+                        color=user.colour, title="Invalid chapter",
+                        description=f"That is not a valid chapter",
                     )
                     await process_msg_submit(ctx.channel, None, embed)
 
@@ -127,10 +159,11 @@ class Exploration(commands.Cog):
 
                     elif query is not None:
                         chapter = query["explores"][0]["chapter"]
-                        await self.perform_exploration_by_chapter(chapter, user, ctx)
+                        await self.exploration_by_chapter(chapter, user, ctx)
 
             else:
-                if chapter > user_profile["exploration"]:
+
+                if chapter > users.find_one({"user_id": str(user.id)}, {"exploration": 1})["exploration"]:
                     embed = discord.Embed(
                         color=user.colour, title="Invalid chapter",
                         description=f"You have not yet unlocked this chapter",
@@ -138,7 +171,7 @@ class Exploration(commands.Cog):
                     await process_msg_submit(ctx.channel, None, embed)
 
                 elif chapter in range(1, (zones.count_documents({}) + 1)):
-                    await self.perform_exploration_by_chapter(chapter, user, ctx)
+                    await self.exploration_by_chapter(chapter, user, ctx)
 
                 else:
                     embed = discord.Embed(
@@ -148,9 +181,11 @@ class Exploration(commands.Cog):
                     await process_msg_submit(ctx.channel, None, embed)
 
             finally:
-                self.client.get_command("perform_exploration").reset_cooldown(ctx)
+                self.client.get_command("exploration").reset_cooldown(ctx)
 
-    async def perform_exploration_by_chapter(self, chapter, user, ctx):
+        self.client.get_command("exploration").reset_cooldown(ctx)
+
+    async def exploration_by_chapter(self, chapter, user, ctx):
 
         zone = zones.find_one({"chapter": chapter}, {"_id": 0})
         spirits, sushi_required = zone["spirits"], zone["sushi_required"]
@@ -160,7 +195,7 @@ class Exploration(commands.Cog):
 
         total_chance, shikigami_name, shikigami_evolved = get_chance_soul_explore(user, 40, chapter, [0, 0], 0.75, 1)
         adjusted_chance = random.uniform(total_chance * 0.95, total_chance)
-        thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
+        thumbnail = get_shikigami_url(shikigami_name, get_evo_link(shikigami_evolved))
 
         def embed_new_create(stage_new, progress, strike):
 
@@ -235,8 +270,7 @@ class Exploration(commands.Cog):
 
                     query = explores.find_one({
                         "user_id": str(user.id), "explores.completion": False}, {
-                        "_id": 0,
-                        "explores.$": 1,
+                        "_id": 0, "explores.$": 1,
                     })
                     explore_report = query["explores"][0]["logs"]
                     explore_attempts = query['explores'][0]['attempts']
@@ -260,7 +294,7 @@ class Exploration(commands.Cog):
                         await process_msg_reaction_clear(msg)
 
                         embed_final = embed_new_create(spirits, explore_report, "~~")
-                        await self.perform_exploration_process_rewards(user.id, msg, embed_final, zone)
+                        await self.exploration_process_rewards(user.id, msg, embed_final, zone)
                         exploration_check_add_unlocked(user, chapter)
                         break
 
@@ -279,9 +313,10 @@ class Exploration(commands.Cog):
 
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
-    async def perform_exploration_process_rewards(self, user_id, msg, embed_final, zone):
+    async def exploration_process_rewards(self, user_id, msg, embed_final, zone):
 
         lower, upper = 0.8, 1.1
+
         jades = round(random.uniform(zone["rewards_exact"]["jades"] * lower, zone["rewards_exact"]["jades"] * upper))
         coins = round(random.uniform(zone["rewards_exact"]["coins"] * lower, zone["rewards_exact"]["coins"] * upper))
         medals = round(random.uniform(zone["rewards_exact"]["medals"] * lower, zone["rewards_exact"]["medals"] * upper))
@@ -313,9 +348,9 @@ class Exploration(commands.Cog):
                 i += 1
 
         shards_reward = list(shikigami_pool_count.items())
-        await self.perform_exploration_issue_shard_rewards(user_id, shards_reward)
+        await self.exploration_issue_shard_rewards(user_id, shards_reward)
 
-        link = await self.perform_exploration_generate_shards(user_id, shards_reward)
+        link = await self.exploration_generate_shards(user_id, shards_reward)
         embed_final.set_image(url=link)
         embed_final.add_field(
             name="Completion rewards",
@@ -327,7 +362,7 @@ class Exploration(commands.Cog):
         )
         await process_msg_edit(msg, None, embed_final)
 
-    async def perform_exploration_generate_shards(self, user_id, shards_reward):
+    async def exploration_generate_shards(self, user_id, shards_reward):
 
         images, font = [], font_create(30)
         x, y, cols = 1, 60, 8
@@ -338,7 +373,7 @@ class Exploration(commands.Cog):
                 address = f"data/shikigamis/{entry[0]}_pre.jpg"
 
                 shikigami_thumbnail = Image.open(address)
-                shikigami_image_final = generate_shikigami_with_shard(shikigami_thumbnail, entry[1], font, x, y)
+                shikigami_image_final = shikigami_shards_count_generate(shikigami_thumbnail, entry[1], font, x, y)
                 images.append(shikigami_image_final)
             else:
                 continue
@@ -357,7 +392,7 @@ class Exploration(commands.Cog):
         attachment_link = msg.attachments[0].url
         return attachment_link
 
-    async def perform_exploration_issue_shard_rewards(self, user_id, shards_reward):
+    async def exploration_issue_shard_rewards(self, user_id, shards_reward):
 
         trimmed = []
         for entry in shards_reward:
@@ -387,23 +422,27 @@ class Exploration(commands.Cog):
                 }
             })
 
+    async def exploration_zones_help(self, ctx):
+
+        embed = discord.Embed(
+            title=f"chapter, ch", color=colour,
+            description=f"shows chapter information and unlocked chapters"
+        )
+        embed.add_field(
+            name="Format", inline=False,
+            value=f"*`{self.prefix}chapter <chapter#1-28>`*\n"
+                  f"*`{self.prefix}chapter unlocked`*\n"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["chapter", "ch"])
     @commands.guild_only()
-    async def show_exploration_zones(self, ctx, *, arg1=None):
+    async def exploration_zones(self, ctx, *, arg1=None):
 
         user = ctx.author
 
         if arg1 is None:
-            embed = discord.Embed(
-                title=f"chapter, ch", color=colour,
-                description=f"shows chapter information and unlocked chapters"
-            )
-            embed.add_field(
-                name="Format", inline=False,
-                value=f"*`{self.prefix}chapter <chapter#1-28>`*\n"
-                      f"*`{self.prefix}chapter unlocked`*\n"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+            await self.exploration_zones_help(ctx)
 
         elif arg1.lower() in ["unlocked"]:
 
@@ -419,53 +458,51 @@ class Exploration(commands.Cog):
             try:
                 chapter = int(arg1)
             except ValueError:
-                return
+                pass
+            else:
+                ch_unlocked = zones.find_one({"chapter": chapter}, {"_id": 0})
 
-            ch_unlocked = zones.find_one({"chapter": chapter}, {"_id": 0})
+                if ch_unlocked is None:
+                    embed = discord.Embed(
+                        title=f"Invalid chapter", color=user,
+                        description="Available chapters: 1-28 only"
+                    )
+                    await process_msg_submit(ctx.channel, None, embed)
 
-            try:
-                description = f"```" \
-                              f"Spirits          ::    {ch_unlocked['spirits']}\n" \
-                              f"Sushi/explore    ::    {ch_unlocked['sushi_required']}" \
-                              f"```"
+                else:
+                    description = f"```" \
+                                  f"Spirits          ::    {ch_unlocked['spirits']}\n" \
+                                  f"Sushi/explore    ::    {ch_unlocked['sushi_required']}" \
+                                  f"```"
 
-                jades = ch_unlocked["rewards_exact"]["jades"]
-                coins = ch_unlocked["rewards_exact"]["coins"]
-                medals = ch_unlocked["rewards_exact"]["medals"]
-                amulets_b = ch_unlocked["rewards_exact"]["amulets_b"]
+                    jades = ch_unlocked["rewards_exact"]["jades"]
+                    coins = ch_unlocked["rewards_exact"]["coins"]
+                    medals = ch_unlocked["rewards_exact"]["medals"]
+                    amulets_b = ch_unlocked["rewards_exact"]["amulets_b"]
 
-                shards_sp = ch_unlocked["shards_count"]["SP"]
-                shards_ssr = ch_unlocked["shards_count"]["SSR"]
-                shards_sr = ch_unlocked["shards_count"]["SR"]
-                shards_r = ch_unlocked["shards_count"]["R"]
-                shards_n = ch_unlocked["shards_count"]["N"]
+                    shards_sp = ch_unlocked["shards_count"]["SP"]
+                    shards_ssr = ch_unlocked["shards_count"]["SSR"]
+                    shards_sr = ch_unlocked["shards_count"]["SR"]
+                    shards_r = ch_unlocked["shards_count"]["R"]
+                    shards_n = ch_unlocked["shards_count"]["N"]
 
-                embed = discord.Embed(
-                    title=f"Chapter {chapter}: {ch_unlocked['name']}",
-                    color=user.colour, description=description
-                )
-                embed.add_field(
-                    name="Completion rewards",
-                    value=f"~{jades:,d}{get_emoji('jades')}, "
-                          f"~{coins:,d}{get_emoji('coins')}, "
-                          f"~{medals:,d}{get_emoji('medals')}, "
-                          f"~{amulets_b:,d}{get_emoji('amulets_b')}",
-                    inline=False
-                )
-                embed.add_field(
-                    name="Shards drop count",
-                    value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | "
-                          f"{e_4} {shards_r} | {e_5} {shards_n}",
-                    inline=False
-                )
-                await process_msg_submit(ctx.channel, None, embed)
-
-            except TypeError:
-                embed = discord.Embed(
-                    title=f"Invalid chapter", color=user,
-                    description="Available chapters: 1-28 only"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
+                    embed = discord.Embed(
+                        title=f"Chapter {chapter}: {ch_unlocked['name']}",
+                        color=user.colour, description=description
+                    )
+                    embed.add_field(
+                        name="Completion rewards", inline=False,
+                        value=f"~{jades:,d}{get_emoji('jades')}, "
+                              f"~{coins:,d}{get_emoji('coins')}, "
+                              f"~{medals:,d}{get_emoji('medals')}, "
+                              f"~{amulets_b:,d}{get_emoji('amulets_b')}",
+                    )
+                    embed.add_field(
+                        name="Shards drop count", inline=False,
+                        value=f"{e_1} {shards_sp} | {e_2} {shards_ssr} | {e_3} {shards_sr} | "
+                              f"{e_4} {shards_r} | {e_5} {shards_n}",
+                    )
+                    await process_msg_submit(ctx.channel, None, embed)
 
 
 def setup(client):

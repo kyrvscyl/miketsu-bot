@@ -2,10 +2,10 @@
 Beta Module
 Miketsu, 2020
 """
+
 import urllib.request
 
 from discord.ext import commands
-from discord_webhook import DiscordEmbed, DiscordWebhook
 
 from cogs.ext.initialize import *
 
@@ -226,9 +226,12 @@ class Beta(commands.Cog):
 
     @commands.command(aliases=["open"])
     @commands.guild_only()
-    async def castle_post_guides_book_open(self, ctx, arg1, *, args="None"):
+    async def castle_post_guides_book_open(self, ctx, arg1=None, *, args=None):
 
-        if check_if_reference_section(ctx):
+        if arg1 is None or args is None:
+            await process_msg_reaction_add(ctx.message, "❌")
+
+        elif check_if_reference_section(ctx):
 
             webhooks = await ctx.channel.webhooks()
             query = {"section": arg1.lower(), "index": args.lower()}

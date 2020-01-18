@@ -3,7 +3,6 @@ Admin Module
 Miketsu, 2020
 """
 
-import asyncio
 import re
 import urllib.request
 
@@ -32,43 +31,76 @@ class Admin(commands.Cog):
     def get_shortened_code(self, key):
         return self.shortened[key]
 
+    async def admin_post_patch_notes_help(self, ctx):
+
+        embed = discord.Embed(
+            title="patch", colour=colour,
+            description=f"submit the patch notes to the <#{id_headlines}>"
+        )
+        embed.add_field(
+            name="Format", inline=False,
+            value=f"*`{self.prefix}patch <pastebin_key> <image_link>`*"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["patch"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def admin_post_patch_notes(self, ctx, key, *, link_image):
+    async def admin_post_patch_notes(self, ctx, key=None, *, link_image=None):
 
-        user = ctx.author
-        headlines_channel = self.client.get_channel(int(id_headlines))
-        link_pastebin, cap = f"https://pastebin.com/raw/{key}", 1500
+        if key is None or link_image is None:
+            await self.admin_post_patch_notes(ctx)
 
-        f = urllib.request.urlopen(link_pastebin)
-        text = f.read().decode('utf-8')
-        text_split = text.replace("\r", "\\n").split("\n")
-        embeds_max = ceil(len(text) / cap)
+        else:
+            user = ctx.author
+            headlines_channel = self.client.get_channel(int(id_headlines))
+            link_pastebin, cap = f"https://pastebin.com/raw/{key}", 1500
 
-        lines, lines_start, description_length = 0, 0, 0
-        lines_end = len(text_split)
+            f = urllib.request.urlopen(link_pastebin)
+            text = f.read().decode('utf-8')
+            text_split = text.replace("\r", "\\n").split("\n")
+            embeds_max = ceil(len(text) / cap)
 
-        for n in range(0, embeds_max):
+            lines, lines_start, description_length = 0, 0, 0
+            lines_end = len(text_split)
 
-            for line in text_split[lines_start:lines_end]:
-                description_length += len(line)
-                if description_length > cap:
-                    break
-                lines += 1
+            for n in range(0, embeds_max):
 
-            description = "".join(text_split[lines_start:lines]).replace("\\n", "\n")
-            lines_start = lines
-            description_length = 0
+                for line in text_split[lines_start:lines_end]:
+                    description_length += len(line)
+                    if description_length > cap:
+                        break
+                    lines += 1
 
-            embed = discord.Embed(color=user.colour, description=description)
-            if embeds_max - 1 == n:
-                embed.set_image(url=link_image)
+                description = "".join(text_split[lines_start:lines]).replace("\\n", "\n")
+                lines_start = lines
+                description_length = 0
 
-            await process_msg_submit(headlines_channel, None, embed)
-            await asyncio.sleep(1)
+                embed = discord.Embed(color=user.colour, description=description)
+                if embeds_max - 1 == n:
+                    embed.set_image(url=link_image)
 
-        await process_msg_reaction_add(ctx.message, "✅")
+                await process_msg_submit(headlines_channel, None, embed)
+                await asyncio.sleep(1)
+
+            await process_msg_reaction_add(ctx.message, "✅")
+
+    async def admin_post_memorandum_help(self, ctx):
+
+        embed = discord.Embed(
+            title="memo", colour=colour,
+            description="submit a paperwork memorandum"
+        )
+        embed.add_field(
+            name="Format", inline=False,
+            value=f"*`{self.prefix}memo <#channel>`*"
+        )
+        embed.add_field(
+            name="Notes", inline=False,
+            value=f"follow the step by step procedure\n"
+                  f"enter any non-image link text to remove the memorandum's embed image"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["memo"])
     @commands.guild_only()
@@ -78,140 +110,187 @@ class Admin(commands.Cog):
         user = ctx.author
 
         if channel_target is None:
-            raise commands.MissingRequiredArgument(user)
+            await self.admin_post_memorandum_help(ctx)
 
         elif channel_target is not None:
 
-            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0})
-            memos_count = memos.count_documents({})
-
-            id_head = query["roles"]["head"]
-            id_channel_memo = query["channels"]["memorandum"]
-            link_image_memo = query["links"]["memo"]
-
-            memo_channel = self.client.get_channel(int(id_channel_memo))
-            memo_channel_name = "memorandum"
-
-            if memo_channel is not None:
-                memo_channel_name = memo_channel.name
-
-            details = [
-                "Step 1: <Required> Enter message content (useful for pinging roles)",
-                "Step 2: <Required> Enter the embed title",
-                "Step 3: <Required> Enter the embed description:\n\nNote: Maximum of 2000 characters",
-                link_image_memo
-            ]
-
-            def create_content(c):
-                return c
-
-            def embed_new_create(t, d, link):
-
-                embed_new = discord.Embed(colour=user.colour, title=t, description=d, timestamp=get_timestamp())
-                embed_new.set_thumbnail(url=ctx.guild.icon_url)
-                embed_new.set_footer(
-                    text=f"#{memo_channel_name}-{lengthen_code_4(memos_count + 1)}",
-                    icon_url=user.avatar_url
-                )
-                if link is not None:
-                    embed_new.set_image(url=link)
-
-                return embed_new
-
-            msg = await process_msg_submit(
-                ctx.channel, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
-            )
-
-            def check(m):
-                return m.author == ctx.author and m.channel.id == ctx.channel.id
-
-            for index, item in enumerate(details):
-                try:
-                    answer = await self.client.wait_for("message", timeout=120, check=check)
-                except asyncio.TimeoutError:
-                    break
-                else:
-                    details[index] = answer.content
-                    await process_msg_reaction_add(answer, "✅")
-
-                    try:
-                        await process_msg_edit(
-                            msg, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
-                        )
-                    except discord.errors.HTTPException:
-                        details[index] = None
-                        await process_msg_edit(
-                            msg, create_content(details[0]), embed_new_create(details[1], details[2], None)
-                        )
-
-            memos.insert_one({
-                "#": memos_count + 1,
-                "timestamp": get_time(),
-                "user_id": str(ctx.author.id),
-                "content": details[0],
-                "title": details[1],
-                "description": details[2],
-                "image": details[3],
-            })
-
-            embed = discord.Embed(
-                colour=ctx.author.colour, timestamp=get_timestamp(),
-                title="Confirm issuance",
-                description="Do you want to send the memo drafted above?\nAnnounces immediately",
-            )
-            embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
-
-            msg1 = await process_msg_submit(ctx.channel, None, embed)
-            await process_msg_reaction_add(msg1, "✅")
-
-            def check2(r, u):
-                return u == ctx.author and str(r.emoji) == "✅" and msg1.id == r.message.id
-
             try:
-                await self.client.wait_for("reaction_add", check=check2, timeout=15)
-            except asyncio.TimeoutError:
-                return
+                channel_target.id
+            except AttributeError:
+                embed = discord.Embed(
+                    colour=user.colour, title="Invalid channel",
+                    description="tag a valid channel", timestamp=get_timestamp()
+                )
+                await process_msg_submit(ctx.channel, None, embed)
             else:
-                await process_msg_submit(
-                    channel_target, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
+                query = guilds.find_one({"server": str(id_guild)}, {"_id": 0})
+                memos_count = memos.count_documents({})
+
+                id_head = query["roles"]["head"]
+                id_channel_memo = query["channels"]["memorandum"]
+                link_image_memo = query["links"]["memo"]
+
+                memo_channel = self.client.get_channel(int(id_channel_memo))
+                memo_channel_name = "memorandum"
+
+                if memo_channel is not None:
+                    memo_channel_name = memo_channel.name
+
+                details = [
+                    "Step 1: <Required> Enter message content (useful for pinging roles)",
+                    "Step 2: <Required> Enter the embed title",
+                    "Step 3: <Required> Enter the embed description:\n\nNote: Maximum of 2000 characters",
+                    link_image_memo
+                ]
+
+                def create_content(c):
+                    return c
+
+                def embed_new_create(t, d, link):
+
+                    embed_new = discord.Embed(colour=user.colour, title=t, description=d, timestamp=get_timestamp())
+                    embed_new.set_thumbnail(url=ctx.guild.icon_url)
+                    embed_new.set_footer(
+                        text=f"#{memo_channel_name}-{lengthen_code_4(memos_count + 1)}",
+                        icon_url=user.avatar_url
+                    )
+                    if link is not None:
+                        embed_new.set_image(url=link)
+
+                    return embed_new
+
+                msg = await process_msg_submit(
+                    ctx.channel, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
                 )
-                await process_msg_submit(
-                    memo_channel,
-                    f"*<@&{id_head}>, a new memo has been issued:*" + "\n" + create_content(details[0]),
-                    embed_new_create(details[1], details[2], details[3])
+
+                def check(m):
+                    return m.author == ctx.author and m.channel.id == ctx.channel.id
+
+                for index, item in enumerate(details):
+                    try:
+                        answer = await self.client.wait_for("message", timeout=120, check=check)
+                    except asyncio.TimeoutError:
+                        break
+                    else:
+                        details[index] = answer.content
+                        await process_msg_reaction_add(answer, "✅")
+
+                        try:
+                            await process_msg_edit(
+                                msg, create_content(details[0]), embed_new_create(details[1], details[2], details[3])
+                            )
+                        except discord.errors.HTTPException:
+                            details[index] = None
+                            await process_msg_edit(
+                                msg, create_content(details[0]), embed_new_create(details[1], details[2], None)
+                            )
+
+                memos.insert_one({
+                    "#": memos_count + 1,
+                    "timestamp": get_time(),
+                    "user_id": str(ctx.author.id),
+                    "content": details[0],
+                    "title": details[1],
+                    "description": details[2],
+                    "image": details[3],
+                })
+
+                embed = discord.Embed(
+                    colour=ctx.author.colour, timestamp=get_timestamp(),
+                    title="Confirm issuance",
+                    description="Do you want to send the memo drafted above?\nAnnounces immediately",
                 )
+                embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+
+                msg1 = await process_msg_submit(ctx.channel, None, embed)
+
+                emojis_add = ["✅"]
+                for emoji in emojis_add:
+                    await process_msg_reaction_add(msg1, emoji)
+
+                def check2(r, u):
+                    return u == ctx.author and str(r.emoji) in emojis_add and msg1.id == r.message.id
+
+                try:
+                    await self.client.wait_for("reaction_add", check=check2, timeout=15)
+                except asyncio.TimeoutError:
+                    pass
+                else:
+                    await process_msg_submit(
+                        channel_target,
+                        create_content(details[0]),
+                        embed_new_create(details[1], details[2], details[3])
+                    )
+                    await process_msg_submit(
+                        memo_channel,
+                        f"*<@&{id_head}>, a new memo has been issued:*" + "\n" + create_content(details[0]),
+                        embed_new_create(details[1], details[2], details[3])
+                    )
+
+    async def admin_post_message_textchannel_help(self, ctx):
+
+        embed = discord.Embed(
+            colour=colour, title="say",
+            description="allows me to repeat a text message"
+        )
+        embed.add_field(
+            name="Format", inline=False,
+            value=f"*`{self.prefix}say <#channel or channel_id> <any message>`*"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["say"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def admin_post_message_textchannel(self, ctx, id_channel, *, content):
+    async def admin_post_message_textchannel(self, ctx, id_channel=None, *, content=None):
 
-        user = ctx.author
-        channel_id = re.sub("[<>#]", "", id_channel)
-        channel_target = self.client.get_channel(int(channel_id))
-
-        if channel_target is None:
-            raise commands.UserInputError(user)
+        if id_channel is None or content is None:
+            await self.admin_post_message_textchannel_help(ctx)
 
         else:
-            await process_msg_submit(channel_target, content, None)
-            await process_msg_reaction_add(ctx.message, "✅")
+            user = ctx.author
+            channel_id = re.sub("[<>#]", "", id_channel)
+            channel_target = self.client.get_channel(int(channel_id))
+
+            if channel_target is None:
+                raise commands.UserInputError(user)
+
+            else:
+                await process_msg_submit(channel_target, content, None)
+                await process_msg_reaction_add(ctx.message, "✅")
+
+    async def admin_post_message_user_help(self, ctx):
+
+        embed = discord.Embed(
+            colour=colour, title="dm",
+            description="allows me to message a user"
+        )
+        embed.add_field(name="Format", value=f"*`{self.prefix}dm <@member or member_id> <any message>`*")
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["dm"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def admin_post_message_user(self, ctx, id_member, *, content):
+    async def admin_post_message_user(self, ctx, id_member=None, *, content=None):
 
-        user = ctx.author
-        member_id = re.sub("[<>@&!]", "", id_member)
-        member = ctx.guild.get_member(int(member_id))
-
-        if member is None:
-            raise commands.CommandInvokeError(user)
+        if id_member is None or content is None:
+            await self.admin_post_message_user_help(ctx)
 
         else:
-            await process_msg_submit(member, content, None)
-            await process_msg_reaction_add(ctx.message, "✅")
+            user = ctx.author
+            member_id = re.sub("[<>@&!]", "", id_member)
+            member = ctx.guild.get_member(int(member_id))
+
+            if member is None:
+                embed = discord.Embed(
+                    title="Invalid member", colour=user.colour,
+                    description="Provide a valid member ID or tag them"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            else:
+                await process_msg_submit(member, content, None)
+                await process_msg_reaction_add(ctx.message, "✅")
 
     @commands.command(aliases=["clear"])
     @commands.guild_only()

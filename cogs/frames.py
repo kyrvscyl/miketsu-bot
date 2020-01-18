@@ -3,8 +3,6 @@ Frames Module
 Miketsu, 2020
 """
 
-import asyncio
-
 from PIL import Image
 from discord.ext import commands
 
@@ -156,8 +154,8 @@ class Frames(commands.Cog):
                 await frame_acquisition(message.author, "Tree in Winter", jades, spell_spam_channel)
 
     @commands.command(aliases=["af"])
-    @commands.check(check_if_developer_team)
     @commands.guild_only()
+    @commands.check(check_if_user_has_development_role)
     async def frames_add_new(self, ctx, arg1, link, *, requirement):
 
         profile = {

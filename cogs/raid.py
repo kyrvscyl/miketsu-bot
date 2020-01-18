@@ -3,8 +3,6 @@ Raid Module
 Miketsu, 2020
 """
 
-import asyncio
-
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -132,11 +130,19 @@ class Raid(commands.Cog):
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["raid", "r"])
-    @commands.check(check_if_user_has_raid_tickets)
     @commands.guild_only()
     async def raid_perform(self, ctx, *, victim: discord.Member = None):
 
-        if victim is None:
+        raider = ctx.author
+
+        if not check_if_user_has_raid_tickets:
+            embed = discord.Embed(
+                title=f"Insufficient realm tickets", colour=raider.colour,
+                description="Purchase at the shop or get your daily rewards"
+            )
+            await process_msg_submit(ctx.channel, None, embed)
+
+        elif victim is None:
             await self.raid_perform_help(ctx)
 
         elif victim.name == ctx.author.name:
@@ -149,7 +155,7 @@ class Raid(commands.Cog):
             try:
                 raid_count = self.get_raid_count(victim)
             except (AttributeError, TypeError):
-                raise discord.ext.commands.BadArgument(ctx.author)
+                await process_msg_invalid_member(ctx)
             else:
 
                 if raid_count >= 3:
@@ -161,7 +167,6 @@ class Raid(commands.Cog):
 
                 elif raid_count < 4:
 
-                    raider = ctx.author
                     raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
                     victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
                     level_diff = raider_medals - victim_medals
@@ -186,7 +191,7 @@ class Raid(commands.Cog):
             total_chance = self.get_raid_chance(raider, victim)
 
         except (KeyError, TypeError):
-            raise discord.ext.commands.BadArgument(ctx.author)
+            await process_msg_invalid_member(ctx)
 
         else:
 
@@ -284,7 +289,7 @@ class Raid(commands.Cog):
             total_chance = self.get_raid_chance(raider, victim)
 
         except (KeyError, TypeError):
-            raise discord.ext.commands.BadArgument(ctx.author)
+            await process_msg_invalid_member(ctx)
 
         else:
             embed = discord.Embed(

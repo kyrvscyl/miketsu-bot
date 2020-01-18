@@ -3,7 +3,6 @@ Startup Module
 Miketsu, 2020
 """
 
-import asyncio
 from itertools import cycle
 
 from discord.ext import commands, tasks
@@ -77,30 +76,51 @@ class Startup(commands.Cog):
         embed.set_footer(text="*Head commands, **#pvp-fair")
         await process_msg_submit(ctx.channel, None, embed)
 
-    @commands.command(aliases=["suggest", "report"])
-    async def suggestions_collect(self, ctx, *, content):
+    async def suggestions_collect_help(self, ctx):
 
         embed = discord.Embed(
-            color=colour, timestamp=get_timestamp(),
-            title="📨 New Suggestion/Report",
+            title="suggest, report",
+            colour=colour,
+            description="submit suggestions/reports for the bot or guild\n"
+                        "available to use through direct message"
         )
         embed.add_field(
-            name="Content", inline=False, value=f"{content}",
+            name="Example", value=f"*`{self.prefix}suggest add new in-game stickers!`*",
+            inline=False
         )
+        await process_msg_submit(ctx.channel, None, embed)
 
-        try:
-            link = f"https://discordapp.com/channels/{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
-            embed.description = f"Author: {ctx.author.mention}\n" \
-                                f"Submitted through: {ctx.channel.mention}\n" \
-                                f"Message Link: [Here]({link})"
-        except AttributeError:
-            embed.description = f"From: {ctx.author.mention}\n" \
-                                f"Submitted through: Direct Message"
+    @commands.command(aliases=["suggest", "report"])
+    async def suggestions_collect(self, ctx, *, content=None):
 
-        scroll_channel = self.client.get_channel(int(id_scroll))
-        msg = await process_msg_submit(scroll_channel, None, embed)
-        await process_msg_reaction_add(msg, "📌")
-        await process_msg_reaction_add(ctx.message, "📩")
+        if content is None:
+            await self.suggestions_collect_help(ctx)
+
+        else:
+            embed = discord.Embed(
+                color=colour, timestamp=get_timestamp(),
+                title="📨 New Suggestion/Report",
+            )
+            embed.add_field(
+                name="Content", inline=False,
+                value=f"{content}",
+            )
+
+            try:
+                link = f"https://discordapp.com/channels/" \
+                       f"{ctx.message.guild.id}/{ctx.message.channel.id}/{ctx.message.id}"
+            except AttributeError:
+                embed.description = f"From: {ctx.author.mention}\n" \
+                                    f"Submitted through: Direct Message"
+            else:
+                embed.description = f"Author: {ctx.author.mention}\n" \
+                                    f"Submitted through: {ctx.channel.mention}\n" \
+                                    f"Message Link: [Here]({link})"
+            finally:
+                scroll_channel = self.client.get_channel(int(id_scroll))
+                msg = await process_msg_submit(scroll_channel, None, embed)
+                await process_msg_reaction_add(msg, "📌")
+                await process_msg_reaction_add(ctx.message, "📩")
 
     @commands.command(aliases=["changelogs", "changelog"])
     @commands.guild_only()

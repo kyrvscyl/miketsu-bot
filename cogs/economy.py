@@ -3,7 +3,6 @@ Economy Module
 Miketsu, 2020
 """
 
-import asyncio
 import collections
 from itertools import cycle
 
@@ -193,7 +192,7 @@ class Economy(commands.Cog):
                 description=f"You have wished for {shikigami_name.title()} shard today"
             )
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-            embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
+            embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
 
             await process_msg_reaction_add(ctx.message, "✅")
             await process_msg_submit(ctx.channel, None, embed)
@@ -286,7 +285,7 @@ class Economy(commands.Cog):
             query = users.find_one({"user_id": str(member.id)}, {"_id": 0, "wish": 1})["wish"]
 
             if query is None:
-                raise commands.BadArgument(user)
+                await process_msg_invalid_member(ctx)
 
             elif query is True:
                 embed = discord.Embed(
@@ -350,23 +349,41 @@ class Economy(commands.Cog):
                                     f"Also acquired `{friendship}`{e_f} and `{friendship_pass}`{e_fp}",
                     )
                     embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                    embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "pre"))
+                    embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
                     await process_msg_submit(ctx.channel, None, embed)
+
+    async def economy_stat_shikigami_help(self, ctx):
+
+        embed = discord.Embed(
+            title="stats",
+            colour=colour,
+            description="shows shikigami pulls statistics"
+        )
+        embed.add_field(
+            name="Example", inline=False,
+            value=f"*`{self.prefix}stat tamamonomae`*\n"
+                  f"*`{self.prefix}stat all`*\n"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["stat", "st"])
     @commands.guild_only()
-    async def economy_stat_shikigami(self, ctx, *, args):
+    async def economy_stat_shikigami(self, ctx, *, args=None):
 
-        shikigami_name = args.lower()
+        if args is None:
+            await self.economy_stat_shikigami(ctx)
 
-        if shikigami_name.lower() in ["sm", "all"]:
-            await self.economy_stat_shikigami_all(ctx)
+        else:
+            shikigami_name = args.lower()
 
-        elif shikigami_name.lower() not in pool_all:
-            await shikigami_post_approximate_results(ctx, shikigami_name.lower())
+            if shikigami_name.lower() in ["sm", "all"]:
+                await self.economy_stat_shikigami_all(ctx)
 
-        elif shikigami_name.lower() in pool_all:
-            await self.economy_stat_shikigami_one(ctx, shikigami_name)
+            elif shikigami_name.lower() not in pool_all:
+                await shikigami_post_approximate_results(ctx, shikigami_name.lower())
+
+            elif shikigami_name.lower() in pool_all:
+                await self.economy_stat_shikigami_one(ctx, shikigami_name)
 
     async def economy_stat_shikigami_all(self, ctx):
 
@@ -480,14 +497,14 @@ class Economy(commands.Cog):
         )
         embed.set_author(
             name=f"Stats for {shikigami_name.title()}",
-            icon_url=get_thumbnail_shikigami(shikigami_name, "pre")
+            icon_url=get_shikigami_url(shikigami_name, "pre")
         )
         listings_formatted = ", ".join(listings_owned)
 
         if len(listings_owned) == 0:
             listings_formatted = "None"
 
-        embed.set_thumbnail(url=get_thumbnail_shikigami(shikigami_name, "evo"))
+        embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "evo"))
         embed.add_field(
             name=f"Owned by {len(listings_owned)} {pluralize('member', len(listings_owned))}",
             value=f"{listings_formatted}"
@@ -497,107 +514,117 @@ class Economy(commands.Cog):
     @commands.command(aliases=["parade", "prd"])
     @commands.guild_only()
     @commands.cooldown(1, 60, commands.BucketType.user)
-    @commands.check(check_if_user_has_parade_tickets)
     async def economy_perform_parade(self, ctx):
 
         user = ctx.author
-        users.update_one({"user_id": str(user.id)}, {"$inc": {"parade_tickets": -1}})
-        await perform_add_log("parade_tickets", -1, user.id)
 
-        dimensions, beans, beaned_shikigamis, parade_pull, timeout = 7, 10, [], [], 25
-
-        for x in range(1, 50):
-            roll = random.uniform(0, 100)
-
-            if roll < 7:
-                p = random.uniform(0, 1.2)
-                if p >= 126 / 109:
-                    parade_pull.append(random.choice(pool_sp))
-                else:
-                    if random.uniform(1, 100) >= 75:
-                        parade_pull.append(random.choice(pool_ssr))
-                    else:
-                        parade_pull.append(random.choice(pool_ssn))
-            elif roll <= 25:
-                parade_pull.append(random.choice(pool_sr))
-            else:
-                parade_pull.append(random.choice(pool_r))
-
-        x_init, y_init = random.randint(1, dimensions), random.randint(1, dimensions)
-        attachment_link = await self.economy_perform_parade_generate_image(ctx, dimensions, parade_pull, x_init, y_init)
-
-        def embed_new_create(listings_shikis, remaining_chances):
-            value = ", ".join([shiki.title() for shiki in listings_shikis])
-            if len(value) == 0:
-                value = None
-
-            embed_new = discord.Embed(
-                color=user.color,
-                title="🎏 Demon Parade",
-                description=f"Beans: 10\n"
-                            f"Time Limit: {timeout} seconds, resets for every bean\n"
-                            f"Note: Cannot bean the same shikigami twice",
-                timestamp=get_timestamp()
+        if not check_if_user_has_parade_tickets:
+            embed = discord.Embed(
+                title="Insufficient parade tickets", colour=user.colour,
+                description=f"Claim your dailies to acquire tickets"
             )
-            embed_new.set_image(url=attachment_link)
-            embed_new.add_field(name="Beaned shikigamis", value=value)
-            embed_new.set_footer(text=f"{remaining_chances} beans", icon_url=user.avatar_url)
-            return embed_new
+            await process_msg_submit(ctx.channel, None, embed)
 
-        msg = await process_msg_submit(ctx.channel, None, embed_new_create(beaned_shikigamis, beans))
+        else:
+            users.update_one({"user_id": str(user.id)}, {"$inc": {"parade_tickets": -1}})
+            await perform_add_log("parade_tickets", -1, user.id)
 
-        emojis_add = ["⬅", "⬆", "⬇", "➡"]
-        for arrow in emojis_add:
-            await msg.add_reaction(arrow)
+            dimensions, beans, beaned_shikigamis, parade_pull, timeout = 7, 10, [], [], 25
 
-        def check(r, u):
-            return msg.id == r.message.id and str(r.emoji) in emojis_add and u.id == user.id
+            for x in range(1, 50):
+                roll = random.uniform(0, 100)
 
-        def get_new_coordinates(x_coor, y_coor, emoji):
+                if roll < 7:
+                    p = random.uniform(0, 1.2)
+                    if p >= 126 / 109:
+                        parade_pull.append(random.choice(pool_sp))
+                    else:
+                        if random.uniform(1, 100) >= 75:
+                            parade_pull.append(random.choice(pool_ssr))
+                        else:
+                            parade_pull.append(random.choice(pool_ssn))
+                elif roll <= 25:
+                    parade_pull.append(random.choice(pool_sr))
+                else:
+                    parade_pull.append(random.choice(pool_r))
 
-            dictionary = {"⬅": -1, "⬆": -1, "⬇": 1, "➡": 1}
-            new_x, new_y = x_coor, y_coor
+            x_init, y_init = random.randint(1, dimensions), random.randint(1, dimensions)
+            attachment_link = await self.economy_perform_parade_generate_image(
+                ctx, dimensions, parade_pull, x_init, y_init
+            )
 
-            if emoji in ["⬅", "➡"]:
-                new_x, new_y = x_coor + dictionary[emoji], y_coor
-                if new_x > dimensions:
-                    new_x = 1
-                if new_x < 1:
-                    new_x = dimensions
+            def embed_new_create(listings_shikis, remaining_chances):
+                value = ", ".join([shiki.title() for shiki in listings_shikis])
+                if len(value) == 0:
+                    value = None
 
-            elif emoji in ["⬇", "⬆"]:
-                new_x, new_y = x_coor, y_coor + dictionary[emoji]
-                if new_y > dimensions:
-                    new_y = 1
-                if new_y < 1:
-                    new_y = dimensions
+                embed_new = discord.Embed(
+                    color=user.color,
+                    title="🎏 Demon Parade",
+                    description=f"Beans: 10\n"
+                                f"Time Limit: {timeout} seconds, resets for every bean\n"
+                                f"Note: Cannot bean the same shikigami twice",
+                    timestamp=get_timestamp()
+                )
+                embed_new.set_image(url=attachment_link)
+                embed_new.add_field(name="Beaned shikigamis", value=value)
+                embed_new.set_footer(text=f"{remaining_chances} beans", icon_url=user.avatar_url)
+                return embed_new
 
-            return new_x, new_y
+            msg = await process_msg_submit(ctx.channel, None, embed_new_create(beaned_shikigamis, beans))
 
-        while beans != -1:
-            try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
-            except asyncio.TimeoutError:
-                await process_msg_reaction_clear(msg)
-                break
-            else:
-                bean_x, bean_y = get_new_coordinates(x_init, y_init, str(reaction.emoji))
+            emojis_add = ["⬅", "⬆", "⬇", "➡"]
+            for arrow in emojis_add:
+                await msg.add_reaction(arrow)
 
-                def get_bean_shikigami(x_coor_get, y_coor_get):
-                    index_bean = (dimensions * y_coor_get) - (dimensions - x_coor_get)
-                    return parade_pull[index_bean - 1]
+            def check(r, u):
+                return msg.id == r.message.id and str(r.emoji) in emojis_add and u.id == user.id
 
-                shikigami_beaned = get_bean_shikigami(bean_x, bean_y)
+            def get_new_coordinates(x_coor, y_coor, emoji):
 
-                if shikigami_beaned not in beaned_shikigamis:
-                    beaned_shikigamis.append(shikigami_beaned)
+                dictionary = {"⬅": -1, "⬆": -1, "⬇": 1, "➡": 1}
+                new_x, new_y = x_coor, y_coor
 
-                await process_msg_edit(msg, None, embed_new_create(beaned_shikigamis, beans))
-                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
-                x_init, y_init = bean_x, bean_y
-                beans -= 1
+                if emoji in ["⬅", "➡"]:
+                    new_x, new_y = x_coor + dictionary[emoji], y_coor
+                    if new_x > dimensions:
+                        new_x = 1
+                    if new_x < 1:
+                        new_x = dimensions
 
-        await self.economy_perform_parade_issue_shards(user, beaned_shikigamis, ctx, msg)
+                elif emoji in ["⬇", "⬆"]:
+                    new_x, new_y = x_coor, y_coor + dictionary[emoji]
+                    if new_y > dimensions:
+                        new_y = 1
+                    if new_y < 1:
+                        new_y = dimensions
+
+                return new_x, new_y
+
+            while beans != -1:
+                try:
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=timeout, check=check)
+                except asyncio.TimeoutError:
+                    await process_msg_reaction_clear(msg)
+                    break
+                else:
+                    bean_x, bean_y = get_new_coordinates(x_init, y_init, str(reaction.emoji))
+
+                    def get_bean_shikigami(x_coor_get, y_coor_get):
+                        index_bean = (dimensions * y_coor_get) - (dimensions - x_coor_get)
+                        return parade_pull[index_bean - 1]
+
+                    shikigami_beaned = get_bean_shikigami(bean_x, bean_y)
+
+                    if shikigami_beaned not in beaned_shikigamis:
+                        beaned_shikigamis.append(shikigami_beaned)
+
+                    await process_msg_edit(msg, None, embed_new_create(beaned_shikigamis, beans))
+                    await process_msg_reaction_remove(msg, str(reaction.emoji), user)
+                    x_init, y_init = bean_x, bean_y
+                    beans -= 1
+
+            await self.economy_perform_parade_issue_shards(user, beaned_shikigamis, ctx, msg)
 
     async def economy_perform_parade_generate_image(self, ctx, max_rows, parade_pull, x_init, y_init):
 
@@ -693,14 +720,22 @@ class Economy(commands.Cog):
     @commands.command(aliases=["pray"])
     @commands.guild_only()
     @commands.cooldown(1, 150, commands.BucketType.user)
-    @commands.check(check_if_user_has_prayers)
     async def economy_pray_use(self, ctx):
 
+        user = ctx.author
+
+        if not check_if_user_has_prayers:
+            embed = discord.Embed(
+                colour=user.colour, title=f"Insufficient prayers",
+                description=f"You have used up all your prayers today",
+            )
+            await process_msg_submit(ctx.channel, None, embed)
+
         embed = discord.Embed(
-            title="Pray to the Goddess of Hope and Prosperity!", color=ctx.author.colour,
+            title="Pray to the Goddess of Hope and Prosperity!", color=user.colour,
             description="45% chance to obtain rich rewards", timestamp=get_timestamp()
         )
-        embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+        embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
         msg = await process_msg_submit(ctx.channel, None, embed)
 
         roll = random.randint(1, 100)
@@ -714,7 +749,7 @@ class Economy(commands.Cog):
             rewards_selection.append(emoji)
 
         def check(r, u):
-            return str(r.emoji) in rewards_selection and u == ctx.author and msg.id == r.message.id
+            return str(r.emoji) in rewards_selection and u == user and msg.id == r.message.id
 
         def get_rewards(y):
             rewards_amount = {
@@ -734,27 +769,27 @@ class Economy(commands.Cog):
         try:
             reaction, user = await self.client.wait_for("reaction_add", timeout=150, check=check)
         except asyncio.TimeoutError:
-            users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"prayers": -1}})
-            await perform_add_log("prayers", -1, ctx.author.id)
+            users.update_one({"user_id": str(user.id)}, {"$inc": {"prayers": -1}})
+            await perform_add_log("prayers", -1, user.id)
         else:
-            users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {"prayers": -1}})
-            await perform_add_log("prayers", -1, ctx.author.id)
+            users.update_one({"user_id": str(user.id)}, {"$inc": {"prayers": -1}})
+            await perform_add_log("prayers", -1, user.id)
 
             if roll >= 55:
                 embed = discord.Embed(
-                    title=f"Prayer results", color=ctx.author.colour,
+                    title=f"Prayer results", color=user.colour,
                     description=f"{next(self.prayer_ignored)}", timestamp=get_timestamp()
                 )
-                embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                 await process_msg_edit(msg, None, embed)
             else:
                 amount, rewards = get_rewards(str(reaction.emoji))
                 embed = discord.Embed(
-                    title=f"Prayer results", color=ctx.author.colour, timestamp=get_timestamp(),
+                    title=f"Prayer results", color=user.colour, timestamp=get_timestamp(),
                     description=f"{next(self.prayer_heard)} You obtained {amount:,d}{str(reaction.emoji)}",
                 )
-                embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
-                users.update_one({"user_id": str(ctx.author.id)}, {"$inc": {rewards: amount}})
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                users.update_one({"user_id": str(user.id)}, {"$inc": {rewards: amount}})
 
                 await perform_add_log(rewards, amount, user.id)
                 await process_msg_edit(msg, None, embed)
@@ -875,109 +910,114 @@ class Economy(commands.Cog):
 
     async def economy_profile_post(self, member, ctx):
 
-        p = users.find_one({"user_id": str(member.id)}, {"id": 0, "shikigami": 0, "cards": 0, "souls": 0})
-        ships_count = ships.count_documents({"code": {"$regex": f".*{ctx.author.id}.*"}})
+        q = users.find_one({"user_id": str(member.id)}, {"id": 0, "shikigami": 0, "cards": 0, "souls": 0})
 
-        amulets, amulets_b = p["amulets"], p["amulets_b"]
-        amulets_spent, amulets_spent_b = p["amulets_spent"], p["amulets_spent_b"]
-        experience, level, level_exp_next = p["experience"], p["level"], p["level_exp_next"]
-        jades, talismans, coins, medals, sushi = p["jades"], p["talisman"], p["coins"], p["medals"], p["sushi"]
-        friendship_points, parade, prayers = p["friendship"], p["parade_tickets"], p["prayers"]
-        realm_ticket, enc_ticket, friendship_pass = p["realm_ticket"], p["encounter_ticket"], p["friendship_pass"]
-        display, nether_pass, achievements = p["display"], p["nether_pass"], p["achievements"]
-
-        embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
-
-        if display is not None:
-            evo = users.find_one({
-                "user_id": str(member.id), "shikigami.name": display}, {
-                "shikigami.$.name": 1
-            })["shikigami"][0]["evolved"]
-            thumbnail = get_thumbnail_shikigami(display.lower(), get_evo_link(evo))
-            embed.set_thumbnail(url=thumbnail)
+        if q is None:
+            await process_msg_invalid_member(ctx)
 
         else:
-            embed.set_thumbnail(url=member.avatar_url)
+            count = ships.count_documents({"code": {"$regex": f".*{ctx.author.id}.*"}})
 
-        def get_emoji_nether(x):
-            if x is False:
-                return "❌"
-            return "✅"
+            amulets, amulets_b = q["amulets"], q["amulets_b"]
+            amulets_spent, amulets_spent_b = q["amulets_spent"], q["amulets_spent_b"]
+            experience, level, level_exp_next = q["experience"], q["level"], q["level_exp_next"]
+            jades, talismans, coins, medals, sushi = q["jades"], q["talisman"], q["coins"], q["medals"], q["sushi"]
+            friendship_points, parade, prayers = q["friendship"], q["parade_tickets"], q["prayers"]
+            realm_ticket, enc_ticket, friendship_pass = q["realm_ticket"], q["encounter_ticket"], q["friendship_pass"]
+            display, nether_pass, achievements = q["display"], q["nether_pass"], q["achievements"]
 
-        embed.set_author(name=f"{member.display_name}'s profile", icon_url=member.avatar_url)
-        embed.add_field(
-            name=f"{e_x} Experience | Nether Pass",
-            value=f"Level: {level} ({experience:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
-        )
-        embed.add_field(
-            name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
-            value=f"{p['SP']} | {p['SSR']} | {p['SR']} | {p['R']:,d} | {p['N']:,d} | {p['SSN']:,d}",
-            inline=False
-        )
-        embed.add_field(
-            name=f"{e_b} Broken Amulets",
-            value=f"On Hand: `{amulets_b:,d}` | Used: `{amulets_spent_b:,d}`"
-        )
-        embed.add_field(
-            name=f"{e_a} Mystery Amulets",
-            value=f"On Hand: `{amulets:,d}` | Used: `{amulets_spent:,d}`", inline=False
-        )
-        embed.add_field(
-            name=f"{e_fp} | 🎟 | 🎫 | 🚢 | 🙏 | 🎏",
-            value=f"{friendship_pass} | {realm_ticket:,d} | {enc_ticket:,d} | {ships_count} | {prayers} | {parade}",
-            inline=False
-        )
-        embed.add_field(
-            name=f"🍣 | {e_f} | {e_t} | {e_m} | {e_j} | {e_c}",
-            value=f"{sushi} | {friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}"
-        )
+            embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
 
-        msg = await process_msg_submit(ctx.channel, None, embed)
-        await process_msg_reaction_add(msg, "🖼")
+            if display is not None:
+                evo = users.find_one({
+                    "user_id": str(member.id), "shikigami.name": display}, {
+                    "shikigami.$.name": 1
+                })["shikigami"][0]["evolved"]
+                thumbnail = get_shikigami_url(display.lower(), get_evo_link(evo))
+                embed.set_thumbnail(url=thumbnail)
 
-        def check(r, u):
-            return str(r.emoji) in ["🖼"] and r.message.id == msg.id and u.bot is False
+            else:
+                embed.set_thumbnail(url=member.avatar_url)
 
-        def check2(r, u):
-            return str(r.emoji) in ["➡"] and r.message.id == msg.id and u.bot is False
+            def get_emoji_nether(x):
+                if x is False:
+                    return "❌"
+                return "✅"
 
-        async def embed_new_create(page_new):
-
-            frame_new_url = await self.economy_profile_generate_frame_image_new(member, achievements, page_new)
-            embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
-            embed_new.set_author(
-                name=f"{member.display_name}'s achievements [{len(achievements)}]",
-                icon_url=member.avatar_url
+            embed.set_author(name=f"{member.display_name}'s profile", icon_url=member.avatar_url)
+            embed.add_field(
+                name=f"{e_x} Experience | Nether Pass",
+                value=f"Level: {level} ({experience:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
             )
-            embed_new.set_image(url=frame_new_url)
-            embed_new.set_footer(text="Hall of Frames")
-            return embed_new
+            embed.add_field(
+                name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
+                value=f"{q['SP']} | {q['SSR']} | {q['SR']} | {q['R']:,d} | {q['N']:,d} | {q['SSN']:,d}",
+                inline=False
+            )
+            embed.add_field(
+                name=f"{e_b} Broken Amulets",
+                value=f"On Hand: `{amulets_b:,d}` | Used: `{amulets_spent_b:,d}`"
+            )
+            embed.add_field(
+                name=f"{e_a} Mystery Amulets",
+                value=f"On Hand: `{amulets:,d}` | Used: `{amulets_spent:,d}`", inline=False
+            )
+            embed.add_field(
+                name=f"{e_fp} | 🎟 | 🎫 | 🚢 | 🙏 | 🎏",
+                value=f"{friendship_pass} | {realm_ticket:,d} | {enc_ticket:,d} | {count} | {prayers} | {parade}",
+                inline=False
+            )
+            embed.add_field(
+                name=f"🍣 | {e_f} | {e_t} | {e_m} | {e_j} | {e_c}",
+                value=f"{sushi} | {friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}"
+            )
 
-        page = 1
-        page_total = ceil(len(achievements) / 20)
+            msg = await process_msg_submit(ctx.channel, None, embed)
+            await process_msg_reaction_add(msg, "🖼")
 
-        try:
-            await self.client.wait_for("reaction_add", timeout=15, check=check)
-        except asyncio.TimeoutError:
-            await process_msg_reaction_clear(msg)
-            return
-        else:
-            await process_msg_edit(msg, None, await embed_new_create(page))
-            await process_msg_reaction_clear(msg)
-            await process_msg_reaction_add(msg, "➡")
+            def check(r, u):
+                return str(r.emoji) in ["🖼"] and r.message.id == msg.id and u.bot is False
 
-        while True:
+            def check2(r, u):
+                return str(r.emoji) in ["➡"] and r.message.id == msg.id and u.bot is False
+
+            async def embed_new_create(page_new):
+
+                frame_new_url = await self.economy_profile_generate_frame_image_new(member, achievements, page_new)
+                embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
+                embed_new.set_author(
+                    name=f"{member.display_name}'s achievements [{len(achievements)}]",
+                    icon_url=member.avatar_url
+                )
+                embed_new.set_image(url=frame_new_url)
+                embed_new.set_footer(text="Hall of Frames")
+                return embed_new
+
+            page = 1
+            page_total = ceil(len(achievements) / 20)
+
             try:
-                reaction, user = await self.client.wait_for("reaction_add", timeout=15, check=check2)
+                await self.client.wait_for("reaction_add", timeout=15, check=check)
             except asyncio.TimeoutError:
                 await process_msg_reaction_clear(msg)
-                break
+                return
             else:
-                if str(reaction.emoji) == "➡":
-                    page += 1
-                if page > page_total:
-                    page = 1
                 await process_msg_edit(msg, None, await embed_new_create(page))
+                await process_msg_reaction_clear(msg)
+                await process_msg_reaction_add(msg, "➡")
+
+            while True:
+                try:
+                    reaction, user = await self.client.wait_for("reaction_add", timeout=15, check=check2)
+                except asyncio.TimeoutError:
+                    await process_msg_reaction_clear(msg)
+                    break
+                else:
+                    if str(reaction.emoji) == "➡":
+                        page += 1
+                    if page > page_total:
+                        page = 1
+                    await process_msg_edit(msg, None, await embed_new_create(page))
 
     async def economy_profile_generate_frame_image_new(self, member, achievements, page_new):
 
@@ -1238,7 +1278,12 @@ class Economy(commands.Cog):
             await self.economy_logs_show_member(ctx, ctx.author)
 
         elif member is not None:
-            await self.economy_logs_show_member(ctx, member)
+            try:
+                member.id
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
+            else:
+                await self.economy_logs_show_member(ctx, member)
 
     async def economy_logs_show_member(self, ctx, member):
 

@@ -3,7 +3,6 @@ Events Module
 Miketsu, 2020
 """
 
-import asyncio
 from datetime import timedelta
 
 from discord.ext import commands
@@ -18,7 +17,7 @@ class Events(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-    async def perform_announce_reminders_bidding(self, date_time):
+    async def events_reminders_announce_bidding(self, date_time):
 
         query = events.find_one({"event": "showdown bidding", "dates": date_time}, {"_id": 0})
 
@@ -38,7 +37,7 @@ class Events(commands.Cog):
             await process_msg_reaction_add(msg, "🔵")
             await process_msg_reaction_add(msg, "🔴")
 
-    async def perform_announce_reminders(self):
+    async def events_reminders_announce_others(self):
 
         for reminder in events.find({"status": True}, {"_id": 0}):
 
@@ -66,6 +65,18 @@ class Events(commands.Cog):
                 if reminder_new["next"] > reminder["end"]:
                     events.update_one({"code": reminder["code"], "status": True}, {"$set": {"status": False}})
 
+    async def events_manipulate_help(self, ctx):
+
+        embed = discord.Embed(
+            title="events, e", color=colour,
+            description="manipulate event settings for reminders, etc.",
+        )
+        embed.add_field(
+            name="Arguments", inline=False,
+            value="activate, deactivate",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["events", "e"])
     @commands.check(check_if_user_has_any_admin_roles)
     async def events_manipulate(self, ctx, *args):
@@ -73,15 +84,7 @@ class Events(commands.Cog):
         user = ctx.author
 
         if len(args) == 0:
-            embed = discord.Embed(
-                title="events, e", color=colour,
-                description="manipulate event settings for reminders, etc.",
-            )
-            embed.add_field(
-                name="Arguments", inline=False,
-                value="activate, deactivate",
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+            await self.events_manipulate_help(ctx)
 
         elif len(args) == 1 and args[0].lower() in ["activate", "a"]:
 
@@ -152,24 +155,23 @@ class Events(commands.Cog):
             get_patch_start_day = (get_time() + timedelta(days=offset)).strftime("%Y-%m-%d")
 
         date_absolute = datetime.strptime(get_patch_start_day, "%Y-%m-%d")
-        request = events.find_one({"code": event}, {"_id": 0})
+        query = events.find_one({"code": event}, {"_id": 0})
 
-        date_next = date_absolute + timedelta(days=request['delta']) - timedelta(hours=request['delta_hr'])
+        date_next = date_absolute + timedelta(days=query['delta']) - timedelta(hours=query['delta_hr'])
         date_start = date_absolute
 
         if timing.lower() == "now":
             date_start = datetime.strptime(get_time().strftime("%Y-%m-%d"), "%Y-%m-%d")
-            date_next = date_start + timedelta(days=request['delta']) - timedelta(hours=request['delta_hr'])
+            date_next = date_start + timedelta(days=query['delta']) - timedelta(hours=query['delta_hr'])
 
             if date_start < datetime.strptime(get_time().strftime("%Y-%m-%d %H:%M"), "%Y-%m-%d %H:%M"):
                 date_start = date_start + timedelta(days=1)
                 date_next = date_next + timedelta(days=1)
 
-        date_end = date_absolute + timedelta(days=request['duration']) - timedelta(hours=request['delta_hr'])
+        date_end = date_absolute + timedelta(days=query['duration']) - timedelta(hours=query['delta_hr'])
 
         events.update_one({
-            "code": event,
-        }, {
+            "code": event, }, {
             "$set": {
                 "status": True,
                 "last": None,
@@ -179,20 +181,19 @@ class Events(commands.Cog):
             }
         })
         await asyncio.sleep(2)
-        request = events.find_one({"code": event}, {"_id": 0})
-        role_id = request['role_id']
+        query = events.find_one({"code": event}, {"_id": 0})
+        role_id = query['role_id']
 
         embed = discord.Embed(
             title="Event activation",
-            description=f"Title: {request['event'].title()}\n"
+            description=f"Title: {query['event'].title()}\n"
                         f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until "
                         f"`{date_end.strftime('%Y-%m-%d | %a')}`",
-            color=user.colour,
-            timestamp=get_timestamp()
+            color=user.colour, timestamp=get_timestamp()
         )
         embed.add_field(
-            name="Action",
-            value=f"Pings <@&{role_id}> role; {request['delta_hr']} hours before the reset at <#{id_headlines}>"
+            name="Action", inline=False,
+            value=f"Pings <@&{role_id}> role; {query['delta_hr']} hours before the reset at <#{id_headlines}>"
         )
         await process_msg_submit(ctx.channel, None, embed)
 

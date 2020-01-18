@@ -3,7 +3,6 @@ Realm Module
 Miketsu, 2020
 """
 
-import asyncio
 from datetime import timedelta
 
 from discord.ext import commands
@@ -83,7 +82,12 @@ class Realm(commands.Cog):
             await self.realm_card_show_user_post(ctx.author, ctx)
 
         else:
-            await self.realm_card_show_user_post(member, ctx)
+            try:
+                member.id
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
+            else:
+                await self.realm_card_show_user_post(member, ctx)
 
     async def realm_card_show_user_post(self, member, ctx):
 
@@ -163,63 +167,68 @@ class Realm(commands.Cog):
         elif arg1.lower() in ["use", "u"] and member is not None:
 
             user = ctx.author
-            code = get_bond(user.id, member.id)
-            ship_data = ships.find_one({"code": code}, {"_id": 0})
 
-            if ship_data is None:
-                embed = discord.Embed(
-                    colour=user.colour, title="Invalid ship", timestamp=get_timestamp(),
-                    description=f"That ship has sunk before it was even fully built"
-                )
-                await process_msg_submit(ctx.channel, None, embed)
+            try:
+                code = get_bond(user.id, member.id)
+            except AttributeError:
+                await process_msg_invalid_member(ctx)
+            else:
+                ship_data = ships.find_one({"code": code}, {"_id": 0})
 
-            elif ship_data is not None:
-
-                if ship_data["cards"]["equipped"] is True:
-                    await process_msg_reaction_add(ctx.message, "🛳")
-
-                elif ship_data["cards"]["equipped"] is False:
-                    user_cards, user_cards_description = [], []
-
-                    for d in users.find_one({"user_id": str(user.id)}, {"_id": 0, "cards": 1})["cards"]:
-                        if d["count"] > 0:
-                            user_cards.append(f"{d['name']}/{d['grade']}")
-                            user_cards_description.append(f"{d['name']}/{d['grade']} [x{d['count']}]")
-
+                if ship_data is None:
                     embed = discord.Embed(
-                        color=user.colour, title="Realm card selection", timestamp=get_timestamp(),
-                        description=f"enter a valid realm card and grade (ex. moon/4)"
+                        colour=user.colour, title="Invalid ship", timestamp=get_timestamp(),
+                        description=f"That ship has sunk before it was even fully built"
                     )
-                    embed.add_field(name="Available cards", value=f"*{', '.join(user_cards_description[:25])}*")
                     await process_msg_submit(ctx.channel, None, embed)
 
-                    def check(m):
-                        return m.content.lower() in user_cards and m.author.id == user.id
+                elif ship_data is not None:
 
-                    try:
-                        message = await self.client.wait_for("message", timeout=60, check=check)
-                    except asyncio.TimeoutError:
-                        return
-                    else:
-                        name_grade = message.content.lower().split("/")
-                        name, grade = name_grade[0], int(name_grade[1])
+                    if ship_data["cards"]["equipped"] is True:
+                        await process_msg_reaction_add(ctx.message, "🛳")
 
-                        ships.update_one({
-                            "code": code
-                        }, {
-                            "$set": {
-                                "cards.equipped": True, "cards.name": name, "cards.grade": grade,
-                                "cards.timestamp": get_time(), "cards.collected": False
-                            }
-                        })
+                    elif ship_data["cards"]["equipped"] is False:
+                        user_cards, user_cards_description = [], []
 
-                        users.update_one({
-                            "user_id": str(user.id),
-                            "cards": {"$elemMatch": {"name": name, "grade": grade}}
-                        }, {
-                            "$inc": {"cards.$.count": -1}
-                        })
-                        await process_msg_reaction_add(message, "✅")
+                        for d in users.find_one({"user_id": str(user.id)}, {"_id": 0, "cards": 1})["cards"]:
+                            if d["count"] > 0:
+                                user_cards.append(f"{d['name']}/{d['grade']}")
+                                user_cards_description.append(f"{d['name']}/{d['grade']} [x{d['count']}]")
+
+                        embed = discord.Embed(
+                            color=user.colour, title="Realm card selection", timestamp=get_timestamp(),
+                            description=f"enter a valid realm card and grade (ex. moon/4)"
+                        )
+                        embed.add_field(name="Available cards", value=f"*{', '.join(user_cards_description[:25])}*")
+                        await process_msg_submit(ctx.channel, None, embed)
+
+                        def check(m):
+                            return m.content.lower() in user_cards and m.author.id == user.id
+
+                        try:
+                            message = await self.client.wait_for("message", timeout=60, check=check)
+                        except asyncio.TimeoutError:
+                            return
+                        else:
+                            name_grade = message.content.lower().split("/")
+                            name, grade = name_grade[0], int(name_grade[1])
+
+                            ships.update_one({
+                                "code": code
+                            }, {
+                                "$set": {
+                                    "cards.equipped": True, "cards.name": name, "cards.grade": grade,
+                                    "cards.timestamp": get_time(), "cards.collected": False
+                                }
+                            })
+
+                            users.update_one({
+                                "user_id": str(user.id),
+                                "cards": {"$elemMatch": {"name": name, "grade": grade}}
+                            }, {
+                                "$inc": {"cards.$.count": -1}
+                            })
+                            await process_msg_reaction_add(message, "✅")
 
     async def realm_card_collect_help(self, ctx):
 

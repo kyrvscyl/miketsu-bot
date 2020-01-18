@@ -122,27 +122,6 @@ class Level(commands.Cog):
                 "souls_unlocked": 1
             })
 
-    async def perform_add_log(self, currency, amount, user_id):
-
-        if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
-            logs.insert_one({"user_id": str(user_id), "logs": []})
-
-        logs.update_one({
-            "user_id": str(user_id)
-        }, {
-            "$push": {
-                "logs": {
-                    "$each": [{
-                        "currency": currency,
-                        "amount": amount,
-                        "date": get_time(),
-                    }],
-                    "$position": 0,
-                    "$slice": 200
-                }
-            }
-        })
-
     @commands.Cog.listener()
     async def on_message(self, message):
 
