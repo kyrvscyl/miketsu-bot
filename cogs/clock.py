@@ -14,6 +14,7 @@ from cogs.events import Events
 from cogs.ext.initialize import *
 from cogs.frames import Frames
 from cogs.quest import Expecto, owls_restock
+from cogs.souls import Souls
 from cogs.summon import Summon
 
 
@@ -144,9 +145,10 @@ class Clock(commands.Cog):
                 if get_time().strftime("%a").lower() == "mon":
                     await Economy(self.client).economy_issue_rewards_reset_weekly()
 
-                await Frames(self.client).frame_automate()
+                await Frames(self.client).frames_automate()
                 await Summon(self.client).summon_perform_streak_penalize()
                 await Frames(self.client).achievements_process_daily()
+                await Souls(self.client).souls_rewards_generate()
 
             if minute_hand == "00":
                 await Frames(self.client).achievements_process_hourly()

@@ -90,12 +90,12 @@ class Castle(commands.Cog):
 
             msg = await process_msg_submit(ctx.channel, None, embed_new_create())
 
-            emoji_arrows = ["➡"]
-            for emoji in emoji_arrows:
+            emojis_add = ["➡"]
+            for emoji in emojis_add:
                 await process_msg_reaction_add(msg, emoji)
 
             def check(r, u):
-                return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emoji_arrows
+                return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
             while True:
                 try:
@@ -104,7 +104,7 @@ class Castle(commands.Cog):
                     await process_msg_reaction_clear(msg)
                     break
                 else:
-                    if str(reaction.emoji) == emoji_arrows[0]:
+                    if str(reaction.emoji) == emojis_add[0]:
                         await process_msg_edit(msg, None, embed_new_create())
 
     @commands.command(aliases=["portrait"])
@@ -471,12 +471,12 @@ class Castle(commands.Cog):
             embed.set_image(url=link)
             msg = await process_msg_submit(ctx.channel, None, embed)
 
-            emoji_arrows = ["⬅", "➡"]
-            for emoji in emoji_arrows:
+            emojis_add = ["⬅", "➡"]
+            for emoji in emojis_add:
                 await process_msg_reaction_add(msg, emoji)
 
             def check(r, u):
-                return str(r.emoji) in emoji_arrows and msg.id == r.message.id and u.id != self.client.user.id
+                return str(r.emoji) in emojis_add and msg.id == r.message.id and u.id != self.client.user.id
 
             page = 0
             while True:
@@ -743,12 +743,12 @@ class Castle(commands.Cog):
 
         msg = await process_msg_submit(ctx.channel, content, embed_new_create(page))
 
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emoji_arrows
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -757,9 +757,9 @@ class Castle(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total

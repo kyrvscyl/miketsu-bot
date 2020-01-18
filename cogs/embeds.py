@@ -40,14 +40,16 @@ class Embeds(commands.Cog):
                         return new_index
                 else:
                     new_index = index + 1
-                    print(index)
                     if index >= len(banners) - 1:
                         return 0
                     else:
                         return new_index
 
-            embed6 = discord.Embed(colour=discord.Colour(0xffd6ab), title="🎏 Banner")
-            embed6.set_image(url=banners[get_new_banner(current_index)])
+            current_index = get_new_banner(current_index)
+            embed6 = discord.Embed(
+                colour=discord.Colour(0xffd6ab), title=f"🎏 Banners {current_index + 1}/{len(banners)}"
+            )
+            embed6.set_image(url=banners[current_index])
             contributor = self.client.get_user(437941992748482562)
             embed6.set_footer(text=f"Assets: Official Onmyoji art; Designed by: {contributor}")
             await process_msg_edit(banner_msg, None, embed6)
@@ -56,18 +58,22 @@ class Embeds(commands.Cog):
     @commands.is_owner()
     async def edit_message_welcome(self, ctx):
 
-        query = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0, "links": 1})
+        query = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0, "links": 1, "roles": 1})
 
         crest_link = query["links"]["crest"]
         rules_link = query["links"]["rules_link"]
         banners = query["links"]["banners"]
+        splash_link = query["links"]["splash"]
+        arts = query["roles"]["arts"]
 
         embed1 = discord.Embed(
             colour=discord.Colour(0xe77eff),
             title="Welcome to House Patronus!",
-            description="Herewith are the rules and information of our server!\n\n"
-                        "Crest designed by <@!281223518103011340>"
+            description=f"Herewith are the rules and information of our server!\n\n"
+                        f"Crest designed by <@!281223518103011340>\n"
+                        f"Server banner by our <@&{arts}>"
         )
+        embed1.set_image(url=splash_link)
         embed1.set_thumbnail(url=crest_link)
 
         embed2 = discord.Embed(
@@ -143,7 +149,7 @@ class Embeds(commands.Cog):
         embed4 = discord.Embed(
             colour=discord.Colour(0xb8e986),
             title="🎀 Benefits & Requirements",
-            description=f"• <@&{id_seers}> must be fully guided for #2&5\n​ ",
+            description=f"• <@&{id_patronus}> must be fully guided for #2&5\n​ ",
             inline=False
         )
         embed4.add_field(
@@ -226,7 +232,7 @@ class Embeds(commands.Cog):
 
         embed6 = discord.Embed(
             colour=discord.Colour(0xffd6ab),
-            title="🎏 Banner"
+            title=f"🎏 Banners 1/{len(banners)}"
         )
         embed6.set_image(
             url=banners[0]
@@ -244,13 +250,14 @@ class Embeds(commands.Cog):
         msg_banner = await welcome_channel.fetch_message(int(query["messages"]["banner"]))
         msg_invite = await welcome_channel.fetch_message(int(query["messages"]["invite"]))
 
-        await msg_intro.edit(embed=embed1)
-        await msg_roles.edit(embed=embed2)
-        await msg_rules.edit(embed=embed3)
-        await msg_benefits.edit(embed=embed4)
-        await msg_events.edit(embed=embed5)
-        await msg_banner.edit(embed=embed6)
-        await msg_invite.edit(content="Our invite link: https://discord.gg/H6N8AHB")
+        await process_msg_edit(msg_intro, None, embed1)
+        await process_msg_edit(msg_roles, None, embed2)
+        await process_msg_edit(msg_rules, None, embed3)
+        await process_msg_edit(msg_benefits, None, embed4)
+        await process_msg_edit(msg_events, None, embed5)
+        await process_msg_edit(msg_banner, None, embed6)
+        await process_msg_edit(msg_invite, "Our invite link: https://discord.gg/H6N8AHB", None)
+
         await process_msg_delete(ctx.message, 0)
         await process_msg_delete(ctx.message, 0)
 

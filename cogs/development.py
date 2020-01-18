@@ -191,7 +191,7 @@ class Development(commands.Cog):
     async def development_manual_frame_automate(self, ctx):
 
         await process_msg_reaction_add(ctx.message, "✅")
-        await Frames(self.client).frame_automate()
+        await Frames(self.client).frames_automate()
         await Summon(self.client).summon_perform_streak_penalize()
 
 

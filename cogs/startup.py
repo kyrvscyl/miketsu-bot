@@ -127,8 +127,9 @@ class Startup(commands.Cog):
             start = end - max_lines
             description = "".join(listings_formatted[start:end])
 
-            embed_new = discord.Embed(color=colour, title="Bot changelogs", description=description)
-            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            embed_new = discord.Embed(color=colour, description=description)
+            embed_new.set_author(name="Bot Changelogs", icon_url=self.client.user.avatar_url)
+            embed_new.set_footer(text=f"Last 200 only; Page: {page_new} of {page_total}")
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))

@@ -2,6 +2,7 @@
 Events Module
 Miketsu, 2020
 """
+
 import asyncio
 from datetime import timedelta
 
@@ -54,9 +55,8 @@ class Events(commands.Cog):
 
                 content = f"<@&{reminder['role_id']}>"
                 embed = discord.Embed(
-                    title="⏰ Reminder", color=16733562,
+                    title="⏰ Reminder", color=16733562, timestamp=get_timestamp(),
                     description=reminder['description'].replace('\\n', '\n'),
-                    timestamp=get_timestamp()
                 )
                 headlines_channel = self.client.get_channel(int(id_headlines))
                 await process_msg_submit(headlines_channel, content, embed)
@@ -70,64 +70,60 @@ class Events(commands.Cog):
     @commands.check(check_if_user_has_any_admin_roles)
     async def events_manipulate(self, ctx, *args):
 
+        user = ctx.author
+
         if len(args) == 0:
             embed = discord.Embed(
-                title="events, e",
+                title="events, e", color=colour,
                 description="manipulate event settings for reminders, etc.",
-                color=colour
             )
             embed.add_field(
-                name="Arguments",
+                name="Arguments", inline=False,
                 value="activate, deactivate",
-                inline=False
             )
             await process_msg_submit(ctx.channel, None, embed)
 
         elif len(args) == 1 and args[0].lower() in ["activate", "a"]:
+
             embed = discord.Embed(
-                title="events activate, e a",
+                title="events activate, e a", color=user.colour,
                 description="activate repetitive events",
-                color=colour
             )
             embed.add_field(
-                name="Timing",
+                name="Timing", inline=False,
                 value="now, next",
-                inline=False
             )
             embed.add_field(
-                name="Event codes",
+                name="Event codes", inline=False,
                 value="coin chaos [cc], fortune temple [ft]",
-                inline=False
             )
             embed.add_field(
-                name="Example",
+                name="Example", inline=False,
                 value="*`;events a next cc`* - next Wed patch\n"
                       "*`;events a now cc`* - activates this week",
-                inline=False
             )
             await process_msg_submit(ctx.channel, None, embed)
 
         elif len(args) == 1 and args[0].lower() in ["deactivate", "d"]:
+
             embed = discord.Embed(
-                title="events deactivate, e d",
+                title="events deactivate, e d", colour=user.colour,
                 description="deactivate events",
-                color=colour
             )
             embed.add_field(
-                name="Event codes",
+                name="Event codes", inline=False,
                 value="coin chaos [cc], fortune temple [ft]",
-                inline=False
             )
             embed.add_field(
-                name="Example",
+                name="Example", inline=False,
                 value="*`;events d cc`*\n",
-                inline=False
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-        elif len(args) == 3 and args[0].lower() in ["activate", "a"] \
-                and args[1].lower() in ["now", "next"] and args[2].lower() in ["cc", "ft"]:
-            await self.events_manipulate_activate(ctx, args[2].lower(), args[1].lower())
+        elif len(args) == 3 and args[0].lower() in ["activate", "a"]:
+
+            if args[1].lower() in ["now", "next"] and args[2].lower() in ["cc", "ft"]:
+                await self.events_manipulate_activate(ctx, args[2].lower(), args[1].lower(), user)
 
         elif len(args) == 2 and args[0].lower() in ["deactivate", "d"] and args[1].lower() in ["cc", "ft"]:
 
@@ -135,9 +131,8 @@ class Events(commands.Cog):
 
             if action.modified_count == 0:
                 embed = discord.Embed(
-                    title="Invalid action",
+                    title="Invalid action", color=user.colour,
                     description="this event is already deactivated",
-                    color=colour
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -147,7 +142,7 @@ class Events(commands.Cog):
         else:
             await process_msg_reaction_add(ctx.message, "❌")
 
-    async def events_manipulate_activate(self, ctx, event, timing):
+    async def events_manipulate_activate(self, ctx, event, timing, user):
 
         if timing.lower() == "now":
             offset = (get_time().weekday() - 2) % 7
@@ -192,7 +187,7 @@ class Events(commands.Cog):
             description=f"Title: {request['event'].title()}\n"
                         f"Duration: `{date_start.strftime('%Y-%m-%d | %a')}` until "
                         f"`{date_end.strftime('%Y-%m-%d | %a')}`",
-            color=colour,
+            color=user.colour,
             timestamp=get_timestamp()
         )
         embed.add_field(

@@ -111,7 +111,7 @@ class Error(commands.Cog):
                 value=f"User | Channel | Source :: {ctx.author} | #{ctx.channel} | [message link]({link})",
                 inline=False
             )
-            await record_scroll.send(embed=embed)
+            await process_msg_submit(record_scroll, None, embed)
 
         except AttributeError:
             embed.add_field(
@@ -119,7 +119,7 @@ class Error(commands.Cog):
                 value=f"User | DMchannel :: {ctx.author} | #{ctx.channel}\n",
                 inline=False
             )
-            await record_scroll.send(embed=embed)
+            await process_msg_submit(record_scroll, None, embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -484,7 +484,7 @@ class Error(commands.Cog):
                     description=f"Certain commands are not available through direct message channels.\n"
                                 f"Use them at the <#{id_spell_spam}>"
                 )
-                await ctx.author.send(embed=embed)
+                await process_msg_submit(ctx.author, None, embed)
 
         elif isinstance(error, commands.CommandInvokeError):
 

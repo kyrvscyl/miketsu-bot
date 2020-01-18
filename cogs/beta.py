@@ -247,10 +247,7 @@ class Beta(commands.Cog):
 
                 file = discord.File(book["address"], filename=book["filename"])
                 contributor = self.client.get_user(int(book["contributor"]))
-                await ctx.channel.send(
-                    content=f"{book['content']} {contributor}",
-                    file=file
-                )
+                await ctx.channel.send(content=f"{book['content']} {contributor}", file=file)
                 await self.castle_post_guides_book_process(ctx, query)
 
             elif book is not None:
@@ -273,10 +270,7 @@ class Beta(commands.Cog):
                 urllib.request.urlretrieve(book["attachment"], book["address"])
 
                 file = discord.File(book["address"], filename=book["filename"])
-                await ctx.channel.send(
-                    content=f"{book['content']}",
-                    file=file
-                )
+                await ctx.channel.send(content=f"{book['content']}", file=file)
                 await self.castle_post_guides_book_process(ctx, query)
 
             elif book is not None:

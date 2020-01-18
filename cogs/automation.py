@@ -82,10 +82,9 @@ class Automation(commands.Cog):
 
         elif str(id_guild) == str(member.guild.id):
 
-            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "channels": 1, "roles": 1, "letters": 1})
+            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "roles": 1, "letters": 1})
 
             try:
-                id_common_room = query["channels"]["the-common-room"]
                 id_no_maj_role = query["roles"]["no-maj"]
                 msg_acceptance = query["letters"]["acceptance"].replace("\\n", "\n")
                 msg_welcome = query["letters"]["welcome"]
@@ -96,7 +95,7 @@ class Automation(commands.Cog):
 
             else:
                 embed3 = discord.Embed(
-                    color=0xffffff, timestamp=get_timestamp(), description=msg_welcome.format(member.mention)
+                    color=colour, timestamp=get_timestamp(), description=msg_welcome.format(member.mention)
                 )
                 common_room_channel = self.client.get_channel(int(id_common_room))
                 await process_msg_submit(common_room_channel, None, embed3)

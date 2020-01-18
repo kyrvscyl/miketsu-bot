@@ -135,6 +135,7 @@ id_office = server["channels"]["headmasters-office"]
 id_shard_trading = server["channels"]["shard-trading"]
 id_welcome = server["channels"]["welcome"]
 id_absence_app = server["channels"]["absence-applications"]
+id_common_room = server["channels"]["the-common-room"]
 
 """ROLES"""
 
@@ -143,6 +144,7 @@ id_silver_sickles = server["roles"]["silver_sickles"]
 id_shard_seeker = server["roles"]["shard_seekers"]
 id_golden_galleons = server["roles"]["golden_galleons"]
 id_seers = server["roles"]["seers"]
+id_patronus = server["roles"]["patronus"]
 
 """EMOJIS"""
 
@@ -866,7 +868,7 @@ def push_note(title, content):
             pass
 
 
-def get_clear_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
+def get_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
     grade_total, soul_set_chance, listings_souls = 0, 0, []
     query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1})
 
@@ -910,6 +912,7 @@ def get_clear_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max,
 
 
 def get_shiki_exp_lvl_next_sushi(user, shikigami_name):
+
     x = users.find_one({
         "user_id": str(user.id),
         "shikigami.name": shikigami_name

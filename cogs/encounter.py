@@ -162,7 +162,7 @@ class Encounter(commands.Cog):
         embed = discord.Embed(
             color=colour, timestamp=get_timestamp(),
             title="Netherworld gates update",
-            description=f"The gates of Netherworld have reset\nUse `{self.prefix}enc_roll` to explore them by chance"
+            description=f"The gates of Netherworld have reset\nUse `{self.prefix}encounter` to explore them by chance"
         )
         spell_spam_channel = self.client.get_channel(int(id_spell_spam))
         await process_msg_submit(spell_spam_channel, content, embed)
@@ -506,7 +506,7 @@ class Encounter(commands.Cog):
         if not check_if_user_has_encounter_tickets(ctx):
             embed = discord.Embed(
                 colour=user.colour, title="Insufficient tickets",
-                description=f"purchase at the shop to obtain more"
+                description=f"Purchase at the *`{self.prefix}shop`* to obtain more"
             )
             await process_msg_submit(ctx.channel, None, embed)
 
@@ -547,7 +547,7 @@ class Encounter(commands.Cog):
                         else:
                             await self.enc_roll_treasure(user, ctx, msg)
 
-        self.client.get_command("enc_roll").reset_cooldown(ctx)
+            self.client.get_command("enc_roll").reset_cooldown(ctx)
 
     async def enc_roll_quiz(self, user, ctx, msg):
 
@@ -868,8 +868,8 @@ class Encounter(commands.Cog):
             jade_steal = round(boss_stats["rewards"]["jades"] * 0.05)
             coin_steal = round(boss_stats["rewards"]["coins"] * 0.08)
 
-            description = f"💨 Rare Boss {boss} has fled with {round(boss_currenthp):,d} remaining HP\n" \
-                          f"💸 Stealing {jade_steal:,d} {e_j} & {coin_steal:,d} {e_c} " \
+            description = f"💨 The Rare Boss {boss} has fled with `{round(boss_currenthp):,d}` remaining HP\n" \
+                          f"💸 Stealing `{jade_steal:,d}` {e_j} & `{coin_steal:,d}` {e_c} " \
                           f"each from its attackers!\n\n{random.choice(self.boss_comment)}~"
 
             embed = discord.Embed(colour=discoverer.colour, description=description, timestamp=get_timestamp())
@@ -881,7 +881,6 @@ class Encounter(commands.Cog):
             bosses.update_one({"boss": boss}, {"$inc": {"rewards.jades": jade_steal, "rewards.coins": coin_steal}})
 
             await process_msg_submit(ctx.channel, None, embed)
-            self.client.get_command("enc_roll").reset_cooldown(ctx)
             self.enc_roll_boss_status_set(False)
 
         elif boss_currenthp == 0:
@@ -932,7 +931,9 @@ class Encounter(commands.Cog):
 
     async def enc_roll_boss_defeat(self, boss, rewards, url, boss_stats, ctx, discoverer2):
 
-        embed = discord.Embed(colour=discoverer2.colour, title="🎊 Boss defeat rewards!", timestamp=get_timestamp())
+        discoverers = [ctx.guild.get_member(int(boss_stats["discoverer"])), discoverer2]
+
+        embed = discord.Embed(colour=ctx.author.colour, title="🎊 Boss defeat rewards!", timestamp=get_timestamp())
         embed.set_thumbnail(url=url)
 
         for reward in rewards:
@@ -960,22 +961,26 @@ class Encounter(commands.Cog):
                 await perform_add_log("coins", coins, user_id)
                 await perform_add_log("medals", medals, user_id)
 
-        for d in [ctx.guild.get_member(int(boss_stats["discoverer"])), discoverer2]:
+        for i, d in enumerate(discoverers):
 
             if d is not None:
                 jades, coins, medals, experience = 250, 150000, 150, 100
-                users.update_one({"user_id": str(d.id)}, {"$inc": {"jades": jades, "coins": coins, "medals": medals}})
-                users.update_one({"user_id": str(d.id), "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
-                await perform_add_log("jades", jades, str(d.id))
-                await perform_add_log("coins", coins, str(d.id))
-                await perform_add_log("medals", medals, str(d.id))
+                users.update_one({"user_id": d.id}, {"$inc": {"jades": jades, "coins": coins, "medals": medals}})
+                users.update_one({"user_id": d.id, "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
+                await perform_add_log("jades", jades, d.id)
+                await perform_add_log("coins", coins, d.id)
+                await perform_add_log("medals", medals, d.id)
 
                 await asyncio.sleep(2)
                 await process_msg_submit(ctx.channel, None, embed)
                 await asyncio.sleep(1)
 
+                caption = "initially"
+                if i == len(discoverers) - 1:
+                    caption = "lastly"
+
                 description = f"{d.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
-                              f"{medals:,d}{e_m} and {experience:,d} {e_x} for initially discovering {boss}!"
+                              f"{medals:,d}{e_m} and {experience:,d} {e_x} for {caption} discovering Rare Boss {boss}!"
                 embed = discord.Embed(colour=d.colour, description=description, timestamp=get_timestamp())
                 await process_msg_submit(ctx.channel, None, embed)
 

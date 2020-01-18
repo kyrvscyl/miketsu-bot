@@ -14,7 +14,9 @@ from cogs.ext.initialize import *
 class Frames(commands.Cog):
 
     def __init__(self, client):
+
         self.client = client
+        self.prefix = self.client.command_prefix
 
         self.steal_adverb = listings_1["steal_adverb"]
         self.steal_verb = listings_1["steal_verb"]
@@ -27,113 +29,110 @@ class Frames(commands.Cog):
         self.total_r = shikigamis.count_documents({"rarity": "R"})
         self.total_n = shikigamis.count_documents({"rarity": "N"})
         self.total_ssn = shikigamis.count_documents({"rarity": "SSN"})
-
+        
+        self.dog_loving = [
+            "ootengu", "lord arakawa", "aoandon", "ichimokuren", "susabi", "higanbana", "yamakaze", "tamamonomae",
+            "blazing tamamonomae", "miketsu", "menreiki", "onikiri", "jr ootengu", "divine miketsu", 
+            "azurestorm ichimokuren"
+        ]
+        self.cat_loving = [
+            "shuten doji", "enma", "ibaraki doji", "yoto hime", "hana", "kaguya", "yuki", "shiranui", "shishio", 
+            "inferno ibaraki doji", "demoniac shuten doji", "crimson yoto", "vengeful hannya", "hakusozu", 
+            "takiyashahime"
+        ]
+    
         self.medal_achievements = []
 
         for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
             self.medal_achievements.append([m['name'], m['required']])
 
-    async def frame_automate(self):
+    def get_coordinates(self, c):
+        return (c * 200 - (ceil(c / 5) - 1) * 1000) - 200, (ceil(c / 5) * 200) - 200
 
-        print("Calculating frames distribution")
+    async def frames_automate(self):
+
         spell_spam_channel = self.client.get_channel(int(id_spell_spam))
-        guild = spell_spam_channel.guild
+        guild = self.client.get_guild(int(id_guild))
 
-        await self.frame_automate_starlight(guild, spell_spam_channel)
+        await self.frames_automate_starlight(guild, spell_spam_channel)
         await asyncio.sleep(1)
-        await self.frame_automate_blazing(guild, spell_spam_channel)
+        await self.frames_automate_blazing(guild, spell_spam_channel)
 
-    async def frame_automate_starlight(self, guild, spell_spam_channel):
-        starlight_role = discord.utils.get(guild.roles, name="Starlight Sky")
+    async def frames_automate_starlight(self, guild, channel):
 
-        streak_list = []
+        frame_name, listings = "Starlight Sky", []
+        role = discord.utils.get(guild.roles, name=frame_name)
+
         for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
-            streak_list.append((user["user_id"], user["SSR_current"]))
+            listings.append((user["user_id"], user["SSR_current"]))
 
-        streak_list_new = sorted(streak_list, key=lambda x: x[1], reverse=True)
-        starlight_new = guild.get_member(int(streak_list_new[0][0]))
-        starlight_current = starlight_role.members[0]
+        listings_sorted = sorted(listings, key=lambda x: x[1], reverse=True)
+        role_new = guild.get_member(int(listings_sorted[0][0]))
+        role_current = role.members[0]
 
-        if len(starlight_role.members) == 0:
-            await starlight_new.add_roles(starlight_role)
+        if len(role.members) == 0:
+
+            await process_role_add(role_new, role)
             await asyncio.sleep(3)
 
             description = \
-                f"{starlight_new.mention}\"s undying luck of not summoning an SSR has " \
-                f"earned themselves the Rare Starlight Sky Frame!\n\n" \
-                f"🍀 No SSR streak record of {streak_list_new[0][1]} summons!"
+                f"{role_new.mention}\"s undying luck of not summoning an SSR has " \
+                f"earned themselves the Rare {frame_name} Frame!\n\n" \
+                f"🍀 No SSR streak record of {listings_sorted[0][1]} summons!"
 
             embed = discord.Embed(
-                color=0xac330f,
-                title="📨 Hall of Framers update",
-                description=description,
-                timestamp=get_timestamp()
+                color=0xac330f, description=description, timestamp=get_timestamp(), title="📨 Hall of Framers update",
             )
-            embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-            await spell_spam_channel.send(embed=embed)
-            await frame_acquisition(starlight_new, "Starlight Sky", 2500, spell_spam_channel)
+            embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+            await process_msg_submit(channel, None, embed)
+            await frame_acquisition(role_new, frame_name, 2500, channel)
 
-        if starlight_current == starlight_new:
+        if role_current == role_new:
+
             jades = 2000
-            users.update_one({"user_id": str(starlight_current.id)}, {"$inc": {"jades": jades}})
-            await perform_add_log("jades", jades, starlight_current.id)
-            msg = f"{starlight_current.mention} has earned {jades:,d}{e_j} " \
-                  f"for wielding the Starlight Sky frame for a day!"
-            await spell_spam_channel.send(msg)
+            users.update_one({"user_id": str(role_current.id)}, {"$inc": {"jades": jades}})
+            await perform_add_log("jades", jades, role_current.id)
+            msg = f"{role_current.mention} has earned {jades:,d}{e_j} for wielding the Starlight Sky frame for a day!"
+            await process_msg_submit(channel, None, msg)
 
         else:
-            await starlight_new.add_roles(starlight_role)
-            await asyncio.sleep(3)
-            await starlight_current.remove_roles(starlight_role)
-            await asyncio.sleep(3)
+            await process_role_add(role_new, role)
+            await asyncio.sleep(1)
+            await process_role_remove(role_new, role)
+            await asyncio.sleep(1)
+
+            adverb, verb = random.choice(self.steal_adverb), random.choice(self.steal_verb)
+            noun, comment = random.choice(self.steal_noun), random.choice(self.steal_comment)
 
             description = \
-                f"{starlight_new.mention} {random.choice(self.steal_adverb)} {random.choice(self.steal_verb)} " \
-                f"the Rare Starlight Sky Frame from {starlight_current.mention}\"s " \
-                f"{random.choice(self.steal_noun)}!! {random.choice(self.steal_comment)}\n\n" \
-                f"🍀 No SSR streak record of {streak_list_new[0][1]} summons! " \
+                f"{role_new.mention} {adverb} {verb} the Rare {frame_name} Frame from {role_current.mention}\"s " \
+                f"{noun}!! {comment}\n\n🍀 No SSR streak record of {listings_sorted[0][1]} summons! " \
                 f"Cuts in three fourths every reset!"
 
             embed = discord.Embed(
-                color=0xac330f,
-                title="📨 Hall of Framers update",
-                description=description,
-                timestamp=get_timestamp()
+                color=0xac330f, title="📨 Hall of Framers update", description=description, timestamp=get_timestamp()
             )
-            embed.set_thumbnail(url="https://vignette.wikia.nocookie.net/onmyoji/images/1/17/Frame7.png")
-            await spell_spam_channel.send(embed=embed)
-            await frame_acquisition(starlight_new, "Starlight Sky", 2500, spell_spam_channel)
+            embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+            await process_msg_submit(channel, None, embed)
+            await frame_acquisition(role_new, frame_name, 2500, channel)
 
-    async def frame_automate_blazing(self, guild, spell_spam_channel):
+    async def frames_automate_blazing(self, guild, channel):
 
-        blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
-        blazing_users = []
+        frame_name, listings = "Blazing Sun", []
+        role = discord.utils.get(guild.roles, name=frame_name)
 
-        for member in blazing_role.members:
-            blazing_users.append(f"{member.display_name}")
-
-            users.update_one({
-                "user_id": str(member.id)
-            }, {
-                "$inc": {
-                    "amulets": 10
-                }
-            })
+        for member in role.members:
+            listings.append(member.name)
+            users.update_one({"user_id": str(member.id)}, {"$inc": {"amulets": 10}})
             await perform_add_log("amulets", 10, member.id)
 
         embed = discord.Embed(
-            title="Blazing Sun Frame Update",
-            description=f"completed the SSR shikigami collection\n"
-                        f"earns 10{e_a} every reset",
-            color=colour,
-            timestamp=get_timestamp()
+            title=f"{frame_name} Frames", color=colour, timestamp=get_timestamp(),
+            description=f"completed the SSR shikigami collection\nearns 10{e_a} every reset",
         )
-        embed.add_field(
-            name="Frame Wielders",
-            value=f"{', '.join(blazing_users)}"
-        )
-        embed.set_thumbnail(url=get_frame_thumbnail("Blazing Sun"))
-        await spell_spam_channel.send(embed=embed)
+        embed.add_field(name="Frame Wielders", value=f"{', '.join(listings)}")
+        embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+        await process_msg_submit(channel, None, embed)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -159,7 +158,7 @@ class Frames(commands.Cog):
     @commands.command(aliases=["af"])
     @commands.check(check_if_developer_team)
     @commands.guild_only()
-    async def achievements_add_new(self, ctx, arg1, link, *, requirement):
+    async def frames_add_new(self, ctx, arg1, link, *, requirement):
 
         profile = {
             "name": arg1.replace("_", " "),
@@ -168,22 +167,22 @@ class Frames(commands.Cog):
         }
         frames.insert_one(profile)
         await process_msg_reaction_add(ctx.message, "✅")
-        await self.achievements_generate_frame_images_newly()
+        await self.frames_add_new_generate_image()
 
-    async def achievements_generate_frame_images_newly(self):
+    async def frames_add_new_generate_image(self):
 
-        frames_listings = []
+        listings_frames = []
         for document in frames.find({}, {"_id": 0}):
             try:
-                frames_listings.append([document["name"], document["requirement"]])
+                listings_frames.append([document["name"], document["requirement"]])
             except KeyError:
                 continue
 
-        pages = ceil(len(frames_listings) / 5)
+        pages = ceil(len(listings_frames) / 5)
         start = ((pages - 1) * 5) + 1
 
         achievements_address = []
-        for entry in frames_listings[start - 1:]:
+        for entry in listings_frames[start - 1:]:
             try:
                 achievements_address.append(f"data/achievements/{entry[0]}.png")
             except KeyError:
@@ -192,41 +191,24 @@ class Frames(commands.Cog):
         images = list(map(Image.open, achievements_address))
         new_im = Image.new("RGBA", (1000, 200))
 
-        def get_coordinates(c):
-            x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
-            y = (ceil(c / 5) * 200) - 200
-            return x, y
-
         for index, item in enumerate(images):
-            new_im.paste(images[index], (get_coordinates(index + 1)))
+            new_im.paste(images[index], (self.get_coordinates(index + 1)))
 
-        address = f"temp/frames1.png"
+        address = f"temp/frames.png"
         new_im.save(address)
-        image_file = discord.File(address, filename=f"frames1.png")
+        image_file = discord.File(address, filename=f"frames.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
         msg = await process_msg_submit_file(hosting_channel, image_file)
         attachment_link = msg.attachments[0].url
 
-        if len(frames_listings[start - 1:]) != 1:
-            config.update_one({
-                "list": 1,
-            }, {
-                "$pop": {
-                    "frames_listings": 1
-                }
-            })
+        if len(listings_frames[start - 1:]) != 1:
+            config.update_one({"list": 1}, {"$pop": {"frames_listings": 1}})
 
-        config.update_one({
-            "list": 1,
-        }, {
-            "$push": {
-                "frames_listings": attachment_link
-            }
-        })
+        config.update_one({"list": 1}, {"$push": {"frames_listings": attachment_link}})
 
     @commands.command(aliases=["frames"])
     @commands.guild_only()
-    async def achievements_show_info(self, ctx):
+    async def frames_show_information(self, ctx):
 
         frames_listings = []
         for document in frames.find({}, {"_id": 0}):
@@ -238,38 +220,37 @@ class Frames(commands.Cog):
         page = 1
         page_total = ceil(len(frames_listings) / 5)
 
-        def check(r, u):
-            return u != self.client.user and r.message.id == msg.id
-
         async def embed_new_create(page_new):
             end = page_new * 5
             start = end - 5
-            embed = discord.Embed(
+            embed_new = discord.Embed(
                 title="frames", colour=ctx.author.colour,
                 description="collect frames based on their stated requirements\n"
                             "certain achievements are verified and issued every hour"
             )
 
-            embed.set_footer(text=f"Page: {page_new} of {page_total}")
-            embed.set_image(url=await self.get_frames_image(page_new))
+            embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+            embed_new.set_image(url=await self.frames_show_images_get(page_new))
             while start < end:
                 try:
-                    embed.add_field(
-                        name=f"{frames_listings[start][0]}",
-                        value=f"{frames_listings[start][1]}",
-                        inline=False
+                    embed_new.add_field(
+                        name=f"{frames_listings[start][0]}", value=f"{frames_listings[start][1]}", inline=False
                     )
                     start += 1
 
                 except IndexError:
                     break
 
-            return embed
+            return embed_new
 
-        msg = await ctx.channel.send(embed=await embed_new_create(1))
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        msg = await process_msg_submit(ctx.channel, None, await embed_new_create(1))
+
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
+
+        def check(r, u):
+            return u != self.client.user and r.message.id == msg.id, str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -278,9 +259,9 @@ class Frames(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
 
                 if page == 0:
@@ -288,730 +269,424 @@ class Frames(commands.Cog):
                 elif page > page_total:
                     page = 1
 
-                await msg.edit(embed=await embed_new_create(page))
+                await process_msg_edit(msg, None, await embed_new_create(page))
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
-    async def get_frames_image(self, page_frames):
+    async def frames_show_images_get(self, page_frames):
+
+        query = config.find_one({"list": 1}, {"_id": 0, "frames_listings": 1})
+
         try:
-            request = config.find_one({
-                "list": 1,
-            }, {
-                "_id": 0,
-                "frames_listings": 1
-            })
-            return request["frames_listings"][page_frames - 1]
+            return query["frames_listings"][page_frames - 1]
         except IndexError:
-            return await self.achievements_generate_frame_images(page_frames)
+            return await self.frames_show_images_generate(page_frames)
 
-    async def achievements_generate_frame_images(self, page_frames):
+    async def frames_show_images_generate(self, page_frames):
 
-        frames_listings = []
+        listings_frames = []
         for document in frames.find({}, {"_id": 0}):
             try:
-                frames_listings.append([document["name"], document["requirement"]])
+                listings_frames.append([document["name"], document["requirement"]])
             except KeyError:
                 continue
 
-        pages = ceil(len(frames_listings) / 5)
+        pages = ceil(len(listings_frames) / 5)
         end = page_frames * 5
         start = end - 5
 
-        achievements_address = []
-        for entry in frames_listings[start:end]:
+        listings_address = []
+        for entry in listings_frames[start:end]:
             try:
-                achievements_address.append(f"data/achievements/{entry[0]}.png")
+                listings_address.append(f"data/achievements/{entry[0]}.png")
             except KeyError:
                 continue
 
-        images = list(map(Image.open, achievements_address))
+        images = list(map(Image.open, listings_address))
         new_im = Image.new("RGBA", (1000, 200))
 
-        def get_coordinates(c):
-            x = (c * 200 - (ceil(c / 5) - 1) * 1000) - 200
-            y = (ceil(c / 5) * 200) - 200
-            return x, y
-
         for index, item in enumerate(images):
-            new_im.paste(images[index], (get_coordinates(index + 1)))
+            new_im.paste(images[index], (self.get_coordinates(index + 1)))
 
-        address = f"temp/frames1.png"
+        address = f"temp/frames.png"
         new_im.save(address)
-        image_file = discord.File(address, filename=f"frames1.png")
+        image_file = discord.File(address, filename=f"frames.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
         msg = await process_msg_submit_file(hosting_channel, image_file)
-        attachment_link = msg.attachments[0].url
+        link_file = msg.attachments[0].url
 
-        request = config.find_one({"list": 1}, {"_id": 0, "frames_listings": 1, "frames_imaged": 1})
-        pages_imaged = len(request["frames_listings"])
-        total_frames_imaged = request["frames_imaged"]
+        query = config.find_one({"list": 1}, {"_id": 0, "frames_listings": 1, "frames_imaged": 1})
+        pages_imaged = len(query["frames_listings"])
+        total_frames_imaged = query["frames_imaged"]
+        count = ((page_frames * 5) - 1) + len(listings_frames[start:end])
 
-        if pages == pages_imaged and total_frames_imaged != frames_listings:
-            config.update_one({
-                "list": 1,
-            }, {
-                "$pop": {
-                    "frames_listings": 1
-                }
-            })
+        if pages == pages_imaged and total_frames_imaged != listings_frames:
+            config.update_one({"list": 1}, {"$pop": {"frames_listings": 1}})
 
-        config.update_one({
-            "list": 1,
-        }, {
-            "$push": {
-                "frames_listings": attachment_link
-            },
-            "$set": {
-                "frames_imaged": ((page_frames * 5) - 1) + len(frames_listings[start:end])
-            }
-        })
-        return attachment_link
+        config.update_one({"list": 1}, {"$push": {"frames_listings": link_file}, "$set": {"frames_imaged": count}})
+        return link_file
 
     async def achievements_process_hourly(self):
 
         print("Processing hourly achievements")
         jades = 3500
         guild = self.client.get_guild(int(id_guild))
-        query = users.find({}, {
-            "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1,
-            "friendship": 1, "exploration": 1
-        })
 
-        for document in query:
+        for document in users.find({}, {
+            "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1,
+            "friendship": 1, "exploration": 1, "achievements_count": 1
+        }):
             member = guild.get_member(int(document["user_id"]))
             if member is None:
                 continue
 
             user_frames = []
             for achievement in document["achievements"]:
-                try:
-                    user_frames.append(achievement["name"])
-                except KeyError:
-                    continue
+                user_frames.append(achievement["name"])
 
-            if "The Scholar" not in user_frames:
+            frame_name = "The Scholar"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "koi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["owned"] >= 100:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["owned"] >= 100:
-                    await self.achievements_process_announce(member, "The Scholar", jades)
-
-            if "Cursed Blade" not in user_frames:
+            frame_name = "Cursed Blade"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "yoto hime"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["evolved"] is True:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["evolved"] is True:
-                    await self.achievements_process_announce(member, "Cursed Blade", jades)
-
-            if "Sword Swallowing-Snake" not in user_frames:
+            frame_name = "Sword Swallowing-Snake"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "orochi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["evolved"] is True:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["evolved"] is True:
-                    await self.achievements_process_announce(member, "Sword Swallowing-Snake", jades)
-
-            if "Dawn of the Thrilling Spring" not in user_frames:
+            frame_name = "Dawn of the Thrilling Spring"
+            if frame_name not in user_frames:
                 if document["friendship"] >= 1000:
-                    await self.achievements_process_announce(member, "Dawn of the Thrilling Spring", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Genteel Women's Reflection" not in user_frames:
-
-                request = ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{document['user_id']}.*"}})
+            frame_name = "Genteel Women's Reflection"
+            if frame_name not in user_frames:
                 total_rewards = 0
-
-                for ship in request:
+                for ship in ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{document['user_id']}.*"}}):
                     total_rewards += ship["level"] * 25
 
                 if total_rewards >= 1000:
-                    await self.achievements_process_announce(member, "Genteel Women's Reflection", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Vampire Blood" not in user_frames:
+            frame_name = "Vampire Blood"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "vampira"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["owned"] >= 30:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["owned"] >= 30:
-                    await self.achievements_process_announce(member, "Vampire Blood", jades)
-
-            if "Taste of the Sea" not in user_frames:
+            frame_name = "Taste of the Sea"
+            if frame_name not in user_frames:
                 if document["amulets_spent"] >= 1000:
-                    await self.achievements_process_announce(member, "Taste of the Sea", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Red Carp" not in user_frames:
+            frame_name = "Red Carp"
+            if frame_name not in user_frames:
                 if document["amulets_spent"] >= 2000:
-                    await self.achievements_process_announce(member, "Red Carp", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Ubumomma" not in user_frames:
+            frame_name = "Ubumomma"
+            if frame_name not in user_frames:
                 if document["level"] >= 30:
-                    await self.achievements_process_announce(member, "Ubumomma", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Pine Of Kisaragi" not in user_frames:
+            frame_name = "Pine Of Kisaragi"
+            if frame_name not in user_frames:
                 if document["level"] >= 50:
-                    await self.achievements_process_announce(member, "Pine Of Kisaragi", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Cold of Mutsuki" not in user_frames:
+            frame_name = "Cold of Mutsuki"
+            if frame_name not in user_frames:
                 if document["level"] == 60:
-                    await self.achievements_process_announce(member, "Cold of Mutsuki", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Kitsune" not in user_frames:
-
+            frame_name = "Kitsune"
+            if frame_name not in user_frames:
                 count_ssn = 0
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": str(member.id)
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.rarity": "SR"
-                        }
-                    }, {
-                        "$count": "count"
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": str(member.id)}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.rarity": "SR"}}, {
+                    "$count": "count"
+                }]):
                     count_ssn = result["count"]
 
                 if count_ssn == self.total_sr:
-                    await self.achievements_process_announce(member, "Kitsune", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Blazing Sun" not in user_frames:
-
+            frame_name = "Blazing Sun"
+            if frame_name not in user_frames:
                 count_ssr = 0
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": str(member.id)
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.rarity": "SSR",
-                            "shikigami.owned": {
-                                "$gt": 0
-                            }
-                        }
-                    }, {
-                        "$count": "count"
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": str(member.id)}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.rarity": "SSR", "shikigami.owned": {"$gt": 0}}}, {
+                    "$count": "count"
+                }]):
                     count_ssr = result["count"]
 
                 if count_ssr == self.total_ssr:
-                    await self.achievements_process_announce(member, "Blazing Sun", jades)
-                    blazing_role = discord.utils.get(guild.roles, name="Blazing Sun")
-                    await member.add_roles(blazing_role)
+                    await self.achievements_process_announce(member, frame_name, jades)
+                    await process_role_add(member, discord.utils.get(guild.roles, name=frame_name))
 
-            if "Limited Gold" not in user_frames:
+            frame_name = "Limited Gold"
+            if frame_name not in user_frames:
                 if document["coins"] >= 70000000:
-                    await self.achievements_process_announce(member, "Limited Gold", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Red Maple Frost" not in user_frames:
-
+            frame_name = "Red Maple Frost"
+            if frame_name not in user_frames:
                 maple_evolve = []
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": document["user_id"]
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.name": {
-                                "$in": [
-                                    "shuten doji", "momiji"
-                                ]
-                            }
-                        }
-                    }, {
-                        "$project": {
-                            "shikigami.name": 1,
-                            "shikigami.evolved": 1
-                        }
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.name": {"$in": ["shuten doji", "momiji"]}}}, {
+                    "$project": {"shikigami.name": 1, "shikigami.evolved": 1}
+                }]):
                     maple_evolve.append(result["shikigami"]["evolved"])
 
                 if len(maple_evolve) == 2:
-
                     if maple_evolve[0] is True and maple_evolve[1] is True:
-                        await self.achievements_process_announce(member, "Red Maple Frost", jades)
+                        await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Festival of Cherries" not in user_frames:
-
+            frame_name = "Festival of Cherries"
+            if frame_name not in user_frames:
                 cherries_evolved = []
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": document["user_id"]
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.name": {
-                                "$in": [
-                                    "momo", "sakura"
-                                ]
-                            }
-                        }
-                    }, {
-                        "$project": {
-                            "shikigami.name": 1,
-                            "shikigami.evolved": 1
-                        }
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.name": {"$in": ["momo", "sakura"]}}}, {
+                    "$project": {"shikigami.name": 1, "shikigami.evolved": 1}
+                }]):
                     cherries_evolved.append(result["shikigami"]["evolved"])
 
                 if len(cherries_evolved) == 2:
-
                     if cherries_evolved[0] is True and cherries_evolved[1] is True:
-                        await self.achievements_process_announce(member, "Festival of Cherries", jades)
+                        await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Famous in Patronus" not in user_frames:
+            frame_name = "Famous in Patronus"
+            if frame_name not in user_frames:
                 if len(user_frames) >= 15:
-                    await self.achievements_process_announce(member, "Famous in Patronus", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
             if document["medals"] >= 2000:
-
                 for reward in self.medal_achievements:
                     if document["medals"] >= reward[1] and reward[0] not in user_frames:
                         await self.achievements_process_announce(member, reward[0], jades)
 
             if document["exploration"] >= 28:
                 total_explorations = 0
-                for result in explores.aggregate([
-                    {
-                        '$match': {
-                            'user_id': document["user_id"]
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$explores'
-                        }
-                    }, {
-                        '$count': 'count'
-                    }
-                ]):
+                for result in explores.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$explores"}}, {
+                    "$count": "count"
+                }]):
                     total_explorations = result["count"]
 
-                exploration_achievements = [
-                    ["The Scout", 50],
-                    ["The Hunter", 100],
-                    ["The Captain", 200]
-                ]
-
+                exploration_achievements = [["The Scout", 50], ["The Hunter", 100], ["The Captain", 200]]
                 for reward in exploration_achievements:
                     if total_explorations >= reward[1] and reward[0] not in user_frames:
                         await self.achievements_process_announce(member, reward[0], jades)
 
-            if "River of Moon" not in user_frames:
-
+            frame_name = "River of Moon"
+            if frame_name not in user_frames:
                 count_r = 0
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": document["user_id"]
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.rarity": "R"
-                        }
-                    }, {
-                        "$count": "count"
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.rarity": "R"}}, {
+                    "$count": "count"
+                }]):
                     count_r = result["count"]
 
                 if count_r == self.total_r:
-                    await self.achievements_process_announce(member, "River of Moon", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Fortune Cat" not in user_frames:
-
+            frame_name = "Fortune Cat"
+            if frame_name not in user_frames:
                 count_n = 0
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": document["user_id"]
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.rarity": "N"
-                        }
-                    }, {
-                        "$count": "count"
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.rarity": "N"}}, {
+                    "$count": "count"
+                }]):
                     count_n = result["count"]
 
                 if count_n == self.total_n:
-                    await self.achievements_process_announce(member, "Fortune Cat", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Kero-Kero" not in user_frames:
-
+            frame_name = "Kero-Kero"
+            if frame_name not in user_frames:
                 count_ssn = 0
-                for result in users.aggregate([
-                    {
-                        "$match": {
-                            "user_id": str(member.id)
-                        }
-                    }, {
-                        "$unwind": {
-                            "path": "$shikigami"
-                        }
-                    }, {
-                        "$match": {
-                            "shikigami.rarity": "SSN",
-                            "shikigami.owned": {
-                                "$gt": 0
-                            }
-                        }
-                    }, {
-                        "$count": "count"
-                    }
+                for result in users.aggregate([{
+                    "$match": {"user_id": str(member.id)}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.rarity": "SSN", "shikigami.owned": {"$gt": 0}}}, {
+                    "$count": "count"}
                 ]):
                     count_ssn = result["count"]
 
                 if count_ssn == self.total_ssn:
-                    await self.achievements_process_announce(member, "Kero-Kero", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Frameous" not in user_frames:
+            frame_name = "Frameous"
+            if frame_name not in user_frames:
                 if len(user_frames) >= 40:
-                    await self.achievements_process_announce(member, "Frameous", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Fortune Puppies" not in user_frames:
+            frame_name = "Fortune Puppies"
+            if frame_name not in user_frames:
                 levels = []
-                for result in users.aggregate([
-                    {
-                        '$match': {
-                            'user_id': document["user_id"]
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$shikigami'
-                        }
-                    }, {
-                        '$match': {
-                            '$or': [
-                                {
-                                    'shikigami.name': 'ootengu'
-                                }, {
-                                    'shikigami.name': 'lord arakawa'
-                                }, {
-                                    'shikigami.name': 'aoandon'
-                                }, {
-                                    'shikigami.name': 'ichimokuren'
-                                }, {
-                                    'shikigami.name': 'susabi'
-                                }, {
-                                    'shikigami.name': 'higanbana'
-                                }, {
-                                    'shikigami.name': 'yamakaze'
-                                }, {
-                                    'shikigami.name': 'tamamonomae'
-                                }, {
-                                    'shikigami.name': 'blazing tamamonomae'
-                                }, {
-                                    'shikigami.name': 'miketsu'
-                                }, {
-                                    'shikigami.name': 'menreiki'
-                                }, {
-                                    'shikigami.name': 'onikiri'
-                                }, {
-                                    'shikigami.name': 'jr ootengu'
-                                }, {
-                                    'shikigami.name': 'divine miketsu'
-                                }, {
-                                    'shikigami.name': 'azurestorm ichimokuren'
-                                }
-                            ]
-                        }
-                    }, {
-                        '$project': {
-                            'shikigami.level': 1
-                        }
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"$or": [{"shikigami.name": {"$in": self.dog_loving}}]}}, {
+                    "$project": {"shikigami.level": 1}
+                }]):
                     levels.append(result["shikigami"]["level"])
 
                 if 40 in levels:
-                    await self.achievements_process_announce(member, "Fortune Puppies", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Fortune Kitties" not in user_frames:
+            frame_name = "Fortune Kitties"
+            if frame_name not in user_frames:
                 levels = []
-                for result in users.aggregate([
-                    {
-                        '$match': {
-                            'user_id': document["user_id"]
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$shikigami'
-                        }
-                    }, {
-                        '$match': {
-                            '$or': [
-                                {
-                                    'shikigami.name': 'shuten doji'
-                                }, {
-                                    'shikigami.name': 'enma'
-                                }, {
-                                    'shikigami.name': 'ibaraki doji'
-                                }, {
-                                    'shikigami.name': 'yoto hime'
-                                }, {
-                                    'shikigami.name': 'hana'
-                                }, {
-                                    'shikigami.name': 'kaguya'
-                                }, {
-                                    'shikigami.name': 'yuki'
-                                }, {
-                                    'shikigami.name': 'shiranui'
-                                }, {
-                                    'shikigami.name': 'shishio'
-                                }, {
-                                    'shikigami.name': 'inferno ibaraki doji'
-                                }, {
-                                    'shikigami.name': 'demoniac shuten doji'
-                                }, {
-                                    'shikigami.name': 'crimson yoto'
-                                }, {
-                                    'shikigami.name': 'vengeful hannya'
-                                }, {
-                                    'shikigami.name': 'hakusozu'
-                                }, {
-                                    'shikigami.name': 'takiyashahime'
-                                }
-                            ]
-                        }
-                    }, {
-                        '$project': {
-                            'shikigami.level': 1
-                        }
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"$or": [{"shikigami.name": {"$in": self.cat_loving}}]}}, {
+                    "$project": {"shikigami.level": 1}
+                }]):
                     levels.append(result["shikigami"]["level"])
 
                 if 40 in levels:
-                    await self.achievements_process_announce(member, "Fortune Kitties", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Spring Rabbit" not in user_frames:
+            frame_name = "Spring Rabbit"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "usagi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["evolved"] is True:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["evolved"] is True:
-                    await self.achievements_process_announce(member, "Spring Rabbit", jades)
-
-            if "King Of The Jungle" not in user_frames:
+            frame_name = "King Of The Jungle"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "yamakaze"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["evolved"] is True and profile["shikigami"][0]["level"] == 40:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["evolved"] is True and profile["shikigami"][0]["level"] == 40:
-                    await self.achievements_process_announce(member, "King Of The Jungle", jades)
-
-            if "In The Clouds" not in user_frames:
+            frame_name = "In The Clouds"
+            if frame_name not in user_frames:
                 if document["exploration"] >= 28:
-                    await self.achievements_process_announce(member, "In The Clouds", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "The Drunken Evil" not in user_frames:
+            frame_name = "The Drunken Evil"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "demoniac shuten doji"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["level"] >= 40:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["level"] >= 40:
-                    await self.achievements_process_announce(member, "The Drunken Evil", jades)
-
-            if "The Nine-Tailed Foxes" not in user_frames:
+            frame_name = "The Nine-Tailed Foxes"
+            if frame_name not in user_frames:
                 total_level = 0
-                for result in users.aggregate([
-                    {
-                        '$match': {
-                            'user_id': document["user_id"]
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$shikigami'
-                        }
-                    }, {
-                        '$match': {
-                            '$or': [
-                                {
-                                    'shikigami.name': 'blazing tamamonomae'
-                                }, {
-                                    'shikigami.name': 'tamamonomae'
-                                }
-                            ]
-                        }
-                    }, {
-                        '$project': {
-                            'shikigami': 1
-                        }
-                    }, {
-                        '$group': {
-                            '_id': '',
-                            'total_level': {
-                                '$sum': '$shikigami.level'
-                            }
-                        }
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"$or": [{"shikigami.name": {"$in": ["blazing tamamonomae", "tamamonomae"]}}]}}, {
+                    "$project": {"shikigami": 1}}, {
+                    "$group": {"_id": "", "total_level": {"$sum": "$shikigami.level"}}
+                }]):
                     total_level = result["total_level"]
 
                 if total_level == 80:
-                    await self.achievements_process_announce(member, "The Nine-Tailed Foxes", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-            if "Spitz Puppy" not in user_frames:
+            frame_name = "Spitz Puppy"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "inugami"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["level"] >= 40:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["level"] >= 40:
-                    await self.achievements_process_announce(member, "Spitz Puppy", jades)
-
-            if "The Seven Masks" not in user_frames:
+            frame_name = "The Seven Masks"
+            if frame_name not in user_frames:
                 profile = users.find_one({
                     "user_id": document["user_id"], "shikigami.name": "menreiki"}, {
                     "_id": 0, "shikigami.$": 1
                 })
+                if profile["shikigami"][0]["shards"] >= 40:
+                    await self.achievements_process_announce(member, frame_name, jades)
 
-                if profile is None:
-                    pass
-
-                elif profile["shikigami"][0]["shards"] >= 40:
-                    await self.achievements_process_announce(member, "The Seven Masks", jades)
-
-            if "Hannya of the Ghoul Mask" not in user_frames:
+            frame_name = "Hannya of the Ghoul Mask"
+            if frame_name not in user_frames:
                 total_level = 0
-                for result in users.aggregate([
-                    {
-                        '$match': {
-                            'user_id': document["user_id"]
-                        }
-                    }, {
-                        '$unwind': {
-                            'path': '$shikigami'
-                        }
-                    }, {
-                        '$match': {
-                            '$or': [
-                                {
-                                    'shikigami.name': 'vengeful hannya'
-                                }, {
-                                    'shikigami.name': 'hannya'
-                                }
-                            ]
-                        }
-                    }, {
-                        '$project': {
-                            'shikigami': 1
-                        }
-                    }, {
-                        '$group': {
-                            '_id': '',
-                            'total_level': {
-                                '$sum': '$shikigami.level'
-                            }
-                        }
-                    }
-                ]):
+                for result in users.aggregate([{
+                    "$match": {"user_id": document["user_id"]}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"$or": [{"shikigami.name": {"$in": ["vengeful hannya", "hannya"]}}]}}, {
+                    "$project": {"shikigami": 1}}, {
+                    "$group": {"_id": "", "total_level": {"$sum": "$shikigami.level"}}
+                }]):
                     total_level = result["total_level"]
 
                 if total_level == 80:
-                    await self.achievements_process_announce(member, "Hannya of the Ghoul Mask", jades)
+                    await self.achievements_process_announce(member, frame_name, jades)
 
     async def achievements_process_weekly(self):
 
-        print("Processing weekly achievements")
-        jades = 750
-        users.update_many({"achievements.name": "Eboshi"}, {"$pull": {"achievements": {"name": "Eboshi"}}})
+        frame_name, jades, listings, i = "Eboshi", 750, [], 0
+        users.update_many({"achievements.name": frame_name}, {"$pull": {"achievements": {"name": frame_name}}})
 
-        medal_board1 = []
-        query = users.find({}, {"_id": 0, "user_id": 1, "medals": 1})
+        for member in users.find({}, {"_id": 0, "user_id": 1, "medals": 1}):
+            listings.append((member["user_id"], member["medals"]))
 
-        for user in query:
-            try:
-                medal_board1.append((user["user_id"], user["medals"]))
-            except AttributeError:
-                continue
+        listings_sorted = sorted(listings, key=lambda x: x[1], reverse=True)
 
-        medal_board2 = sorted(medal_board1, key=lambda x: x[1], reverse=True)
-
-        i = 0
         while i < 3:
-            user = self.client.get_user(int(medal_board2[i][0]))
-            if user is None:
-                continue
-            await self.achievements_process_announce(user, "Eboshi", jades)
-            await asyncio.sleep(1)
+            member = self.client.get_user(int(listings_sorted[i][0]))
+            if member is not None:
+                await self.achievements_process_announce(member, frame_name, jades)
+                await asyncio.sleep(0.5)
             i += 1
 
     async def achievements_process_daily(self):
 
-        print("Processing daily achievements")
         jades = 5000
         guild = self.client.get_guild(int(id_guild))
         guild_1st_anniversary = datetime.strptime("2019-Feb-01", "%Y-%b-%d")
 
-        query = users.find({}, {
+        for document in users.find({}, {
             "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1
-        })
-
-        for document in query:
+        }):
             member = guild.get_member(int(document["user_id"]))
             if member is None:
                 continue
@@ -1021,30 +696,30 @@ class Frames(commands.Cog):
 
             user_frames = []
             for achievement in document["achievements"]:
-                try:
-                    user_frames.append(achievement["name"])
-                except KeyError:
-                    continue
+                user_frames.append(achievement["name"])
 
-            if delta_days >= 100 and "Recalling the Past" not in user_frames:
-                await self.achievements_process_announce(member, "Recalling the Past", jades)
+            frame_name = "Recalling the Past"
+            if delta_days >= 100 and frame_name not in user_frames:
+                await self.achievements_process_announce(member, frame_name, jades)
 
-            if delta_days >= 365 and "Loyal Company" not in user_frames:
-                await self.achievements_process_announce(member, "Loyal Company", jades)
+            frame_name = "Loyal Company"
+            if delta_days >= 365 and frame_name not in user_frames:
+                await self.achievements_process_announce(member, frame_name, jades)
 
-            if guild_1st_anniversary > date_joined and "One Year Anniversary" not in user_frames:
-                await self.achievements_process_announce(member, "One Year Anniversary", jades)
+            frame_name = "One Year Anniversary"
+            if guild_1st_anniversary > date_joined and frame_name not in user_frames:
+                await self.achievements_process_announce(member, frame_name, jades)
 
+            frame_name = "The Sun & Moon"
             if "Starlight Sky" in user_frames and "Blazing Sun" in user_frames and "The Sun & Moon" not in user_frames:
-                await self.achievements_process_announce(member, "The Sun & Moon", jades)
+                await self.achievements_process_announce(member, frame_name, jades)
 
     async def achievements_process_announce(self, member, frame_name, jades):
 
         spell_spam_channel = self.client.get_channel(int(id_spell_spam))
 
         if users.find_one({
-            "user_id": str(member.id), "achievements.name": f"{frame_name}"
-        }, {
+            "user_id": str(member.id), "achievements.name": f"{frame_name}"}, {
             "_id": 0, "achievements.$": 1
         }) is None:
 
@@ -1057,7 +732,8 @@ class Frames(commands.Cog):
                     }
                 },
                 "$inc": {
-                    "jades": jades
+                    "jades": jades,
+                    "achievements_count": 1
                 }
             })
 
@@ -1066,18 +742,14 @@ class Frames(commands.Cog):
                 intro_caption = " "
 
             embed = discord.Embed(
-                color=member.colour,
-                title="Frame acquisition",
+                color=member.colour, title="Frame acquisition", timestamp=get_timestamp(),
                 description=f"{member.mention} has obtained{intro_caption}{frame_name} frame!\n"
                             f"Acquired {jades:,d}{e_j} as bonus rewards!",
-                timestamp=get_timestamp()
             )
             embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
             embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
-            await spell_spam_channel.send(embed=embed)
+            await process_msg_submit(spell_spam_channel, None, embed)
             await asyncio.sleep(1)
-        else:
-            print("already have the frame")
 
 
 def setup(client):

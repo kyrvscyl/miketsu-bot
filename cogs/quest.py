@@ -1019,8 +1019,8 @@ class Expecto(commands.Cog):
         embed1.set_image(url=link)
 
         msg = await ctx.channel.send(embed=embed1)
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
@@ -1049,9 +1049,9 @@ class Expecto(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 await msg.edit(embed=create_embed(page))
 

@@ -12,17 +12,16 @@ from cogs.ext.initialize import *
 
 
 class Exploration(commands.Cog):
+
     def __init__(self, client):
+
         self.client = client
         self.prefix = self.client.command_prefix
 
     def push_new_exploration(self, user, chapter, spirits):
 
         if explores.find_one({"user_id": str(user.id)}, {"_id": 0}) is None:
-            explores.insert_one({
-                "user_id": str(user.id),
-                "explores": []
-            })
+            explores.insert_one({"user_id": str(user.id), "explores": []})
 
         if explores.find_one({
             "user_id": str(user.id),
@@ -33,6 +32,7 @@ class Exploration(commands.Cog):
         }, {
             "_id": 0, "explores.$": 1
         }) is None:
+
             explores.update_one({
                 "user_id": str(user.id)
             }, {
@@ -63,29 +63,17 @@ class Exploration(commands.Cog):
     async def perform_exploration_check_clears_post(self, member, ctx):
 
         total_explorations = 0
-        for result in explores.aggregate([
-            {
-                '$match': {
-                    'user_id': str(member.id)
-                }
-            }, {
-                '$unwind': {
-                    'path': '$explores'
-                }
-            }, {
-                '$match': {
-                    'explores.completion': True
-                }
-            }, {
-                '$count': 'count'
-            }
-        ]):
+        for result in explores.aggregate([{
+            '$match': {'user_id': str(member.id)}}, {
+            '$unwind': {'path': '$explores'}}, {
+            '$match': {'explores.completion': True}}, {
+            '$count': 'count'
+        }]):
             total_explorations = result["count"]
 
         embed = discord.Embed(
-            colour=ctx.author.colour,
+            colour=ctx.author.colour, timestamp=get_timestamp(),
             description=f"Your total exploration clears: {total_explorations}",
-            timestamp=get_timestamp()
         )
         embed.set_footer(
             text=f"{member.display_name}",
@@ -103,8 +91,7 @@ class Exploration(commands.Cog):
 
         if not check_if_user_has_shiki_set:
             embed = discord.Embed(
-                color=user.colour,
-                title="Invalid shikigami",
+                color=user.colour, title="Invalid shikigami",
                 description=f"set a shikigami first using `{self.prefix}set`",
             )
             await process_msg_submit(ctx.channel, None, embed)
@@ -119,9 +106,7 @@ class Exploration(commands.Cog):
 
                 if arg.lower() not in ["last", "unf", "unfinished"]:
                     embed = discord.Embed(
-                        color=ctx.author.colour,
-                        title="Invalid chapter",
-                        description=f"that is not a valid chapter",
+                        color=user.colour, title="Invalid chapter", description=f"That is not a valid chapter",
                     )
                     await process_msg_submit(ctx.channel, None, embed)
 
@@ -134,7 +119,7 @@ class Exploration(commands.Cog):
 
                     if query is None:
                         embed = discord.Embed(
-                            color=ctx.author.colour, timestamp=get_timestamp(),
+                            color=user.colour, timestamp=get_timestamp(),
                             description=f"You have no pending explorations",
                         )
                         embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
@@ -147,9 +132,8 @@ class Exploration(commands.Cog):
             else:
                 if chapter > user_profile["exploration"]:
                     embed = discord.Embed(
-                        color=user.colour,
-                        title="Invalid chapter",
-                        description=f"you have not yet unlocked this chapter",
+                        color=user.colour, title="Invalid chapter",
+                        description=f"You have not yet unlocked this chapter",
                     )
                     await process_msg_submit(ctx.channel, None, embed)
 
@@ -158,9 +142,8 @@ class Exploration(commands.Cog):
 
                 else:
                     embed = discord.Embed(
-                        color=ctx.author.colour,
-                        title="Invalid chapter",
-                        description=f"that is not a valid chapter, < {zones.count_documents({})}",
+                        color=user.colour, title="Invalid chapter",
+                        description=f"That is not a valid chapter, < {zones.count_documents({})}",
                     )
                     await process_msg_submit(ctx.channel, None, embed)
 
@@ -175,11 +158,9 @@ class Exploration(commands.Cog):
 
         self.push_new_exploration(user, chapter, spirits)
 
-        total_chance, shikigami_name, shikigami_evolved = get_clear_chance_soul_explore(user, 40, chapter, [0, 0], 0.75,
-                                                                                        1)
-        thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
-
+        total_chance, shikigami_name, shikigami_evolved = get_chance_soul_explore(user, 40, chapter, [0, 0], 0.75, 1)
         adjusted_chance = random.uniform(total_chance * 0.95, total_chance)
+        thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
 
         def embed_new_create(stage_new, progress, strike):
 
@@ -194,17 +175,16 @@ class Exploration(commands.Cog):
             shiki_exp, shiki_exp_next, shiki_lvl, user_sushi = get_shiki_exp_lvl_next_sushi(user, shikigami_name)
 
             embed_new = discord.Embed(
-                color=ctx.author.colour,
+                color=user.colour, timestamp=get_timestamp(),
                 title=f"{strike}Exploration stage: {exploration_stage_new}/{spirits}{strike}",
                 description=f"Chapter {chapter}: {zone['name']}\n{description2}",
-                timestamp=get_timestamp()
             )
             embed_new.add_field(
                 name=f"Shikigami: {shikigami_name.title()} | {user_sushi} {e_s}",
                 value=f"Level: {shiki_lvl} | Experience: {shiki_exp}/{shiki_exp_next}\n"
                       f"Clear Chance: ~{round(total_chance, 2)}%"
             )
-            embed_new.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+            embed_new.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
             embed_new.set_thumbnail(url=thumbnail)
 
             return embed_new
@@ -223,14 +203,14 @@ class Exploration(commands.Cog):
             "explores.$": 1
         })['explores'][0]['attempts']
 
-        msg = await ctx.channel.send(embed=embed_new_create(explore_attempts, [], ""))
+        msg = await process_msg_submit(ctx.channel, None, embed_new_create(explore_attempts, [], ""))
         await process_msg_reaction_add(msg, "🏹")
 
         def check(r, u):
             return \
                 msg.id == r.message.id and \
                 str(r.emoji) == "🏹" and \
-                u.id == ctx.author.id and \
+                u.id == user.id and \
                 check_if_user_has_sushi_2(ctx, sushi_required)
 
         while True:
@@ -241,7 +221,7 @@ class Exploration(commands.Cog):
                 break
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": - sushi_required}})
-                await perform_add_log("sushi", -sushi_required, ctx.author.id)
+                await perform_add_log("sushi", -sushi_required, user.id)
 
                 roll = random.uniform(0, 100)
                 if roll < adjusted_chance:
@@ -260,7 +240,7 @@ class Exploration(commands.Cog):
                     })
                     explore_report = query["explores"][0]["logs"]
                     explore_attempts = query['explores'][0]['attempts']
-                    await msg.edit(embed=embed_new_create(explore_attempts, explore_report, ""))
+                    await process_msg_edit(msg, None, embed_new_create(explore_attempts, explore_report, ""))
 
                     if explore_attempts == spirits:
 
@@ -276,7 +256,7 @@ class Exploration(commands.Cog):
                             "_id": 0, "explores.$": 1,
                         })["explores"][0]["logs"]
 
-                        await msg.edit(embed=embed_new_create(spirits, explore_report, "~~"))
+                        await process_msg_edit(msg, None, embed_new_create(spirits, explore_report, "~~"))
                         await process_msg_reaction_clear(msg)
 
                         embed_final = embed_new_create(spirits, explore_report, "~~")
@@ -291,14 +271,13 @@ class Exploration(commands.Cog):
                     })
                     query = explores.find_one({
                         "user_id": str(user.id), "explores.completion": False}, {
-                        "_id": 0,
-                        "explores.$": 1,
+                        "_id": 0, "explores.$": 1,
                     })
                     explore_report = query["explores"][0]["logs"]
                     explore_attempts = query['explores'][0]['attempts']
-                    await msg.edit(embed=embed_new_create(explore_attempts, explore_report, ""))
+                    await process_msg_edit(msg, None, embed_new_create(explore_attempts, explore_report, ""))
 
-                await msg.remove_reaction(str(reaction.emoji), user)
+                await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
     async def perform_exploration_process_rewards(self, user_id, msg, embed_final, zone):
 
@@ -379,6 +358,7 @@ class Exploration(commands.Cog):
         return attachment_link
 
     async def perform_exploration_issue_shard_rewards(self, user_id, shards_reward):
+
         trimmed = []
         for entry in shards_reward:
             if entry[1] != 0:
@@ -400,7 +380,8 @@ class Exploration(commands.Cog):
                     evolve, shards = True, 0
                 shikigami_push_user(user_id, shikigami_shard[0], evolve, shards)
 
-            users.update_one({"user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
+            users.update_one({
+                "user_id": str(user_id), "shikigami.name": shikigami_shard[0]}, {
                 "$inc": {
                     "shikigami.$.shards": 1
                 }
@@ -409,6 +390,8 @@ class Exploration(commands.Cog):
     @commands.command(aliases=["chapter", "ch"])
     @commands.guild_only()
     async def show_exploration_zones(self, ctx, *, arg1=None):
+
+        user = ctx.author
 
         if arg1 is None:
             embed = discord.Embed(
@@ -424,13 +407,12 @@ class Exploration(commands.Cog):
 
         elif arg1.lower() in ["unlocked"]:
 
-            ch_unlocked = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "exploration": 1})['exploration']
+            ch_unlocked = users.find_one({"user_id": str(user.id)}, {"_id": 0, "exploration": 1})['exploration']
             embed = discord.Embed(
-                color=ctx.author.colour,
+                color=user.colour, timestamp=get_timestamp(),
                 description=f"You have access up to chapter {ch_unlocked}",
-                timestamp=get_timestamp()
             )
-            embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
             await process_msg_submit(ctx.channel, None, embed)
 
         else:
@@ -460,8 +442,7 @@ class Exploration(commands.Cog):
 
                 embed = discord.Embed(
                     title=f"Chapter {chapter}: {ch_unlocked['name']}",
-                    color=ctx.author.colour,
-                    description=description
+                    color=user.colour, description=description
                 )
                 embed.add_field(
                     name="Completion rewards",
@@ -481,8 +462,7 @@ class Exploration(commands.Cog):
 
             except TypeError:
                 embed = discord.Embed(
-                    title=f"Invalid chapter",
-                    color=colour,
+                    title=f"Invalid chapter", color=user,
                     description="Available chapters: 1-28 only"
                 )
                 await process_msg_submit(ctx.channel, None, embed)

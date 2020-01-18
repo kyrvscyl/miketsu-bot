@@ -240,12 +240,12 @@ class Economy(commands.Cog):
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(page))
 
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and msg.id == r.message.id and str(r.emoji) in emoji_arrows
+            return u != self.client.user and msg.id == r.message.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -254,9 +254,9 @@ class Economy(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total
@@ -546,12 +546,12 @@ class Economy(commands.Cog):
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(beaned_shikigamis, beans))
 
-        emoji_arrows = ["⬅", "⬆", "⬇", "➡"]
-        for arrow in emoji_arrows:
+        emojis_add = ["⬅", "⬆", "⬇", "➡"]
+        for arrow in emojis_add:
             await msg.add_reaction(arrow)
 
         def check(r, u):
-            return msg.id == r.message.id and str(r.emoji) in emoji_arrows and u.id == user.id
+            return msg.id == r.message.id and str(r.emoji) in emojis_add and u.id == user.id
 
         def get_new_coordinates(x_coor, y_coor, emoji):
 
@@ -916,11 +916,11 @@ class Economy(commands.Cog):
         )
         embed.add_field(
             name=f"{e_b} Broken Amulets",
-            value=f"On Hand: {amulets_b} | Used: {amulets_spent_b:,d}"
+            value=f"On Hand: `{amulets_b:,d}` | Used: `{amulets_spent_b:,d}`"
         )
         embed.add_field(
             name=f"{e_a} Mystery Amulets",
-            value=f"On Hand: {amulets} | Used: {amulets_spent:,d}", inline=False
+            value=f"On Hand: `{amulets:,d}` | Used: `{amulets_spent:,d}`", inline=False
         )
         embed.add_field(
             name=f"{e_fp} | 🎟 | 🎫 | 🚢 | 🙏 | 🎏",
@@ -962,20 +962,22 @@ class Economy(commands.Cog):
             await process_msg_reaction_clear(msg)
             return
         else:
-            await msg.edit(embed=await embed_new_create(page))
+            await process_msg_edit(msg, None, await embed_new_create(page))
             await process_msg_reaction_clear(msg)
             await process_msg_reaction_add(msg, "➡")
 
-        try:
-            reaction, user = await self.client.wait_for("reaction_add", timeout=15, check=check2)
-        except asyncio.TimeoutError:
-            await process_msg_reaction_clear(msg)
-        else:
-            if str(reaction.emoji) == "➡":
-                page += 1
-            if page > page_total:
-                page = 1
-            await process_msg_edit(msg, None, await embed_new_create(page))
+        while True:
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=15, check=check2)
+            except asyncio.TimeoutError:
+                await process_msg_reaction_clear(msg)
+                break
+            else:
+                if str(reaction.emoji) == "➡":
+                    page += 1
+                if page > page_total:
+                    page = 1
+                await process_msg_edit(msg, None, await embed_new_create(page))
 
     async def economy_profile_generate_frame_image_new(self, member, achievements, page_new):
 
@@ -1275,12 +1277,12 @@ class Economy(commands.Cog):
 
         msg = await process_msg_submit(channel, None, embed_new_create(page))
 
-        emoji_arrows = ["⬅", "➡"]
-        for emoji in emoji_arrows:
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emoji_arrows
+            return u != self.client.user and r.message.id == msg.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -1289,9 +1291,9 @@ class Economy(commands.Cog):
                 await process_msg_reaction_clear(msg)
                 break
             else:
-                if str(reaction.emoji) == emoji_arrows[1]:
+                if str(reaction.emoji) == emojis_add[1]:
                     page += 1
-                elif str(reaction.emoji) == emoji_arrows[0]:
+                elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
                 if page == 0:
                     page = page_total

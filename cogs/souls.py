@@ -19,23 +19,28 @@ class Souls(commands.Cog):
         self.client = client
         self.prefix = self.client.command_prefix
 
-        self.day = get_time().strftime("%a").lower()
-
         self.soul_raw_address = "data/raw/soul_slot.png"
 
         self.souls_rewards = []
-        if self.day in ["sat", "sun"]:
+        self.souls_rewards_generate()
+
+    def souls_rewards_generate(self):
+
+        day = get_time().strftime("%a").lower()
+        self.souls_rewards.clear()
+
+        if day in ["sat", "sun"]:
             for document in souls.find({"source.souls_weekend": True}, {"_id": 0, "name": 1}):
                 self.souls_rewards.append(document["name"])
 
-        for document in souls.find({"source.souls_weekday": self.day}, {"_id": 0, "name": 1}):
+        for document in souls.find({"source.souls_weekday": day}, {"_id": 0, "name": 1}):
             self.souls_rewards.append(document["name"])
 
     async def souls_equip_help(self, ctx):
 
         embed = discord.Embed(
-            title="soul", color=colour,
-            description=f"equip your shikigami with souls to obtain bonus rewards",
+            title="equip, eq", color=colour,
+            description=f"equip your shikigami with souls to obtain bonus clear chances",
         )
         embed.add_field(name="Formats", inline=False, value=f"*`{self.prefix}equip 6 watcher`*")
         await process_msg_submit(ctx.channel, None, embed)
@@ -53,7 +58,7 @@ class Souls(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
-    @commands.command(aliases=["equip"])
+    @commands.command(aliases=["equip", "eq"])
     @commands.guild_only()
     async def souls_shikigami_equip(self, ctx, slot=None, *, args=None):
 
@@ -173,8 +178,8 @@ class Souls(commands.Cog):
         users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": - sushi_required}})
         await perform_add_log("sushi", -sushi_required, user.id)
 
-        total_chance, shikigami_name, shikigami_evolved = get_clear_chance_soul_explore(user, 50, stage_adj, [2, 2.5],
-                                                                                        0.75, 1)
+        total_chance, shikigami_name, shikigami_evolved = get_chance_soul_explore(user, 50, stage_adj, [2, 2.5],
+                                                                                  0.75, 1)
         thumbnail = get_thumbnail_shikigami(shikigami_name, get_evo_link(shikigami_evolved))
         adjusted_chance = random.uniform(total_chance * 0.97, total_chance)
 
@@ -401,7 +406,8 @@ class Souls(commands.Cog):
 
         image_file = discord.File(temp_address, filename=f"{ctx.message.id}.png")
         hosting_channel = self.client.get_channel(int(id_hosting))
-        msg1 = await hosting_channel.send(file=image_file)
+        msg1 = await process_msg_submit_file(hosting_channel, image_file)
+
         attachment_link = msg1.attachments[0].url
 
         scales, scales_rev = 0, 0
@@ -431,25 +437,25 @@ class Souls(commands.Cog):
     async def souls_experience_add(self, user, soul_exp_list):
 
         for s in soul_exp_list:
-            s, experience, slot = s[0], s[1], s[2]
+            s_type, experience, slot = s[0], s[1], s[2]
 
-            if users.find_one({"user_id": str(user.id), f"souls.{s}": {"$type": "object"}}, {"_id": 0}) is None:
-                users.update_one({"user_id": str(user.id)}, {"$set": {f"souls.{s}": []}})
+            if users.find_one({"user_id": str(user.id), f"souls.{s_type}": {"$type": "object"}}, {"_id": 0}) is None:
+                users.update_one({"user_id": str(user.id)}, {"$set": {f"souls.{s_type}": []}})
 
             x = users.update_one({
                 "user_id": str(user.id), "$and": [{
-                    f"souls.{s}": {"$elemMatch": {"slot": slot, "grade": {"$lt": 6}}}
+                    f"souls.{s_type}": {"$elemMatch": {"slot": slot, "grade": {"$lt": 6}}}
                 }]
             }, {
                 "$inc": {
-                    f"souls.{s}.$.exp": experience
+                    f"souls.{s_type}.$.exp": experience
                 }
             })
 
             if x.modified_count == 0:
                 users.update_one({"user_id": str(user.id)}, {
                     "$push": {
-                        f"souls.{s}": {
+                        f"souls.{s_type}": {
                             "grade": 1,
                             "slot": slot,
                             "exp": experience,
@@ -459,7 +465,7 @@ class Souls(commands.Cog):
                     }
                 })
 
-            await self.souls_level_up(user, s, slot)
+            await self.souls_level_up(user, s_type, slot)
 
     async def souls_level_up(self, user, soul_name, slot):
 
@@ -471,11 +477,13 @@ class Souls(commands.Cog):
             f"souls.{soul_name}.$": 1
         })
 
-        if soul_data["souls"][soul_name][0]["exp"] > soul_data["souls"][soul_name][0]["lvl_exp_next"]:
+        if soul_data["souls"][soul_name][0]["grade"] == 6:
+            pass
+
+        elif soul_data["souls"][soul_name][0]["exp"] >= soul_data["souls"][soul_name][0]["lvl_exp_next"]:
+
             def get_lvl_exp_next_new(g):
-                dictionary = {
-                    1: 7000, 2: 21000, 3: 63000, 4: 189000, 5: 567000, 6: 567000,
-                }
+                dictionary = {1: 7000, 2: 21000, 3: 63000, 4: 189000, 5: 567000}
                 return dictionary[g]
 
             lvl_exp_next_new = get_lvl_exp_next_new(soul_data["souls"][soul_name][0]["grade"] + 1)
