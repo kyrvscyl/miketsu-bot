@@ -146,7 +146,7 @@ class Souls(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
-    @commands.command(aliases=["soul"])
+    @commands.command(aliases=["soul", "souls"])
     @commands.guild_only()
     async def souls_process(self, ctx, *, args=None):
 
@@ -454,17 +454,25 @@ class Souls(commands.Cog):
             })
 
             if x.modified_count == 0:
-                users.update_one({"user_id": str(user.id)}, {
-                    "$push": {
-                        f"souls.{s_type}": {
-                            "grade": 1,
-                            "slot": slot,
-                            "exp": experience,
-                            "lvl_exp_next": 7000,
-                            "equipped": None
+
+                if users.find_one({
+                    "user_id": str(user.id),
+                    "$and": [{
+                        f"souls.{s_type}": {"$elemMatch": {"slot": slot, "grade": {"$eq": 6}}}}]}, {
+                    "_id": 0, f"souls.{s_type}": 1
+                }) is None:
+
+                    users.update_one({"user_id": str(user.id)}, {
+                        "$push": {
+                            f"souls.{s_type}": {
+                                "grade": 1,
+                                "slot": slot,
+                                "exp": experience,
+                                "lvl_exp_next": 7000,
+                                "equipped": None
+                            }
                         }
-                    }
-                })
+                    })
 
             await self.souls_level_up(user, s_type, slot)
 

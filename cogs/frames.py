@@ -347,7 +347,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "koi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["owned"] >= 100:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["owned"] >= 100:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "Cursed Blade"
@@ -356,7 +359,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "yoto hime"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["evolved"] is True:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["evolved"] is True:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "Sword Swallowing-Snake"
@@ -365,7 +371,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "orochi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["evolved"] is True:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["evolved"] is True:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "Dawn of the Thrilling Spring"
