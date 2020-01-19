@@ -397,7 +397,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "vampira"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["owned"] >= 30:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["owned"] >= 30:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "Taste of the Sea"
@@ -594,7 +597,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "usagi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["evolved"] is True:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["evolved"] is True:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "King Of The Jungle"
@@ -603,7 +609,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "yamakaze"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["evolved"] is True and profile["shikigami"][0]["level"] == 40:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["evolved"] is True and profile["shikigami"][0]["level"] == 40:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "In The Clouds"
@@ -617,7 +626,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "demoniac shuten doji"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["level"] >= 40:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["level"] >= 40:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "The Nine-Tailed Foxes"
@@ -641,7 +653,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "inugami"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["level"] >= 40:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["level"] >= 40:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "The Seven Masks"
@@ -650,7 +665,10 @@ class Frames(commands.Cog):
                     "user_id": document["user_id"], "shikigami.name": "menreiki"}, {
                     "_id": 0, "shikigami.$": 1
                 })
-                if profile["shikigami"][0]["shards"] >= 40:
+                if profile is None:
+                    pass
+
+                elif profile["shikigami"][0]["shards"] >= 40:
                     await self.achievements_process_announce(member, frame_name, jades)
 
             frame_name = "Hannya of the Ghoul Mask"
