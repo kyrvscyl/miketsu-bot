@@ -960,6 +960,10 @@ class Encounter(commands.Cog):
                 await perform_add_log("coins", coins, user_id)
                 await perform_add_log("medals", medals, user_id)
 
+        await asyncio.sleep(2)
+        await process_msg_submit(ctx.channel, None, embed)
+        await asyncio.sleep(1)
+
         for i, d in enumerate(discoverers):
 
             if d is not None:
@@ -970,10 +974,6 @@ class Encounter(commands.Cog):
                 await perform_add_log("coins", coins, d.id)
                 await perform_add_log("medals", medals, d.id)
 
-                await asyncio.sleep(2)
-                await process_msg_submit(ctx.channel, None, embed)
-                await asyncio.sleep(1)
-
                 caption = "initially"
                 if i == len(discoverers) - 1:
                     caption = "lastly"
@@ -981,6 +981,7 @@ class Encounter(commands.Cog):
                 description = f"{d.mention} earned an extra {jades:,d}{e_j}, {coins:,d}{e_c}, " \
                               f"{medals:,d}{e_m} and {experience:,d} {e_x} for {caption} discovering Rare Boss {boss}!"
                 embed = discord.Embed(colour=d.colour, description=description, timestamp=get_timestamp())
+
                 await process_msg_submit(ctx.channel, None, embed)
 
         users.update_many({"level": {"$gt": 60}}, {"$set": {"experience": 100000, "level_exp_next": 100000}})

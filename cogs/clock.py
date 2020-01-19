@@ -146,11 +146,11 @@ class Clock(commands.Cog):
 
                 await Frames(self.client).frames_automate()
                 await Summon(self.client).summon_perform_streak_penalize()
-                await Frames(self.client).achievements_process_daily()
+                await Frames(self.client).frames_automate_daily()
                 await Souls(self.client).souls_rewards_generate()
 
             if minute_hand == "00":
-                await Frames(self.client).achievements_process_hourly()
+                await Frames(self.client).frames_automate_hourly()
 
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()

@@ -21,7 +21,7 @@ class Level(commands.Cog):
         else:
             users.update_one({"user_id": str(user.id)}, {"$inc": {"experience": experience}})
 
-    async def level_add_level(self, user, ctx):
+    async def level_add_level(self, user, message):
 
         query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "experience": 1, "level": 1})
 
@@ -70,7 +70,7 @@ class Level(commands.Cog):
                 await perform_add_log("amulets", amulets, user.id)
                 await perform_add_log("coins", coins, user.id)
 
-            await process_msg_reaction_add(ctx.message, e_x)
+            await process_msg_reaction_add(message, e_x)
 
     async def level_create_user(self, user):
 

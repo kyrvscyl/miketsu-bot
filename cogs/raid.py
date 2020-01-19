@@ -124,7 +124,7 @@ class Raid(commands.Cog):
         )
         embed.add_field(
             name="Formats", inline=False,
-            value=f"*`{self.prefix}raid @member`*\n"
+            value=f"*`{self.prefix}raid <@member>`*\n"
                   f"*`{self.prefix}r <name#discriminator>`*",
         )
         await process_msg_submit(ctx.channel, None, embed)

@@ -323,7 +323,7 @@ class Frames(commands.Cog):
         config.update_one({"list": 1}, {"$push": {"frames_listings": link_file}, "$set": {"frames_imaged": count}})
         return link_file
 
-    async def achievements_process_hourly(self):
+    async def frames_automate_hourly(self):
 
         print("Processing hourly achievements")
         jades = 3500
@@ -351,7 +351,7 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["owned"] >= 100:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Cursed Blade"
             if frame_name not in user_frames:
@@ -363,7 +363,7 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["evolved"] is True:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Sword Swallowing-Snake"
             if frame_name not in user_frames:
@@ -375,12 +375,12 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["evolved"] is True:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Dawn of the Thrilling Spring"
             if frame_name not in user_frames:
                 if document["friendship"] >= 1000:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Genteel Women's Reflection"
             if frame_name not in user_frames:
@@ -389,7 +389,7 @@ class Frames(commands.Cog):
                     total_rewards += ship["level"] * 25
 
                 if total_rewards >= 1000:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Vampire Blood"
             if frame_name not in user_frames:
@@ -401,32 +401,32 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["owned"] >= 30:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Taste of the Sea"
             if frame_name not in user_frames:
                 if document["amulets_spent"] >= 1000:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Red Carp"
             if frame_name not in user_frames:
                 if document["amulets_spent"] >= 2000:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Ubumomma"
             if frame_name not in user_frames:
                 if document["level"] >= 30:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Pine Of Kisaragi"
             if frame_name not in user_frames:
                 if document["level"] >= 50:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Cold of Mutsuki"
             if frame_name not in user_frames:
                 if document["level"] == 60:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Kitsune"
             if frame_name not in user_frames:
@@ -440,7 +440,7 @@ class Frames(commands.Cog):
                     count_ssn = result["count"]
 
                 if count_ssn == self.total_sr:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Blazing Sun"
             if frame_name not in user_frames:
@@ -454,13 +454,13 @@ class Frames(commands.Cog):
                     count_ssr = result["count"]
 
                 if count_ssr == self.total_ssr:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
                     await process_role_add(member, discord.utils.get(guild.roles, name=frame_name))
 
             frame_name = "Limited Gold"
             if frame_name not in user_frames:
                 if document["coins"] >= 70000000:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Red Maple Frost"
             if frame_name not in user_frames:
@@ -475,7 +475,7 @@ class Frames(commands.Cog):
 
                 if len(maple_evolve) == 2:
                     if maple_evolve[0] is True and maple_evolve[1] is True:
-                        await self.achievements_process_announce(member, frame_name, jades)
+                        await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Festival of Cherries"
             if frame_name not in user_frames:
@@ -490,17 +490,17 @@ class Frames(commands.Cog):
 
                 if len(cherries_evolved) == 2:
                     if cherries_evolved[0] is True and cherries_evolved[1] is True:
-                        await self.achievements_process_announce(member, frame_name, jades)
+                        await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Famous in Patronus"
             if frame_name not in user_frames:
                 if len(user_frames) >= 15:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             if document["medals"] >= 2000:
                 for reward in self.medal_achievements:
                     if document["medals"] >= reward[1] and reward[0] not in user_frames:
-                        await self.achievements_process_announce(member, reward[0], jades)
+                        await self.frames_automate_announcement(member, reward[0], jades)
 
             if document["exploration"] >= 28:
                 total_explorations = 0
@@ -514,7 +514,7 @@ class Frames(commands.Cog):
                 exploration_achievements = [["The Scout", 50], ["The Hunter", 100], ["The Captain", 200]]
                 for reward in exploration_achievements:
                     if total_explorations >= reward[1] and reward[0] not in user_frames:
-                        await self.achievements_process_announce(member, reward[0], jades)
+                        await self.frames_automate_announcement(member, reward[0], jades)
 
             frame_name = "River of Moon"
             if frame_name not in user_frames:
@@ -528,7 +528,7 @@ class Frames(commands.Cog):
                     count_r = result["count"]
 
                 if count_r == self.total_r:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Fortune Cat"
             if frame_name not in user_frames:
@@ -542,7 +542,7 @@ class Frames(commands.Cog):
                     count_n = result["count"]
 
                 if count_n == self.total_n:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Kero-Kero"
             if frame_name not in user_frames:
@@ -556,12 +556,12 @@ class Frames(commands.Cog):
                     count_ssn = result["count"]
 
                 if count_ssn == self.total_ssn:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Frameous"
             if frame_name not in user_frames:
                 if len(user_frames) >= 40:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Fortune Puppies"
             if frame_name not in user_frames:
@@ -575,7 +575,7 @@ class Frames(commands.Cog):
                     levels.append(result["shikigami"]["level"])
 
                 if 40 in levels:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Fortune Kitties"
             if frame_name not in user_frames:
@@ -589,7 +589,7 @@ class Frames(commands.Cog):
                     levels.append(result["shikigami"]["level"])
 
                 if 40 in levels:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Spring Rabbit"
             if frame_name not in user_frames:
@@ -601,7 +601,7 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["evolved"] is True:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "King Of The Jungle"
             if frame_name not in user_frames:
@@ -613,12 +613,12 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["evolved"] is True and profile["shikigami"][0]["level"] == 40:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "In The Clouds"
             if frame_name not in user_frames:
                 if document["exploration"] >= 28:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "The Drunken Evil"
             if frame_name not in user_frames:
@@ -630,7 +630,7 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["level"] >= 40:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "The Nine-Tailed Foxes"
             if frame_name not in user_frames:
@@ -645,7 +645,7 @@ class Frames(commands.Cog):
                     total_level = result["total_level"]
 
                 if total_level == 80:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Spitz Puppy"
             if frame_name not in user_frames:
@@ -657,7 +657,7 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["level"] >= 40:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "The Seven Masks"
             if frame_name not in user_frames:
@@ -669,7 +669,7 @@ class Frames(commands.Cog):
                     pass
 
                 elif profile["shikigami"][0]["shards"] >= 40:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Hannya of the Ghoul Mask"
             if frame_name not in user_frames:
@@ -684,9 +684,9 @@ class Frames(commands.Cog):
                     total_level = result["total_level"]
 
                 if total_level == 80:
-                    await self.achievements_process_announce(member, frame_name, jades)
+                    await self.frames_automate_announcement(member, frame_name, jades)
 
-    async def achievements_process_weekly(self):
+    async def frames_automate_weekly(self):
 
         frame_name, jades, listings, i = "Eboshi", 750, [], 0
         users.update_many({"achievements.name": frame_name}, {"$pull": {"achievements": {"name": frame_name}}})
@@ -699,11 +699,11 @@ class Frames(commands.Cog):
         while i < 3:
             member = self.client.get_user(int(listings_sorted[i][0]))
             if member is not None:
-                await self.achievements_process_announce(member, frame_name, jades)
+                await self.frames_automate_announcement(member, frame_name, jades)
                 await asyncio.sleep(0.5)
             i += 1
 
-    async def achievements_process_daily(self):
+    async def frames_automate_daily(self):
 
         jades = 5000
         guild = self.client.get_guild(int(id_guild))
@@ -725,21 +725,21 @@ class Frames(commands.Cog):
 
             frame_name = "Recalling the Past"
             if delta_days >= 100 and frame_name not in user_frames:
-                await self.achievements_process_announce(member, frame_name, jades)
+                await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Loyal Company"
             if delta_days >= 365 and frame_name not in user_frames:
-                await self.achievements_process_announce(member, frame_name, jades)
+                await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "One Year Anniversary"
             if guild_1st_anniversary > date_joined and frame_name not in user_frames:
-                await self.achievements_process_announce(member, frame_name, jades)
+                await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "The Sun & Moon"
             if "Starlight Sky" in user_frames and "Blazing Sun" in user_frames and "The Sun & Moon" not in user_frames:
-                await self.achievements_process_announce(member, frame_name, jades)
+                await self.frames_automate_announcement(member, frame_name, jades)
 
-    async def achievements_process_announce(self, member, frame_name, jades):
+    async def frames_automate_announcement(self, member, frame_name, jades):
 
         spell_spam_channel = self.client.get_channel(int(id_spell_spam))
 

@@ -29,7 +29,7 @@ class Development(commands.Cog):
 
         elif args == "weekly":
             await Economy(self.client).economy_issue_rewards_reset_weekly()
-            await Frames(self.client).achievements_process_weekly()
+            await Frames(self.client).frames_automate_weekly()
             await process_msg_reaction_add(ctx.message, "✅")
 
         elif args == "boss":
@@ -177,14 +177,14 @@ class Development(commands.Cog):
     async def development_manual_achievements_process_hourly(self, ctx):
 
         await process_msg_reaction_add(ctx.message, "✅")
-        await Frames(self.client).achievements_process_hourly()
+        await Frames(self.client).frames_automate_hourly()
 
     @commands.command(aliases=["dmapd"])
     @commands.is_owner()
     async def development_manual_achievements_process_daily(self, ctx):
 
         await process_msg_reaction_add(ctx.message, "✅")
-        await Frames(self.client).achievements_process_daily()
+        await Frames(self.client).frames_automate_daily()
 
     @commands.command(aliases=["dmfa"])
     @commands.is_owner()

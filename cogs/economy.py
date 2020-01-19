@@ -142,7 +142,7 @@ class Economy(commands.Cog):
             else:
                 users.update_one({"user_id": str(user.id)}, {"$inc": {"sushi": sushi}})
                 sushi_claimers.append(str(user.id))
-                await process_msg_edit(msg, None, embed_new_create(sushi_claimers, ""))
+                await process_msg_edit(msg, content, embed_new_create(sushi_claimers, ""))
                 await perform_add_log("sushi", sushi, user.id)
 
     @commands.command(aliases=["wish"])

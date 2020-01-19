@@ -28,7 +28,7 @@ class Realm(commands.Cog):
                 description="equip cards with your ships to obtained shared rewards"
             )
 
-            def generate_data():
+            def realm_data_generate():
                 field_value = []
                 card_details = listings_cards[page_new - 1]
                 name = card_details[0]
@@ -45,7 +45,7 @@ class Realm(commands.Cog):
                 )
                 embed_new.set_footer(text=f"Page: {page_new} of {len(listings_cards)}")
 
-            generate_data()
+            realm_data_generate()
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(1))

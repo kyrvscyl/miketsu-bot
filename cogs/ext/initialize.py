@@ -315,10 +315,6 @@ def check_if_valid_and_castle(ctx):
     return ctx.channel.category.id == id_castle and str(ctx.channel.name) not in invalid_channels
 
 
-def check_if_restricted_section(ctx):
-    return str(ctx.channel.id) == id_restricted
-
-
 def check_if_user_has_any_admin_roles(ctx):
     for role in reversed(ctx.author.roles):
         if role.name in config.find_one({"list": 1}, {"_id": 0})["admin_roles"]:
@@ -377,10 +373,12 @@ def check_if_channel_is_pvp(ctx):
     return ctx.channel.id == id_duelling_room
 
 
+def check_if_restricted_section(ctx):
+    return ctx.channel.id == id_restricted
+
+
 def check_if_reference_section(ctx):
-    return str(ctx.channel.id) == guilds.find_one({
-        "server": str(id_guild)}, {"_id": 0, "channels": 1}
-    )["channels"]["reference-section"]
+    return ctx.channel.id == id_reference
 
 
 def get_shikigami_stats_1(user_id, shiki):
@@ -488,7 +486,7 @@ def get_random_shikigami(r):
 
 
 def get_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
-    grade_total, soul_set_chance, listings_souls = 0, 0, []
+    grade_total, soul_set_chance, listings_souls = 1, 0, []
     query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1})
 
     user_level = query["level"]
@@ -531,12 +529,7 @@ def get_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_a
 
 
 def get_shiki_exp_lvl_next_sushi(user, shikigami_name):
-    x = users.find_one({
-        "user_id": str(user.id),
-        "shikigami.name": shikigami_name}, {
-        "_id": 0, "shikigami.$": 1, "sushi": 1
-    })
-
+    x = users.find_one({"user_id": str(user.id), "shikigami.name": shikigami_name}, {"shikigami.$": 1, "sushi": 1})
     return x["shikigami"][0]['exp'], x["shikigami"][0]['level_exp_next'], x["shikigami"][0]['level'], x["sushi"]
 
 

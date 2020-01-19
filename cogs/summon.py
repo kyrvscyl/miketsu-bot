@@ -294,7 +294,10 @@ class Summon(commands.Cog):
         text = [f"{x[1]} {pluralize(x[0], x[1])}" for x in shikigami_pulled_count]
 
         for x in shikigami_pulled:
-            description += "🔸{}\n".format(x[1].title())
+            if x[0] not in ["SSR", "SP"]:
+                description += "🔸{}\n".format(x[1].title())
+            else:
+                description += "🔸||{}||\n".format(x[1].title())
 
         embed = discord.Embed(
             color=user.colour, title="🎊 Summon results",
