@@ -484,7 +484,7 @@ class Souls(commands.Cog):
         elif soul_data["souls"][soul_name][0]["exp"] >= soul_data["souls"][soul_name][0]["lvl_exp_next"]:
 
             def get_lvl_exp_next_new(g):
-                dictionary = {1: 7000, 2: 21000, 3: 63000, 4: 189000, 5: 567000}
+                dictionary = {1: 7000, 2: 21000, 3: 63000, 4: 189000, 5: 567000, 6: 567000}
                 return dictionary[g]
 
             lvl_exp_next_new = get_lvl_exp_next_new(soul_data["souls"][soul_name][0]["grade"] + 1)
