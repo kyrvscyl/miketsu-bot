@@ -21,7 +21,7 @@ from cogs.ext.database import get_collections
 
 """SETUP"""
 
-version = "2.0.beta0.1"
+version = "2.0.beta"
 command_prefix = ";"
 time_start = datetime.now()
 
@@ -374,9 +374,7 @@ def check_if_user_has_sushi_2(ctx, required):
 
 
 def check_if_channel_is_pvp(ctx):
-    return str(ctx.channel.id) == guilds.find_one({
-        "server": str(id_guild)}, {"_id": 0, "channels": 1}
-    )["channels"]["duelling-room"]
+    return ctx.channel.id == id_duelling_room
 
 
 def check_if_reference_section(ctx):

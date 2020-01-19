@@ -246,7 +246,7 @@ class Realm(commands.Cog):
 
         try:
             code = get_bond(user.id, member.id)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, commands.BadArgument):
             await self.realm_card_collect_help(ctx)
         else:
             ship_data = ships.find_one({"code": code}, {"_id": 0})

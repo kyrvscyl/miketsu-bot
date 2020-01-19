@@ -181,9 +181,7 @@ class Exploration(commands.Cog):
                     await process_msg_submit(ctx.channel, None, embed)
 
             finally:
-                self.client.get_command("exploration").reset_cooldown(ctx)
-
-        self.client.get_command("exploration").reset_cooldown(ctx)
+                self.client.get_command("exploration_process").reset_cooldown(ctx)
 
     async def exploration_by_chapter(self, chapter, user, ctx):
 

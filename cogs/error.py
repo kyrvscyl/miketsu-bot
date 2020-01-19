@@ -133,6 +133,10 @@ class Error(commands.Cog):
             "frames_add_new",
             "expecto_patronus_show"
         ]
+
+        self.functions_member_tagging = [
+            "exploration_check_clears"
+        ]
     
     async def submit_error(self, ctx, error, exception):
 
@@ -166,7 +170,12 @@ class Error(commands.Cog):
         elif isinstance(error, commands.UserInputError):
 
             if isinstance(error, commands.BadArgument):
-                await self.submit_error(ctx, error, "BadArgument")
+
+                if str(ctx.command) in self.functions_member_tagging:
+                    return
+
+                else:
+                    await self.submit_error(ctx, error, "BadArgument")
 
             else:
                 await self.submit_error(ctx, error, "UserInputError")
@@ -188,10 +197,7 @@ class Error(commands.Cog):
 
         elif isinstance(error, commands.CommandOnCooldown):
 
-            if str(ctx.command) in self.functions_with_cooldown:
-                return
-
-            elif str(ctx.command) == "economy_sushi_bento_serve":
+            if str(ctx.command) == "economy_sushi_bento_serve":
 
                 embed = discord.Embed(
                     title="sushi, food, hungry, ap",
@@ -204,6 +210,9 @@ class Error(commands.Cog):
                     value=f"In {int(error.retry_after / 60)} {pluralize('minute', int(error.retry_after / 60))}"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
+
+            elif str(ctx.command) in self.functions_with_cooldown:
+                return
 
             else:
                 await self.submit_error(ctx, error, "CommandOnCooldown")

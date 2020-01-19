@@ -274,6 +274,19 @@ class Castle(commands.Cog):
 
         return attachment_link
 
+    async def castle_duel_help(self, ctx, invoke, args_v):
+
+        embed = discord.Embed(
+            title=f"{invoke}, {invoke[:1]}", colour=colour,
+            description="recognizable first arguments for this command"
+        )
+        embed.add_field(name="Arguments", inline=False, value=f"*{', '.join(args_v)}*", )
+        embed.add_field(
+            name="Example", inline=False,
+            value=f"*`{self.prefix}{invoke} {random.choice(args_v)}`*",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["duel", "d"])
     @commands.guild_only()
     async def castle_duel(self, ctx, *args):
@@ -284,18 +297,11 @@ class Castle(commands.Cog):
         if not check_if_channel_is_pvp:
             return
 
-        elif args[0].lower() in [args_v[0], args_v[0][:1]]:
+        elif len(args) == 0:
+            await self.castle_duel_help(ctx, invoke, args_v)
 
-            embed = discord.Embed(
-                title=f"{invoke}, {invoke[:1]}", colour=colour,
-                description="recognizable first arguments for this command"
-            )
-            embed.add_field(name="Arguments", inline=False, value=f"*{', '.join(args_v)}*", )
-            embed.add_field(
-                name="Example", inline=False,
-                value=f"*`{self.prefix}{invoke} {random.choice(args_v)}`*",
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+        elif args[0].lower() in [args_v[0], args_v[0][:1]]:
+            await self.castle_duel_help(ctx, invoke, args_v)
 
         elif args[0].lower() in [args_v[1], args_v[1][:1]]:
 
