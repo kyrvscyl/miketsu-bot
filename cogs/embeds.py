@@ -58,7 +58,7 @@ class Embeds(commands.Cog):
     @commands.is_owner()
     async def embeds_welcome_edit(self, ctx):
 
-        query = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0, "links": 1, "roles": 1})
+        query = guilds.find_one({"server": f"{id_guild}"}, {"_id": 0})
 
         crest_link = query["links"]["crest"]
         rules_link = query["links"]["rules_link"]
@@ -71,7 +71,7 @@ class Embeds(commands.Cog):
             title="Welcome to House Patronus!",
             description=f"Herewith are the rules and information of our server!\n\n"
                         f"Crest designed by <@!281223518103011340>\n"
-                        f"Server banner by our <@&{arts}>"
+                        f"Server banner designed by our <@&{arts}>"
         )
         embed1.set_image(url=splash_link)
         embed1.set_thumbnail(url=crest_link)

@@ -95,7 +95,7 @@ class Frames(commands.Cog):
             users.update_one({"user_id": str(role_current.id)}, {"$inc": {"jades": jades}})
             await perform_add_log("jades", jades, role_current.id)
             msg = f"{role_current.mention} has earned {jades:,d}{e_j} for wielding the Starlight Sky frame for a day!"
-            await process_msg_submit(channel, None, msg)
+            await process_msg_submit(channel, msg, None)
 
         else:
             await process_role_add(role_new, role)
