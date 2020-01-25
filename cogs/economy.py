@@ -972,7 +972,7 @@ class Economy(commands.Cog):
             )
             embed.add_field(
                 name=f"🍣 | {e_f} | {e_t} | {e_m} | {e_j} | {e_c}",
-                value=f"`{sushi:,d}` |` {friendship_points:,d}` | `{talismans:,d}` | "
+                value=f"`{sushi:,d}` | `{friendship_points:,d}` | `{talismans:,d}` | "
                       f"`{medals:,d}` | `{jades:,d}` | `{coins:,d}`"
             )
 

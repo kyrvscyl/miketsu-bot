@@ -251,7 +251,7 @@ class Frames(commands.Cog):
             await process_msg_reaction_add(msg, emoji)
 
         def check(r, u):
-            return u != self.client.user and r.message.id == msg.id, str(r.emoji) in emojis_add
+            return u != self.client.user and msg.id == r.message.id and str(r.emoji) in emojis_add
 
         while True:
             try:
@@ -264,7 +264,6 @@ class Frames(commands.Cog):
                     page += 1
                 elif str(reaction.emoji) == emojis_add[0]:
                     page -= 1
-
                 if page == 0:
                     page = page_total
                 elif page > page_total:

@@ -842,7 +842,7 @@ class Encounter(commands.Cog):
                     "current_hp": -round(p_dmg, 0)
                 }
             })
-            users.update_one({"user_id": p}, {"$inc": {"boss_damage": round(p_dmg, 0)}})
+            users.update_one({"user_id": p}, {"$inc": {"boss_damage": int(round(p_dmg, 0))}})
             member = ctx.guild.get_member(int(p))
             embed = discord.Embed(
                 color=member.colour,
