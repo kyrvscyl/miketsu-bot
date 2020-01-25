@@ -119,7 +119,10 @@ class Level(commands.Cog):
                 "souls": {},
                 "scales": 0,
                 "scales_rev": 0,
-                "souls_unlocked": 1
+                "souls_unlocked": 1,
+                "boss_damage": 0,
+                "raid_successes": 0,
+                "raid_failures": 0
             })
 
     @commands.Cog.listener()

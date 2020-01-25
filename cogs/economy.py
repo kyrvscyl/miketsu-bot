@@ -1183,8 +1183,8 @@ class Economy(commands.Cog):
             await self.client.wait_for("reaction_add", timeout=7.0, check=check)
         except asyncio.TimeoutError:
             embed = discord.Embed(
-                title="Timeout!", colour=colour, timestamp=get_timestamp(),
-                description=f"no confirmation was received",
+                title="Timeout!", colour=ctx.author.colour, timestamp=get_timestamp(),
+                description=f"No confirmation was received",
             )
             embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
             embed.set_thumbnail(url=seller_img)
@@ -1192,6 +1192,7 @@ class Economy(commands.Cog):
             await process_msg_reaction_clear(msg)
             return False
         else:
+            await process_msg_reaction_clear(msg)
             return True
 
     async def economy_shop_buy_items_process_purchase(self, user, ctx, offer_i, offer_a, cost_i, cost_a, msg):

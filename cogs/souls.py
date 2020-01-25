@@ -153,6 +153,9 @@ class Souls(commands.Cog):
         if args is None:
             await self.souls_help(ctx)
 
+        elif args.lower() in ["stats", "stat"]:
+            await self.souls_show_stats(ctx, ctx.author)
+
         elif args.lower() is not None and args in souls_all:
             await self.souls_show_users(ctx, ctx.author, args.lower())
 
@@ -170,6 +173,46 @@ class Souls(commands.Cog):
                     description=f"You only have access up to {souls_stage_unlocked}",
                 )
                 await process_msg_submit(ctx.channel, None, embed)
+
+    async def souls_show_stats(self, ctx, user):
+
+        d, eq_1, eq_2 = None, "$souls.stage", "$souls.clears"
+        group = {"_id": None}
+
+        for stage in range(1, 11):
+            group.update(
+                {f'{stage}_clear': {"$sum": {"$cond": [{"$and": [{"$eq": [eq_1, stage]}, {"$eq": [eq_2, 3]}]}, 1, 0]}}}
+            )
+            group.update(
+                {f'{stage}_total': {"$sum": {"$cond": [{"$and": [{"$eq": [eq_1, stage]}]}, 1, 0]}}}
+            )
+
+        for x in explores.aggregate([{
+            '$match': {'user_id': str(user.id)}}, {
+            '$project': {'souls': 1}}, {
+            '$unwind': {'path': '$souls'}}, {
+            '$group': group}
+        ]):
+            d = x
+
+        description = []
+        total_souls = 0
+        for y in range(1, 11):
+            description.append(
+                f"S{lengthen_code_2(y)} :: {d[f'{y}_clear']}/{d[f'{y}_total']}"
+            )
+            total_souls += d[f'{y}_clear']
+
+        embed = discord.Embed(
+            color=user.colour, title="Soul Statistics", timestamp=get_timestamp(),
+            description="```" + "\n".join(description) + "```"
+        )
+        embed.add_field(
+            name="Total Souls Challenged",
+            value=f"{total_souls}"
+        )
+        embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+        await process_msg_submit(ctx.channel, None, embed)
 
     async def souls_explore(self, stage, user, ctx, unlocked):
 
@@ -279,6 +322,12 @@ class Souls(commands.Cog):
                         await self.souls_explore_rewards_generate_link(
                             embed_last, user, stage, msg, ctx, unlocked
                         )
+                        explores.update_one({
+                            "user_id": str(user.id), "souls.completion": None}, {
+                            "$set": {
+                                "souls.completion": True
+                            }
+                        })
                         await process_msg_reaction_clear(msg)
                         break
                     else:

@@ -167,12 +167,12 @@ class Raid(commands.Cog):
 
                 elif raid_count < 4:
 
-                    raider_medals = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
-                    victim_medals = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
-                    level_diff = raider_medals - victim_medals
-                    range_diff = 60
+                    raider_level = users.find_one({"user_id": str(raider.id)}, {"_id": 0, "level": 1})["level"]
+                    victim_level = users.find_one({"user_id": str(victim.id)}, {"_id": 0, "level": 1})["level"]
+                    diff = raider_level - victim_level
+                    range_diff = 59
 
-                    if abs(level_diff) <= range_diff:
+                    if abs(diff) <= range_diff:
                         users.update_one({"user_id": str(victim.id)}, {"$inc": {"raided_count": 1}})
                         users.update_one({"user_id": str(raider.id)}, {"$inc": {"realm_ticket": -1}})
                         await self.raid_perform_attack(victim, raider, ctx)
@@ -229,7 +229,9 @@ class Raid(commands.Cog):
 
     async def raid_perform_attack_giverewards_as_winner_victim(self, victim, raider, coins, jades, medals, experience):
 
-        users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
+        users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {
+            "$inc": {"experience": experience, "raid_failures": 1}
+        })
         users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": coins, "jades": jades, "medals": medals}})
 
         await perform_add_log("coins", coins, victim.id)
@@ -239,7 +241,9 @@ class Raid(commands.Cog):
     async def raid_perform_attack_giverewards_as_winner_raider(self, raider, coins, jades, medals, experience):
 
         users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
-        users.update_one({"user_id": str(raider.id)}, {"$inc": {"coins": coins, "jades": jades, "medals": medals}})
+        users.update_one({"user_id": str(raider.id)}, {
+            "$inc": {"coins": coins, "jades": jades, "medals": medals, "raid_successes": 1}
+        })
 
         await perform_add_log("coins", coins, raider.id)
         await perform_add_log("jades", jades, raider.id)

@@ -34,15 +34,19 @@ class Frames(commands.Cog):
             "azurestorm ichimokuren"
         ]
         self.cat_loving = [
-            "shuten doji", "enma", "ibaraki doji", "yoto hime", "hana", "kaguya", "yuki", "shiranui", "shishio", 
-            "inferno ibaraki doji", "demoniac shuten doji", "crimson yoto", "vengeful hannya", "hakusozu", 
+            "shuten doji", "enma", "ibaraki doji", "yoto hime", "hana", "kaguya", "yuki", "shiranui", "shishio",
+            "inferno ibaraki doji", "demoniac shuten doji", "crimson yoto", "vengeful hannya", "hakusozu",
             "takiyashahime"
         ]
-    
+
         self.medal_achievements = []
+        self.boss_damage_achievements = []
 
         for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
             self.medal_achievements.append([m['name'], m['required']])
+
+        for b in frames.find({"achievement": "boss_damage"}, {"_id": 0, "required": 1, "name": 1}):
+            self.boss_damage_achievements.append([b['name'], b['required']])
 
     def get_coordinates(self, c):
         return (c * 200 - (ceil(c / 5) - 1) * 1000) - 200, (ceil(c / 5) * 200) - 200
@@ -158,12 +162,11 @@ class Frames(commands.Cog):
     @commands.check(check_if_user_has_development_role)
     async def frames_add_new(self, ctx, arg1, link, *, requirement):
 
-        profile = {
-            "name": arg1.replace("_", " "),
+        frames.insert_one({
+            "name": arg1.replace("_", " ").title(),
             "requirement": requirement,
             "link": link
-        }
-        frames.insert_one(profile)
+        })
         await process_msg_reaction_add(ctx.message, "✅")
         await self.frames_add_new_generate_image()
 
@@ -328,10 +331,12 @@ class Frames(commands.Cog):
         print("Processing hourly achievements")
         jades = 3500
         guild = self.client.get_guild(int(id_guild))
+        guild_owner_id = guild.owner.id
 
         for document in users.find({}, {
             "_id": 0, "user_id": 1, "level": 1, "achievements": 1, "amulets_spent": 1, "coins": 1, "medals": 1,
-            "friendship": 1, "exploration": 1, "achievements_count": 1
+            "friendship": 1, "exploration": 1, "achievements_count": 1, "boss_damage": 1,
+            "raid_failures": 1, "raid_successes": 1
         }):
             member = guild.get_member(int(document["user_id"]))
             if member is None:
@@ -385,7 +390,7 @@ class Frames(commands.Cog):
             frame_name = "Genteel Women's Reflection"
             if frame_name not in user_frames:
                 total_rewards = 0
-                for ship in ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{document['user_id']}.*"}}):
+                for ship in ships.find({"level": {"$gt": 1}, "code": {"$regex": f".*{str(member.id)}.*"}}):
                     total_rewards += ship["level"] * 25
 
                 if total_rewards >= 1000:
@@ -430,16 +435,16 @@ class Frames(commands.Cog):
 
             frame_name = "Kitsune"
             if frame_name not in user_frames:
-                count_ssn = 0
+                count_sr = 0
                 for result in users.aggregate([{
                     "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"shikigami.rarity": "SR"}}, {
                     "$count": "count"
                 }]):
-                    count_ssn = result["count"]
+                    count_sr = result["count"]
 
-                if count_ssn == self.total_sr:
+                if count_sr == self.total_sr:
                     await self.frames_automate_announcement(member, frame_name, jades)
 
             frame_name = "Blazing Sun"
@@ -684,6 +689,98 @@ class Frames(commands.Cog):
                     total_level = result["total_level"]
 
                 if total_level == 80:
+                    await self.frames_automate_announcement(member, frame_name, jades)
+
+            frame_name = "Moonlight Shell"
+            if frame_name not in user_frames:
+                for x in users.aggregate([{
+                    '$match': {'user_id': document["user_id"]}}, {
+                    '$project': {'souls': {'$objectToArray': '$souls'}, 'user_id': 1}}, {
+                    '$unwind': {'path': '$souls'}}
+                ]):
+                    if len(x['souls']['v']) == 6:
+                        total_grade = 0
+                        for y in x['souls']['v']:
+                            if y['grade'] == 6:
+                                total_grade += 6
+                        if total_grade == 36:
+                            await self.frames_automate_announcement(member, frame_name, jades)
+                            break
+
+            frame_name = "Auspicious Dragon Chant"
+            if frame_name not in user_frames:
+                eq_1, eq_2 = "$souls.stage", "$souls.clears"
+
+                for x in explores.aggregate([{
+                    '$match': {'user_id': document["user_id"]}}, {
+                    '$project': {'souls': 1}}, {
+                    '$unwind': {'path': '$souls'}}, {
+                    '$group': {
+                        "_id": None,
+                        f'10_clear': {"$sum": {"$cond": [{"$and": [{"$eq": [eq_1, 10]}, {"$eq": [eq_2, 3]}]}, 1, 0]}}
+                    }}
+                ]):
+                    if x["10_clear"] >= 1000:
+                        await self.frames_automate_announcement(member, frame_name, jades)
+                        break
+
+            frame_name = "Master Of Patronus"
+            if frame_name not in user_frames:
+                if str(guild_owner_id) == str(member.id):
+                    await self.frames_automate_announcement(member, frame_name, jades)
+
+            if document["boss_damage"] >= 250000:
+                for reward in self.medal_achievements:
+                    if document["boss_damage"] >= reward[1] and reward[0] not in user_frames:
+                        await self.frames_automate_announcement(member, reward[0], jades)
+
+            frame_name = "Water's Exquisitiveness"
+            if frame_name not in user_frames:
+                for x in users.aggregate([{
+                    '$match': {'user_id': str(member.id)}}, {
+                    '$unwind': {'path': '$shikigami'}}, {
+                    '$match': {'shikigami.level': 40}}, {
+                    '$count': 'count'}
+                ]):
+                    if x['count'] >= 20:
+                        await self.frames_automate_announcement(member, frame_name, jades)
+
+            frame_name = "The 365"
+            if frame_name not in user_frames:
+                if document["raid_successes"] - document["raid_failures"] >= 365:
+                    await self.frames_automate_announcement(member, frame_name, jades)
+
+            frame_name = "Phoenix Fire"
+            if frame_name not in user_frames:
+                count_sp = 0
+                for result in users.aggregate([{
+                    "$match": {"user_id": str(member.id)}}, {
+                    "$unwind": {"path": "$shikigami"}}, {
+                    "$match": {"shikigami.rarity": "SP"}}, {
+                    "$count": "count"
+                }]):
+                    count_sp = result["count"]
+
+                if count_sp == self.total_sp:
+                    await self.frames_automate_announcement(member, frame_name, jades)
+
+            frame_name = "Evergreen Vine"
+            if frame_name not in user_frames:
+                soul_set_total = 0
+                for x in users.aggregate([{
+                    '$match': {'user_id': document["user_id"]}}, {
+                    '$project': {'souls': {'$objectToArray': '$souls'}, 'user_id': 1}}, {
+                    '$unwind': {'path': '$souls'}}
+                ]):
+                    if len(x['souls']['v']) == 6:
+                        total_grade = 0
+                        for y in x['souls']['v']:
+                            if y['grade'] == 6:
+                                total_grade += 6
+                        if total_grade == 36:
+                            soul_set_total += 1
+
+                if soul_set_total == 12:
                     await self.frames_automate_announcement(member, frame_name, jades)
 
     async def frames_automate_weekly(self):

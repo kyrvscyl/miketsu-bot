@@ -334,9 +334,9 @@ class Encounter(commands.Cog):
                 await process_msg_delete(msg2, 4)
             else:
                 shiki_bet = answer.content.lower()
-                total_chance = self.enc_roll_nether_get_chance(user, shiki_bet, 0.2, 40, [0, 0], 70, 1)
+                total_chance = self.enc_roll_nether_get_chance(user, shiki_bet, 0.2, 50, [0, 0], 70, 1)
 
-                shiki_clears = 0
+                shiki_clears, adjusted_chance = 0, 0
                 for i in range(waves_c + 1, max_waves + 1):
                     total_chance_2 = total_chance - i * 0.09
                     adjusted_chance = random.uniform(total_chance_2 * 0.98, total_chance_2)
@@ -352,11 +352,11 @@ class Encounter(commands.Cog):
                             break
                     else:
                         shikis_d.append(shiki_bet)
-                        clear_chances.append(total_chance)
+                        clear_chances.append(adjusted_chance)
                         total_attempts -= 1
                         break
 
-                placed_shikigamis.append([shiki_bet, total_chance, shiki_clears])
+                placed_shikigamis.append([shiki_bet, adjusted_chance, shiki_clears])
                 embed = embed_new_create(shikis_t, shikis_d, "end", shiki_bet, waves_c, "", [])
                 await process_msg_edit(msg, None, embed)
 
@@ -842,6 +842,7 @@ class Encounter(commands.Cog):
                     "current_hp": -round(p_dmg, 0)
                 }
             })
+            users.update_one({"user_id": p}, {"$inc": {"boss_damage": round(p_dmg, 0)}})
             member = ctx.guild.get_member(int(p))
             embed = discord.Embed(
                 color=member.colour,

@@ -54,19 +54,23 @@ class Summon(commands.Cog):
 
             try:
                 amulets_pulled = int(arg1)
+
             except ValueError:
                 arg1_lowered = arg1.lower()
 
                 if arg1_lowered in ["broken", "b"]:
                     await self.summon_perform_broken(ctx, ctx.author)
+
                 elif arg1_lowered in pool_all:
                     await self.summon_perform_shards(ctx, arg1_lowered, ctx.author)
+
                 else:
                     await shikigami_post_approximate_results(ctx, arg1_lowered)
 
             else:
                 if amulets_pulled not in [1, 10]:
                     await self.summon_perform_help_info(ctx)
+
                 else:
                     await self.summon_perform_mystery(ctx, ctx.author, amulets_pulled)
 

@@ -188,6 +188,7 @@ pool_r = []
 pool_n = []
 pool_ssn = []
 
+pool_others = []
 pool_shrine = []
 
 pool_all = []

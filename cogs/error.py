@@ -11,6 +11,7 @@ from cogs.ext.initialize import *
 class Error(commands.Cog):
 
     def __init__(self, client):
+
         self.client = client
         self.prefix = self.client.command_prefix
 
@@ -135,7 +136,8 @@ class Error(commands.Cog):
         ]
 
         self.functions_member_tagging = [
-            "exploration_check_clears"
+            "exploration_check_clears",
+            "raid_perform"
         ]
     
     async def submit_error(self, ctx, error, exception):
