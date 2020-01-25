@@ -925,6 +925,7 @@ class Economy(commands.Cog):
             friendship_points, parade, prayers = q["friendship"], q["parade_tickets"], q["prayers"]
             realm_ticket, enc_ticket, friendship_pass = q["realm_ticket"], q["encounter_ticket"], q["friendship_pass"]
             display, nether_pass, achievements = q["display"], q["nether_pass"], q["achievements"]
+            boss_damage, raid_successes, raid_failures = q["boss_damage"], q["raid_successes"], q["raid_failures"]
 
             embed = discord.Embed(color=member.colour, timestamp=get_timestamp())
 
@@ -947,32 +948,36 @@ class Economy(commands.Cog):
             embed.set_author(name=f"{member.display_name}'s profile", icon_url=member.avatar_url)
             embed.add_field(
                 name=f"{e_x} Experience | Nether Pass",
-                value=f"Level: {level} ({experience:,d}/{level_exp_next:,d}) | {get_emoji_nether(nether_pass)}"
+                value=f"`Lvl.{level}` [`{experience:,d}`/`{level_exp_next:,d}`] | {get_emoji_nether(nether_pass)}"
             )
             embed.add_field(
                 name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
-                value=f"{q['SP']} | {q['SSR']} | {q['SR']} | {q['R']:,d} | {q['N']:,d} | {q['SSN']:,d}",
+                value=f"`{q['SP']}` | `{q['SSR']}` | `{q['SR']}` | `{q['R']:,d}` | `{q['N']:,d}` | `{q['SSN']:,d}`",
                 inline=False
             )
             embed.add_field(
-                name=f"{e_b} Broken Amulets",
-                value=f"On Hand: `{amulets_b:,d}` | Used: `{amulets_spent_b:,d}`"
+                name=f"Amulets Used/Spent [{e_b} | {e_a}]",
+                value=f"[`{amulets_b:,d}`/`{amulets_spent_b:,d}`] | [`{amulets:,d}`/`{amulets_spent:,d}`]"
             )
             embed.add_field(
-                name=f"{e_a} Mystery Amulets",
-                value=f"On Hand: `{amulets:,d}` | Used: `{amulets_spent:,d}`", inline=False
+                name=f"Boss Damage Dealt | Raid [Success/Fail]",
+                value=f"`{boss_damage:,d}` | [`{raid_successes:,d}`/`{raid_failures:,d}`]",
+                inline=False
             )
             embed.add_field(
                 name=f"{e_fp} | 🎟 | 🎫 | 🚢 | 🙏 | 🎏",
-                value=f"{friendship_pass} | {realm_ticket:,d} | {enc_ticket:,d} | {count} | {prayers} | {parade}",
+                value=f"`{friendship_pass}` | `{realm_ticket:,d}` | "
+                      f"`{enc_ticket:,d}` | `{count}` | `{prayers}` | `{parade}`",
                 inline=False
             )
             embed.add_field(
                 name=f"🍣 | {e_f} | {e_t} | {e_m} | {e_j} | {e_c}",
-                value=f"{sushi} | {friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}"
+                value=f"`{sushi:,d}` |` {friendship_points:,d}` | `{talismans:,d}` | "
+                      f"`{medals:,d}` | `{jades:,d}` | `{coins:,d}`"
             )
 
             msg = await process_msg_submit(ctx.channel, None, embed)
+            await process_msg_reaction_add(msg, "🖼")
             await process_msg_reaction_add(msg, "🖼")
 
             def check(r, u):

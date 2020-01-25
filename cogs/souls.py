@@ -53,7 +53,8 @@ class Souls(commands.Cog):
         embed.add_field(
             name="Formats", inline=False,
             value=f"*`{self.prefix}souls <name>`*\n"
-                  f"*`{self.prefix}souls <1-10>`*"
+                  f"*`{self.prefix}souls <1-10>`*\n"
+                  f"*`{self.prefix}souls stats`*"
         )
         await process_msg_submit(ctx.channel, None, embed)
 

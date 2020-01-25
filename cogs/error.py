@@ -174,7 +174,7 @@ class Error(commands.Cog):
             if isinstance(error, commands.BadArgument):
 
                 if str(ctx.command) in self.functions_member_tagging:
-                    return
+                    await process_msg_invalid_member(ctx)
 
                 else:
                     await self.submit_error(ctx, error, "BadArgument")
