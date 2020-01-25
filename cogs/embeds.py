@@ -186,7 +186,7 @@ class Embeds(commands.Cog):
         embed4.add_field(
             name="# 5. Absenteeism/Leave",
             value=f"• File your leave prior long vacation via <#{id_absence_app}> or contact any Head\n"
-                  f"• Your maximum inactivity is assessed based on your guild retention/feats",
+                  f"• Your maximum inactivity is assessed based on your guild retention/feats​ ",
             inline=False
         )
         embed4.add_field(
@@ -202,7 +202,7 @@ class Embeds(commands.Cog):
         embed5 = discord.Embed(
             colour=discord.Colour(0x50e3c2),
             title="🎊 Events & Timings",
-            description=f"• <@&{id_seers}> role is pinged for events #2-5\n​ "
+            description=f"• <@&{id_seers}> role is pinged for events #2-4\n​ "
         )
         embed5.add_field(
             name="# 1. Guild Raid",
