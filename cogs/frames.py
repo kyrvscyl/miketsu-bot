@@ -439,7 +439,7 @@ class Frames(commands.Cog):
                 for result in users.aggregate([{
                     "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
-                    "$match": {"shikigami.rarity": "SR"}}, {
+                    "$match": {"shikigami.rarity": "SR", "shikigami.owned": {"$gt": 0}}}, {
                     "$count": "count"
                 }]):
                     count_sr = result["count"]
@@ -756,7 +756,7 @@ class Frames(commands.Cog):
                 for result in users.aggregate([{
                     "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
-                    "$match": {"shikigami.rarity": "SP"}}, {
+                    "$match": {"shikigami.rarity": "SP", "shikigami.owned": {"$gt": 0}}}, {
                     "$count": "count"
                 }]):
                     count_sp = result["count"]
