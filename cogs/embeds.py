@@ -186,7 +186,7 @@ class Embeds(commands.Cog):
         embed4.add_field(
             name="# 5. Absenteeism/Leave",
             value=f"• File your leave prior long vacation via <#{id_absence_app}> or contact any Head\n"
-                  f"• Your maximum inactivity is assessed based on your guild retention/feats​ ",
+                  f"• Your maximum inactivity is assessed based on your guild retention/feats\n​ ",
             inline=False
         )
         embed4.add_field(

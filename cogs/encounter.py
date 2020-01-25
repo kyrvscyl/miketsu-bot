@@ -496,7 +496,7 @@ class Encounter(commands.Cog):
             })
 
     @commands.command(aliases=["encounter", "enc"])
-    @commands.cooldown(1, 180, commands.BucketType.user)
+    @commands.cooldown(1, 60, commands.BucketType.user)
     @commands.guild_only()
     async def enc_roll(self, ctx):
 
@@ -546,7 +546,7 @@ class Encounter(commands.Cog):
                         else:
                             await self.enc_roll_treasure(user, ctx, msg)
 
-            self.client.get_command("enc_roll").reset_cooldown(ctx)
+        self.client.get_command("enc_roll").reset_cooldown(ctx)
 
     async def enc_roll_quiz(self, user, ctx, msg):
 

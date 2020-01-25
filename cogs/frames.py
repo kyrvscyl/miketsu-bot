@@ -42,10 +42,13 @@ class Frames(commands.Cog):
         self.medal_achievements = []
         self.boss_damage_achievements = []
 
-        for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}):
+        for m in frames.find({"achievement": "medals"}, {"_id": 0, "required": 1, "name": 1}).sort([("required", 1)]):
             self.medal_achievements.append([m['name'], m['required']])
 
-        for b in frames.find({"achievement": "boss_damage"}, {"_id": 0, "required": 1, "name": 1}):
+        for b in frames.find({
+            "achievement": "boss_damage"}, {
+            "_id": 0, "required": 1, "name": 1
+        }).sort([("required", 1)]):
             self.boss_damage_achievements.append([b['name'], b['required']])
 
     def get_coordinates(self, c):
@@ -348,7 +351,7 @@ class Frames(commands.Cog):
             frame_name = "The Scholar"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "koi"}, {
+                    "user_id": str(member.id), "shikigami.name": "koi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -360,7 +363,7 @@ class Frames(commands.Cog):
             frame_name = "Cursed Blade"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "yoto hime"}, {
+                    "user_id": str(member.id), "shikigami.name": "yoto hime"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -372,7 +375,7 @@ class Frames(commands.Cog):
             frame_name = "Sword Swallowing-Snake"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "orochi"}, {
+                    "user_id": str(member.id), "shikigami.name": "orochi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -398,7 +401,7 @@ class Frames(commands.Cog):
             frame_name = "Vampire Blood"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "vampira"}, {
+                    "user_id": str(member.id), "shikigami.name": "vampira"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -470,7 +473,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 maple_evolve = []
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"shikigami.name": {"$in": ["shuten doji", "momiji"]}}}, {
                     "$project": {"shikigami.name": 1, "shikigami.evolved": 1}
@@ -485,7 +488,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 cherries_evolved = []
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"shikigami.name": {"$in": ["momo", "sakura"]}}}, {
                     "$project": {"shikigami.name": 1, "shikigami.evolved": 1}
@@ -509,7 +512,7 @@ class Frames(commands.Cog):
             if document["exploration"] >= 28:
                 total_explorations = 0
                 for result in explores.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$explores"}}, {
                     "$count": "count"
                 }]):
@@ -524,7 +527,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 count_r = 0
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"shikigami.rarity": "R"}}, {
                     "$count": "count"
@@ -538,7 +541,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 count_n = 0
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"shikigami.rarity": "N"}}, {
                     "$count": "count"
@@ -571,7 +574,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 levels = []
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"$or": [{"shikigami.name": {"$in": self.dog_loving}}]}}, {
                     "$project": {"shikigami.level": 1}
@@ -585,7 +588,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 levels = []
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"$or": [{"shikigami.name": {"$in": self.cat_loving}}]}}, {
                     "$project": {"shikigami.level": 1}
@@ -598,7 +601,7 @@ class Frames(commands.Cog):
             frame_name = "Spring Rabbit"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "usagi"}, {
+                    "user_id": str(member.id), "shikigami.name": "usagi"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -610,7 +613,7 @@ class Frames(commands.Cog):
             frame_name = "King Of The Jungle"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "yamakaze"}, {
+                    "user_id": str(member.id), "shikigami.name": "yamakaze"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -627,7 +630,7 @@ class Frames(commands.Cog):
             frame_name = "The Drunken Evil"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "demoniac shuten doji"}, {
+                    "user_id": str(member.id), "shikigami.name": "demoniac shuten doji"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -640,7 +643,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 total_level = 0
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"$or": [{"shikigami.name": {"$in": ["blazing tamamonomae", "tamamonomae"]}}]}}, {
                     "$project": {"shikigami": 1}}, {
@@ -654,7 +657,7 @@ class Frames(commands.Cog):
             frame_name = "Spitz Puppy"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "inugami"}, {
+                    "user_id": str(member.id), "shikigami.name": "inugami"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -666,7 +669,7 @@ class Frames(commands.Cog):
             frame_name = "The Seven Masks"
             if frame_name not in user_frames:
                 profile = users.find_one({
-                    "user_id": document["user_id"], "shikigami.name": "menreiki"}, {
+                    "user_id": str(member.id), "shikigami.name": "menreiki"}, {
                     "_id": 0, "shikigami.$": 1
                 })
                 if profile is None:
@@ -679,7 +682,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 total_level = 0
                 for result in users.aggregate([{
-                    "$match": {"user_id": document["user_id"]}}, {
+                    "$match": {"user_id": str(member.id)}}, {
                     "$unwind": {"path": "$shikigami"}}, {
                     "$match": {"$or": [{"shikigami.name": {"$in": ["vengeful hannya", "hannya"]}}]}}, {
                     "$project": {"shikigami": 1}}, {
@@ -693,7 +696,7 @@ class Frames(commands.Cog):
             frame_name = "Moonlight Shell"
             if frame_name not in user_frames:
                 for x in users.aggregate([{
-                    '$match': {'user_id': document["user_id"]}}, {
+                    '$match': {'user_id': str(member.id)}}, {
                     '$project': {'souls': {'$objectToArray': '$souls'}, 'user_id': 1}}, {
                     '$unwind': {'path': '$souls'}}
                 ]):
@@ -711,7 +714,7 @@ class Frames(commands.Cog):
                 eq_1, eq_2 = "$souls.stage", "$souls.clears"
 
                 for x in explores.aggregate([{
-                    '$match': {'user_id': document["user_id"]}}, {
+                    '$match': {'user_id': str(member.id)}}, {
                     '$project': {'souls': 1}}, {
                     '$unwind': {'path': '$souls'}}, {
                     '$group': {
@@ -767,7 +770,7 @@ class Frames(commands.Cog):
             if frame_name not in user_frames:
                 soul_set_total = 0
                 for x in users.aggregate([{
-                    '$match': {'user_id': document["user_id"]}}, {
+                    '$match': {'user_id': str(member.id)}}, {
                     '$project': {'souls': {'$objectToArray': '$souls'}, 'user_id': 1}}, {
                     '$unwind': {'path': '$souls'}}
                 ]):
@@ -869,6 +872,7 @@ class Frames(commands.Cog):
             )
             embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
             embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
+            await perform_add_log("jades", jades, member.id)
             await process_msg_submit(spell_spam_channel, None, embed)
             await asyncio.sleep(1)
 

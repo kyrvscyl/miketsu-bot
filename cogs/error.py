@@ -136,8 +136,26 @@ class Error(commands.Cog):
         ]
 
         self.functions_member_tagging = [
+            "development_compensate_increase_level_shikigami",
+            "development_compensate_increase_level_user",
+            "development_compensate_items",
+            "development_compensate_push_shikigami",
+            "economy_logs_show",
+            "economy_profile_show",
+            "economy_wish_fulfill",
             "exploration_check_clears",
-            "raid_perform"
+            "exploration_check_clears",
+            "friendship_check_sail",
+            "friendship_check_sail",
+            "friendship_ship_show_all",
+            "raid_perform",
+            "realm_card_collect",
+            "realm_card_use",
+            "shikigami_image_show_collected",
+            "shikigami_list_show_collected",
+            "shikigami_show_post_shards",
+            "shikigami_show_post_shikis"
+            "shikigami_show_post_shikis",
         ]
     
     async def submit_error(self, ctx, error, exception):

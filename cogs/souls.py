@@ -58,6 +58,58 @@ class Souls(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
+    async def souls_unequip_help(self, ctx):
+
+        embed = discord.Embed(
+            title="unequip, uneq", color=colour,
+            description=f"unequip all souls of a certain type",
+        )
+        embed.add_field(name="Formats", inline=False, value=f"*`{self.prefix}unequip watcher`*")
+        await process_msg_submit(ctx.channel, None, embed)
+
+    @commands.command(aliases=["unequip", "uneq"])
+    @commands.guild_only()
+    async def souls_shikigami_unequip(self, ctx, *, args=None):
+
+        if args is None:
+            await self.souls_unequip_help(ctx)
+
+        elif args.lower() not in souls_all:
+            await self.souls_show_approximate(ctx, args)
+
+        else:
+            soul_type = args.lower()
+            query = users.find_one({
+                "user_id": str(ctx.author.id),
+                f"souls.{soul_type}": {"$type": "array"}
+            }, {
+                "_id": 0,
+                f"souls.{soul_type}": 1
+            })
+
+            for x in query["souls"][soul_type]:
+                shikigami_equipped = x["equipped"]
+                slot = x["slot"]
+
+                users.update_one({
+                    "user_id": str(ctx.author.id),
+                    "shikigami.name": shikigami_equipped
+                }, {
+                    "$set": {
+                        f"shikigami.$.souls.{slot}": None
+                    }
+                })
+
+                users.update_one({
+                    "user_id": str(ctx.author.id),
+                    f"souls.{soul_type}.slot": slot
+                }, {
+                    "$set": {
+                        f"souls.{soul_type}.$.equipped": None
+                    }
+                })
+
+
     @commands.command(aliases=["equip", "eq"])
     @commands.guild_only()
     async def souls_shikigami_equip(self, ctx, slot=None, *, args=None):
@@ -65,8 +117,8 @@ class Souls(commands.Cog):
         if slot is None or args is None:
             await self.souls_equip_help(ctx)
 
-        elif args not in souls_all:
-            await self.souls_show_approximate(ctx, args)
+        elif args.lower() not in souls_all:
+            await self.souls_show_approximate(ctx, args.lower())
 
         elif slot in [f"{x}" for x in list(range(1, 7))] and args.lower() in souls_all:
 
