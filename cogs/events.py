@@ -77,6 +77,31 @@ class Events(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
+    @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if message.author.bot is True:
+            return
+
+        elif not isinstance(message.channel, discord.DMChannel):
+            return
+
+        elif len(message.attachments) > 0:
+
+            bot_info = await self.client.application_info()
+            owner = self.client.get_user(bot_info.owner.id)
+
+            embed = discord.Embed(color=colour, timestamp=get_timestamp())
+            embed.set_author(
+                name=f"{message.author}",
+                icon_url=message.author.avatar_url
+            )
+            embed.set_image(url=message.attachments[0].url)
+            await process_msg_submit(owner, None, embed)
+
+            content = f"You have successfully submitted an entry"
+            await process_msg_submit(message.author, content, embed)
+
     @commands.command(aliases=["events", "e"])
     @commands.check(check_if_user_has_any_admin_roles)
     async def events_manipulate(self, ctx, *args):
