@@ -229,9 +229,8 @@ class Raid(commands.Cog):
 
     async def raid_perform_attack_giverewards_as_winner_victim(self, victim, raider, coins, jades, medals, experience):
 
-        users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {
-            "$inc": {"experience": experience, "raid_failures": 1}
-        })
+        users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
+        users.update_one({"user_id": str(raider.id)}, {"$inc": {"raid_failures": 1}})
         users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": coins, "jades": jades, "medals": medals}})
 
         await perform_add_log("coins", coins, victim.id)
