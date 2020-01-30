@@ -135,7 +135,7 @@ class Raid(commands.Cog):
 
         raider = ctx.author
 
-        if not check_if_user_has_raid_tickets:
+        if not check_if_user_has_raid_tickets(ctx):
             embed = discord.Embed(
                 title=f"Insufficient realm tickets", colour=raider.colour,
                 description="Purchase at the shop or get your daily rewards"
@@ -229,9 +229,8 @@ class Raid(commands.Cog):
 
     async def raid_perform_attack_giverewards_as_winner_victim(self, victim, raider, coins, jades, medals, experience):
 
-        users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {
-            "$inc": {"experience": experience, "raid_failures": 1}
-        })
+        users.update_one({"user_id": str(raider.id), "level": {"$lt": 60}}, {"$inc": {"experience": experience}})
+        users.update_one({"user_id": str(raider.id)}, {"$inc": {"raid_failures": 1}})
         users.update_one({"user_id": str(victim.id)}, {"$inc": {"coins": coins, "jades": jades, "medals": medals}})
 
         await perform_add_log("coins", coins, victim.id)

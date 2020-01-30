@@ -190,6 +190,16 @@ class Embeds(commands.Cog):
             inline=False
         )
         embed4.add_field(
+            name="# 5. Inactivity strikes system",
+            value=f"• After missing any 2 weeks of GQ requirements without notice in <#{id_absence_app}>"
+                  f" or pming an officer you will get a strike\n"
+                  f"• After the above, offenders will receive +1 strike for every 1 week\n"
+                  f"• If space in guild is required, anyone who has warnings is considered eligible for removal\n"
+                  f"• Getting 3 strikes in 3 weeks or 6 strikes in 2 months will result in being kicked from "
+                  f"the guild\n​ ",
+            inline=False
+        )
+        embed4.add_field(
             name="# 6. Shard Trading",
             value=f"• If leaving for shards, contact any Head & specify amount of days\n"
                   f"• If inviting a trader, notify a Head in advance\n"

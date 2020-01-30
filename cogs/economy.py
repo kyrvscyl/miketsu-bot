@@ -956,7 +956,7 @@ class Economy(commands.Cog):
                 inline=False
             )
             embed.add_field(
-                name=f"Amulets Used/Spent [{e_b} | {e_a}]",
+                name=f"Amulets Have/Spent [{e_b} | {e_a}]",
                 value=f"[`{amulets_b:,d}`/`{amulets_spent_b:,d}` | `{amulets:,d}`/`{amulets_spent:,d}`]"
             )
             embed.add_field(

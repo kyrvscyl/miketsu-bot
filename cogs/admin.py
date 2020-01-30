@@ -385,6 +385,7 @@ class Admin(commands.Cog):
                     name="Example", inline=False,
                     value=f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 1 role member`*\n"
                           f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 100 notes alt account`*\n"
+                          f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} 45 strikes <insert reason>`*\n"
                           f"*`{self.prefix}{invoke[:1]} {args_v[3][:1]} inactives`*"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
@@ -435,6 +436,14 @@ class Admin(commands.Cog):
                 embed = discord.Embed(
                     colour=colour, title=f"Invalid `{args_v[3]}` syntax",
                     description="no value provided for the field"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+            elif len(args) == 3 and args[2].lower() == "strikes":
+
+                embed = discord.Embed(
+                    colour=colour, title=f"Invalid `{args_v[3]}` syntax",
+                    description="No reason provided"
                 )
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -671,6 +680,21 @@ class Admin(commands.Cog):
                         "time": get_time(),
                         "note": " ".join(args[3::])
                     }
+                }
+            })
+            await process_msg_reaction_add(ctx.message, "✅")
+
+        elif args[2].lower() in ["strikes"]:
+            members.update_one(find_query, {
+                "$push": {
+                    "notes": {
+                        "officer": ctx.author.name,
+                        "time": get_time(),
+                        "note": "🎯 " + " ".join(args[3::])
+                    }
+                },
+                "$inc": {
+                    "strikes": 1
                 }
             })
             await process_msg_reaction_add(ctx.message, "✅")
@@ -958,13 +982,21 @@ class Admin(commands.Cog):
             await self.admin_manage_guild_show_approximate(ctx, args[1])
         else:
             code, name, role = member['#'], member['name'], member['role']
-            status = member["status"]
-            status_update = member['status_update']
+            status, status_update = member["status"], member['status_update']
+            strikes = member["strikes"]
 
             def get_emoji_role(x):
                 return self.roles_emoji[x]
 
             role_emoji = get_emoji_role(member['role'])
+
+            if strikes > 0:
+                strikes_formatted, i = "", 0
+                while i < strikes:
+                    strikes_formatted += "🎯"
+                    i += 1
+            else:
+                strikes_formatted = None
 
             embed = discord.Embed(
                 color=ctx.author.colour, timestamp=get_timestamp(),
@@ -972,6 +1004,7 @@ class Admin(commands.Cog):
             )
             embed.set_thumbnail(url=ctx.guild.icon_url)
             embed.add_field(name="⛳ Status", value=f"{status.title()} [{status_update.strftime('%d.%b %y')}]")
+            embed.add_field(name="🏹 Strikes", value=strikes_formatted)
 
             if not member["notes"]:
                 embed.add_field(name="🗒 Notes", value="No notes yet.")
@@ -1012,7 +1045,8 @@ class Admin(commands.Cog):
                 "name_lower": args[2].lower(),
                 "total_feats": 0,
                 "weekly_gq": 30,
-                "status_update": get_time()
+                "status_update": get_time(),
+                "strikes": 0
             })
             await process_msg_reaction_add(ctx.message, "✅")
 
