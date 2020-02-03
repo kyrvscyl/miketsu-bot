@@ -730,6 +730,7 @@ class Economy(commands.Cog):
                 description=f"You have used up all your prayers today",
             )
             await process_msg_submit(ctx.channel, None, embed)
+            return
 
         embed = discord.Embed(
             title="Pray to the Goddess of Hope and Prosperity!", color=user.colour,
