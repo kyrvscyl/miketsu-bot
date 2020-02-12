@@ -294,7 +294,7 @@ class Castle(commands.Cog):
         invoke = "duel"
         args_v = ["help", "add", "delete", "update", "show"]
 
-        if not check_if_channel_is_pvp:
+        if not check_if_channel_is_pvp(ctx):
             return
 
         elif len(args) == 0:

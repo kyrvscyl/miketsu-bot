@@ -385,8 +385,18 @@ class Shikigami(commands.Cog):
     @commands.guild_only()
     async def shikigami_show_post_shiki(self, ctx, *, shikigami_name=None):
 
-        if shikigami_name is None:
+        if shikigami_name is None and not check_if_user_has_shiki_set(ctx):
             await self.shikigami_show_post_shiki_help(ctx)
+
+        elif shikigami_name is None and check_if_user_has_shiki_set(ctx):
+            shikigami_name_lowered = get_shikigami_display(ctx.author)
+            query = users.find_one({
+                "user_id": str(ctx.author.id),
+                "shikigami.name": shikigami_name_lowered
+            }, {
+                "_id": 0, "shikigami.$": 1
+            })
+            await self.shikigami_show_post_shiki_user(ctx.author, query, shikigami_name_lowered, ctx)
 
         else:
             shikigami_name_lowered = shikigami_name.lower()
@@ -448,11 +458,11 @@ class Shikigami(commands.Cog):
         embed = discord.Embed(
             colour=user.colour, timestamp=get_timestamp(),
             description=f"```"
-                        f"Level    ::   {shiki_profile['level']}\n"
-                        f"Exp      ::   {shiki_profile['exp']}/{shiki_profile['level_exp_next']}\n"
-                        f"Grade    ::   {shiki_profile['grade']}\n"
-                        f"Owned    ::   {shiki_profile['owned']}\n"
-                        f"Shards   ::   {shiki_profile['shards']}\n"
+                        f"Level  ::   {shiki_profile['level']}\n"
+                        f"Exp    ::   {shiki_profile['exp']}/{shiki_profile['level_exp_next']}\n"
+                        f"Grade  ::   {shiki_profile['grade']}\n"
+                        f"Owned  ::   {shiki_profile['owned']}\n"
+                        f"Shards ::   {shiki_profile['shards']}\n"
                         f"```",
         )
 
@@ -686,7 +696,7 @@ class Shikigami(commands.Cog):
                 if count != 1:
                     embed = discord.Embed(
                         colour=ctx.author.colour, title="Invalid selection",
-                        description=f"this shikigami is not in your possession"
+                        description=f"This shikigami is not in your possession"
                     )
                     await process_msg_submit(ctx.channel, None, embed)
 
@@ -766,160 +776,171 @@ class Shikigami(commands.Cog):
             await shikigami_post_approximate_results(ctx, shikigami_name.lower())
 
         elif action.lower() in ["sacrifice", "s"] and shikigami_name.lower() in pool_all_mystery:
+            await self.shikigami_shrine_sacrifice(shikigami_name.lower(), user, ctx)
 
-            shikigami_name_lower = shikigami_name.lower()
+        elif action.lower() in ["exchange", "exc"] and shikigami_name.lower() in pool_shrine:
+            await self.shikigami_shrine_exchange(shikigami_name.lower(), user, ctx)
 
-            query = users.find_one({
-                "user_id": str(user.id), "shikigami.name": shikigami_name_lower
-            }, {
-                "_id": 0, "shikigami.$.name": 1
-            })
+        self.client.get_command("shikigami_shrine").reset_cooldown(ctx)
 
-            if query is None:
+    async def shikigami_shrine_sacrifice(self, shikigami_name, user, ctx):
+
+        shikigami_name_lower = shikigami_name.lower()
+
+        query = users.find_one({
+            "user_id": str(user.id), "shikigami.name": shikigami_name_lower
+        }, {
+            "_id": 0, "shikigami.$.name": 1
+        })
+
+        if query is None:
+            embed = discord.Embed(
+                colour=user.colour, title=f"Invalid shikigami",
+                description=f"no shikigami {shikigami_name_lower.title()} in your possession yet"
+            )
+            await process_msg_submit(ctx.channel, None, embed)
+        else:
+            count_shikigami, rarity = query["shikigami"][0]["owned"], query["shikigami"][0]["rarity"]
+            talisman_per = get_talisman_acquire(rarity)
+
+            def check(m):
+                try:
+                    int(m.content)
+                except (TypeError, ValueError):
+                    raise KeyboardInterrupt
+                else:
+                    return m.author == ctx.author and m.channel == ctx.channel
+
+            embed = discord.Embed(
+                colour=user.colour, timestamp=get_timestamp(), title=f"Specify amount",
+                description=f"You currently have {count_shikigami:,d} {shikigami_name_lower.title()}",
+            )
+            embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
+            embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+            msg = await process_msg_submit(ctx.channel, None, embed)
+
+            try:
+                message = await self.client.wait_for("message", timeout=15, check=check)
+            except asyncio.TimeoutError:
                 embed = discord.Embed(
-                    colour=user.colour, title=f"Invalid shikigami",
-                    description=f"no shikigami {shikigami_name_lower.title()} in your possession yet"
+                    title="Timeout!", colour=user.colour,
+                    description=f"Enter the amount on time", timestamp=get_timestamp()
                 )
-                await process_msg_submit(ctx.channel, None, embed)
-            else:
-                count_shikigami, rarity = query["shikigami"][0]["owned"], query["shikigami"][0]["rarity"]
-                talisman_per = get_talisman_acquire(rarity)
-
-                def check(m):
-                    try:
-                        int(m.content)
-                    except (TypeError, ValueError):
-                        raise KeyboardInterrupt
-                    else:
-                        return m.author == ctx.author and m.channel == ctx.channel
-
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                await process_msg_edit(msg, None, embed)
+            except KeyboardInterrupt:
                 embed = discord.Embed(
-                    colour=user.colour, timestamp=get_timestamp(), title=f"Specify amount",
-                    description=f"You currently have {count_shikigami:,d} {shikigami_name_lower.title()}",
+                    title="Invalid amount", colour=user.colour,
+                    description=f"provide a valid integer", timestamp=get_timestamp()
                 )
                 embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
                 embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                msg = await process_msg_submit(ctx.channel, None, embed)
+                await process_msg_edit(msg, None, embed)
 
-                try:
-                    message = await self.client.wait_for("message", timeout=15, check=check)
-                except asyncio.TimeoutError:
+            else:
+                request_shrine = int(message.content)
+
+                if count_shikigami >= request_shrine:
+                    final_talismans = talisman_per * request_shrine
+                    users.update_one({
+                        "user_id": str(user.id),
+                        "shikigami.name": shikigami_name_lower}, {
+                        "$inc": {
+                            "shikigami.$.owned": - request_shrine,
+                            "talisman": final_talismans,
+                            f"{rarity}": - request_shrine
+                        }
+                    })
+                    await perform_add_log("talisman", final_talismans, user.id)
                     embed = discord.Embed(
-                        title="Timeout!", colour=user.colour,
-                        description=f"Enter the amount on time", timestamp=get_timestamp()
-                    )
-                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                    await process_msg_edit(msg, None, embed)
-                except KeyboardInterrupt:
-                    embed = discord.Embed(
-                        title="Invalid amount", colour=user.colour,
-                        description=f"provide a valid integer", timestamp=get_timestamp()
+                        title="Shrine successful", colour=user.colour, timestamp=get_timestamp(),
+                        description=f"You shrined {shikigami_name_lower.title()} for {final_talismans:,d}{e_t}",
                     )
                     embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
                     embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                     await process_msg_edit(msg, None, embed)
 
                 else:
-                    request_shrine = int(message.content)
-
-                    if count_shikigami >= request_shrine:
-                        final_talismans = talisman_per * request_shrine
-                        users.update_one({
-                            "user_id": str(user.id),
-                            "shikigami.name": shikigami_name_lower}, {
-                            "$inc": {
-                                "shikigami.$.owned": - request_shrine,
-                                "talisman": final_talismans,
-                                f"{rarity}": - request_shrine
-                            }
-                        })
-                        await perform_add_log("talisman", final_talismans, user.id)
-                        embed = discord.Embed(
-                            title="Shrine successful", colour=user.colour, timestamp=get_timestamp(),
-                            description=f"You shrined {shikigami_name_lower.title()} for {final_talismans:,d}{e_t}",
-                        )
-                        embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
-                        embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                        await process_msg_edit(msg, None, embed)
-
-                    else:
-                        embed = discord.Embed(
-                            title="Insufficient shikigamis", colour=user.colour, timestamp=get_timestamp(),
-                            description=f"You lack that amount of shikigami {shikigami_name_lower.title()}",
-                        )
-                        embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
-                        embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                        await process_msg_submit(ctx.channel, None, embed)
-
-        elif action.lower() in ["exchange", "exc"] and shikigami_name.lower() in pool_shrine:
-
-            shikigami_name_lower = shikigami_name.lower()
-            rarity = shikigamis.find_one({"name": shikigami_name_lower}, {"_id": 0, "rarity": 1})["rarity"]
-            talisman = users.find_one({"user_id": str(user.id)}, {"_id": 0, "talisman": 1})["talisman"]
-
-            def get_talisman_required(x):
-                dictionary = {"SSR": 350000, "SR": 150000, "R": 50000}
-                return dictionary[x]
-
-            talisman_req = get_talisman_required(rarity)
-
-            if talisman >= talisman_req:
-                embed = discord.Embed(
-                    title="Exchange confirmation", colour=colour, timestamp=get_timestamp(),
-                    description=f"Confirm exchange of {talisman_req:,d}{e_t} for a {shikigami_name_lower.title()}",
-                )
-                embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-                msg = await process_msg_submit(ctx.channel, None, embed)
-
-                await process_msg_reaction_add(msg, "✅")
-
-                def check(r, u):
-                    return u == ctx.author and str(r.emoji) == "✅" and r.message.id == msg.id
-
-                try:
-                    await self.client.wait_for("reaction_add", timeout=10.0, check=check)
-                except asyncio.TimeoutError:
-                    await process_msg_reaction_clear(msg)
-                else:
-                    query = users.find_one({
-                        "user_id": str(user.id),
-                        "shikigami.name": shikigami_name_lower}, {
-                        "_id": 0, "shikigami.$": 1
-                    })
-
-                    if query is None:
-                        evolve, shards = False, 0
-                        if get_rarity_shikigami(shikigami_name_lower) == "SP":
-                            evolve, shards = True, 5
-                        shikigami_push_user(user.id, shikigami_name_lower, evolve, shards)
-
-                    users.update_one({
-                        "user_id": str(user.id),
-                        "shikigami.name": shikigami_name_lower}, {
-                        "$inc": {
-                            "shikigami.$.owned": 1,
-                            "talisman": - talisman_req,
-                            f"{rarity}": 1
-                        }
-                    })
-                    await perform_add_log("talisman", - talisman_req, user.id)
                     embed = discord.Embed(
-                        title="Exchange success!", colour=colour, timestamp=get_timestamp(),
-                        description=f"You acquired {shikigami_name_lower.title()} for {talisman_req:,d}{e_t}",
+                        title="Insufficient shikigamis", colour=user.colour, timestamp=get_timestamp(),
+                        description=f"You lack that amount of shikigami {shikigami_name_lower.title()}",
                     )
-                    embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-                    await process_msg_edit(msg, None, embed)
-                    await process_msg_reaction_clear(msg)
+                    embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    await process_msg_submit(ctx.channel, None, embed)
 
-            elif talisman < talisman_req:
+            finally:
+                self.client.get_command("shikigami_shrine").reset_cooldown(ctx)
+
+    async def shikigami_shrine_exchange(self, shikigami_name, user, ctx):
+
+        shikigami_name_lower = shikigami_name.lower()
+        rarity = shikigamis.find_one({"name": shikigami_name_lower}, {"_id": 0, "rarity": 1})["rarity"]
+        talisman = users.find_one({"user_id": str(user.id)}, {"_id": 0, "talisman": 1})["talisman"]
+
+        def get_talisman_required(x):
+            return {"SSR": 350000, "SR": 150000, "R": 50000}[x]
+
+        talisman_req = get_talisman_required(rarity)
+
+        if talisman >= talisman_req:
+            embed = discord.Embed(
+                title="Exchange confirmation", colour=colour, timestamp=get_timestamp(),
+                description=f"Confirm exchange of {talisman_req:,d}{e_t} for a {shikigami_name_lower.title()}",
+            )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            msg = await process_msg_submit(ctx.channel, None, embed)
+
+            await process_msg_reaction_add(msg, "✅")
+
+            def check(r, u):
+                return u == ctx.author and str(r.emoji) == "✅" and r.message.id == msg.id
+
+            try:
+                await self.client.wait_for("reaction_add", timeout=10.0, check=check)
+            except asyncio.TimeoutError:
+                await process_msg_reaction_clear(msg)
+            else:
+                query = users.find_one({
+                    "user_id": str(user.id),
+                    "shikigami.name": shikigami_name_lower}, {
+                    "_id": 0, "shikigami.$": 1
+                })
+
+                if query is None:
+                    evolve, shards = False, 0
+                    if get_rarity_shikigami(shikigami_name_lower) == "SP":
+                        evolve, shards = True, 5
+                    shikigami_push_user(user.id, shikigami_name_lower, evolve, shards)
+
+                users.update_one({
+                    "user_id": str(user.id),
+                    "shikigami.name": shikigami_name_lower}, {
+                    "$inc": {
+                        "shikigami.$.owned": 1,
+                        "talisman": - talisman_req,
+                        f"{rarity}": 1
+                    }
+                })
+                await perform_add_log("talisman", - talisman_req, user.id)
                 embed = discord.Embed(
-                    title="Insufficient talismans", colour=colour, timestamp=get_timestamp(),
-                    description=f"You lack {talisman_req - talisman:,d}{e_t}",
+                    title="Exchange success!", colour=colour, timestamp=get_timestamp(),
+                    description=f"You acquired {shikigami_name_lower.title()} for {talisman_req:,d}{e_t}",
                 )
                 embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-                await process_msg_submit(ctx.channel, None, embed)
+                await process_msg_edit(msg, None, embed)
+                await process_msg_reaction_clear(msg)
 
-        self.client.get_command("shikigami_shrine").reset_cooldown(ctx)
+            finally:
+                self.client.get_command("shikigami_shrine").reset_cooldown(ctx)
+
+        elif talisman < talisman_req:
+            embed = discord.Embed(
+                title="Insufficient talismans", colour=colour, timestamp=get_timestamp(),
+                description=f"You lack {talisman_req - talisman:,d}{e_t}",
+            )
+            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            await process_msg_submit(ctx.channel, None, embed)
 
     async def perform_evolution_help(self, ctx):
 
@@ -941,6 +962,7 @@ class Shikigami(commands.Cog):
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["evolve", "evo"])
+    @commands.guild_only()
     async def perform_evolution(self, ctx, *, shikigami_name=None):
 
         if shikigami_name is None:

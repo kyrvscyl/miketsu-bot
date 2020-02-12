@@ -108,7 +108,7 @@ class Souls(commands.Cog):
                         f"souls.{soul_type}.$.equipped": None
                     }
                 })
-
+                await process_msg_reaction_add(ctx.message, "✅")
 
     @commands.command(aliases=["equip", "eq"])
     @commands.guild_only()
@@ -165,6 +165,51 @@ class Souls(commands.Cog):
                     }, {
                         "$set": {
                             f"shikigami.$.souls.{slot}": None
+                        }
+                    })
+
+                test = users.aggregate([
+                    {
+                        '$match': {
+                            'user_id': str(user.id)
+                        }
+                    }, {
+                        '$project': {
+                            'souls': 1
+                        }
+                    }, {
+                        '$project': {
+                            'souls': {
+                                '$objectToArray': '$souls'
+                            }
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$souls'
+                        }
+                    }, {
+                        '$unwind': {
+                            'path': '$souls.v'
+                        }
+                    }, {
+                        '$match': {
+                            'souls.v.equipped': shikigami_set,
+                            'souls.v.slot': int(slot),
+                            'souls.k': {"$ne": soul_select}
+                        }
+                    }
+                ])
+
+                for x in test:
+                    print(x)
+                    soul_duplicate = x["souls"]["k"]
+                    print(soul_duplicate)
+                    users.update_one({
+                        "user_id": str(user.id),
+                        f"souls.{soul_duplicate}.slot": int(slot)
+                    }, {
+                        "$set": {
+                            f"souls.{soul_duplicate}.$.equipped": None
                         }
                     })
 

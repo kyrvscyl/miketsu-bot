@@ -518,7 +518,7 @@ class Economy(commands.Cog):
 
         user = ctx.author
 
-        if not check_if_user_has_parade_tickets:
+        if not check_if_user_has_parade_tickets(ctx):
             embed = discord.Embed(
                 title="Insufficient parade tickets", colour=user.colour,
                 description=f"Claim your dailies to acquire tickets"
@@ -724,78 +724,78 @@ class Economy(commands.Cog):
 
         user = ctx.author
 
-        if not check_if_user_has_prayers:
+        if not check_if_user_has_prayers(ctx):
             embed = discord.Embed(
                 colour=user.colour, title=f"Insufficient prayers",
                 description=f"You have used up all your prayers today",
             )
             await process_msg_submit(ctx.channel, None, embed)
-            return
 
-        embed = discord.Embed(
-            title="Pray to the Goddess of Hope and Prosperity!", color=user.colour,
-            description="45% chance to obtain rich rewards", timestamp=get_timestamp()
-        )
-        embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-        msg = await process_msg_submit(ctx.channel, None, embed)
-
-        roll = random.randint(1, 100)
-        rewards_emoji = [e_j, e_f, e_a, e_c, e_t, e_m, e_s]
-        rewards_selection = []
-
-        for x in range(0, 3):
-            emoji = random.choice(rewards_emoji)
-            await process_msg_reaction_add(msg, emoji.replace("<", "").replace(">", ""))
-            rewards_emoji.remove(emoji)
-            rewards_selection.append(emoji)
-
-        def check(r, u):
-            return str(r.emoji) in rewards_selection and u == user and msg.id == r.message.id
-
-        def get_rewards(y):
-            rewards_amount = {
-                e_j: 350, e_f: 75, e_a: 5, e_c: 500000, e_t: 2500, e_m: 250, e_s: 50
-            }
-            rewards_text = {
-                e_j: "jades",
-                e_f: "friendship",
-                e_a: "amulets",
-                e_c: "coins",
-                e_t: "talisman",
-                e_m: "medals",
-                e_s: "sushi"
-            }
-            return rewards_amount[y], rewards_text[y]
-
-        try:
-            reaction, user = await self.client.wait_for("reaction_add", timeout=150, check=check)
-        except asyncio.TimeoutError:
-            users.update_one({"user_id": str(user.id)}, {"$inc": {"prayers": -1}})
-            await perform_add_log("prayers", -1, user.id)
         else:
-            users.update_one({"user_id": str(user.id)}, {"$inc": {"prayers": -1}})
-            await perform_add_log("prayers", -1, user.id)
+            embed = discord.Embed(
+                title="Pray to the Goddess of Hope and Prosperity!", color=user.colour,
+                description="45% chance to obtain rich rewards", timestamp=get_timestamp()
+            )
+            embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+            msg = await process_msg_submit(ctx.channel, None, embed)
 
-            if roll >= 55:
-                embed = discord.Embed(
-                    title=f"Prayer results", color=user.colour,
-                    description=f"{next(self.prayer_ignored)}", timestamp=get_timestamp()
-                )
-                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                await process_msg_edit(msg, None, embed)
+            roll = random.randint(1, 100)
+            rewards_emoji = [e_j, e_f, e_a, e_c, e_t, e_m, e_s]
+            rewards_selection = []
+
+            for x in range(0, 3):
+                emoji = random.choice(rewards_emoji)
+                await process_msg_reaction_add(msg, emoji.replace("<", "").replace(">", ""))
+                rewards_emoji.remove(emoji)
+                rewards_selection.append(emoji)
+
+            def check(r, u):
+                return str(r.emoji) in rewards_selection and u == user and msg.id == r.message.id
+
+            def get_rewards(y):
+                rewards_amount = {
+                    e_j: 350, e_f: 75, e_a: 5, e_c: 500000, e_t: 2500, e_m: 250, e_s: 50
+                }
+                rewards_text = {
+                    e_j: "jades",
+                    e_f: "friendship",
+                    e_a: "amulets",
+                    e_c: "coins",
+                    e_t: "talisman",
+                    e_m: "medals",
+                    e_s: "sushi"
+                }
+                return rewards_amount[y], rewards_text[y]
+
+            try:
+                reaction, user = await self.client.wait_for("reaction_add", timeout=150, check=check)
+            except asyncio.TimeoutError:
+                users.update_one({"user_id": str(user.id)}, {"$inc": {"prayers": -1}})
+                await perform_add_log("prayers", -1, user.id)
             else:
-                amount, rewards = get_rewards(str(reaction.emoji))
-                embed = discord.Embed(
-                    title=f"Prayer results", color=user.colour, timestamp=get_timestamp(),
-                    description=f"{next(self.prayer_heard)} You obtained {amount:,d}{str(reaction.emoji)}",
-                )
-                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
-                users.update_one({"user_id": str(user.id)}, {"$inc": {rewards: amount}})
+                users.update_one({"user_id": str(user.id)}, {"$inc": {"prayers": -1}})
+                await perform_add_log("prayers", -1, user.id)
 
-                await perform_add_log(rewards, amount, user.id)
-                await process_msg_edit(msg, None, embed)
-        finally:
-            self.client.get_command("economy_pray_use").reset_cooldown(ctx)
+                if roll >= 55:
+                    embed = discord.Embed(
+                        title=f"Prayer results", color=user.colour,
+                        description=f"{next(self.prayer_ignored)}", timestamp=get_timestamp()
+                    )
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    await process_msg_edit(msg, None, embed)
+                else:
+                    amount, rewards = get_rewards(str(reaction.emoji))
+                    embed = discord.Embed(
+                        title=f"Prayer results", color=user.colour, timestamp=get_timestamp(),
+                        description=f"{next(self.prayer_heard)} You obtained {amount:,d}{str(reaction.emoji)}",
+                    )
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    users.update_one({"user_id": str(user.id)}, {"$inc": {rewards: amount}})
+
+                    await perform_add_log(rewards, amount, user.id)
+                    await process_msg_edit(msg, None, embed)
+            finally:
+                self.client.get_command("economy_pray_use").reset_cooldown(ctx)
 
     @commands.command(aliases=["daily"])
     @commands.guild_only()

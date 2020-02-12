@@ -276,14 +276,14 @@ class Friendship(commands.Cog):
 
         giver = ctx.author
 
-        if not check_if_user_has_friendship_passes:
+        if not check_if_user_has_friendship_passes(ctx):
             embed = discord.Embed(
                 colour=giver.colour, title="Insufficient friendship passes",
                 description=f"Fulfill wishes or claim your dailies to obtain more"
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-        if receiver is None:
+        elif receiver is None:
             await self.friendship_give_help(ctx)
 
         elif receiver.bot is True or receiver == giver:

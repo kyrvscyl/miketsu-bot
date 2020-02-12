@@ -115,21 +115,21 @@ class Exploration(commands.Cog):
         if arg is None:
             await self.exploration_help(ctx)
 
-        elif not check_if_user_has_sushi_1:
+        elif not check_if_user_has_sushi_1(ctx):
             embed = discord.Embed(
                 title=f"Insufficient sushi", colour=user.colour,
                 description=f"Get food from bento or from {self.prefix}hungry"
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-        elif not check_if_user_has_shiki_set:
+        elif not check_if_user_has_shiki_set(ctx):
             embed = discord.Embed(
                 color=user.colour, title="Invalid shikigami",
                 description=f"set a shikigami first using `{self.prefix}set`",
             )
             await process_msg_submit(ctx.channel, None, embed)
 
-        elif check_if_user_has_shiki_set:
+        elif check_if_user_has_shiki_set(ctx):
 
             try:
                 chapter = int(arg)
