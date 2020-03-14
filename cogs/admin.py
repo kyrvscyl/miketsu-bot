@@ -471,9 +471,10 @@ class Admin(commands.Cog):
                     name="Examples",
                     value=f"• *`{self.prefix}m s all`*\n"
                           f"• *`{self.prefix}m s all aki`*\n"
-                          f"• *`{self.prefix}m s all status inactive`*\n"
+                          f"• *`{self.prefix}m s status inactive`*\n"
                           f"• *`{self.prefix}m s 120`*\n"
-                          f"• *`{self.prefix}m s all <guild/abc/123>`*",
+                          f"• *`{self.prefix}m s all <guild/abc/123>`*\n"
+                          f"• *`{self.prefix}m s all guild strike`*",
                     inline=False
                 )
                 await process_msg_submit(ctx.channel, None, embed)
@@ -531,6 +532,10 @@ class Admin(commands.Cog):
 
             elif len(args) == 3 and args[1].lower() == "all" and args[2].lower() == "guild":
                 await self.admin_manage_guild_show_current_members(ctx)
+
+            elif len(args) == 4 and args[1].lower() == "all" and args[2].lower() == "guild" \
+                    and args[3].lower() == "strike":
+                await self.admin_manage_guild_show_current_members_strikes(ctx)
 
             elif len(args) == 3 and args[1].lower() == "all":
                 await self.admin_manage_guild_show_startswith(ctx, args)
@@ -871,16 +876,34 @@ class Admin(commands.Cog):
 
         formatted_list = []
         find_query = {"role": {"$in": ["officer", "member", "leader", "trader"]}}
-        project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1}
+        project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "strikes": 1}
 
         for member in members.find(find_query, project).sort([("total_feats", -1)]):
             role = self.get_shortened_code(member["role"])
             status = self.get_shortened_code(member["status"])
             number = lengthen_code_3(member["#"])
-            formatted_list.append(f"`{number}: {role}` | `{status}` | {member['name']}\n")
+            strike = member['strikes']
+            formatted_list.append(f"`{number}: {role}` | `{status}` | `{strike}` | {member['name']}\n")
 
         noun = pluralize("member", len(formatted_list))
         content = f"There are {len(formatted_list)} {noun} currently in the guild"
+        await self.admin_manage_guild_paginate_embeds(ctx, formatted_list, content)
+
+    async def admin_manage_guild_show_current_members_strikes(self, ctx):
+
+        formatted_list = []
+        find_query = {"role": {"$in": ["officer", "member", "leader", "trader"]}, "strikes": {"$gt": 0}}
+        project = {"_id": 0, "name": 1, "role": 1, "#": 1, "status": 1, "strikes": 1}
+
+        for member in members.find(find_query, project).sort([("strikes", -1)]):
+            role = self.get_shortened_code(member["role"])
+            status = self.get_shortened_code(member["status"])
+            number = lengthen_code_3(member["#"])
+            strike = member['strikes']
+            formatted_list.append(f"`{number}: {role}` | `{status}` | `{strike}` | {member['name']}\n")
+
+        noun = pluralize("member", len(formatted_list))
+        content = f"There are {len(formatted_list)} {noun} with strikes in the guild"
         await self.admin_manage_guild_paginate_embeds(ctx, formatted_list, content)
 
     async def admin_manage_guild_show_startswith(self, ctx, args):
@@ -1121,7 +1144,7 @@ class Admin(commands.Cog):
                     page = page_total
                 elif page > page_total:
                     page = 1
-                await process_msg_edit(msg, None, embed_new_create(page))
+                await process_msg_edit(msg, caption, embed_new_create(page))
                 await process_msg_reaction_remove(msg, str(reaction.emoji), user)
 
 

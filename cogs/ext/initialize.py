@@ -142,6 +142,7 @@ id_absence_app = server["channels"]["absence-applications"]
 id_common_room = server["channels"]["the-common-room"]
 id_diagon_alley = server["categories"]["diagon-alley"]
 id_headmaster = server["headmaster"]
+id_portrait = server["channels"]["portrait"]
 
 """ROLES"""
 

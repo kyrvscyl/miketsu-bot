@@ -222,6 +222,68 @@ class Events(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
+    @commands.command(aliases=["potg"])
+    @commands.is_owner()
+    async def events_start_potg(self, ctx):
+
+        channel = self.client.get_channel(int(id_portrait))
+        reactions = ["1️⃣", "2️⃣", "3️⃣", "4️⃣"]
+
+        embed = discord.Embed(
+            description="Voting is now opened until March 21, 2020\n"
+                        "Pick your favorite me! :kissing_heart:\n\n"
+                        "To change your vote, remove your previous reaction vote first",
+            timestamp=get_timestamp(),
+            color=colour
+        )
+        embed.set_author(name="Portrait of the Goddess Vote Casting!", icon_url=self.client.user.avatar_url)
+
+        default_role = ctx.guild.default_role
+        msg = await process_msg_submit(channel, default_role, embed)
+        guilds.update_one({"server": str(ctx.guild.id)}, {"$set": {"messages.portrait": str(msg.id)}})
+
+        for react in reactions:
+            await process_msg_reaction_add(msg, react)
+
+        for index, entry in enumerate(events.find_one({"event": "portrait"}, {"_id": 0})["links"]):
+
+            embed = discord.Embed(
+                timestamp=get_timestamp(),
+                description=f"{entry['emoji']} *{entry['caption']}*",
+                color=colour
+            )
+            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar_url)
+            embed.set_image(url=entry["link"])
+            await process_msg_submit(channel, None, embed)
+
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+
+        if self.client.get_user(int(payload.user_id)).bot:
+            return
+
+        elif str(payload.channel_id) == id_portrait:
+
+            msg_id = guilds.find_one({
+                "server": str(payload.guild_id)
+            }, {"_id": 0, "messages.portrait": 1})["messages"]["portrait"]
+
+            if msg_id == str(payload.message_id):
+
+                guild = self.client.get_guild(int(id_guild))
+                member = guild.get_member(int(payload.user_id))
+                portrait_channel = self.client.get_channel(int(id_portrait))
+                msg = await portrait_channel.fetch_message(int(payload.message_id))
+
+                for reaction in msg.reactions:
+                    if str(reaction.emoji) == str(payload.emoji):
+                        continue
+
+                    users_reacted = await reaction.users().flatten()
+                    if member in users_reacted:
+                        await process_msg_reaction_remove(msg, payload.emoji, member)
+
 
 def setup(client):
     client.add_cog(Events(client))
