@@ -488,6 +488,7 @@ def get_random_shikigami(r):
 
 
 def get_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
+
     grade_total, soul_set_chance, listings_souls = 1, 0, []
     query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1})
 

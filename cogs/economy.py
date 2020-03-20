@@ -74,8 +74,8 @@ class Economy(commands.Cog):
 
         def embed_new_create(strike):
             embed_new = discord.Embed(
-                description=f"{strike}You currently have `{reserves:,d}`{get_emoji('sushi')} in your reserve{strike}",
-                color=colour, timestamp=get_timestamp()
+                description=f"{strike}You currently have {reserves:,d}{get_emoji('sushi')} in your reserve{strike}",
+                color=user.colour, timestamp=get_timestamp()
             )
             embed_new.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
             return embed_new
@@ -346,7 +346,7 @@ class Economy(commands.Cog):
                     embed = discord.Embed(
                         color=user.colour, title=f"Wish fulfilled", timestamp=get_timestamp(),
                         description=f"Donated 1 {shikigami_name.title()} shard to {member.mention}\n"
-                                    f"Also acquired `{friendship}`{e_f} and `{friendship_pass}`{e_fp}",
+                                    f"Also acquired {friendship}{e_f} and {friendship_pass}{e_fp}",
                     )
                     embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
                     embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
@@ -845,11 +845,11 @@ class Economy(commands.Cog):
         embed = discord.Embed(
             color=ctx.author.colour, title="🎁 Daily rewards", timestamp=get_timestamp(),
             description=f"A box containing "
-                        f"`{friendship_pass:,d}`{e_fp}, `{jades:,d}`{e_j}, `{coins:,d}`{e_c}, "
-                        f"`{realm_ticket:,d}` {e_r}, "
-                        f"`{encounter_ticket:,d}` {e_e}, "
-                        f"`{parade_tickets:,d}` {e_p}, & "
-                        f"`{sushi:,d}` {e_s}",
+                        f"{friendship_pass:,d}{e_fp}, {jades:,d}{e_j}, {coins:,d}{e_c}, "
+                        f"{realm_ticket:,d} {e_r}, "
+                        f"{encounter_ticket:,d} {e_e}, "
+                        f"{parade_tickets:,d} {e_p}, & "
+                        f"{sushi:,d} {e_s}",
         )
         embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
         await process_msg_submit(ctx.channel, None, embed)
@@ -893,8 +893,8 @@ class Economy(commands.Cog):
 
         embed = discord.Embed(
             color=user.colour, timestamp=get_timestamp(), title="💝 Weekly rewards",
-            description=f"A mythical box containing `{jades:,d}`{e_j}, `{coins:,d}`{e_c}, "
-                        f"`{amulets:,d}`{e_a}, & `{sushi:,d}`{e_s}",
+            description=f"A mythical box containing {jades:,d}{e_j}, {coins:,d}{e_c}, "
+                        f"{amulets:,d}{e_a}, & {sushi:,d}{e_s}",
         )
         embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
         await process_msg_submit(ctx.channel, None, embed)
@@ -924,7 +924,7 @@ class Economy(commands.Cog):
             experience, level, level_exp_next = q["experience"], q["level"], q["level_exp_next"]
             jades, talismans, coins, medals, sushi = q["jades"], q["talisman"], q["coins"], q["medals"], q["sushi"]
             friendship_points, parade, prayers = q["friendship"], q["parade_tickets"], q["prayers"]
-            realm_ticket, enc_ticket, friendship_pass = q["realm_ticket"], q["encounter_ticket"], q["friendship_pass"]
+            realm_ticket, enc_ticket, fp_pass = q["realm_ticket"], q["encounter_ticket"], q["friendship_pass"]
             display, nether_pass, achievements = q["display"], q["nether_pass"], q["achievements"]
             boss_damage, raid_successes, raid_failures = q["boss_damage"], q["raid_successes"], q["raid_failures"]
 
@@ -949,32 +949,30 @@ class Economy(commands.Cog):
             embed.set_author(name=f"{member.display_name}'s profile", icon_url=member.avatar_url)
             embed.add_field(
                 name=f"{e_x} Experience | Nether Pass",
-                value=f"`Lvl.{level}` [`{experience:,d}`/`{level_exp_next:,d}`] | {get_emoji_nether(nether_pass)}"
+                value=f"Lvl.{level} [{experience:,d}/{level_exp_next:,d}] | {get_emoji_nether(nether_pass)}"
             )
             embed.add_field(
                 name=f"{e_1} | {e_2} | {e_3} | {e_4} | {e_5} | {e_6}",
-                value=f"`{q['SP']}` | `{q['SSR']}` | `{q['SR']}` | `{q['R']:,d}` | `{q['N']:,d}` | `{q['SSN']:,d}`",
+                value=f"{q['SP']} | {q['SSR']} | {q['SR']} | {q['R']:,d} | {q['N']:,d} | {q['SSN']:,d}",
                 inline=False
             )
             embed.add_field(
                 name=f"Amulets Have/Spent [{e_b} | {e_a}]",
-                value=f"[`{amulets_b:,d}`/`{amulets_spent_b:,d}` | `{amulets:,d}`/`{amulets_spent:,d}`]"
+                value=f"[{amulets_b:,d}/{amulets_spent_b:,d} | {amulets:,d}/{amulets_spent:,d}]"
             )
             embed.add_field(
                 name=f"Boss Damage Dealt | Raid [Success/Fail]",
-                value=f"`{boss_damage:,d}` | [`{raid_successes:,d}`/`{raid_failures:,d}`]",
+                value=f"{boss_damage:,d} | [{raid_successes:,d}/{raid_failures:,d}]",
                 inline=False
             )
             embed.add_field(
                 name=f"{e_fp} | 🎟 | 🎫 | 🚢 | 🙏 | 🎏",
-                value=f"`{friendship_pass}` | `{realm_ticket:,d}` | "
-                      f"`{enc_ticket:,d}` | `{count}` | `{prayers}` | `{parade}`",
+                value=f"{fp_pass} | {realm_ticket:,d} | {enc_ticket:,d} | {count} | {prayers} | {parade}",
                 inline=False
             )
             embed.add_field(
                 name=f"🍣 | {e_f} | {e_t} | {e_m} | {e_j} | {e_c}",
-                value=f"`{sushi:,d}` | `{friendship_points:,d}` | `{talismans:,d}` | "
-                      f"`{medals:,d}` | `{jades:,d}` | `{coins:,d}`"
+                value=f"{sushi:,d} | {friendship_points:,d} | {talismans:,d} | {medals:,d} | {jades:,d} | {coins:,d}"
             )
 
             msg = await process_msg_submit(ctx.channel, None, embed)
@@ -1128,8 +1126,8 @@ class Economy(commands.Cog):
             cost_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, currency: 1})[currency]
 
             embed = discord.Embed(title="Confirm purchase?", color=ctx.author.colour, timestamp=get_timestamp())
-            embed.description = f"{frame_name} frame for `{amount:,d}` {get_emoji(currency)}"
-            embed.add_field(name="Inventory", value=f"`{cost_item_have:,d}` {get_emoji(currency)}", inline=False)
+            embed.description = f"{frame_name} frame for {amount:,d} {get_emoji(currency)}"
+            embed.add_field(name="Inventory", value=f"{cost_item_have:,d} {get_emoji(currency)}", inline=False)
             embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
 
             try:
@@ -1162,12 +1160,12 @@ class Economy(commands.Cog):
                 embed = discord.Embed(title="Confirm purchase?", colour=user.colour, timestamp=get_timestamp())
                 embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
                 embed.description = \
-                    f"`{offer_amount}` {get_emoji(offer_item)} `for` " \
-                    f"`{cost_amount:,d}` {get_emoji(cost_item)}\n\n"
+                    f"{offer_amount} {get_emoji(offer_item)} for " \
+                    f"{cost_amount:,d} {get_emoji(cost_item)}\n\n"
                 embed.add_field(
                     name="Inventory",
-                    value=f"`{offer_item_have:,d}` {get_emoji(offer_item)} | "
-                          f"`{cost_item_have:,d}` {get_emoji(cost_item)}"
+                    value=f"{offer_item_have:,d} {get_emoji(offer_item)} | "
+                          f"{cost_item_have:,d} {get_emoji(cost_item)}"
                 )
                 embed.set_thumbnail(url=seller_img)
 
@@ -1219,13 +1217,13 @@ class Economy(commands.Cog):
 
             embed = discord.Embed(title="Purchase successful", colour=user.color, timestamp=get_timestamp())
             embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
-            embed.description = f"You acquired `{offer_a:,d}`{get_emoji(offer_i)} " \
-                                f"in exchange for `{cost_a:,d}`{get_emoji(cost_i)}"
+            embed.description = f"You acquired {offer_a:,d}{get_emoji(offer_i)} " \
+                                f"in exchange for {cost_a:,d}{get_emoji(cost_i)}"
             embed.set_thumbnail(url=seller_img)
             embed.add_field(
                 name="Inventory",
-                value=f"`{offer_item_have:,d}` {get_emoji(offer_i)} | "
-                      f"`{cost_item_have:,d}` {get_emoji(cost_i)}"
+                value=f"{offer_item_have:,d} {get_emoji(offer_i)} | "
+                      f"{cost_item_have:,d} {get_emoji(cost_i)}"
             )
             await process_msg_edit(msg, None, embed)
 
@@ -1258,7 +1256,7 @@ class Economy(commands.Cog):
 
                 embed = discord.Embed(
                     title="Confirmation receipt", colour=colour, timestamp=get_timestamp(),
-                    description=f"You acquired {frame_name} in exchange for `{amount:,d}`{get_emoji(currency)}",
+                    description=f"You acquired {frame_name} in exchange for {amount:,d}{get_emoji(currency)}",
                 )
                 embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
                 await process_msg_submit(ctx.channel, None, embed)

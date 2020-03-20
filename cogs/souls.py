@@ -257,6 +257,13 @@ class Souls(commands.Cog):
         elif args.lower() is not None and args in souls_all:
             await self.souls_show_users(ctx, ctx.author, args.lower())
 
+        elif not check_if_user_has_shiki_set(ctx):
+            embed = discord.Embed(
+                color=ctx.author.colour, title="Invalid shikigami",
+                description=f"set a shikigami first using `{self.prefix}set`",
+            )
+            await process_msg_submit(ctx.channel, None, embed)
+
         elif args.lower() is not None and args in soul_dungeons:
 
             query = users.find_one({"user_id": str(ctx.author.id)}, {"_id": 0, "souls_unlocked": 1})
@@ -274,6 +281,7 @@ class Souls(commands.Cog):
 
     async def souls_show_stats(self, ctx, user):
 
+        description, total_souls = [], 0
         d, eq_1, eq_2 = None, "$souls.stage", "$souls.clears"
         group = {"_id": None}
 
@@ -293,24 +301,29 @@ class Souls(commands.Cog):
         ]):
             d = x
 
-        description = []
-        total_souls = 0
-        for y in range(1, 11):
-            description.append(
-                f"S{lengthen_code_2(y)} :: {d[f'{y}_clear']}/{d[f'{y}_total']}"
-            )
-            total_souls += d[f'{y}_clear']
+        try:
+            for y in range(1, 11):
+                description.append(
+                    f"S{lengthen_code_2(y)} :: {d[f'{y}_clear']}/{d[f'{y}_total']}"
+                )
+                total_souls += d[f'{y}_clear']
 
-        embed = discord.Embed(
-            color=user.colour, title="Soul Statistics", timestamp=get_timestamp(),
-            description="```" + "\n".join(description) + "```"
-        )
-        embed.add_field(
-            name="Total Souls Challenged",
-            value=f"{total_souls}"
-        )
-        embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
-        await process_msg_submit(ctx.channel, None, embed)
+            embed = discord.Embed(
+                color=user.colour, title="Soul Statistics", timestamp=get_timestamp(),
+                description="```" + "\n".join(description) + "```"
+            )
+            embed.add_field(
+                name="Total Souls Challenged",
+                value=f"{total_souls}"
+            )
+            embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+            await process_msg_submit(ctx.channel, None, embed)
+
+        except TypeError:
+            embed = discord.Embed(
+                color=user.colour, title="Soul Statistics", description="You do not have souls in your inventory"
+            )
+            await process_msg_submit(ctx.channel, None, embed)
 
     async def souls_explore(self, stage, user, ctx, unlocked):
 
