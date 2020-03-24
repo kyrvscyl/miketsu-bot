@@ -126,74 +126,84 @@ class Automation(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
 
-        embed = discord.Embed(color=0xffffff, timestamp=get_timestamp())
-        embed.set_author(name=f"{member} [{member.display_name}] has left the house!")
-        embed.set_footer(
-            text=f"{member.guild.member_count} members",
-            icon_url=member.avatar_url
-        )
+        if str(id_guild) != str(member.guild.id):
+            return
 
-        record_scroll_channel = self.client.get_channel(int(id_scroll))
-        await process_msg_submit(record_scroll_channel, None, embed)
+        elif str(id_guild) == str(member.guild.id):
+
+            embed = discord.Embed(color=0xffffff, timestamp=get_timestamp())
+            embed.set_author(name=f"{member} [{member.display_name}] has left the house!")
+            embed.set_footer(
+                text=f"{member.guild.member_count} members",
+                icon_url=member.avatar_url
+            )
+
+            record_scroll_channel = self.client.get_channel(int(id_scroll))
+            await process_msg_submit(record_scroll_channel, None, embed)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
 
-        record_scroll_channel = self.client.get_channel(int(id_scroll))
-        auror_department_channel = self.client.get_channel(int(id_auror_dept))
+        if str(id_guild) != str(before.guild.id):
+            return
 
-        if before.roles != after.roles:
-            changed_role1 = list(set(after.roles) - set(before.roles))
-            changed_role2 = list(set(before.roles) - set(after.roles))
+        elif str(id_guild) == str(before.guild.id):
 
-            if not changed_role1:
+            record_scroll_channel = self.client.get_channel(int(id_scroll))
+            auror_department_channel = self.client.get_channel(int(id_auror_dept))
+
+            if before.roles != after.roles:
+                changed_role1 = list(set(after.roles) - set(before.roles))
+                changed_role2 = list(set(before.roles) - set(after.roles))
+
+                if not changed_role1:
+                    embed = discord.Embed(
+                        color=0x50e3c2, timestamp=get_timestamp(),
+                        title=f"Removed {changed_role2[0].name} role from {before} [{before.display_name}]"
+                    )
+                    embed.set_footer(
+                        text=f"{len(after.roles)} {pluralize('role', len(after.roles))}",
+                        icon_url=before.avatar_url
+                    )
+                    await process_msg_submit(record_scroll_channel, None, embed)
+
+                elif not changed_role2:
+                    embed = discord.Embed(
+                        color=0x50e3c2, timestamp=get_timestamp(),
+                        title=f"Added {changed_role1[0].name} role to {before} [{before.display_name}]"
+                    )
+                    embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
+                    await process_msg_submit(record_scroll_channel, None, embed)
+
+                    if changed_role1[0].name == "Auror":
+                        embed = discord.Embed(
+                            color=0x50e3c2, timestamp=get_timestamp(),
+                            title=f"{before.display_name} has been promoted to ⚜ Auror"
+                        )
+                        embed.set_footer(icon_url=before.avatar_url)
+                        await process_msg_submit(auror_department_channel, None, embed)
+
+            elif before.name != after.name:
                 embed = discord.Embed(
-                    color=0x50e3c2, timestamp=get_timestamp(),
-                    title=f"Removed {changed_role2[0].name} role from {before} [{before.display_name}]"
+                    color=0x7ed321, timestamp=get_timestamp(),
+                    description=f"{before.name} → {after.name}",
                 )
-                embed.set_footer(
-                    text=f"{len(after.roles)} {pluralize('role', len(after.roles))}",
+                embed.set_author(
+                    name=f"Username change",
                     icon_url=before.avatar_url
                 )
                 await process_msg_submit(record_scroll_channel, None, embed)
 
-            elif not changed_role2:
+            elif before.nick != after.nick:
                 embed = discord.Embed(
-                    color=0x50e3c2, timestamp=get_timestamp(),
-                    title=f"Added {changed_role1[0].name} role to {before} [{before.display_name}]"
+                    color=0x7ed321, timestamp=get_timestamp(),
+                    description=f"{before.display_name} → {after.mention}",
                 )
-                embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
+                embed.set_author(
+                    name=f"Nickname change",
+                    icon_url=before.avatar_url
+                )
                 await process_msg_submit(record_scroll_channel, None, embed)
-
-                if changed_role1[0].name == "Auror":
-                    embed = discord.Embed(
-                        color=0x50e3c2, timestamp=get_timestamp(),
-                        title=f"{before.display_name} has been promoted to ⚜ Auror"
-                    )
-                    embed.set_footer(icon_url=before.avatar_url)
-                    await process_msg_submit(auror_department_channel, None, embed)
-
-        elif before.name != after.name:
-            embed = discord.Embed(
-                color=0x7ed321, timestamp=get_timestamp(),
-                description=f"{before.name} → {after.name}",
-            )
-            embed.set_author(
-                name=f"Username change",
-                icon_url=before.avatar_url
-            )
-            await process_msg_submit(record_scroll_channel, None, embed)
-
-        elif before.nick != after.nick:
-            embed = discord.Embed(
-                color=0x7ed321, timestamp=get_timestamp(),
-                description=f"{before.display_name} → {after.mention}",
-            )
-            embed.set_author(
-                name=f"Nickname change",
-                icon_url=before.avatar_url
-            )
-            await process_msg_submit(record_scroll_channel, None, embed)
 
 
 def setup(client):
