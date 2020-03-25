@@ -5,6 +5,7 @@ Miketsu, 2020
 
 from datetime import timedelta
 
+from PIL import Image
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -222,6 +223,23 @@ class Events(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
+    @commands.command(aliases=["potg1"])
+    @commands.is_owner()
+    async def events_start_potg(self, ctx):
+
+        channel = self.client.get_channel(int(id_portrait))
+
+        for index, entry in enumerate(events.find_one({"event": "portrait"}, {"_id": 0})["links"]):
+
+            embed = discord.Embed(
+                timestamp=get_timestamp(),
+                description=f"{entry['emoji']} *{entry['caption']}*",
+                color=colour
+            )
+            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar_url)
+            embed.set_image(url=entry["link"])
+            await process_msg_submit(channel, None, embed)
+
     @commands.command(aliases=["potg"])
     @commands.is_owner()
     async def events_start_potg(self, ctx):
@@ -256,6 +274,39 @@ class Events(commands.Cog):
             embed.set_image(url=entry["link"])
             await process_msg_submit(channel, None, embed)
 
+    @commands.command(aliases=["potg1"])
+    @commands.is_owner()
+    async def events_start_potg(self, ctx):
+
+        channel = self.client.get_channel(int(id_headlines))
+
+        embed = discord.Embed(
+            description="We are pleased to conclude the result of our\n"
+                        "**2nd Patronus Anniversary: Portrait of a Goddess Event!**\n\n"
+                        "Our winning art with an RNG of 45% is.... :drum:\n\n"
+                        "||Our voters' choice!||\n"
+                        "||PoaG entry #3: Together, let's bring new life to this wonderful place :sparkles:||\n"
+                        "||Congratulations to <@!628219450931544065>!||\n\n"
+                        "Our organizer will contact you for your 10USD worth of prize! :gift_heart::ear_of_rice:",
+            timestamp=get_timestamp(),
+            color=colour
+        )
+        embed.set_author(name="Portrait of the Goddess Results!", icon_url=self.client.user.avatar_url)
+
+        default_role = ctx.guild.default_role
+        await process_msg_submit(channel, default_role, embed)
+
+        for index, entry in enumerate(events.find_one({"event": "portrait"}, {"_id": 0})["links"]):
+
+            embed = discord.Embed(
+                timestamp=get_timestamp(),
+                description=f"{entry['emoji']} *{entry['caption']}*\n\n"
+                            f"Illustration by <@!{entry['id']}>",
+                color=colour
+            )
+            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar_url)
+            embed.set_image(url=entry["link"])
+            await process_msg_submit(channel, None, embed)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -283,6 +334,167 @@ class Events(commands.Cog):
                     users_reacted = await reaction.users().flatten()
                     if member in users_reacted:
                         await process_msg_reaction_remove(msg, payload.emoji, member)
+
+    @commands.command(aliases=["freeze"])
+    @commands.is_owner()
+    async def events_start_frozen(self, ctx):
+
+        await process_msg_reaction_add(ctx.message, "❄")
+        theme_dict = events.find_one({"event": "afd2019"}, {"_id": 0})
+        themed_names_id = [str(self.client.user.id)]
+
+        # bot
+        with open(f"data/raw/{theme_dict['server'][2]['new']}", "rb") as f:
+            image_file = f.read()
+        try:
+            await self.client.user.edit(avatar=image_file)
+        except discord.errors.HTTPException:
+            pass
+
+        # server name
+        with open(f"data/raw/{theme_dict['server'][1]['new']}", "rb") as f:
+            image_file = f.read()
+        try:
+            await ctx.guild.edit(name=theme_dict["server"][0]["themed"])
+            await ctx.guild.edit(icon=image_file)
+        except discord.errors.HTTPException:
+            pass
+
+        # categories
+        for category in theme_dict["categories"]:
+            category_id = category["id"]
+            category_name_new = category["themed"]
+            category = self.client.get_channel(int(category_id))
+            await category.edit(name=category_name_new)
+
+        # categories
+        for channel in theme_dict["channels"]:
+            channel_id = channel["id"]
+            channel_name_new = channel["themed"]
+            channel_target = self.client.get_channel(int(channel_id))
+            await channel_target.edit(name=channel_name_new)
+
+        # roles
+        for role in theme_dict["roles"]:
+            role_id = role["id"]
+            role_name_new = role["themed"]
+            role_target = discord.utils.get(ctx.guild.roles, id=int(role_id))
+            await role_target.edit(name=role_name_new)
+
+        # officers
+        for officer in theme_dict["specials"]:
+            officer_id = officer["id"]
+            themed_names_id.append(officer_id)
+            officer_name_new = officer["themed"]
+            officer_target = ctx.guild.get_member(int(officer_id))
+
+            events.update_one({
+                "event": "afd2019",
+                "officers.id": officer_id
+            }, {
+                "$set": {
+                    "officers.$.name": officer_target.display_name
+                }
+            })
+
+            try:
+                await officer_target.edit(nick=officer_name_new)
+            except discord.errors.Forbidden:
+                continue
+
+        # members
+        for member in ctx.guild.members:
+            if str(member.id) in themed_names_id:
+                continue
+
+            events.update_one({"event": "afd2019"}, {
+                "$push": {
+                    "members": {
+                        "id": str(member.id),
+                        "name": member.display_name,
+                        "themed": "Troll"
+                    }}
+            })
+            await member.edit(nick="Troll")
+
+        embed = discord.Embed(
+            description=None,
+            color=colour
+        )
+        embed.set_author(name="Elsa", icon_url=None)
+
+    @commands.command(aliases=["defrost"])
+    @commands.is_owner()
+    async def events_end_frozen(self, ctx):
+
+        await process_msg_reaction_add(ctx.message, "🔥")
+        theme_dict = events.find_one({"event": "afd2019"}, {"_id": 0})
+        themed_names_id = [str(self.client.user.id)]
+
+        # bot
+        with open(f"data/raw/{theme_dict['server'][2]['old']}", "rb") as f:
+            image_file = f.read()
+        try:
+            await self.client.user.edit(avatar=image_file)
+        except discord.errors.HTTPException:
+            pass
+
+        # server name
+        with open(f"data/raw/{theme_dict['server'][1]['old']}", "rb") as f:
+            image_file = f.read()
+        try:
+            await ctx.guild.edit(name=theme_dict["server"][0]["name"])
+            await ctx.guild.edit(icon=image_file)
+        except discord.errors.HTTPException:
+            pass
+
+        # categories
+        for category in theme_dict["categories"]:
+            category_id = category["id"]
+            category_name_new = category["name"]
+            category = self.client.get_channel(int(category_id))
+            await category.edit(name=category_name_new)
+
+        # categories
+        for channel in theme_dict["channels"]:
+            channel_id = channel["id"]
+            channel_name_new = channel["name"]
+            channel_target = self.client.get_channel(int(channel_id))
+            await channel_target.edit(name=channel_name_new)
+
+        # roles
+        for role in theme_dict["roles"]:
+            role_id = role["id"]
+            role_name_new = role["name"]
+            role_target = discord.utils.get(ctx.guild.roles, id=int(role_id))
+            await role_target.edit(name=role_name_new)
+
+        # officers
+        for officer in theme_dict["specials"]:
+            officer_id = officer["id"]
+            themed_names_id.append(officer_id)
+            officer_name_new = officer["name"]
+            officer_target = ctx.guild.get_member(int(officer_id))
+
+            try:
+                await officer_target.edit(nick=officer_name_new)
+            except discord.errors.Forbidden:
+                continue
+
+        # members
+        for member in ctx.guild.members:
+            if str(member.id) in themed_names_id:
+                continue
+
+            name_original = events.find_one({
+                "event": "afd2019",
+                "members.id": str(member.id)
+            }, {
+                "_id": 0,
+                "members.$": 1
+            })["members"][0]["name"]
+
+            await member.edit(nick=name_original)
 
 
 def setup(client):
