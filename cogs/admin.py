@@ -292,12 +292,44 @@ class Admin(commands.Cog):
                 await process_msg_submit(member, content, None)
                 await process_msg_reaction_add(ctx.message, "✅")
 
+    async def admin_purge_messages_help(self, ctx):
+
+        embed = discord.Embed(
+            colour=colour, title="clear",
+            description="allows me to clear an amount of messages in the same channel"
+        )
+        embed.add_field(name="Format", value=f"*`{self.prefix}clear <non negative integer: max of 100>`*")
+        await process_msg_submit(ctx.channel, None, embed)
+
     @commands.command(aliases=["clear"])
     @commands.guild_only()
     @commands.check(check_if_user_has_any_admin_roles)
-    async def admin_purge_messages(self, ctx, amount=2):
+    async def admin_purge_messages(self, ctx, amount=None):
 
-        await process_msg_purge(ctx.channel, amount)
+        if amount is None:
+            await self.admin_purge_messages_help(ctx)
+
+        else:
+            try:
+                int(amount)
+            except ValueError:
+                await self.admin_purge_messages_help(ctx)
+            else:
+                if int(amount) > 0:
+                    await process_msg_purge(ctx.channel, amount)
+
+    async def admin_manage_guild_help(self, ctx, invoke, args_v):
+
+        embed = discord.Embed(
+            title=f"{invoke}, {invoke[:1]}", colour=colour,
+            description="recognizable first arguments for this command"
+        )
+        embed.add_field(name="Arguments", inline=False, value=f"*{', '.join(args_v)}*", )
+        embed.add_field(
+            name="Example", inline=False,
+            value=f"*`{self.prefix}{invoke} {random.choice(args_v)}`*",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["manage", "m"])
     @commands.guild_only()
@@ -307,18 +339,11 @@ class Admin(commands.Cog):
         invoke = "manage"
         args_v = ["help", "add", "delete", "update", "show"]
 
-        if args[0].lower() in [args_v[0], args_v[0][:1]]:
+        if len(args) == 0:
+            await self.admin_manage_guild_help(ctx, invoke, args_v)
 
-            embed = discord.Embed(
-                title=f"{invoke}, {invoke[:1]}", colour=colour,
-                description="recognizable first arguments for this command"
-            )
-            embed.add_field(name="Arguments", inline=False, value=f"*{', '.join(args_v)}*", )
-            embed.add_field(
-                name="Example", inline=False,
-                value=f"*`{self.prefix}{invoke} {random.choice(args_v)}`*",
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+        elif args[0].lower() in [args_v[0], args_v[0][:1]]:
+            await self.admin_manage_guild_help(ctx, invoke, args_v)
 
         elif args[0].lower() in [args_v[1], args_v[1][:1]]:
 
@@ -457,24 +482,24 @@ class Admin(commands.Cog):
 
             if len(args) == 1:
                 embed = discord.Embed(
-                    title="manage show, m s", colour=colour,
+                    title=f"{invoke} {args_v[4]}, {invoke[:1]} {args_v[4][:1]}", colour=colour,
                     description="queries the guild database"
                 )
                 embed.add_field(
                     name="Formats",
-                    value=f"• *`{self.prefix}m s all <opt: [<startswith> or guild]>`*\n"
-                          f"• *`{self.prefix}m s all <role or status> <value>`*\n"
-                          f"• *`{self.prefix}m s <name or id_num>`*",
+                    value=f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all <opt: [<startswith> or guild]>`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all <role or status> <value>`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} <name or id_num>`*",
                     inline=False
                 )
                 embed.add_field(
                     name="Examples",
-                    value=f"• *`{self.prefix}m s all`*\n"
-                          f"• *`{self.prefix}m s all aki`*\n"
-                          f"• *`{self.prefix}m s status inactive`*\n"
-                          f"• *`{self.prefix}m s 120`*\n"
-                          f"• *`{self.prefix}m s all <guild/abc/123>`*\n"
-                          f"• *`{self.prefix}m s all guild strike`*",
+                    value=f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all aki`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} status inactive`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} 120`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all <guild/[abc]/123>`*\n"
+                          f"• *`{self.prefix}{invoke[:1]} {args_v[4][:1]} all guild strike`*",
                     inline=False
                 )
                 await process_msg_submit(ctx.channel, None, embed)
@@ -487,7 +512,7 @@ class Admin(commands.Cog):
 
                 embed = discord.Embed(
                     colour=colour,
-                    title="Invalid `show` syntax",
+                    title=f"Invalid `{args_v[4]}` syntax",
                     description="provide a role value to show"
                 )
                 embed.add_field(
@@ -504,7 +529,7 @@ class Admin(commands.Cog):
 
                 embed = discord.Embed(
                     colour=colour,
-                    title="Invalid `show` syntax",
+                    title=f"Invalid `{args_v[4]}` syntax",
                     description="provide a status value to show"
                 )
                 embed.add_field(

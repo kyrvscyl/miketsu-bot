@@ -220,8 +220,7 @@ class Error(commands.Cog):
             if str(ctx.command) == "economy_sushi_bento_serve":
 
                 embed = discord.Embed(
-                    title="sushi, food, hungry, ap",
-                    colour=colour,
+                    title="sushi, food, hungry, ap", colour=colour,
                     description=f"request for hourly free food servings\n"
                                 f"pings the <@&{id_sushchefs}> role"
                 )

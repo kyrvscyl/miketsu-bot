@@ -53,7 +53,7 @@ class Shikigami(commands.Cog):
 
     async def shikigami_show_post_collected(self, member, rarity, ctx):
 
-        listings_shikis_evo, listings_shikis, pool_rarity = [], [], get_pool_rarity(rarity)
+        listings_shikis_evo, listings_shikis, listings_rarity_all = [], [], get_pool_rarity(rarity)
         for entry in users.aggregate([{
             "$match": {
                 "user_id": str(member.id)}}, {
@@ -77,12 +77,12 @@ class Shikigami(commands.Cog):
             listings_shikis.append(entry["shikigami"]["name"])
 
         for entry in shikigamis.find({"rarity": rarity}, {"_id": 0, "name": 1}):
-            pool_rarity.append(entry["name"])
+            listings_rarity_all.append(entry["name"])
 
-        listings_uncollected = list(set(pool_rarity) - set(listings_shikis))
+        listings_uncollected = list(set(listings_rarity_all) - set(listings_shikis))
 
         link = await self.shikigami_show_post_collected_generate(
-            listings_shikis_evo, listings_uncollected, pool_rarity, rarity, member
+            listings_shikis_evo, listings_uncollected, listings_rarity_all, rarity, member
         )
 
         embed = discord.Embed(
@@ -93,10 +93,10 @@ class Shikigami(commands.Cog):
         embed.set_footer(icon_url=member.avatar_url, text=f"{member.display_name}")
         await process_msg_submit(ctx.channel, None, embed)
 
-    async def shikigami_show_post_collected_generate(self, shikis, shikis_unc, pool_rarity, rarity, member):
+    async def shikigami_show_post_collected_generate(self, shikis, shikis_unc, listings_rarity_all, rarity, member):
 
         rows, cols = get_variables(rarity)
-        width, height = get_image_variables(pool_rarity, cols, rows)
+        width, height = get_image_variables(listings_rarity_all, cols, rows)
         new_im = Image.new("RGBA", (width, height))
 
         images = []

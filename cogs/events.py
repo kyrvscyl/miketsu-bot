@@ -5,7 +5,6 @@ Miketsu, 2020
 
 from datetime import timedelta
 
-from PIL import Image
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -228,6 +227,7 @@ class Events(commands.Cog):
     async def events_start_potg(self, ctx):
 
         channel = self.client.get_channel(int(id_portrait))
+        await process_msg_reaction_add(ctx.message, "✅")
 
         for index, entry in enumerate(events.find_one({"event": "portrait"}, {"_id": 0})["links"]):
 
@@ -336,7 +336,7 @@ class Events(commands.Cog):
                         await process_msg_reaction_remove(msg, payload.emoji, member)
 
     @commands.command(aliases=["freeze"])
-    @commands.is_owner()
+    @commands.check(check_if_user_has_any_admin_roles)
     async def events_start_frozen(self, ctx):
 
         await process_msg_reaction_add(ctx.message, "❄")
