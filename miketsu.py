@@ -17,7 +17,7 @@ config.update_one({"var": 1}, {"$set": {"clock": False}})
 
 def cogs_extension_startup():
     for filename in sorted(os.listdir("./cogs")):
-        if filename.endswith(".py") and filename == "events.py":
+        if filename.endswith(".py"):
             try:
                 client.load_extension(f"cogs.{filename[:-3]}")
             except commands.ExtensionNotLoaded:
