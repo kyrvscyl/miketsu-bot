@@ -17,7 +17,7 @@ config.update_one({"var": 1}, {"$set": {"clock": False}})
 
 def cogs_extension_startup():
     for filename in sorted(os.listdir("./cogs")):
-        if filename.endswith(".py"):
+        if filename.endswith(".py") and filename == "events.py":
             try:
                 client.load_extension(f"cogs.{filename[:-3]}")
             except commands.ExtensionNotLoaded:
@@ -51,7 +51,8 @@ async def show_bot_statistics(ctx):
     embed.add_field(
         name="Development",
         value=f"• Coding: <@!{bot_info.owner.id}>\n"
-              f"• Support Group: <@!437941992748482562>, <@!201402446705065984>",
+              f"• Support Group: <@!437941992748482562>, <@!201402446705065984>\n"
+              f"• Illustration by <@!628219450931544065>",
         inline=False
     )
     embed.add_field(
