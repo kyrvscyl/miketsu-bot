@@ -340,7 +340,7 @@ class Events(commands.Cog):
     async def events_start_frozen(self, ctx):
 
         await process_msg_reaction_add(ctx.message, "❄")
-        theme_dict = events.find_one({"event": "afd2019"}, {"_id": 0})
+        theme_dict = events.find_one({"event": "afd2020"}, {"_id": 0})
         themed_names_id = [str(self.client.user.id)]
 
         # bot
@@ -350,6 +350,7 @@ class Events(commands.Cog):
             await self.client.user.edit(avatar=image_file)
         except discord.errors.HTTPException:
             pass
+
 
         # server name
         with open(f"data/raw/{theme_dict['server'][1]['new']}", "rb") as f:
@@ -428,7 +429,7 @@ class Events(commands.Cog):
     async def events_end_frozen(self, ctx):
 
         await process_msg_reaction_add(ctx.message, "🔥")
-        theme_dict = events.find_one({"event": "afd2019"}, {"_id": 0})
+        theme_dict = events.find_one({"event": "afd2020"}, {"_id": 0})
         themed_names_id = [str(self.client.user.id)]
 
         # bot
