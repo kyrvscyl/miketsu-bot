@@ -34,7 +34,7 @@ class Quest(commands.Cog):
 
     async def logging(self, msg):
         channel = self.client.get_channel(int(id_scroll))
-        await channel.send(f"[{get_time().strftime('%Y-%b-%d %HH')}] " + msg)
+        await channel.send(f"`[{get_time().strftime('%Y-%b-%d %HH')}]` " + msg)
 
     @commands.command(aliases=["hint"])
     @commands.has_role("🐬")
@@ -751,7 +751,7 @@ class Expecto(commands.Cog):
                     f"quest1.$.hints.{path_new}": ["locked", "locked", "locked", "locked", "locked"]
                 }
             })
-        await Quest(self.client).logging(f"Shifted {user} path to {path_new}")
+        await Quest(self.client).logging(f"Shifted {user}'s path to {path_new}")
 
     @commands.command(aliases=["patronus"])
     @commands.check(check_if_user_has_development_role)

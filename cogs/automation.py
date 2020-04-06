@@ -159,7 +159,7 @@ class Automation(commands.Cog):
                 if not changed_role1:
                     embed = discord.Embed(
                         color=0x50e3c2, timestamp=get_timestamp(),
-                        title=f"Removed {changed_role2[0].name} role from {before} [{before.display_name}]"
+                        description=f"Removed {changed_role2[0].mention} role from {before.mention}",
                     )
                     embed.set_footer(
                         text=f"{len(after.roles)} {pluralize('role', len(after.roles))}",
@@ -170,7 +170,7 @@ class Automation(commands.Cog):
                 elif not changed_role2:
                     embed = discord.Embed(
                         color=0x50e3c2, timestamp=get_timestamp(),
-                        title=f"Added {changed_role1[0].name} role to {before} [{before.display_name}]"
+                        description=f"Added {changed_role1[0].mention} role to {before.mention}",
                     )
                     embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.avatar_url)
                     await process_msg_submit(record_scroll_channel, None, embed)

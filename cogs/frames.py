@@ -92,7 +92,7 @@ class Frames(commands.Cog):
             await process_msg_submit(channel, None, embed)
             await frame_acquisition(role_new, frame_name, 2500, channel)
 
-        if role_current == role_new:
+        elif role_current == role_new:
 
             jades = 2000
             users.update_one({"user_id": str(role_current.id)}, {"$inc": {"jades": jades}})

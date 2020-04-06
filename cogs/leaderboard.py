@@ -25,7 +25,7 @@ class Leaderboard(commands.Cog):
             value=f"*SP, SSR, SR, SSN, level, medals, amulets, friendship, ships, streak, frames*",
             inline=False
         )
-        embed.add_field(name="Example", value=f"*`{self.prefix}leaderboard friendship`*", inline=False)
+        embed.add_field(name="Example", value=f"*{self.prefix}leaderboard friendship*", inline=False)
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["leaderboard", "lb"])

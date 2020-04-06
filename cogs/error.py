@@ -157,6 +157,10 @@ class Error(commands.Cog):
             "shikigami_show_post_shikis"
             "shikigami_show_post_shikis",
         ]
+
+        self.functions_role_only = [
+            "hint_request"
+        ]
     
     async def submit_error(self, ctx, error, exception):
 
@@ -203,6 +207,9 @@ class Error(commands.Cog):
         elif isinstance(error, commands.CheckFailure):
 
             if str(ctx.command) in self.functions_is_owner:
+                return
+
+            elif str(ctx.command) in self.functions_role_only:
                 return
 
             elif isinstance(error, commands.NoPrivateMessage):

@@ -543,6 +543,8 @@ class Economy(commands.Cog):
                             parade_pull.append(random.choice(pool_ssr))
                         else:
                             parade_pull.append(random.choice(pool_ssn))
+                elif roll <= 10:
+                    parade_pull.append(random.choice(pool_others))
                 elif roll <= 25:
                     parade_pull.append(random.choice(pool_sr))
                 else:

@@ -188,6 +188,14 @@ class Encounter(commands.Cog):
         if survivability == 0 and discoverability == 0:
             await self.enc_perform_reset_boss()
 
+    @commands.command(aliases=["try"])
+    @commands.is_owner()
+    async def enc_nether_try(self, ctx, *, args1):
+
+        shiki_bet = args1.lower()
+        total_chance = self.enc_roll_nether_get_chance(ctx.author, shiki_bet, 0.2, 50, [0, 0], 70, 1)
+        print(total_chance)
+
     @commands.command(aliases=["netherworld", "nw"])
     @commands.guild_only()
     async def enc_nether_info(self, ctx):
@@ -239,7 +247,7 @@ class Encounter(commands.Cog):
             shikigamis_formatted = []
             embed_new = discord.Embed(
                 color=user.colour, title=f"Encounter Netherworld", timestamp=get_timestamp(),
-                description=f"react below and place your shikigamis to start clearing waves",
+                description=f"React below and place your shikigamis to start clearing waves",
             )
 
             for e in t:
@@ -664,12 +672,12 @@ class Encounter(commands.Cog):
                 embed = discord.Embed(
                     color=user.colour, timestamp=get_timestamp(),
                     title="Encounter treasure",
-                    description=f"You acquired `{offer_a:,d}`{get_emoji(offer_i)} in exchange for "
-                                f"`{cost_a:,d}`{get_emoji(cost_i)}",
+                    description=f"You acquired {offer_a:,d}{get_emoji(offer_i)} in exchange for "
+                                f"{cost_a:,d}{get_emoji(cost_i)}",
                 )
                 embed.add_field(
                     name="Updated Inventory", inline=False,
-                    value=f"`{offer_i_have:,d}` {get_emoji(offer_i)} | `{cost_i_have:,d}` {get_emoji(cost_i)}"
+                    value=f"{offer_i_have:,d} {get_emoji(offer_i)} | {cost_i_have:,d} {get_emoji(cost_i)}"
                 )
                 embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
                 await process_msg_edit(msg, None, embed)
@@ -868,8 +876,8 @@ class Encounter(commands.Cog):
             jade_steal = round(boss_stats["rewards"]["jades"] * 0.05)
             coin_steal = round(boss_stats["rewards"]["coins"] * 0.08)
 
-            description = f"💨 The Rare Boss {boss} has fled with `{round(boss_currenthp):,d}` remaining HP\n" \
-                          f"💸 Stealing `{jade_steal:,d}` {e_j} & `{coin_steal:,d}` {e_c} " \
+            description = f"💨 The Rare Boss {boss} has fled with {round(boss_currenthp):,d} remaining HP\n" \
+                          f"💸 Stealing {jade_steal:,d} {e_j} & {coin_steal:,d} {e_c} " \
                           f"each from its attackers!\n\n{random.choice(self.boss_comment)}~"
 
             embed = discord.Embed(colour=discoverer.colour, description=description, timestamp=get_timestamp())

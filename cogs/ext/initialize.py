@@ -203,6 +203,8 @@ trading_list_formatted = []
 for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
     if shikigami["shrine"] is True:
         pool_shrine.append(shikigami["name"])
+    elif shikigami["amulet"] == "parade":
+        pool_others.append(shikigami["name"])
     elif shikigami["rarity"] == "SP":
         pool_sp.append(shikigami["name"])
     elif shikigami["rarity"] == "SSR":
@@ -225,6 +227,7 @@ pool_all_broken.extend(pool_n)
 pool_all_broken.extend(pool_ssn)
 pool_all.extend(pool_all_mystery)
 pool_all.extend(pool_all_broken)
+pool_all.extend(pool_others)
 
 rarity_dict = {"SP": pool_sp, "SSR": pool_ssr, "SR": pool_sr, "R": pool_r, "N": pool_n, "SSN": pool_ssn}
 
@@ -450,8 +453,8 @@ def get_emoji_cards(x):
     return cards_realm[x]
 
 
-def get_image_variables(x, cols, rows):
-    return rows, ceil(len(x) / cols) * 90
+def get_image_variables(rarity_sum, cols, width):
+    return width, ceil(len(rarity_sum) / cols) * 90
 
 
 def get_shiki_tile_coordinates(c, cols, rows):
@@ -909,6 +912,7 @@ def get_data_quest1(user_id):
 
 def get_profile_finished_quest1(user):
     score, timestamp_start, patronus_summon, hints_unlocked, owl_final, wand, paths = "", "", "", "", "", "", ""
+
     for profile in quests.aggregate([{
         "$match": {"user_id": str(user.id)}}, {
         "$project": {"_id": 0, "quest1": {"$slice": ["$quest1", -1]}}
@@ -937,6 +941,7 @@ def get_profile_history_quest1(user, cycle):
 
 def get_profile_progress_quest1(user):
     score, timestamp_start, current_path, cycle, hints_unlocked, paths = "", "", "", "", "", ""
+
     for profile in quests.aggregate([{
         "$match": {"user_id": str(user.id)}}, {
         "$project": {"_id": 0, "quest1": {"$slice": ["$quest1", -1]}}

@@ -172,7 +172,7 @@ class Embeds(commands.Cog):
         )
         embed4.add_field(
             name="# 4. Guild Bonuses",
-            value="• Top 10 guild in overall activeness ranking\n"
+            value="• Top 25 guild in overall activeness ranking\n"
                   "• Rated at 60-70 guild packs per week\n"
                   "• Weekly 1-hour soul & evo bonus\n"
                   "• 24/7 exp, coin, & medal buffs\n"
@@ -190,7 +190,7 @@ class Embeds(commands.Cog):
             inline=False
         )
         embed4.add_field(
-            name="# 5. Inactivity strikes system",
+            name="# 6. Inactivity strikes system",
             value=f"• After missing any 2 weeks of GQ requirements without notice in <#{id_absence_app}>"
                   f" or pming an officer you will get a strike\n"
                   f"• After the above, offenders will receive +1 strike for every 1 week\n"
@@ -200,7 +200,7 @@ class Embeds(commands.Cog):
             inline=False
         )
         embed4.add_field(
-            name="# 6. Shard Trading",
+            name="# 7. Shard Trading",
             value=f"• If leaving for shards, contact any Head & specify amount of days\n"
                   f"• If inviting a trader, notify a Head in advance\n"
                   f"• Traders are required to fulfill our minimum GQ requirements or they will be kicked\n​ ",

@@ -408,7 +408,7 @@ class Events(commands.Cog):
             if str(member.id) in themed_names_id:
                 continue
 
-            events.update_one({"event": "afd2019"}, {
+            events.update_one({"event": "afd2020"}, {
                 "$push": {
                     "members": {
                         "id": str(member.id),
@@ -416,13 +416,10 @@ class Events(commands.Cog):
                         "themed": "Troll"
                     }}
             })
-            await member.edit(nick="Troll")
-
-        embed = discord.Embed(
-            description=None,
-            color=colour
-        )
-        embed.set_author(name="Elsa", icon_url=None)
+            try:
+                await member.edit(nick="Troll")
+            except discord.errors.HTTPException:
+                pass
 
     @commands.command(aliases=["defrost"])
     @commands.is_owner()
@@ -496,6 +493,7 @@ class Events(commands.Cog):
             })["members"][0]["name"]
 
             await member.edit(nick=name_original)
+            await asyncio.sleep(1)
 
 
 def setup(client):

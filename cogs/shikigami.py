@@ -76,9 +76,6 @@ class Shikigami(commands.Cog):
             listings_shikis_evo.append((entry["shikigami"]["name"], entry["shikigami"]["evolved"]))
             listings_shikis.append(entry["shikigami"]["name"])
 
-        for entry in shikigamis.find({"rarity": rarity}, {"_id": 0, "name": 1}):
-            listings_rarity_all.append(entry["name"])
-
         listings_uncollected = list(set(listings_rarity_all) - set(listings_shikis))
 
         link = await self.shikigami_show_post_collected_generate(
@@ -96,7 +93,10 @@ class Shikigami(commands.Cog):
     async def shikigami_show_post_collected_generate(self, shikis, shikis_unc, listings_rarity_all, rarity, member):
 
         rows, cols = get_variables(rarity)
+        print(rows, cols, listings_rarity_all)
         width, height = get_image_variables(listings_rarity_all, cols, rows)
+
+        print(width, height)
         new_im = Image.new("RGBA", (width, height))
 
         images = []
@@ -334,9 +334,7 @@ class Shikigami(commands.Cog):
         images, font, x, y = [], font_create(30), 1, 60
         rows, cols = get_variables(rarity)
 
-        print(pool_rarity)
         width, height = get_image_variables(pool_rarity, cols, rows)
-        print(width, height)
         new_im = Image.new("RGBA", (width, height))
 
         for entry in shikis:
@@ -407,7 +405,7 @@ class Shikigami(commands.Cog):
                 "_id": 0, "shikigami.$": 1
             })
 
-            if shikigami_name_lowered not in pool_all_mystery and shikigami_name_lowered not in pool_all_broken:
+            if shikigami_name_lowered not in pool_all:
                 await shikigami_post_approximate_results(ctx, shikigami_name_lowered)
 
             elif query is None:
@@ -454,6 +452,7 @@ class Shikigami(commands.Cog):
                 listings_souls.append([None, 0, i])
 
         listings_souls = sorted(listings_souls, key=lambda z: z[2], reverse=False)
+        print(listings_souls)
 
         embed = discord.Embed(
             colour=user.colour, timestamp=get_timestamp(),
@@ -513,6 +512,8 @@ class Shikigami(commands.Cog):
             for y in list(range(1, g + 1)):
                 im_new.paste(magatama_raw, get_new_coor_magatama(y), magatama_raw)
 
+            return im_new
+
         def get_soul_coordinates(s):
             soul_coordinates_plot = {
                 "1": [((width - 90) / 2) - (d / 2), ((height - h_hex) / 2) - (d / 2)],
@@ -529,11 +530,11 @@ class Shikigami(commands.Cog):
             if listings_souls[index][0] is not None:
                 im_magatama = Image.open("data/raw/magatama.png")
                 w, h = im_magatama.size
-                create_magatama_grade(listings_souls[index][1], im_magatama)
+                magatama_graded = create_magatama_grade(listings_souls[index][1], im_magatama)
 
-                h_percent = (height_base / float(im_magatama.size[1]))
-                w_size = int((float(im_magatama.size[0]) * float(h_percent)))
-                x = im_magatama.resize((w_size, height_base), Image.ANTIALIAS)
+                h_percent = (height_base / float(magatama_graded.size[1]))
+                w_size = int((float(magatama_graded.size[0]) * float(h_percent)))
+                x = magatama_graded.resize((w_size, height_base), Image.ANTIALIAS)
                 souls_im = Image.open(f"data/souls/{listings_souls[index][0]}.png").resize((d, d), Image.ANTIALIAS)
                 im.paste(souls_im, (get_soul_coordinates(str(index + 1))), souls_im)
                 im.paste(
@@ -687,10 +688,10 @@ class Shikigami(commands.Cog):
                 users.update_one({"user_id": str(ctx.author.id)}, {"$set": {"display": shikigami_name_lower}})
                 await process_msg_reaction_add(ctx.message, "✅")
 
-            elif shikigami_name_lower not in pool_all_mystery:
+            elif shikigami_name_lower not in pool_all:
                 await shikigami_post_approximate_results(ctx, shikigami_name_lower)
 
-            elif shikigami_name_lower in pool_all_mystery:
+            elif shikigami_name_lower in pool_all:
                 count = users.count_documents({"user_id": str(ctx.author.id), "shikigami.name": shikigami_name_lower})
 
                 if count != 1:

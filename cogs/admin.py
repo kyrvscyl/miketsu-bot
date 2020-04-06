@@ -734,7 +734,12 @@ class Admin(commands.Cog):
             await process_msg_reaction_add(ctx.message, "✅")
 
         elif args[2].lower() in ["role"] and args[3].lower() in self.roles:
-            members.update_one(find_query, {"$set": {"role": args[3].lower()}})
+            update = {"status": args[3].lower()}
+
+            if args[3].lower() in ["applicant"]:
+                update.update({"status": "active", "status_update": get_time()})
+
+            members.update_one(find_query, {"$set": update})
             await process_msg_reaction_add(ctx.message, "✅")
 
             embed = discord.Embed(
