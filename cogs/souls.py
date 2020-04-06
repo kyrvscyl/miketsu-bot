@@ -201,9 +201,7 @@ class Souls(commands.Cog):
                 ])
 
                 for x in test:
-                    print(x)
                     soul_duplicate = x["souls"]["k"]
-                    print(soul_duplicate)
                     users.update_one({
                         "user_id": str(user.id),
                         f"souls.{soul_duplicate}.slot": int(slot)

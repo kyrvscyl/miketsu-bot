@@ -194,7 +194,6 @@ class Encounter(commands.Cog):
 
         shiki_bet = args1.lower()
         total_chance = self.enc_roll_nether_get_chance(ctx.author, shiki_bet, 0.2, 50, [0, 0], 70, 1)
-        print(total_chance)
 
     @commands.command(aliases=["netherworld", "nw"])
     @commands.guild_only()

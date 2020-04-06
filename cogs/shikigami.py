@@ -93,10 +93,7 @@ class Shikigami(commands.Cog):
     async def shikigami_show_post_collected_generate(self, shikis, shikis_unc, listings_rarity_all, rarity, member):
 
         rows, cols = get_variables(rarity)
-        print(rows, cols, listings_rarity_all)
         width, height = get_image_variables(listings_rarity_all, cols, rows)
-
-        print(width, height)
         new_im = Image.new("RGBA", (width, height))
 
         images = []
@@ -452,7 +449,6 @@ class Shikigami(commands.Cog):
                 listings_souls.append([None, 0, i])
 
         listings_souls = sorted(listings_souls, key=lambda z: z[2], reverse=False)
-        print(listings_souls)
 
         embed = discord.Embed(
             colour=user.colour, timestamp=get_timestamp(),
