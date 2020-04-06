@@ -200,7 +200,7 @@ trading_list = []
 
 trading_list_formatted = []
 
-for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1}):
+for shikigami in shikigamis.find({}, {"_id": 0, "name": 1, "rarity": 1, "shrine": 1, "amulet": 1}):
     if shikigami["shrine"] is True:
         pool_shrine.append(shikigami["name"])
     elif shikigami["amulet"] == "parade":
