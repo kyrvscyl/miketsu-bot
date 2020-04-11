@@ -853,9 +853,22 @@ async def process_role_add(member, role):
         pass
 
 
-async def process_channel_edit(channel, name, topic):
+async def process_channel_edit_name(channel, name, topic):
     try:
         await channel.edit(name=name, topic=topic)
+    except AttributeError:
+        pass
+    except discord.errors.Forbidden:
+        pass
+    except discord.errors.NotFound:
+        pass
+    except discord.errors.HTTPException:
+        pass
+
+
+async def process_channel_edit_topic(channel, topic):
+    try:
+        await channel.edit(topic=topic)
     except AttributeError:
         pass
     except discord.errors.Forbidden:

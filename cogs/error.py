@@ -83,6 +83,9 @@ class Error(commands.Cog):
             "enc_boss_stats",
             "enc_nether_info",
             "enc_roll",
+            "expecto_patronus_show",
+            "expecto_show_cycle",
+            "expecto_transact_emporium"
             "exploration_check_clears",
             "exploration_process",
             "exploration_zones",
@@ -113,8 +116,6 @@ class Error(commands.Cog):
             "shikigami_show_post_shiki",
             "shikigami_show_post_shikis",
             "shikigami_shrine",
-            "expecto_show_cycle",
-            "expecto_patronus_show",
             "souls_process",
             "summon_perform",
         ]
@@ -159,7 +160,10 @@ class Error(commands.Cog):
         ]
 
         self.functions_role_only = [
-            "hint_request"
+            "hint_request",
+            "expecto_progress",
+            "expecto_transact_emporium",
+            "expecto_buy_items"
         ]
     
     async def submit_error(self, ctx, error, exception):

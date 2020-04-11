@@ -62,7 +62,7 @@ class Quest(commands.Cog):
                         break
                     h += 1
 
-            except (IndexError, KeyError):
+            except (IndexError, KeyError, TypeError):
                 await process_msg_submit(user, "You have used up all your hints for this path.", None)
 
             else:
@@ -175,7 +175,7 @@ class Quest(commands.Cog):
                 read_message_history=True
             )
             await process_msg_reaction_add(message, "✨")
-            await process_channel_edit(gringotts_channel, None, topic)
+            await process_channel_edit_topic(gringotts_channel, topic)
 
             if user not in role_galleons.members:
                 if path not in ["path8", "path18", "path12", "path13", "path0"]:
@@ -299,7 +299,7 @@ class Quest(commands.Cog):
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
                 await secret_response(message.channel.name, msg)
-                await process_channel_edit(message.channel, None, topic)
+                await process_channel_edit_topic(message.channel, topic)
                 break
 
             except KeyError:
@@ -325,7 +325,7 @@ class Quest(commands.Cog):
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=10)
 
-                await process_channel_edit(message.channel, None, topic)
+                await process_channel_edit_topic(message.channel, topic)
                 await secret_response(message.channel.name, msg)
                 i += 1
 
@@ -376,7 +376,7 @@ class Quest(commands.Cog):
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
                 await secret_response(message.channel.name, msg)
-                await process_channel_edit(message.channel, None, topic)
+                await process_channel_edit_topic(message.channel, topic)
                 break
 
             except KeyError:
@@ -403,7 +403,7 @@ class Quest(commands.Cog):
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=10)
 
-                await process_channel_edit(message.channel, None, topic)
+                await process_channel_edit_topic(message.channel, topic)
                 await secret_response(message.channel.name, msg)
                 i += 1
 
@@ -456,7 +456,7 @@ class Quest(commands.Cog):
                 await action_update_quest1(user, cycle, actions=3)
                 await penalize_quest1(user, cycle, points=10)
                 await secret_response(message.channel.name, msg)
-                await process_channel_edit(message.channel, None, topic)
+                await process_channel_edit_topic(message.channel, topic)
                 break
 
             except KeyError:
@@ -483,7 +483,7 @@ class Quest(commands.Cog):
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=10)
 
-                await process_channel_edit(message.channel, None, topic)
+                await process_channel_edit_topic(message.channel, topic)
                 await secret_response(message.channel.name, msg)
                 i += 1
 
@@ -843,22 +843,22 @@ class Expecto(commands.Cog):
 
     @commands.command(aliases=["cycle"])
     @commands.guild_only()
-    async def expecto_show_cycle(self, ctx, cycle_query=None, *, user: discord.Member = None):
+    async def expecto_show_cycle(self, ctx, cycle_query=None, *, member: discord.Member = None):
 
-        requestor = ctx.author
-        requestor_profile = quests.find_one({"user_id": str(requestor)}, {"_id": 0})
+        user = ctx.author
+        user_profile = quests.find_one({"user_id": str(user.id)}, {"_id": 0})
 
         if cycle_query is None:
             await self.expecto_show_cycle_help(ctx)
 
-        if requestor_profile is None:
+        elif user_profile is None:
             await process_msg_submit(ctx.channel, "You have to finish your own first cycle first.", None)
 
-        elif requestor_profile is not None:
+        elif user_profile is not None:
 
             profile = {}
             for result in quests.aggregate([{
-                "$match": {"user_id": str(requestor.id)}}, {
+                "$match": {"user_id": str(user.id)}}, {
                 "$project": {"_id": 0, "status": {"$slice": ["$quest1.status", 1]}}
             }]):
                 profile = result
@@ -874,10 +874,10 @@ class Expecto(commands.Cog):
                 except (ValueError, TypeError):
                     await process_msg_submit(ctx.channel, f"Use `{self.prefix}cycle <cycle#> <@mention>.", None)
                 else:
-                    if user is None:
-                        user = ctx.message.author
+                    if member is None:
+                        member = ctx.message.author
 
-                    profile = get_profile_history_quest1(user, cycle_query)
+                    profile = get_profile_history_quest1(member, cycle_query)
                     patronus_summon = profile["quest1"]["patronus"]["patronus"]
                     score = profile["quest1"]["score"]
                     timestamp_start = profile["quest1"]["timestamp_start"]
@@ -911,8 +911,8 @@ class Expecto(commands.Cog):
                     embed.set_image(url=patronus_profile["link"])
                     embed.set_footer(text=f"Hours spent: {delta} hours")
                     embed.set_author(
-                        name=f"{user.display_name} | Cycle #{cycle_query} results",
-                        icon_url=user.avatar_url
+                        name=f"{member.display_name} | Cycle #{cycle_query} results",
+                        icon_url=member.avatar_url
                     )
                     embed.add_field(
                         name="Wand Properties",
@@ -1129,6 +1129,7 @@ class Expecto(commands.Cog):
                     await process_msg_delete(ctx.message, 0)
 
             elif ctx.message.content == f"{self.prefix}knock":
+
                 if path == "path6":
                     await self.expecto_update_path(user, cycle, path_new="path9")
                 elif path == "path15":
@@ -1137,7 +1138,7 @@ class Expecto(commands.Cog):
                 responses = self.get_responses_quest1("eeylops_owl")
                 msg = responses["knock"][0]
                 topic = responses["knock"][1]
-                await process_channel_edit(ctx.channel, None, topic)
+                await process_channel_edit_topic(ctx.channel, topic)
                 await process_msg_delete(ctx.message, 0)
                 await secret_response(ctx.channel.name, msg)
                 await penalize_quest1(user, cycle, points=15)
@@ -1150,7 +1151,7 @@ class Expecto(commands.Cog):
 
                 responses = self.get_responses_quest1("eeylops_owl")["inquire"]
                 msg, topic = responses[actions]
-                await process_channel_edit(ctx.channel, None, topic)
+                await process_channel_edit_topic(ctx.channel, topic)
                 await process_msg_delete(ctx.message, 0)
                 await action_update_quest1(user, cycle, actions=1)
                 await penalize_quest1(user, cycle, points=15)
@@ -1197,7 +1198,7 @@ class Expecto(commands.Cog):
                         topic = responses["purchasing"]["buying_again"][1]
                         await penalize_quest1(user, cycle, points=75)
                         await secret_response(ctx.channel.name, msg)
-                        await process_channel_edit(ctx.channel, None, topic)
+                        await process_channel_edit_topic(ctx.channel, topic)
                         await process_msg_delete(ctx.message, 0)
 
                     elif user not in role_galleons.members:
@@ -1206,7 +1207,7 @@ class Expecto(commands.Cog):
                         await self.expecto_update_path(user, cycle, path_new="path7")
                         await penalize_quest1(user, cycle, points=10)
                         await secret_response(ctx.channel.name, msg)
-                        await process_channel_edit(ctx.channel, None, topic)
+                        await process_channel_edit_topic(ctx.channel, topic)
                         await process_msg_delete(ctx.message, 0)
 
                         quests.update_one({
@@ -1223,7 +1224,7 @@ class Expecto(commands.Cog):
                         await self.expecto_update_path(user, cycle, path_new="path24")
                         await penalize_quest1(user, cycle, points=20)
                         await secret_response(ctx.channel.name, msg)
-                        await process_channel_edit(ctx.channel, None, topic)
+                        await process_channel_edit_topic(ctx.channel, topic)
                         await process_msg_delete(ctx.message, 0)
 
                         quests.update_one({
@@ -1254,7 +1255,7 @@ class Expecto(commands.Cog):
                                     "quest1.$.owl": owl_buy
                                 }
                             })
-                            await process_channel_edit(ctx.channel, None, topic)
+                            await process_channel_edit_topic(ctx.channel, topic)
 
                             if path != "path0":
                                 await self.expecto_update_path(user, cycle, path_new="path2")
@@ -1427,7 +1428,7 @@ class Expecto(commands.Cog):
                     await secret_response(channel.name, msg1)
                     await asyncio.sleep(6)
                     await secret_response(channel.name, msg2)
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
                     await asyncio.sleep(5)
                     await self.expecto_wand_personalise(user, channel, cycle, role_star, responses)
 
@@ -1437,7 +1438,7 @@ class Expecto(commands.Cog):
                     await penalize_quest1(user, cycle, points=25)
                     await action_update_quest1(user, cycle, actions=3)
                     await secret_response(channel.name, msg)
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
 
     async def expecto_wand_personalise(self, user, channel, cycle, role_star, responses):
 
@@ -1460,7 +1461,7 @@ class Expecto(commands.Cog):
         topic = responses["owl_analysis"][trait][1]
 
         await secret_response(channel.name, msg1)
-        await process_channel_edit(channel, None, topic)
+        await process_channel_edit_topic(channel, topic)
         await asyncio.sleep(9)
 
         wand_length = await self.expecto_get_wand_length(user, channel, responses)
@@ -1608,7 +1609,7 @@ class Expecto(commands.Cog):
                 if i == 0:
                     msg = responses["core_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["core_selection"]["invalid1"][1]
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
                     await penalize_quest1(user, cycle, points=5)
 
                 elif i == 1:
@@ -1617,7 +1618,7 @@ class Expecto(commands.Cog):
                     topic = responses["core_selection"]["invalid2"][1]
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=10)
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
 
                 await secret_response(channel.name, msg)
                 i += 1
@@ -1629,7 +1630,7 @@ class Expecto(commands.Cog):
                     responses["core_description"][f'{wand_core.lower()}']
                 )
                 topic = responses["core_selection"]["chose"][1]
-                await process_channel_edit(channel, None, topic)
+                await process_channel_edit_topic(channel, topic)
                 await secret_response(channel.name, msg)
                 break
 
@@ -1677,7 +1678,7 @@ class Expecto(commands.Cog):
                 if i == 0:
                     msg = responses["wood_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["wood_selection"]["invalid1"][1]
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
                     await penalize_quest1(user, cycle, points=10)
 
                 elif i == 1:
@@ -1686,7 +1687,7 @@ class Expecto(commands.Cog):
                     topic = responses["wood_selection"]["invalid2"][1]
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=10)
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
 
                 await secret_response(channel.name, msg)
                 i += 1
@@ -1698,7 +1699,7 @@ class Expecto(commands.Cog):
                     responses["wood_description"][f'{wand_wood.lower()}']
                 )
                 topic = responses["wood_selection"]["chose"][1]
-                await process_channel_edit(channel, None, topic)
+                await process_channel_edit_topic(channel, topic)
                 await secret_response(channel.name, msg)
                 break
 
@@ -1746,7 +1747,7 @@ class Expecto(commands.Cog):
                 if i == 0:
                     msg = responses["length_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["length_selection"]["invalid1"][1]
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
                     await penalize_quest1(user, cycle, points=10)
 
                 elif i == 1:
@@ -1755,7 +1756,7 @@ class Expecto(commands.Cog):
                     topic = responses["length_selection"]["invalid2"][1]
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=15)
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
 
                 await secret_response(channel.name, msg)
                 i += 1
@@ -1764,7 +1765,7 @@ class Expecto(commands.Cog):
                 wand_length = answer.content
                 msg = responses["length_selection"]["chose"][0].format(wand_length)
                 topic = responses["length_selection"]["chose"][1]
-                await process_channel_edit(channel, None, topic)
+                await process_channel_edit_topic(channel, topic)
                 await secret_response(channel.name, msg)
                 break
 
@@ -1812,7 +1813,7 @@ class Expecto(commands.Cog):
                 if i == 0:
                     msg = responses["flexibility_selection"]["invalid1"][0].format(user.mention)
                     topic = responses["flexibility_selection"]["invalid1"][1]
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
                     await penalize_quest1(user, cycle, points=10)
 
                 elif i == 1:
@@ -1821,7 +1822,7 @@ class Expecto(commands.Cog):
                     topic = responses["flexibility_selection"]["invalid2"][1]
                     await action_update_quest1(user, cycle, actions=3)
                     await penalize_quest1(user, cycle, points=15)
-                    await process_channel_edit(channel, None, topic)
+                    await process_channel_edit_topic(channel, topic)
 
                 await secret_response(channel.name, msg)
                 i += 1
@@ -1830,7 +1831,7 @@ class Expecto(commands.Cog):
                 wand_flexibility = answer.content
                 msg = responses["flexibility_selection"]["chose"][0].format(wand_flexibility.title())
                 topic = responses["flexibility_selection"]["chose"][1]
-                await process_channel_edit(channel, None, topic)
+                await process_channel_edit_topic(channel, topic)
                 await secret_response(channel.name, msg)
                 break
 

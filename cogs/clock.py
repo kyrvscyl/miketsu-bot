@@ -118,7 +118,7 @@ class Clock(commands.Cog):
         if clock.name == clock_name:
             raise KeyboardInterrupt
         else:
-            await process_channel_edit(clock, clock_name, None)
+            await process_channel_edit_name(clock, clock_name, None)
 
         try:
             if minute_hand == "00":

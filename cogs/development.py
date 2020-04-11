@@ -194,6 +194,13 @@ class Development(commands.Cog):
         await Frames(self.client).frames_automate()
         await Summon(self.client).summon_perform_streak_penalize()
 
+    @commands.command(aliases=["test"])
+    @commands.is_owner()
+    async def development_test_function(self, ctx):
+
+        topic = "test"
+        await process_channel_edit_topic(ctx.channel, topic)
+
 
 def setup(client):
     client.add_cog(Development(client))
