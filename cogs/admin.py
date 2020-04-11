@@ -725,6 +725,9 @@ class Admin(commands.Cog):
                 },
                 "$inc": {
                     "strikes": 1
+                },
+                "$set": {
+                    "status": "inactive"
                 }
             })
             await process_msg_reaction_add(ctx.message, "✅")
