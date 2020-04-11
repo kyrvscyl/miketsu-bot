@@ -151,6 +151,7 @@ class Error(commands.Cog):
             "friendship_ship_show_all",
             "raid_perform",
             "realm_card_collect",
+            "realm_card_show_user"
             "realm_card_use",
             "shikigami_image_show_collected",
             "shikigami_list_show_collected",

@@ -172,28 +172,29 @@ class Friendship(commands.Cog):
         if member1 is None and member2 is None:
             await self.friendship_ship_show_one_help(ctx)
 
-        try:
-            if member1 is not None and member2 is None:
-                try:
-                    code = get_bond(ctx.author.id, member1.id)
-                except AttributeError:
-                    await process_msg_invalid_member(ctx)
+        else:
+            try:
+                if member1 is not None and member2 is None:
+                    try:
+                        code = get_bond(ctx.author.id, member1.id)
+                    except AttributeError:
+                        await process_msg_invalid_member(ctx)
+                    else:
+                        await self.friendship_post_ship(code, member1, ctx)
                 else:
-                    await self.friendship_post_ship(code, member1, ctx)
-            else:
-                try:
-                    code = get_bond(member1.id, member2.id)
-                except AttributeError:
-                    await process_msg_invalid_member(ctx)
-                else:
-                    await self.friendship_post_ship(code, member1, ctx)
+                    try:
+                        code = get_bond(member1.id, member2.id)
+                    except AttributeError:
+                        await process_msg_invalid_member(ctx)
+                    else:
+                        await self.friendship_post_ship(code, member1, ctx)
 
-        except TypeError:
-            embed = discord.Embed(
-                colour=ctx.author, title="Invalid ship",
-                description=f"That ship has sunk before it was even fully built"
-            )
-            await process_msg_submit(ctx.channel, None, embed)
+            except TypeError:
+                embed = discord.Embed(
+                    colour=ctx.author, title="Invalid ship",
+                    description=f"That ship has sunk before it was even fully built"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
 
     async def friendship_post_ship(self, code, member, ctx):
 

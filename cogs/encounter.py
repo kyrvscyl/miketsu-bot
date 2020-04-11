@@ -538,7 +538,7 @@ class Encounter(commands.Cog):
                         if 0 <= random.uniform(0, 100) <= 20 and check_if_user_has_nether_pass(ctx):
                             await self.enc_roll_nether(user, ctx.channel, msg)
                         else:
-                            if random.uniform(0, 100) < 30:
+                            if random.uniform(0, 100) < 45:
                                 await self.enc_roll_quiz(user, ctx, msg)
                             else:
                                 await self.enc_roll_treasure(user, ctx, msg)
@@ -548,7 +548,7 @@ class Encounter(commands.Cog):
                         await self.enc_roll_nether(user, ctx.channel, msg)
 
                     else:
-                        if random.uniform(0, 100) < 30:
+                        if random.uniform(0, 100) < 45:
                             await self.enc_roll_quiz(user, ctx, msg)
                         else:
                             await self.enc_roll_treasure(user, ctx, msg)
