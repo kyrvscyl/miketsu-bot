@@ -133,7 +133,7 @@ class Error(commands.Cog):
         self.functions_development = [
             "development_shikigami_add",
             "frames_add_new",
-            "expecto_patronus_show"
+            "expecto_patronus_show",
         ]
 
         self.functions_member_tagging = [
@@ -148,23 +148,24 @@ class Error(commands.Cog):
             "exploration_check_clears",
             "friendship_check_sail",
             "friendship_check_sail",
+            "friendship_give",
             "friendship_ship_show_all",
             "raid_perform",
             "realm_card_collect",
-            "realm_card_show_user"
+            "realm_card_show_user",
             "realm_card_use",
             "shikigami_image_show_collected",
             "shikigami_list_show_collected",
             "shikigami_show_post_shards",
-            "shikigami_show_post_shikis"
             "shikigami_show_post_shikis",
+            "shikigami_show_post_shikis"
         ]
 
         self.functions_role_only = [
-            "hint_request",
+            "expecto_buy_items"
             "expecto_progress",
             "expecto_transact_emporium",
-            "expecto_buy_items"
+            "hint_request",
         ]
     
     async def submit_error(self, ctx, error, exception):

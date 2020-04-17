@@ -316,7 +316,7 @@ class Admin(commands.Cog):
                 await self.admin_purge_messages_help(ctx)
             else:
                 if int(amount) > 0:
-                    await process_msg_purge(ctx.channel, amount)
+                    await process_msg_purge(ctx.channel, int(amount))
 
     async def admin_manage_guild_help(self, ctx, invoke, args_v):
 
