@@ -68,11 +68,10 @@ class Frames(commands.Cog):
         frame_name, listings = "Starlight Sky", []
         role = discord.utils.get(guild.roles, name=frame_name)
 
-        for user in streaks.find({}, {"_id": 0, "user_id": 1, "SSR_current": 1}):
-            listings.append((user["user_id"], user["SSR_current"]))
+        for member in streaks.find({}, {"_id": 0}).sort([("SSR_current", -1)]).limit(2):
+            listings.append(member)
 
-        listings_sorted = sorted(listings, key=lambda x: x[1], reverse=True)
-        role_new = guild.get_member(int(listings_sorted[0][0]))
+        role_new = guild.get_member(int(listings[0]["user_id"]))
         role_current = role.members[0]
 
         if len(role.members) == 0:
@@ -83,7 +82,7 @@ class Frames(commands.Cog):
             description = \
                 f"{role_new.mention}\"s undying luck of not summoning an SSR has " \
                 f"earned themselves the Rare {frame_name} Frame!\n\n" \
-                f"🍀 No SSR streak record of {listings_sorted[0][1]} summons!"
+                f"🍀 No SSR streak record of {listings[0]['SSR_record']} summons!"
 
             embed = discord.Embed(
                 color=0xac330f, description=description, timestamp=get_timestamp(), title="📨 Hall of Framers update",
@@ -103,7 +102,7 @@ class Frames(commands.Cog):
         else:
             await process_role_add(role_new, role)
             await asyncio.sleep(1)
-            await process_role_remove(role_new, role)
+            await process_role_remove(role_current, role)
             await asyncio.sleep(1)
 
             adverb, verb = random.choice(self.steal_adverb), random.choice(self.steal_verb)
@@ -111,7 +110,7 @@ class Frames(commands.Cog):
 
             description = \
                 f"{role_new.mention} {adverb} {verb} the Rare {frame_name} Frame from {role_current.mention}\"s " \
-                f"{noun}!! {comment}\n\n🍀 No SSR streak record of {listings_sorted[0][1]} summons! " \
+                f"{noun}!! {comment}\n\n🍀 No SSR streak record of {listings[0]['SSR_record']} summons! " \
                 f"Cuts in three fourths every reset!"
 
             embed = discord.Embed(

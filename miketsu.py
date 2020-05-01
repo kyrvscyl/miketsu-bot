@@ -16,6 +16,7 @@ config.update_one({"var": 1}, {"$set": {"clock": False}})
 
 
 def cogs_extension_startup():
+
     for filename in sorted(os.listdir("./cogs")):
         if filename.endswith(".py"):
             try:
@@ -35,7 +36,6 @@ async def show_bot_statistics(ctx):
 
     bot_info = await client.application_info()
     days, hours, minutes = get_days_hours_minutes(datetime.now() - time_start)
-    timestamp = datetime.timestamp(datetime.now())
 
     modules_loaded = ', '.join(sorted(cogs_loaded))
     if len(cogs_loaded) == 0:
@@ -45,13 +45,13 @@ async def show_bot_statistics(ctx):
         colour=colour,
         title=f"{client.user.name} Bot",
         description="A fan made Onmyoji-themed exclusive Discord bot",
-        timestamp=datetime.utcfromtimestamp(timestamp)
+        timestamp=get_timestamp()
     )
     embed.set_thumbnail(url=client.user.avatar_url)
     embed.add_field(
         name="Development",
         value=f"• Coding: <@!{bot_info.owner.id}>\n"
-              f"• Support Group: <@!437941992748482562>, <@!201402446705065984>\n"
+              f"• Support Group: <@!437941992748482562>\n"
               f"• Illustration by <@!628219450931544065>",
         inline=False
     )

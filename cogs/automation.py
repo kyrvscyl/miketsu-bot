@@ -183,6 +183,10 @@ class Automation(commands.Cog):
                         embed.set_footer(icon_url=before.avatar_url)
                         await process_msg_submit(auror_department_channel, None, embed)
 
+                    elif changed_role1[0].name == "Patronus":
+                        role_remove = discord.utils.get(before.guild.roles, name="No-Maj")
+                        await process_role_remove(before, role_remove)
+
             elif before.name != after.name:
                 embed = discord.Embed(
                     color=0x7ed321, timestamp=get_timestamp(),

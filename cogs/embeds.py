@@ -31,25 +31,25 @@ class Embeds(commands.Cog):
             current_thumbnail = banner_msg.embeds[0].image.url
             current_index = banners.index(current_thumbnail)
 
-            def get_new_banner(index):
+            def get_new_banner(i):
                 if str(payload.emoji) == "⬅":
-                    new_index = index - 1
-                    if index < 0:
-                        return len(banners) - 1
+                    new_index = i - 1
+                    if i < 0:
+                        return len(banners) - 1, len(banners)
                     else:
-                        return new_index
+                        return new_index, new_index + 1
                 else:
-                    new_index = index + 1
-                    if index >= len(banners) - 1:
-                        return 0
+                    new_index = i + 1
+                    if i >= len(banners) - 1:
+                        return 0, 1
                     else:
-                        return new_index
+                        return new_index, new_index + 1
 
-            current_index = get_new_banner(current_index)
+            index, page = get_new_banner(current_index)
             embed6 = discord.Embed(
-                colour=discord.Colour(0xffd6ab), title=f"🎏 Banners {current_index + 1}/{len(banners)}"
+                colour=discord.Colour(0xffd6ab), title=f"🎏 Banners {page}/{len(banners)}"
             )
-            embed6.set_image(url=banners[current_index])
+            embed6.set_image(url=banners[index])
             contributor = self.client.get_user(437941992748482562)
             embed6.set_footer(text=f"Assets: Official Onmyoji art; Designed by: {contributor}")
             await process_msg_edit(banner_msg, None, embed6)
