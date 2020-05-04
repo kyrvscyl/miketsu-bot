@@ -101,7 +101,7 @@ class Utility(commands.Cog):
             await self.shikigami_bounty_help(ctx)
             return
 
-        shikigami_name = shikigami_name.replace("_", "").lower()
+        shikigami_name = shikigami_name.replace("_", " ").lower()
         x = shikigamis.update_one({"aliases": shikigami_name.lower()}, {"$push": {"location": location_new}})
 
         if x.modified_count == 1:
