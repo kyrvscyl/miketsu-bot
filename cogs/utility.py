@@ -31,6 +31,15 @@ class Utility(commands.Cog):
                   f"*",
             inline=False
         )
+        embed.add_field(
+            name="Examples",
+            value=f"*"
+            f"`{self.prefix}bounty yuki onna`\n"
+            f"`{self.prefix}baa yuki_onna <new alias/keyword>`\n"
+            f"`{self.prefix}bal shuten_doji <new location>`"
+            f"*",
+            inline=False
+        )
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["bounty", "b"])
@@ -92,6 +101,7 @@ class Utility(commands.Cog):
             await self.shikigami_bounty_help(ctx)
             return
 
+        shikigami_name = shikigami_name.replace("_", "").lower()
         x = shikigamis.update_one({"aliases": shikigami_name.lower()}, {"$push": {"location": location_new}})
 
         if x.modified_count == 1:
