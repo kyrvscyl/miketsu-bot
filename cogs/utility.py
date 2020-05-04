@@ -72,7 +72,7 @@ class Utility(commands.Cog):
             return
 
         shikigami_name_formatted = shikigami_name.replace("_", " ")
-        x = bounties.update_one({"aliases": shikigami_name.lower()}, {"$push": {"aliases": alias_new.lower()}})
+        x = shikigamis.update_one({"aliases": shikigami_name.lower()}, {"$push": {"aliases": alias_new.lower()}})
 
         if x.modified_count == 1:
             embed = discord.Embed(
@@ -92,7 +92,7 @@ class Utility(commands.Cog):
             await self.shikigami_bounty_help(ctx)
             return
 
-        x = bounties.update_one({"aliases": shikigami_name.lower()}, {"$push": {"location": location_new}})
+        x = shikigamis.update_one({"aliases": shikigami_name.lower()}, {"$push": {"location": location_new}})
 
         if x.modified_count == 1:
             embed = discord.Embed(

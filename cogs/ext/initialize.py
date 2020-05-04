@@ -30,7 +30,6 @@ time_start = datetime.now()
 
 books = get_collections("books")
 bosses = get_collections("bosses")
-bounties = get_collections("bounties")
 changelogs = get_collections("changelogs")
 config = get_collections("config")
 
