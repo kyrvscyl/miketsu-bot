@@ -25,6 +25,7 @@ class Embeds(commands.Cog):
         if str(payload.message_id) == query["messages"]["banner"] and str(payload.emoji) in ["⬅", "➡"]:
 
             banners = query["links"]["banners"]
+            banners_contributor = query["links"]["banners_contributor"]
             welcome_channel = self.client.get_channel(int(id_welcome))
             banner_msg = await welcome_channel.fetch_message(int(query["messages"]["banner"]))
 
@@ -50,7 +51,7 @@ class Embeds(commands.Cog):
                 colour=discord.Colour(0xffd6ab), title=f"🎏 Banners {page}/{len(banners)}"
             )
             embed6.set_image(url=banners[index])
-            contributor = self.client.get_user(437941992748482562)
+            contributor = self.client.get_user(int(banners_contributor[index]))
             embed6.set_footer(text=f"Assets: Official Onmyoji art; Designed by: {contributor}")
             await process_msg_edit(banner_msg, None, embed6)
 
