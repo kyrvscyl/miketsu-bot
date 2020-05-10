@@ -7,6 +7,7 @@ import sys
 
 from discord.ext import commands
 
+from cogs.castle import Castle
 from cogs.development import Economy
 from cogs.encounter import Encounter
 from cogs.events import Events
@@ -73,7 +74,6 @@ class Clock(commands.Cog):
                     push_note("Miketsu Bot", "Stopping a concurrent function")
                     break
                 except:
-                    push_note("Miketsu Bot", "Ignoring exception on clock processing ~10s")
                     continue
 
     async def clock_start_update(self):
@@ -140,6 +140,7 @@ class Clock(commands.Cog):
             if hour_minute == "00:00":
                 await Encounter(self.client).enc_perform_reset_boss_check()
                 await Economy(self.client).economy_issue_rewards_reset_daily()
+                await Castle(self.client).castle_submit_contents_periodic()
 
                 if get_time().strftime("%a").lower() == "mon":
                     await Economy(self.client).economy_issue_rewards_reset_weekly()

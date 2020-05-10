@@ -3,6 +3,7 @@ Embeds Module
 Miketsu, 2020
 """
 
+from PIL import Image
 from discord.ext import commands
 
 from cogs.ext.initialize import *
@@ -271,6 +272,102 @@ class Embeds(commands.Cog):
 
         await process_msg_delete(ctx.message, 0)
         await process_msg_delete(ctx.message, 0)
+
+    async def embeds_lineup_create_help(self, ctx):
+
+        embed = discord.Embed(
+            title="shikilist, sl", colour=colour,
+            description="creates a shikigami lineup with souls"
+        )
+        embed.add_field(
+            name="Formats", inline=False,
+            value=f"*`{self.prefix}lineup <shikigami1-soul1-soul2, ...>`*",
+        )
+        embed.add_field(
+            name="Example", inline=False,
+            value=f"*`{self.prefix}lineup shuten doji-kyoukotsu, enmusubi-shadow`*",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
+    @commands.command(aliases=["lineup"])
+    @commands.guild_only()
+    async def embeds_lineup_create(self, ctx, *, args=None):
+
+        if args is None:
+            await self.embeds_lineup_create_help(ctx)
+
+        else:
+            args_formatted = args.lower().replace(", ", ",").replace(" ,", ",").split(",")
+            link = await self.embeds_lineup_create_link(args_formatted, ctx)
+
+            if link.startswith("http") is True:
+                embed = discord.Embed(color=ctx.author.colour, timestamp=get_timestamp())
+                embed.set_image(url=link)
+                embed.set_footer(icon_url=ctx.author.avatar_url, text=f"{ctx.author.display_name}")
+                await process_msg_submit(ctx.channel, None, embed)
+
+            else:
+                embed = discord.Embed(
+                    color=ctx.author.colour, title="Invalid shikigami/soul",
+                    description=f"I did not recognize this -> `{link}`"
+                )
+                await process_msg_submit(ctx.channel, None, embed)
+
+    async def embeds_lineup_create_link(self, args_formatted, ctx):
+
+        images, images_address = [], []
+        height, width = 80, len(args_formatted) * 80
+        x_init, y_init = -80, 0
+
+        for x in args_formatted:
+            x_formatted = x.replace(" - ", "-").replace("- ", "-").replace(" -", "-").split("-")
+            height_new = len(x_formatted) * 80
+            if height <= height_new:
+                height = height_new
+
+            if shikigamis.find_one({"aliases": x_formatted[0]}, {"_id": 0, "name": 1}) is None:
+                return x_formatted[0]
+            else:
+                address_shikigami = f"data/shikigamis/{x_formatted[0]}_evo.jpg"
+                images_address.append(address_shikigami)
+                images.append(Image.open(address_shikigami).resize((80, 80), Image.ANTIALIAS))
+
+            for y in x_formatted[1:]:
+                if souls.find_one({"name": y.lower()}, {"_id": 0, "name": 1}) is None:
+                    return y.lower()
+
+                address_soul = f"data/souls/{y.lower()}.png"
+                images_address.append(address_soul)
+                images.append(Image.open(address_soul))
+
+        new_im = Image.new("RGBA", (width, height))
+
+        def get_coordinates(i, x_coordinate, y_coordinate):
+
+            if images_address[i][:10] == "data/souls":
+                y_coordinate += 80
+                return x_coordinate, y_coordinate
+
+            elif images_address[i][:10] == "data/shiki":
+                x_coordinate += 80
+                y_coordinate = 0
+                return x_coordinate, y_coordinate
+
+        for index, item in enumerate(images):
+            x_new, y_new = get_coordinates(index, x_init, y_init)
+            new_im.paste(images[index], (x_new, y_new))
+            x_init = x_new
+            y_init = y_new
+
+        address_temp = f"temp/{ctx.author.id}.png"
+        new_im.save(address_temp)
+
+        image_file = discord.File(address_temp, filename=f"{ctx.author.id}.png")
+        hosting_channel = self.client.get_channel(int(id_hosting))
+        msg = await process_msg_submit_file(hosting_channel, image_file)
+        attachment_link = msg.attachments[0].url
+
+        return attachment_link
 
 
 def setup(client):

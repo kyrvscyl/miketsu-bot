@@ -27,6 +27,77 @@ class Castle(commands.Cog):
     def castle_get_emoji_primary_role(self, role):
         return self.primary_emojis[role]
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+
+        if not str(payload.channel_id) in [id_reference, id_restricted]:
+            return
+
+        elif str(payload.emoji) not in ["📖", "📚", "📘", "📕", "📗", "📙", "🔖", "📑", "📔"]:
+            return
+
+        else:
+            channel = self.client.get_channel(int(payload.channel_id))
+            link = f"https://discordapp.com/channels/{id_guild}/{payload.channel_id}/{payload.message_id}"
+            msg = await channel.fetch_message(int(payload.message_id))
+
+            total_books = pages.count_documents({"section": str(channel.name)})
+            dictionary = {
+                "#": total_books + 1,
+                "link": link,
+                "title": msg.content,
+                "section": str(channel.name)
+            }
+            pages.insert_one(dictionary)
+
+    async def castle_submit_contents(self, channel, msg_id):
+
+        listings, listings_formatted = [], []
+        for page in pages.find({"section": str(channel.name)}, {"_id": 0}):
+            listings.append([page["#"], page["title"], page["link"]])
+
+        for line in listings:
+            listings_formatted.append(f"• `#{line[0]}` | [Link]({line[2]}) | {line[1][:45]}...\n")
+
+        embed = discord.Embed(
+            colour=colour, title="Table of Contents",
+            description="".join(listings_formatted)
+        )
+        msg_new = await process_msg_submit(channel, None, embed)
+
+        try:
+            msg_old = await channel.fetch_message(int(msg_id))
+            await msg_old.delete()
+        except discord.errors.NotFound:
+            pass
+
+        guilds.update_one({"server": str(id_guild)}, {"$set": {f"messages.{channel.name}": str(msg_new.id)}})
+
+    async def castle_submit_contents_periodic(self):
+
+        for section in [id_restricted, id_reference]:
+
+            channel = self.client.get_channel(int(section))
+            channel_msg_id_last = channel.last_message_id
+
+            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, f"messages.{channel.name}": 1})
+            msg_id = query["messages"][str(channel.name)]
+
+            try:
+                msg = await channel.fetch_message(int(channel_msg_id_last))
+            except discord.errors.NotFound:
+                await self.castle_submit_contents(channel, msg_id)
+            else:
+                if str(msg.id) != msg_id:
+                    await self.castle_submit_contents(channel, msg_id)
+
+    @commands.command(aliases=["contents"])
+    @commands.is_owner()
+    async def castle_submit_contents_manual(self, ctx):
+
+        await self.castle_submit_contents_periodic()
+        await process_msg_reaction_add(ctx.message, "✅")
+
     @commands.command(aliases=["portraits"])
     @commands.guild_only()
     async def castle_portrait_show_all(self, ctx):

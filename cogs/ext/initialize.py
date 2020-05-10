@@ -8,7 +8,6 @@ import os
 import random
 from collections import Counter
 from datetime import datetime
-from math import ceil, exp
 
 import discord
 import pushbullet
@@ -16,6 +15,7 @@ import pytz
 from PIL import ImageDraw
 from PIL import ImageFont
 from discord_webhook import DiscordEmbed, DiscordWebhook
+from math import ceil, exp
 
 from cogs.ext.database import get_collections
 
@@ -38,6 +38,7 @@ events = get_collections("events")
 explores = get_collections("explores")
 frames = get_collections("frames")
 guilds = get_collections("guilds")
+pages = get_collections("pages")
 
 hints = get_collections("hints")
 logs = get_collections("logs")

@@ -124,7 +124,7 @@ class Shikigami(commands.Cog):
 
         embed = discord.Embed(
             title="shikilist, sl", colour=colour,
-            description="shows your shikigami listings by rarity "
+            description="shows your shikigami listings by rarity"
         )
         embed.add_field(
             name="Formats", inline=False,

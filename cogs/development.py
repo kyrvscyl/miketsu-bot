@@ -2,7 +2,6 @@
 Development Module
 Miketsu, 2020
 """
-
 from discord.ext import commands
 
 from cogs.economy import Economy
@@ -193,13 +192,6 @@ class Development(commands.Cog):
         await process_msg_reaction_add(ctx.message, "✅")
         await Frames(self.client).frames_automate()
         await Summon(self.client).summon_perform_streak_penalize()
-
-    @commands.command(aliases=["test"])
-    @commands.is_owner()
-    async def development_test_function(self, ctx):
-
-        topic = "test"
-        await process_channel_edit_topic(ctx.channel, topic)
 
 
 def setup(client):
