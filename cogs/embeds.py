@@ -276,7 +276,7 @@ class Embeds(commands.Cog):
     async def embeds_lineup_create_help(self, ctx):
 
         embed = discord.Embed(
-            title="shikilist, sl", colour=colour,
+            title="lineup", colour=colour,
             description="creates a shikigami lineup with souls"
         )
         embed.add_field(

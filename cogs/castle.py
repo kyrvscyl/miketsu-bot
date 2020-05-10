@@ -91,9 +91,24 @@ class Castle(commands.Cog):
                 if str(msg.id) != msg_id:
                     await self.castle_submit_contents(channel, msg_id)
 
-    @commands.command(aliases=["retitle"])
+    async def castle_retitle_help(self, ctx):
+
+        embed = discord.Embed(
+            title="retitle, rt", colour=colour,
+            description="retitle a book in the library, adapts based on the channel name"
+        )
+        embed.add_field(
+            name="Formats", inline=False,
+            value=f"*`{self.prefix}retitle <number> <new title>`*",
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
+    @commands.command(aliases=["retitle", "rt"])
     @commands.guild_only()
-    async def castle_submit_contents_manual(self, ctx, number, *, args=None):
+    async def castle_retitle(self, ctx, number=None, *, args=None):
+
+        if number is None or args is None:
+            await self.castle_retitle_help(ctx)
 
         try:
             number = int(number)
