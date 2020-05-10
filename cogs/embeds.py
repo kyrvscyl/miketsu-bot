@@ -369,6 +369,47 @@ class Embeds(commands.Cog):
 
         return attachment_link
 
+    async def embeds_post_help(self, ctx):
+
+        embed = discord.Embed(
+            title="embed", colour=colour,
+            description="submit a an embed message"
+        )
+        embed.add_field(
+            name="Format", inline=False,
+            value=f"*`{self.prefix}embed <#channel> <title|description|image_link>`*"
+        )
+        await process_msg_submit(ctx.channel, None, embed)
+
+    @commands.command(aliases=["embed"])
+    @commands.guild_only()
+    async def embeds_post_(self, ctx, channel: discord.TextChannel = None, *, args):
+
+        if channel is None:
+            await self.embeds_post_help(ctx)
+            return
+
+        list_msg = args.replace(" | ", "|").split("|", 3)
+        print(list_msg)
+        embed = discord.Embed(color=ctx.author.colour)
+
+        if len(list_msg) == 1:
+            embed.description = list_msg[0]
+
+        elif len(list_msg) == 2:
+            embed.title = list_msg[0]
+            embed.description = list_msg[1]
+
+        elif len(list_msg) == 3:
+            embed.title = list_msg[0]
+            embed.description = list_msg[1]
+            embed.set_image(url=list_msg[2])
+        else:
+            return
+
+        await process_msg_submit(channel, None, embed)
+        await process_msg_reaction_add(ctx.message, "✅")
+
 
 def setup(client):
     client.add_cog(Embeds(client))

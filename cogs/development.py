@@ -12,6 +12,7 @@ from cogs.summon import Summon
 
 
 class Development(commands.Cog):
+
     def __init__(self, client):
         self.client = client
         self.prefix = self.client.command_prefix
