@@ -33,10 +33,8 @@ class Castle(commands.Cog):
         if not str(payload.channel_id) in [id_reference, id_restricted]:
             return
 
-        elif str(payload.emoji) not in ["📖", "📚", "📘", "📕", "📗", "📙", "🔖", "📑", "📔"]:
-            return
+        elif str(payload.emoji) in ["📖", "📚", "📘", "📕", "📗", "📙", "🔖", "📑", "📔"]:
 
-        else:
             channel = self.client.get_channel(int(payload.channel_id))
             link = f"https://discordapp.com/channels/{id_guild}/{payload.channel_id}/{payload.message_id}"
             msg = await channel.fetch_message(int(payload.message_id))
@@ -50,20 +48,85 @@ class Castle(commands.Cog):
             }
             pages.insert_one(dictionary)
 
-    async def castle_submit_contents(self, channel, msg_id):
+        elif str(payload.emoji) in ["⬅", "➡"]:
+
+            channel = self.client.get_channel(int(payload.channel_id))
+            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "messages": 1})
+
+            if str(payload.message_id) == query["messages"][str(channel.name)]:
+
+                listings_formatted = self.create_listings_formatted(channel)
+                msg = await channel.fetch_message(int(payload.message_id))
+                current_page = int(msg.embeds[0].footer.text[6:][0])
+                page_total = int(msg.embeds[0].footer.text[-1:])
+
+                if str(payload.emoji) == "➡":
+                    current_page += 1
+                elif str(payload.emoji) == "⬅":
+                    current_page -= 1
+                if current_page == 0:
+                    current_page = page_total
+                elif current_page > page_total:
+                    current_page = 1
+                await process_msg_edit(msg, None, self.embed_new_create(listings_formatted, current_page))
+
+    def create_listings_formatted(self, channel):
 
         listings, listings_formatted = [], []
+
         for page in pages.find({"section": str(channel.name)}, {"_id": 0}):
             listings.append([page["#"], page["title"], page["link"]])
 
         for line in listings:
             listings_formatted.append(f"• `#{line[0]}` | [Link]({line[2]}) | {line[1][:45]}...\n")
 
-        embed = discord.Embed(
+        return listings_formatted
+
+    def embed_new_create(self, listings_formatted, page_new):
+
+        lines_max = 8
+        page_total = ceil(len(listings_formatted) / lines_max)
+        if page_total == 0:
+            page_total = 1
+
+        end = page_new * lines_max
+        start = end - lines_max
+        description_new = "".join(listings_formatted[start:end])
+
+        embed_new = discord.Embed(
             colour=colour, title="Table of Contents",
-            description="".join(listings_formatted)
+            description=f"{description_new}", timestamp=get_timestamp()
         )
-        msg_new = await process_msg_submit(channel, None, embed)
+        embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
+        return embed_new
+
+    async def castle_edit_contents(self, channel, msg_id, p):
+
+        listings_formatted = self.create_listings_formatted(channel)
+
+        msg_new = await process_msg_submit(
+            channel, None, self.embed_new_create(listings_formatted, p)
+        )
+
+        try:
+            msg_old = await channel.fetch_message(int(msg_id))
+            await msg_old.delete()
+        except discord.errors.NotFound:
+            pass
+
+        guilds.update_one({"server": str(id_guild)}, {"$set": {f"messages.{channel.name}": str(msg_new.id)}})
+
+    async def castle_submit_contents(self, channel, msg_id, p):
+
+        listings_formatted = self.create_listings_formatted(channel)
+
+        msg_new = await process_msg_submit(
+            channel, None, self.embed_new_create(listings_formatted, p)
+        )
+
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
+            await process_msg_reaction_add(msg_new, emoji)
 
         try:
             msg_old = await channel.fetch_message(int(msg_id))
@@ -86,10 +149,10 @@ class Castle(commands.Cog):
             try:
                 msg = await channel.fetch_message(int(channel_msg_id_last))
             except discord.errors.NotFound:
-                await self.castle_submit_contents(channel, msg_id)
+                await self.castle_submit_contents(channel, msg_id, 1)
             else:
                 if str(msg.id) != msg_id:
-                    await self.castle_submit_contents(channel, msg_id)
+                    await self.castle_submit_contents(channel, msg_id, 1)
 
     async def castle_retitle_help(self, ctx):
 

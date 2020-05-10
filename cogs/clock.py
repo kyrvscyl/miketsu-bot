@@ -136,6 +136,7 @@ class Clock(commands.Cog):
 
             if hour_minute in ["06:00", "18:00"]:
                 await Encounter(self.client).enc_nether_announce()
+                await Castle(self.client).castle_submit_contents_periodic()
 
             if hour_minute == "00:00":
                 await Encounter(self.client).enc_perform_reset_boss_check()
