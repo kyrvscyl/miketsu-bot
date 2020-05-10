@@ -44,9 +44,19 @@ class Castle(commands.Cog):
                 "#": total_books + 1,
                 "link": link,
                 "title": msg.content,
-                "section": str(channel.name)
+                "section": str(channel.name),
+                "user_id": str(payload.user_id),
+                "timestamp": get_time()
             }
             pages.insert_one(dictionary)
+
+            record_scroll_channel = self.client.get_channel(int(id_scroll))
+            embed = discord.Embed(
+                color=colour, timestamp=get_timestamp(),
+                description=f"A new book has been published at {channel.mention} | [Link]({link})"
+            )
+            embed.set_footer(text=f"Total books: {total_books + 1}")
+            await process_msg_submit(record_scroll_channel, None, embed)
 
         elif str(payload.emoji) in ["⬅", "➡"]:
 
