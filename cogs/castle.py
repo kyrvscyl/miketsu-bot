@@ -91,6 +91,26 @@ class Castle(commands.Cog):
                 if str(msg.id) != msg_id:
                     await self.castle_submit_contents(channel, msg_id)
 
+    @commands.command(aliases=["retitle"])
+    @commands.guild_only()
+    async def castle_submit_contents_manual(self, ctx, number, *, args=None):
+
+        try:
+            number = int(number)
+        except ValueError:
+            pass
+        else:
+            query = pages.find_one({"section": str(ctx.channel.name), "#": number}, {"_id": 0})
+            if query is not None:
+                x = pages.update_one({"section": str(ctx.channel.name), "#": number}, {
+                    "$set": {
+                        "title": args
+                    }
+                })
+                if x.modified_count > 0:
+                    await process_msg_reaction_add(ctx.message, "✅")
+                    await ctx.message.delete(delay=180)
+
     @commands.command(aliases=["contents"])
     @commands.is_owner()
     async def castle_submit_contents_manual(self, ctx):
