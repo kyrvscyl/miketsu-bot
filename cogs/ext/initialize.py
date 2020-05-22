@@ -40,6 +40,7 @@ frames = get_collections("frames")
 guilds = get_collections("guilds")
 pages = get_collections("pages")
 
+highlights = get_collections("highlights")
 hints = get_collections("hints")
 logs = get_collections("logs")
 members = get_collections("members")
@@ -130,8 +131,10 @@ id_spell_spam = server["channels"]["spell-spam"]
 id_clock = server["channels"]["clock"]
 id_headlines = server["channels"]["headlines"]
 id_scroll = server["channels"]["scroll-of-everything"]
-id_castle = int(server["categories"]["castle"])
+id_castle = server["categories"]["castle"]
 id_duelling_room = server["channels"]["duelling-room"]
+id_showcase = server["channels"]["showcase"]
+id_unleash = server["channels"]["unleash"]
 id_reference = server["channels"]["reference-section"]
 id_restricted = server["channels"]["restricted-section"]
 id_auror_dept = server["channels"]["auror-department"]
@@ -317,7 +320,7 @@ def font_create(size):
 
 
 def check_if_valid_and_castle(ctx):
-    return ctx.channel.category.id == id_castle and str(ctx.channel.name) not in invalid_channels
+    return str(ctx.channel.category.id) == id_castle and str(ctx.channel.name) not in invalid_channels
 
 
 def check_if_user_has_any_admin_roles(ctx):

@@ -30,7 +30,7 @@ class Castle(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
 
-        if not str(payload.channel_id) in [id_reference, id_restricted]:
+        if not str(payload.channel_id) in [id_reference, id_restricted, id_unleash, id_showcase]:
             return
 
         elif str(payload.emoji) in ["📖", "📚", "📘", "📕", "📗", "📙", "🔖", "📑", "📔"]:
@@ -79,6 +79,86 @@ class Castle(commands.Cog):
                 elif current_page > page_total:
                     current_page = 1
                 await process_msg_edit(msg, None, self.embed_new_create(listings_formatted, current_page))
+
+        elif str(payload.emoji) in ["⭐", "🌟", "🔥", "🧂"]:
+
+            channel = self.client.get_channel(int(payload.channel_id))
+            link = f"https://discordapp.com/channels/{id_guild}/{payload.channel_id}/{payload.message_id}"
+            msg = await channel.fetch_message(int(payload.message_id))
+
+            if highlights.find_one({"msg_id": str(msg.id)}, {"_id": 0}) is None:
+
+                try:
+                    attachment_link = msg.attachments[0].url
+                except (TypeError, IndexError):
+                    attachment_link = None
+
+                highlights.insert_one({
+                    "user_id": str(msg.author.id),
+                    "user_name": msg.author.name,
+                    "channel": str(channel.id),
+                    "msg_id": str(msg.id),
+                    "msg_link": link,
+                    "content": msg.content,
+                    "attachment_link": attachment_link,
+                    "stars": 1,
+                    "starers": [str(payload.user_id)],
+                    "submitted": False,
+                    "guild": str(msg.guild.id)
+                })
+
+            else:
+                starers_listing = highlights.find_one({"msg_id": str(msg.id)}, {"_id": 0, "starers": 1})['starers']
+
+                if not str(payload.user_id) in starers_listing:
+                    highlights.update_one({
+                        "msg_id": str(msg.id)}, {
+                        "$inc": {
+                            "stars": 1
+                        },
+                        "$push": {
+                            "starers": str(payload.user_id)
+                        }
+                    })
+                await self.castle_process_star_boards(msg)
+
+    async def castle_process_star_boards(self, msg):
+
+        query = highlights.find_one({"msg_id": str(msg.id)}, {"_id": 0})
+
+        if query["stars"] == 7 and query['submitted'] is False:
+
+            count = highlights.count_documents({"channel": str(msg.channel.id)})
+            headlines_channel = self.client.get_channel(int(id_headlines))
+
+            ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
+            nth = ordinal(count)
+
+            embed = discord.Embed(
+                description=f"{query['content']}\n\n[Link here!]({query['msg_link']})",
+                timestamp=get_timestamp(),
+                color=msg.author.colour
+            )
+            embed.set_author(name=f"{msg.author.display_name}'s reckoning", icon_url=msg.author.avatar_url)
+
+            if query['attachment_link'] is not None:
+                embed.set_image(url=query['attachment_link'])
+
+            embed.set_footer(
+                text=f"{nth} Entry | #{msg.channel.name}"
+            )
+            msg1 = await process_msg_submit(headlines_channel, None, embed)
+
+            if str(msg.channel.name) == "showcase":
+                emojis_add = ["🔥", "🧂", "👍"]
+                for emoji in emojis_add:
+                    await process_msg_reaction_add(msg1, emoji)
+            else:
+                emojis_add = ["🔥", "🧂", "🇫"]
+                for emoji in emojis_add:
+                    await process_msg_reaction_add(msg1, emoji)
+
+            highlights.update_one({"msg_id": str(msg.id)}, {"$set": {"submitted": True}})
 
     def create_listings_formatted(self, channel):
 
