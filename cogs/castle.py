@@ -126,7 +126,7 @@ class Castle(commands.Cog):
 
         query = highlights.find_one({"msg_id": str(msg.id)}, {"_id": 0})
 
-        if query["stars"] == 7 and query['submitted'] is False:
+        if query["stars"] == 5 and query['submitted'] is False:
 
             count = highlights.count_documents({"channel": str(msg.channel.id)})
             headlines_channel = self.client.get_channel(int(id_headlines))
