@@ -66,7 +66,7 @@ class Utility(commands.Cog):
                     title=f"Bounty location(s) for {search['name'].title()}",
                     description=description
                 )
-                embed.set_footer(icon_url=search["thumbnail"]["pre"], text=f"Queried {search['queries']} time(s)")
+                embed.set_footer(icon_url=search["thumbnail"]["pre"], text=f"Queried {search['queries'] + 1} time(s)")
                 await process_msg_submit(ctx.channel, None, embed)
 
                 shikigamis.update_one({"aliases": shikigami_name.lower()}, {"$inc": {"queries": 1}})

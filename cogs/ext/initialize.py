@@ -39,6 +39,7 @@ explores = get_collections("explores")
 frames = get_collections("frames")
 guilds = get_collections("guilds")
 pages = get_collections("pages")
+coops = get_collections("coops")
 
 highlights = get_collections("highlights")
 hints = get_collections("hints")
@@ -134,6 +135,7 @@ id_scroll = server["channels"]["scroll-of-everything"]
 id_castle = server["categories"]["castle"]
 id_duelling_room = server["channels"]["duelling-room"]
 id_showcase = server["channels"]["showcase"]
+id_coop = server["channels"]["co-op-team"]
 id_unleash = server["channels"]["unleash"]
 id_reference = server["channels"]["reference-section"]
 id_restricted = server["channels"]["restricted-section"]

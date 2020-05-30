@@ -62,6 +62,22 @@ class Automation(commands.Cog):
                     embed.set_image(url=attachments[0]["url"])
 
                 await process_msg_submit(headlines_channel, content, embed)
+                msg = await shard_trading_channel.fetch_message(payload.data['id'])
+                await msg.unpin()
+
+            elif str(channel_id) == id_coop and pinned is True:
+
+                count = coops.count_documents({}) + 1
+                link = f"https://discordapp.com/channels/{id_guild}/{id_coop}/{payload.data['id']}"
+
+                coops.insert_one({
+                    "#": count,
+                    "user_id": str(payload.data["author"]["id"]),
+                    "msg_id": str(payload.data['id']),
+                    "link": link,
+                    "channel_id": id_coop,
+                    "timestamp": get_time(),
+                })
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):

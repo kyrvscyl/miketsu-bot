@@ -30,55 +30,87 @@ class Castle(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
 
-        if not str(payload.channel_id) in [id_reference, id_restricted, id_unleash, id_showcase]:
+        if str(payload.user_id) == str(self.client.user.id):
             return
 
-        elif str(payload.emoji) in ["📖", "📚", "📘", "📕", "📗", "📙", "🔖", "📑", "📔"]:
+        elif not str(payload.channel_id) in [id_reference, id_restricted, id_unleash, id_showcase, id_coop]:
+            return
 
-            channel = self.client.get_channel(int(payload.channel_id))
-            link = f"https://discordapp.com/channels/{id_guild}/{payload.channel_id}/{payload.message_id}"
-            msg = await channel.fetch_message(int(payload.message_id))
+        elif str(payload.channel_id) in [id_coop]:
 
-            total_books = pages.count_documents({"section": str(channel.name)})
-            dictionary = {
-                "#": total_books + 1,
-                "link": link,
-                "title": msg.content,
-                "section": str(channel.name),
-                "user_id": str(payload.user_id),
-                "timestamp": get_time()
-            }
-            pages.insert_one(dictionary)
+            if str(payload.emoji) in ["⬅", "➡"]:
 
-            record_scroll_channel = self.client.get_channel(int(id_scroll))
-            embed = discord.Embed(
-                color=colour, timestamp=get_timestamp(),
-                description=f"A new book has been published at {channel.mention} | [Link]({link})"
-            )
-            embed.set_footer(text=f"Total books: {total_books + 1}")
-            await process_msg_submit(record_scroll_channel, None, embed)
-
-        elif str(payload.emoji) in ["⬅", "➡"]:
-
-            channel = self.client.get_channel(int(payload.channel_id))
-            query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "messages": 1})
-
-            if str(payload.message_id) == query["messages"][str(channel.name)]:
-
-                listings_formatted = self.create_listings_formatted(channel)
+                channel = self.client.get_channel(int(payload.channel_id))
                 msg = await channel.fetch_message(int(payload.message_id))
-                current_page = int(msg.embeds[0].footer.text[6:][0])
-                page_total = int(msg.embeds[0].footer.text[-1:])
+                current_page, page_total = None, None
+                user = channel.guild.get_member(int(payload.user_id))
 
-                if str(payload.emoji) == "➡":
-                    current_page += 1
-                elif str(payload.emoji) == "⬅":
-                    current_page -= 1
-                if current_page == 0:
-                    current_page = page_total
-                elif current_page > page_total:
-                    current_page = 1
-                await process_msg_edit(msg, None, self.embed_new_create(listings_formatted, current_page))
+                try:
+                    current_page = int(msg.embeds[0].footer.text[6:][0])
+                    page_total = int(msg.embeds[0].footer.text[-1:])
+                except TypeError:
+                    current_page, page_total = 1, 2
+                finally:
+                    if str(payload.emoji) == "➡":
+                        current_page += 1
+                    elif str(payload.emoji) == "⬅":
+                        current_page -= 1
+                    if current_page == 0:
+                        current_page = page_total
+                    elif current_page > page_total:
+                        current_page = 1
+
+                embed = await self.embed_new_create_coop(channel, current_page)
+                await process_msg_edit(msg, None, embed)
+                await process_msg_reaction_remove(msg, str(payload.emoji), user)
+
+        elif str(payload.channel_id) in [id_reference, id_restricted]:
+
+            if str(payload.emoji) in ["📖", "📚", "📘", "📕", "📗", "📙", "🔖", "📑", "📔"]:
+
+                channel = self.client.get_channel(int(payload.channel_id))
+                link = f"https://discordapp.com/channels/{id_guild}/{payload.channel_id}/{payload.message_id}"
+                msg = await channel.fetch_message(int(payload.message_id))
+
+                total_books = pages.count_documents({"section": str(channel.name)})
+                pages.insert_one({
+                    "#": total_books + 1,
+                    "link": link,
+                    "title": msg.content,
+                    "section": str(channel.name),
+                    "user_id": str(payload.user_id),
+                    "timestamp": get_time()
+                })
+
+                record_scroll_channel = self.client.get_channel(int(id_scroll))
+                embed = discord.Embed(
+                    color=colour, timestamp=get_timestamp(),
+                    description=f"A new book has been published at {channel.mention} | [Link]({link})"
+                )
+                embed.set_footer(text=f"Total books: {total_books + 1}")
+                await process_msg_submit(record_scroll_channel, None, embed)
+
+            elif str(payload.emoji) in ["⬅", "➡"]:
+
+                channel = self.client.get_channel(int(payload.channel_id))
+                query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, "messages": 1})
+
+                if str(payload.message_id) == query["messages"][str(channel.name)]:
+
+                    listings_formatted = self.create_listings_formatted(channel)
+                    msg = await channel.fetch_message(int(payload.message_id))
+                    current_page = int(msg.embeds[0].footer.text[6:][0])
+                    page_total = int(msg.embeds[0].footer.text[-1:])
+
+                    if str(payload.emoji) == "➡":
+                        current_page += 1
+                    elif str(payload.emoji) == "⬅":
+                        current_page -= 1
+                    if current_page == 0:
+                        current_page = page_total
+                    elif current_page > page_total:
+                        current_page = 1
+                    await process_msg_edit(msg, None, self.embed_new_create_contents(listings_formatted, current_page))
 
         else:
 
@@ -153,6 +185,7 @@ class Castle(commands.Cog):
                 emojis_add = ["🔥", "🧂", "👍"]
                 for emoji in emojis_add:
                     await process_msg_reaction_add(msg1, emoji)
+
             else:
                 emojis_add = ["🔥", "🧂", "🇫"]
                 for emoji in emojis_add:
@@ -172,7 +205,48 @@ class Castle(commands.Cog):
 
         return listings_formatted
 
-    def embed_new_create(self, listings_formatted, page_new):
+    async def embed_new_create_coop(self, channel, page):
+
+        listings_msg_id = []
+        for entry in coops.find({"channel_id": str(channel.id)}, {"_id": 0}):
+            try:
+                await channel.fetch_message(int(entry["msg_id"]))
+            except discord.errors.NotFound:
+                coops.delete_one({"msg_id": listings_msg_id[page + 1]})
+                continue
+            except TypeError:
+                listings_msg_id.append(entry['msg_id'])
+            else:
+                listings_msg_id.append(entry['msg_id'])
+
+        if page <= 1 or page > coops.count_documents({}):
+
+            embed_new = discord.Embed(
+                colour=colour, title=f"🔍 Coop Finder", timestamp=get_timestamp(),
+                description=f""
+                f"Pin your team information & requirements in this channel.\n"
+                f"You can edit it to update or delete it to unregister anytime\n\n",
+            )
+            embed_new.set_footer(text=f"Page: 1 of {coops.count_documents({})}")
+            return embed_new
+
+        else:
+            profile = coops.find_one({"msg_id": listings_msg_id[page - 1]}, {"_id": 0})
+            guild = self.client.get_guild(int(id_guild))
+            member = guild.get_member(int(profile['user_id']))
+
+            msg = await channel.fetch_message(int(listings_msg_id[page - 1]))
+
+            embed_new = discord.Embed(
+                colour=member.colour, description=f"{msg.content}", timestamp=get_timestamp(),
+                title=f"🔍 {member.display_name}'s Coop Profile"
+            )
+            embed_new.set_footer(text=f"Page: {page} of {coops.count_documents({})}")
+            embed_new.set_thumbnail(url=member.avatar_url)
+            return embed_new
+
+
+    def embed_new_create_contents(self, listings_formatted, page_new):
 
         lines_max = 8
         page_total = ceil(len(listings_formatted) / lines_max)
@@ -195,7 +269,7 @@ class Castle(commands.Cog):
         listings_formatted = self.create_listings_formatted(channel)
 
         msg_new = await process_msg_submit(
-            channel, None, self.embed_new_create(listings_formatted, p)
+            channel, None, self.embed_new_create_contents(listings_formatted, p)
         )
 
         try:
@@ -211,7 +285,7 @@ class Castle(commands.Cog):
         listings_formatted = self.create_listings_formatted(channel)
 
         msg_new = await process_msg_submit(
-            channel, None, self.embed_new_create(listings_formatted, p)
+            channel, None, self.embed_new_create_contents(listings_formatted, p)
         )
 
         emojis_add = ["⬅", "➡"]
@@ -243,6 +317,50 @@ class Castle(commands.Cog):
             else:
                 if str(msg.id) != msg_id:
                     await self.castle_submit_contents(channel, msg_id, 1)
+
+    @commands.command(aliases=["c"])
+    async def castle_submit_coops(self, ctx):
+
+        channel = self.client.get_channel(int(id_coop))
+        query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, f"messages.coop": 1})
+        msg_id = query["messages"]["coop"]
+
+        msg = await channel.fetch_message(int(msg_id))
+        try:
+            current_page = int(msg.embeds[0].footer.text[6:][0])
+        except (IndexError, TypeError):
+            current_page = 1
+
+        embed = await self.embed_new_create_coop(channel, current_page)
+        msg_new = await process_msg_submit(channel, None, embed)
+
+        emojis_add = ["⬅", "➡"]
+        for emoji in emojis_add:
+            await process_msg_reaction_add(msg_new, emoji)
+
+        try:
+            msg_old = await channel.fetch_message(int(msg_id))
+            await msg_old.delete()
+        except discord.errors.NotFound:
+            pass
+
+        guilds.update_one({"server": str(id_guild)}, {"$set": {f"messages.coop": str(msg_new.id)}})
+
+    async def castle_submit_coops_periodic(self):
+
+        channel = self.client.get_channel(int(id_coop))
+        channel_msg_id_last = channel.last_message_id
+
+        query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, f"messages.coop": 1})
+        msg_id = query["messages"][str(channel.name)]
+
+        try:
+            msg = await channel.fetch_message(int(channel_msg_id_last))
+        except discord.errors.NotFound:
+            await self.castle_submit_contents(channel, msg_id, 1)
+        else:
+            if str(msg.id) != msg_id:
+                await self.castle_submit_contents(channel, msg_id, 1)
 
     async def castle_retitle_help(self, ctx):
 
@@ -278,6 +396,9 @@ class Castle(commands.Cog):
                 if x.modified_count > 0:
                     await process_msg_reaction_add(ctx.message, "✅")
                     await ctx.message.delete(delay=180)
+
+            else:
+                await process_msg_reaction_add(ctx.message, "❌")
 
     @commands.command(aliases=["contents"])
     @commands.is_owner()
