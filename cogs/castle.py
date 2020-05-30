@@ -80,7 +80,7 @@ class Castle(commands.Cog):
                     current_page = 1
                 await process_msg_edit(msg, None, self.embed_new_create(listings_formatted, current_page))
 
-        elif str(payload.emoji) in ["⭐", "🌟", "🔥", "🧂"]:
+        else:
 
             channel = self.client.get_channel(int(payload.channel_id))
             link = f"https://discordapp.com/channels/{id_guild}/{payload.channel_id}/{payload.message_id}"
