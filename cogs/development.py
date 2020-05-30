@@ -197,7 +197,7 @@ class Development(commands.Cog):
 
     @commands.command(aliases=["c"])
     @commands.is_owner()
-    async def development_manual_frame_automate(self, ctx):
+    async def development_manual_castle_submit_coops(self, ctx):
 
         await Castle(self.client).castle_submit_coops()
         await process_msg_reaction_add(ctx.message, "✅")
