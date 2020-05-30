@@ -195,7 +195,7 @@ class Development(commands.Cog):
         await Frames(self.client).frames_automate()
         await Summon(self.client).summon_perform_streak_penalize()
 
-    @commands.command(aliases=["c"])
+    @commands.command(aliases=["test"])
     @commands.is_owner()
     async def development_manual_castle_submit_coops(self, ctx):
 
