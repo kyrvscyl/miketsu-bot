@@ -48,29 +48,31 @@ class Utility(commands.Cog):
 
         if shikigami_name is None:
             await self.shikigami_bounty_help(ctx)
-            return
-
-        search = shikigamis.find_one({
-            "aliases": shikigami_name.lower()
-        }, {
-            "_id": 0, "location": 1, "thumbnail": 1, "name": 1, "aliases": 1
-        })
-
-        if search is not None:
-
-            description = ("• " + "\n• ".join(search["location"]))
-            aliases = ", ".join(search["aliases"])
-
-            embed = discord.Embed(
-                color=ctx.author.colour, timestamp=get_timestamp(),
-                title=f"Bounty location(s) for {search['name'].title()}",
-                description=description
-            )
-            embed.set_footer(icon_url=search["thumbnail"]["pre"], text=f"aliases: {aliases}")
-            await process_msg_submit(ctx.channel, None, embed)
 
         else:
-            await shikigami_post_approximate_results(ctx, shikigami_name)
+
+            search = shikigamis.find_one({
+                "aliases": shikigami_name.lower()
+            }, {
+                "_id": 0, "location": 1, "thumbnail": 1, "name": 1, "aliases": 1, "queries": 1
+            })
+
+            if search is not None:
+
+                description = ("• " + "\n• ".join(search["location"]))
+
+                embed = discord.Embed(
+                    color=ctx.author.colour, timestamp=get_timestamp(),
+                    title=f"Bounty location(s) for {search['name'].title()}",
+                    description=description
+                )
+                embed.set_footer(icon_url=search["thumbnail"]["pre"], text=f"Queried {search['queries']} time(s)")
+                await process_msg_submit(ctx.channel, None, embed)
+
+                shikigamis.update_one({"aliases": shikigami_name.lower()}, {"$inc": {"queries": 1}})
+
+            else:
+                await shikigami_post_approximate_results(ctx, shikigami_name)
 
     @commands.command(aliases=["baa"])
     @commands.guild_only()
