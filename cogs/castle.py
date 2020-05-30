@@ -321,7 +321,7 @@ class Castle(commands.Cog):
     async def castle_submit_coops(self):
 
         channel = self.client.get_channel(int(id_coop))
-        query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, f"messages.coop": 1})
+        query = guilds.find_castle_submit_coopsone({"server": str(id_guild)}, {"_id": 0, f"messages.coop": 1})
         msg_id = query["messages"]["coop"]
 
         msg = await channel.fetch_message(int(msg_id))
