@@ -318,8 +318,7 @@ class Castle(commands.Cog):
                 if str(msg.id) != msg_id:
                     await self.castle_submit_contents(channel, msg_id, 1)
 
-    @commands.command(aliases=["c"])
-    async def castle_submit_coops(self, ctx):
+    async def castle_submit_coops(self):
 
         channel = self.client.get_channel(int(id_coop))
         query = guilds.find_one({"server": str(id_guild)}, {"_id": 0, f"messages.coop": 1})

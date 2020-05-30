@@ -4,6 +4,7 @@ Miketsu, 2020
 """
 from discord.ext import commands
 
+from cogs.castle import Castle
 from cogs.economy import Economy
 from cogs.encounter import Encounter
 from cogs.ext.initialize import *
@@ -193,6 +194,13 @@ class Development(commands.Cog):
         await process_msg_reaction_add(ctx.message, "✅")
         await Frames(self.client).frames_automate()
         await Summon(self.client).summon_perform_streak_penalize()
+
+    @commands.command(aliases=["c"])
+    @commands.is_owner()
+    async def development_manual_frame_automate(self, ctx):
+
+        await Castle(self.client).castle_submit_coops()
+        await process_msg_reaction_add(ctx.message, "✅")
 
 
 def setup(client):
