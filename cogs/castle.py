@@ -245,7 +245,6 @@ class Castle(commands.Cog):
             embed_new.set_thumbnail(url=member.avatar_url)
             return embed_new
 
-
     def embed_new_create_contents(self, listings_formatted, page_new):
 
         lines_max = 8

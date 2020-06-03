@@ -74,6 +74,7 @@ class Clock(commands.Cog):
                     push_note("Miketsu Bot", "Stopping a concurrent function")
                     break
                 except:
+                    print("continuing")
                     continue
 
     async def clock_start_update(self):
@@ -137,13 +138,11 @@ class Clock(commands.Cog):
             if hour_minute in ["06:00", "18:00"]:
                 await Encounter(self.client).enc_nether_announce()
                 await Castle(self.client).castle_submit_contents_periodic()
-                await Castle(self.client).castle_submit_coops()
 
             if hour_minute == "00:00":
                 await Encounter(self.client).enc_perform_reset_boss_check()
                 await Economy(self.client).economy_issue_rewards_reset_daily()
                 await Castle(self.client).castle_submit_contents_periodic()
-                await Castle(self.client).castle_submit_coops()
 
                 if get_time().strftime("%a").lower() == "mon":
                     await Economy(self.client).economy_issue_rewards_reset_weekly()
