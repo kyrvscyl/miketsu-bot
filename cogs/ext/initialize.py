@@ -10,7 +10,6 @@ from collections import Counter
 from datetime import datetime
 
 import discord
-import pushbullet
 import pytz
 from PIL import ImageDraw
 from PIL import ImageFont
@@ -24,7 +23,6 @@ from cogs.ext.database import get_collections
 version = "2.0.beta"
 command_prefix = ";"
 time_start = datetime.now()
-
 
 """COLLECTIONS"""
 
@@ -69,7 +67,6 @@ weather = get_collections("weathers")
 weathers = get_collections("weathers")
 zones = get_collections("zones")
 
-
 """CONFIGURATION"""
 
 token = os.environ.get("TOKEN")
@@ -82,13 +79,11 @@ listings_3 = config.find_one({"list": 3}, {"_id": 0})
 
 server = guilds.find_one({"server": str(id_guild)}, {"_id": 0})
 
-
 """VARIABLES"""
 
 timezone = variables["timezone"]
 colour = variables["embed_color"]
 librarian_img = variables["librarian_img"]
-
 
 """LISTINGS"""
 
@@ -108,9 +103,9 @@ commands_fake = [
 
 commands_others = [
     "changelogs", "bounty", "suggest", "stickers", "newsticker", "wander", "portrait", "clear"
-    "stats", "duel\\*\\*", "memo\\*", "manage\\*", "events\\*", "info", "report", "patch", "dm"
+                                                                                       "stats", "duel\\*\\*", "memo\\*",
+    "manage\\*", "events\\*", "info", "report", "patch", "dm"
 ]
-
 
 """DICTIONARIES"""
 
@@ -122,7 +117,6 @@ mystic_shop = dictionaries["mystic_shop"]
 talisman_acquire = dictionaries["talisman_acquire"]
 cards_realm = dictionaries["cards_realm"]
 get_emojis = dictionaries["get_emojis"]
-
 
 """CHANNELS"""
 
@@ -181,7 +175,6 @@ e_t = emojis["t"]
 e_x = emojis["x"]
 
 e_fp = emojis["fp"]
-
 
 """SUMMON POOL"""
 
@@ -245,7 +238,6 @@ for card in realms.find({}, {"_id": 0}):
     realm_cards.append(f"{card['name'].lower()}")
     listings_cards.append([card["name"], card["rewards"], card["base"], card['link']["6"]])
 
-
 """SOULS"""
 
 souls_all = []
@@ -253,7 +245,6 @@ soul_dungeons = [f"{x}" for x in list(range(1, 11))]
 
 for soul in souls.find({}, {"_id": 0, "name": 1}):
     souls_all.append(soul["name"])
-
 
 """SHOP"""
 
@@ -278,7 +269,6 @@ for trade in trading_list:
         f"▫ `{trade[1]}`{emoji_dict[trade[0]]} → `{trade[3]:,d}`{emoji_dict[trade[2]]} | "
         f"{trade[4]} {trade[5]}\n"
     )
-
 
 """FUNCTIONS"""
 
@@ -496,7 +486,6 @@ def get_random_shikigami(r):
 
 
 def get_chance_soul_explore(user, min_chance, stage_ref, adj, evo_adj_max, evo_adj):
-
     grade_total, soul_set_chance, listings_souls = 1, 0, []
     query = users.find_one({"user_id": str(user.id)}, {"_id": 0, "level": 1, "display": 1})
 
@@ -575,7 +564,6 @@ def shikigami_push_user(user_id, shiki, evolve, shards):
 
 
 def shikigami_experience_add(user, shikigami_name, experience):
-
     shikigami_add_exp = users.update_one({
         "user_id": str(user.id),
         "$and": [{
@@ -657,19 +645,6 @@ def pluralize(singular, count):
         return singular
 
 
-def push_note(title, content):
-    api_key = str(os.environ.get("PUSHBULLET"))
-    try:
-        pb = pushbullet.Pushbullet(api_key=api_key)
-    except pushbullet.errors.PushbulletError:
-        pass
-    else:
-        try:
-            pb.push_note(title, content)
-        except pushbullet.errors.PushError:
-            pass
-
-
 async def shikigami_post_approximate_results(ctx, query):
     shikigamis_search = shikigamis.find({
         "name": {"$regex": f"^{query[:2].lower()}"}}, {
@@ -692,7 +667,6 @@ async def shikigami_post_approximate_results(ctx, query):
 
 
 async def perform_add_log(currency, amount, user_id):
-
     if logs.find_one({"user_id": str(user_id)}, {"_id": 0}) is None:
         profile = {"user_id": str(user_id), "logs": []}
         logs.insert_one(profile)
@@ -746,7 +720,7 @@ async def frame_acquisition(user, frame_name, jades, channel):
     embed = discord.Embed(
         color=user.colour, title="Frame acquisition", timestamp=get_timestamp(),
         description=f"{user.mention} has obtained{intro_caption}{frame_name} frame!\n"
-                    f"Acquired {jades:,d}{e_j} as bonus rewards!",
+        f"Acquired {jades:,d}{e_j} as bonus rewards!",
     )
     embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
     embed.set_thumbnail(url=get_frame_thumbnail(frame_name))

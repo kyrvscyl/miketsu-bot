@@ -60,7 +60,6 @@ class Clock(commands.Cog):
 
             config.update_one({"var": 1}, {"$set": {"clock": True}})
             print("Initializing a clock instance")
-            push_note("Miketsu Bot", "Initializing a clock instance")
 
             while True:
                 try:
@@ -71,7 +70,6 @@ class Clock(commands.Cog):
                         await asyncio.sleep(1)
 
                 except KeyboardInterrupt:
-                    push_note("Miketsu Bot", "Stopping a concurrent function")
                     break
                 except:
                     print("continuing")
@@ -157,7 +155,6 @@ class Clock(commands.Cog):
 
         except:
             exc_type, exc_obj, exc_tb = sys.exc_info()
-            push_note("Miketsu Bot", f"{exc_type}, Line {exc_tb.tb_lineno}")
             print("clock.py error: ", f"{exc_type}, Line {exc_tb.tb_lineno}")
 
     @commands.command(aliases=["tick"])
