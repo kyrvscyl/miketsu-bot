@@ -836,12 +836,16 @@ async def process_channel_edit_name(channel, name, topic):
     try:
         await channel.edit(name=name, topic=topic)
     except AttributeError:
+        print("1")
         pass
     except discord.errors.Forbidden:
+        print("2")
         pass
     except discord.errors.NotFound:
+        print("3")
         pass
     except discord.errors.HTTPException:
+        print("4")
         pass
 
 
