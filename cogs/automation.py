@@ -62,7 +62,6 @@ class Automation(commands.Cog):
                     embed.set_image(url=attachments[0]["url"])
 
                 await process_msg_submit(headlines_channel, content, embed)
-                msg = await shard_trading_channel.fetch_message(payload.data['id'])
 
             elif str(channel_id) == id_coop and pinned is True:
 

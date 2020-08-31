@@ -48,7 +48,7 @@ class Error(commands.Cog):
             "admin_post_message_user",
             "admin_purge_messages",
             "admin_manage_guild",
-            "clock_start_manual"
+            "clock_start_manual",
         ]
 
         self.functions_guild_only = [
@@ -216,6 +216,9 @@ class Error(commands.Cog):
                 return
 
             elif str(ctx.command) in self.functions_role_only:
+                return
+
+            elif str(ctx.command) in self.functions_admin:
                 return
 
             elif isinstance(error, commands.NoPrivateMessage):

@@ -711,8 +711,8 @@ class Economy(commands.Cog):
 
         try:
             counter = collections.Counter(rarities_beaned)
-            SSR_count = dict(counter)["SSR"]
-            if SSR_count >= 4:
+            ssr_count = dict(counter)["SSR"]
+            if ssr_count >= 4:
                 spell_spam_channel = self.client.get_channel(int(id_spell_spam))
                 await frame_acquisition(user, "Flower Fest", 3500, spell_spam_channel)
 
