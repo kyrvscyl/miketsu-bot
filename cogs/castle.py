@@ -218,7 +218,7 @@ class Castle(commands.Cog):
             listings.append([page["#"], page["title"], page["link"]])
 
         for line in listings:
-            listings_formatted.append(f"• `#{line[0]}` | [Link]({line[2]}) | {line[1][:45]}...\n")
+            listings_formatted.append(f"• `#{lengthen_code_2(int(line[0]))}` | [Link]({line[2]}) | {line[1][:45]}...\n")
 
         return listings_formatted
 
