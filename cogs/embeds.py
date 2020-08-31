@@ -67,6 +67,7 @@ class Embeds(commands.Cog):
         banners = query["links"]["banners"]
         splash_link = query["links"]["splash"]
         arts = query["roles"]["arts"]
+        id_head = query["roles"]["head"]
 
         embed1 = discord.Embed(
             colour=discord.Colour(0xe77eff),
@@ -161,20 +162,20 @@ class Embeds(commands.Cog):
         )
         embed4.add_field(
             name="# 2. Guild Quest (GQ) requirements",
-            value="• For members as well as traders, min 90 weekly GQ\n"
-                  "• Consistent inactivity will be forewarned by Head\n"
-                  "• AQ is not the only option to fulfill GQs\n​ ",
+            value=f"• For members as well as traders, min 90 weekly GQ\n"
+                  f"• Consistent inactivity will be forewarned by <@&{id_head}>\n"
+                  f"• AQ is not the only option to fulfill GQs\n​ ",
             inline=False
         )
         embed4.add_field(
             name="# 3. Alternate Accounts",
-            value="• We can accommodate if slots are available\n"
-                  "• Notify a Head before applying\n​ ",
+            value=f"• We can accommodate if slots are available\n"
+                  f"• Notify a <@&{id_head}> before applying\n​ ",
             inline=False
         )
         embed4.add_field(
             name="# 4. Guild Bonuses",
-            value="• Top 25 guild in overall activeness ranking\n"
+            value="• Top 50 guild in overall activeness ranking\n"
                   "• Rated at 60-70 guild packs per week\n"
                   "• Weekly 1-hour soul & evo bonus\n"
                   "• 24/7 exp, coin, & medal buffs\n"
@@ -187,7 +188,7 @@ class Embeds(commands.Cog):
         )
         embed4.add_field(
             name="# 5. Absenteeism/Leave",
-            value=f"• File your leave prior long vacation via <#{id_absence_app}> or contact any Head\n"
+            value=f"• File your leave prior long vacation via <#{id_absence_app}> or contact any <@&{id_head}>\n"
                   f"• Your maximum inactivity is assessed based on your guild retention/feats\n​ ",
             inline=False
         )
@@ -203,8 +204,8 @@ class Embeds(commands.Cog):
         )
         embed4.add_field(
             name="# 7. Shard Trading",
-            value=f"• If leaving for shards, contact any Head & specify amount of days\n"
-                  f"• If inviting a trader, notify a Head in advance\n"
+            value=f"• If leaving for shards, contact any <@&{id_head}> & specify amount of days\n"
+                  f"• If inviting a trader, notify the <@&{id_head}> in advance\n"
                   f"• Traders are required to fulfill our minimum GQ requirements or they will be kicked\n​ ",
             inline=False
         )

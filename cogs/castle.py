@@ -28,6 +28,23 @@ class Castle(commands.Cog):
         return self.primary_emojis[role]
 
     @commands.Cog.listener()
+    async def on_message(self, message):
+
+        if message.author == self.client.user:
+            return
+
+        elif str(message.channel.id) in [id_unleash, id_showcase]:
+
+            if len(message.attachments) > 0:
+
+                reactions_showcase, reactions_unleash = ["🔥"], ["🧂", "💣"]
+
+                if str(message.channel.id) == id_showcase:
+                    await process_msg_reaction_add(message, random.choice(reactions_showcase))
+                else:
+                    await process_msg_reaction_add(message, random.choice(reactions_unleash))
+
+    @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
 
         if str(payload.user_id) == str(self.client.user.id):
@@ -160,7 +177,7 @@ class Castle(commands.Cog):
 
         if query["stars"] == 5 and query['submitted'] is False:
 
-            count = highlights.count_documents({"channel": str(msg.channel.id)})
+            count = highlights.count_documents({"channel": str(msg.channel.id), "submitted": True})
             headlines_channel = self.client.get_channel(int(id_headlines))
 
             ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n / 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
@@ -171,7 +188,7 @@ class Castle(commands.Cog):
                 timestamp=get_timestamp(),
                 color=msg.author.colour
             )
-            embed.set_author(name=f"{msg.author.display_name}'s reckoning", icon_url=msg.author.avatar_url)
+            embed.set_author(name=f"{msg.author.display_name}'s", icon_url=msg.author.avatar_url)
 
             if query['attachment_link'] is not None:
                 embed.set_image(url=query['attachment_link'])

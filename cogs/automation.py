@@ -63,7 +63,6 @@ class Automation(commands.Cog):
 
                 await process_msg_submit(headlines_channel, content, embed)
                 msg = await shard_trading_channel.fetch_message(payload.data['id'])
-                await msg.unpin()
 
             elif str(channel_id) == id_coop and pinned is True:
 
