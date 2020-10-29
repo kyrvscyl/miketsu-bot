@@ -10,7 +10,10 @@ from cogs.ext.initialize import *
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-client = commands.Bot(command_prefix=command_prefix, case_insensitive=True)
+intents = discord.Intents.default()
+intents.members = True
+
+client = commands.Bot(command_prefix=command_prefix, case_insensitive=True, intents=intents)
 client.remove_command("help")
 
 config.update_one({"var": 1}, {"$set": {"clock": False}})
