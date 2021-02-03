@@ -82,7 +82,7 @@ class Summon(commands.Cog):
             "user_id": str(user.id),
             "shikigami.name": shikigami_name
         }, {
-            "_id": 0, "shikigami.$.name": 1
+            "_id": 0, "shikigami.$": 1
         })
 
         if shikigami_profile is None:

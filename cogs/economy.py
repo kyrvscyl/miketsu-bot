@@ -935,7 +935,7 @@ class Economy(commands.Cog):
             if display is not None:
                 evo = users.find_one({
                     "user_id": str(member.id), "shikigami.name": display}, {
-                    "shikigami.$.name": 1
+                    "shikigami.$": 1
                 })["shikigami"][0]["evolved"]
                 thumbnail = get_shikigami_url(display.lower(), get_evo_link(evo))
                 embed.set_thumbnail(url=thumbnail)

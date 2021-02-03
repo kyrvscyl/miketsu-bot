@@ -41,7 +41,7 @@ class Roles(commands.Cog):
             role_id = sortings.find_one({
                 "msg_id": str(payload.message_id),
                 "fields.emoji": str(payload.emoji)
-            }, {"_id": 0, "fields.$.role_id": 1})["fields"][0]["role_id"]
+            }, {"_id": 0, "fields.$": 1})["fields"][0]["role_id"]
 
             valid_emojis = []
             valid_emojis_remove = []

@@ -130,7 +130,7 @@ class Souls(commands.Cog):
                 "user_id": str(user.id), f"souls.{soul_select}.slot": int(slot)
             }, {
                 "_id": 0,
-                f"souls.{soul_select}.$.{slot}": 1
+                f"souls.{soul_select}.$": 1
             })
 
             if query is None:

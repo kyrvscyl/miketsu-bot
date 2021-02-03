@@ -741,7 +741,7 @@ class Expecto(commands.Cog):
 
         path_profile = quests.find_one({
             "user_id": str(user.id), "quest1.cycle": cycle}, {
-            "_id": 0, "quest1.$.hints": 1
+            "_id": 0, "quest1.$": 1
         })
 
         if path_new not in path_profile["quest1"][0]["hints"]:

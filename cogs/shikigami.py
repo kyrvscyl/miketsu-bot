@@ -787,7 +787,7 @@ class Shikigami(commands.Cog):
         query = users.find_one({
             "user_id": str(user.id), "shikigami.name": shikigami_name_lower
         }, {
-            "_id": 0, "shikigami.$.name": 1
+            "_id": 0, "shikigami.$": 1
         })
 
         if query is None:
