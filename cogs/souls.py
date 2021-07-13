@@ -1,6 +1,6 @@
 """
 Souls Module
-Miketsu, 2020
+"Miketsu, 2021
 """
 
 from math import floor

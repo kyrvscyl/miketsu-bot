@@ -1,6 +1,6 @@
 """
 Frames Module
-Miketsu, 2020
+"Miketsu, 2021
 """
 
 from PIL import Image

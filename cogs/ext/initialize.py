@@ -1,6 +1,6 @@
 """"
 Initialize Module
-Miketsu, 2020
+"Miketsu, 2021
 """
 
 import asyncio
@@ -8,13 +8,13 @@ import os
 import random
 from collections import Counter
 from datetime import datetime
+from math import ceil, exp
 
 import discord
 import pytz
 from PIL import ImageDraw
 from PIL import ImageFont
 from discord_webhook import DiscordEmbed, DiscordWebhook
-from math import ceil, exp
 
 from cogs.ext.database import get_collections
 

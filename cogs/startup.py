@@ -1,11 +1,12 @@
 """
 Startup Module
-Miketsu, 2020
+"Miketsu, 2021
 """
 
 from itertools import cycle
 
 from discord.ext import commands, tasks
+from discord_slash import cog_ext, SlashContext
 
 from cogs.ext.initialize import *
 
@@ -57,8 +58,8 @@ class Startup(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
-    @commands.command(aliases=["h", "help"])
-    async def help_show(self, ctx):
+    @cog_ext.cog_slash(name="help")
+    async def help_show(self, ctx: SlashContext):
 
         embed = discord.Embed(
             title="help, h", color=colour,
@@ -74,7 +75,7 @@ class Startup(commands.Cog):
         )
         embed.set_thumbnail(url=self.client.user.avatar_url)
         embed.set_footer(text="*Head commands, **#pvp-fair")
-        await process_msg_submit(ctx.channel, None, embed)
+        await process_msg_submit(ctx, None, embed)
 
     async def suggestions_collect_help(self, ctx):
 

@@ -1,10 +1,12 @@
 
 """
 Discord Miketsu Bot.
-kyrvscyl, 2020
+kyrvscyl, 2021
 """
 
+import discord
 from discord.ext import commands
+from discord_slash import SlashCommand
 
 from cogs.ext.initialize import *
 
@@ -16,11 +18,12 @@ intents.members = True
 client = commands.Bot(command_prefix=command_prefix, case_insensitive=True, intents=intents)
 client.remove_command("help")
 
+slash = SlashCommand(client, sync_commands=True)
+
 config.update_one({"var": 1}, {"$set": {"clock": False}})
 
 
 def cogs_extension_startup():
-
     for filename in sorted(os.listdir("./cogs")):
         if filename.endswith(".py"):
             try:
@@ -32,7 +35,9 @@ def cogs_extension_startup():
                 print(f"Loading {filename}..")
 
 
-@client.command(aliases=["stats"])
+@slash.slash(
+    name="stats", guild_ids=[id_guild], description="Shows some bot statistics",
+)
 async def show_bot_statistics(ctx):
 
     def get_days_hours_minutes(td):
@@ -71,7 +76,7 @@ async def show_bot_statistics(ctx):
         name=f"Modules [{len(cogs_loaded)}]",
         value=f"{modules_loaded}"
     )
-    await process_msg_submit(ctx.channel, None, embed)
+    await process_msg_submit(ctx, None, embed)
 
 
 @client.command(aliases=["load", "l"])

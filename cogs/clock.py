@@ -1,6 +1,6 @@
 """
 Clock Module
-Miketsu, 2020
+"Miketsu, 2021
 """
 
 import sys
