@@ -6,7 +6,6 @@ Startup Module
 from itertools import cycle
 
 from discord.ext import commands, tasks
-from discord_slash import cog_ext, SlashContext
 
 from cogs.ext.initialize import *
 
@@ -58,8 +57,8 @@ class Startup(commands.Cog):
         )
         await process_msg_submit(ctx.channel, None, embed)
 
-    @cog_ext.cog_slash(name="help")
-    async def help_show(self, ctx: SlashContext):
+    @commands.command(aliases=["help", "h"])
+    async def help_show(self, ctx):
 
         embed = discord.Embed(
             title="help, h", color=colour,
