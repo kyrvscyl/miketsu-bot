@@ -162,7 +162,7 @@ class Raid(commands.Cog):
                     embed = discord.Embed(
                         colour=victim.colour, description="Raids are capped at 3 times per day and per realm"
                     )
-                    embed.set_author(name="Realm is under protection", icon_url=victim..avatar.url)
+                    embed.set_author(name="Realm is under protection", icon_url=victim.avatar.url)
                     await process_msg_submit(ctx.channel, None, embed)
 
                 elif raid_count < 4:

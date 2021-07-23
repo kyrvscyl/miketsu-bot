@@ -941,14 +941,14 @@ class Economy(commands.Cog):
                 embed.set_thumbnail(url=thumbnail)
 
             else:
-                embed.set_thumbnail(url=member..avatar.url)
+                embed.set_thumbnail(url=member.avatar.url)
 
             def get_emoji_nether(x):
                 if x is False:
                     return "❌"
                 return "✅"
 
-            embed.set_author(name=f"{member.display_name}'s profile", icon_url=member..avatar.url)
+            embed.set_author(name=f"{member.display_name}'s profile", icon_url=member.avatar.url)
             embed.add_field(
                 name=f"{e_x} Experience | Nether Pass",
                 value=f"Lvl.{level} [{experience:,d}/{level_exp_next:,d}] | {get_emoji_nether(nether_pass)}"
@@ -993,7 +993,7 @@ class Economy(commands.Cog):
                 embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp())
                 embed_new.set_author(
                     name=f"{member.display_name}'s achievements [{len(achievements)}]",
-                    icon_url=member..avatar.url
+                    icon_url=member.avatar.url
                 )
                 embed_new.set_image(url=frame_new_url)
                 embed_new.set_footer(text="Hall of Frames")
@@ -1322,7 +1322,7 @@ class Economy(commands.Cog):
             description = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(color=member.colour, description=description)
-            embed_new.set_author(name=f"{member.display_name}", icon_url=member..avatar.url)
+            embed_new.set_author(name=f"{member.display_name}", icon_url=member.avatar.url)
             embed_new.set_footer(text=f"Last 200 only | Page: {page_new} of {page_total}")
 
             return embed_new

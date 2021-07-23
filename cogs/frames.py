@@ -869,7 +869,7 @@ class Frames(commands.Cog):
                 description=f"{member.mention} has obtained{intro_caption}{frame_name} frame!\n"
                             f"Acquired {jades:,d}{e_j} as bonus rewards!",
             )
-            embed.set_footer(icon_url=member..avatar.url, text=f"{member.display_name}")
+            embed.set_footer(icon_url=member.avatar.url, text=f"{member.display_name}")
             embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
             await perform_add_log("jades", jades, member.id)
             await process_msg_submit(spell_spam_channel, None, embed)

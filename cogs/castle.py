@@ -277,7 +277,7 @@ class Castle(commands.Cog):
                 title=f"🔍 {member.display_name}'s Coop Profile"
             )
             embed_new.set_footer(text=f"Page: {page} of {coops.count_documents({})}")
-            embed_new.set_thumbnail(url=member..avatar.url)
+            embed_new.set_thumbnail(url=member.avatar.url)
             return embed_new
 
     async def castle_edit_contents(self, channel, msg_id, p):

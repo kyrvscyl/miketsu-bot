@@ -912,7 +912,7 @@ class Expecto(commands.Cog):
                     embed.set_footer(text=f"Hours spent: {delta} hours")
                     embed.set_author(
                         name=f"{member.display_name} | Cycle #{cycle_query} results",
-                        icon_url=member..avatar.url
+                        icon_url=member.avatar.url
                     )
                     embed.add_field(
                         name="Wand Properties",

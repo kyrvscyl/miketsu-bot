@@ -80,7 +80,7 @@ class Exploration(commands.Cog):
         )
         embed.set_footer(
             text=f"{member.display_name}",
-            icon_url=member..avatar.url
+            icon_url=member.avatar.url
         )
         await process_msg_submit(ctx.channel, None, embed)
 
