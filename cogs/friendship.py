@@ -92,7 +92,7 @@ class Friendship(commands.Cog):
             )
             embed_new.set_footer(
                 text=f"Page {page_new} of {page_total}",
-                icon_url=member.default_avatar_url
+                icon_url=member..avatar.url
             )
 
             while start < end:

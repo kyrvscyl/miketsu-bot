@@ -54,7 +54,7 @@ class Automation(commands.Cog):
                 embed = discord.Embed(color=member.colour, description=description, timestamp=get_timestamp())
                 embed.set_author(
                     name=f"{member.display_name} is seeking for shards!",
-                    icon_url=member.default_avatar_url
+                    icon_url=member..avatar.url
                 )
                 embed.set_footer(text=f"#{shard_trading_channel.name}")
 
@@ -126,7 +126,7 @@ class Automation(commands.Cog):
                 embed2.set_author(name=f"{member} has joined the house!")
                 embed2.set_footer(
                     text=f"{member.guild.member_count} members",
-                    icon_url=member.default_avatar_url
+                    icon_url=member..avatar.url
                 )
                 record_scroll_channel = self.client.get_channel(int(id_scroll))
                 await process_msg_submit(record_scroll_channel, None, embed2)
@@ -149,7 +149,7 @@ class Automation(commands.Cog):
             embed.set_author(name=f"{member} [{member.display_name}] has left the house!")
             embed.set_footer(
                 text=f"{member.guild.member_count} members",
-                icon_url=member.default_avatar_url
+                icon_url=member..avatar.url
             )
 
             record_scroll_channel = self.client.get_channel(int(id_scroll))
@@ -177,7 +177,7 @@ class Automation(commands.Cog):
                     )
                     embed.set_footer(
                         text=f"{len(after.roles)} {pluralize('role', len(after.roles))}",
-                        icon_url=before.default_avatar_url
+                        icon_url=before..avatar.url
                     )
                     await process_msg_submit(record_scroll_channel, None, embed)
 
@@ -186,7 +186,7 @@ class Automation(commands.Cog):
                         color=0x50e3c2, timestamp=get_timestamp(),
                         description=f"Added {changed_role1[0].mention} role to {before.mention}",
                     )
-                    embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before.default_avatar_url)
+                    embed.set_footer(text=f"{len(after.roles)} roles", icon_url=before..avatar.url)
                     await process_msg_submit(record_scroll_channel, None, embed)
 
                     if changed_role1[0].name == "Auror":
@@ -194,7 +194,7 @@ class Automation(commands.Cog):
                             color=0x50e3c2, timestamp=get_timestamp(),
                             title=f"{before.display_name} has been promoted to ⚜ Auror"
                         )
-                        embed.set_footer(icon_url=before.default_avatar_url)
+                        embed.set_footer(icon_url=before..avatar.url)
                         await process_msg_submit(auror_department_channel, None, embed)
 
                     elif changed_role1[0].name == "Patronus":
@@ -208,7 +208,7 @@ class Automation(commands.Cog):
                 )
                 embed.set_author(
                     name=f"Username change",
-                    icon_url=before.default_avatar_url
+                    icon_url=before..avatar.url
                 )
                 await process_msg_submit(record_scroll_channel, None, embed)
 
@@ -219,7 +219,7 @@ class Automation(commands.Cog):
                 )
                 embed.set_author(
                     name=f"Nickname change",
-                    icon_url=before.default_avatar_url
+                    icon_url=before..avatar.url
                 )
                 await process_msg_submit(record_scroll_channel, None, embed)
 

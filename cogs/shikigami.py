@@ -87,7 +87,7 @@ class Shikigami(commands.Cog):
             color=member.colour, timestamp=get_timestamp()
         )
         embed.set_image(url=link)
-        embed.set_footer(icon_url=member.default_avatar_url, text=f"{member.display_name}")
+        embed.set_footer(icon_url=member..avatar.url, text=f"{member.display_name}")
         await process_msg_submit(ctx.channel, None, embed)
 
     async def shikigami_show_post_collected_generate(self, shikis, shikis_unc, listings_rarity_all, rarity, member):
@@ -205,7 +205,7 @@ class Shikigami(commands.Cog):
             )
             embed_new.set_footer(
                 text=f"Page: {page_new} of {page_total}",
-                icon_url=member.default_avatar_url
+                icon_url=member..avatar.url
             )
             return embed_new
 
@@ -310,7 +310,7 @@ class Shikigami(commands.Cog):
             color=member.colour, timestamp=get_timestamp()
         )
         embed.set_image(url=link)
-        embed.set_footer(icon_url=member.default_avatar_url, text=f"{member.display_name}")
+        embed.set_footer(icon_url=member..avatar.url, text=f"{member.display_name}")
         await process_msg_submit(ctx.channel, None, embed)
 
     async def shikigami_show_post_shards_generate(self, shikis, shikis_unc, pool_rarity, rarity, member):
@@ -624,7 +624,7 @@ class Shikigami(commands.Cog):
             color=member.colour, timestamp=get_timestamp()
         )
         embed.set_image(url=link)
-        embed.set_footer(icon_url=member.default_avatar_url, text=f"{member.display_name}")
+        embed.set_footer(icon_url=member..avatar.url, text=f"{member.display_name}")
         await process_msg_submit(ctx.channel, None, embed)
 
     async def shikigami_show_post_shikis_generate(self, shikis, shikis_unc, pool_rarity, rarity, member):

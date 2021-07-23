@@ -114,7 +114,7 @@ class Realm(commands.Cog):
             description = "".join(list_formatted[start:end])
 
             embed_new = discord.Embed(color=member.colour, timestamp=get_timestamp(), description=f"{description}")
-            embed_new.set_author(name=f"{member.display_name}'s realm cards", icon_url=member.default_avatar_url)
+            embed_new.set_author(name=f"{member.display_name}'s realm cards", icon_url=member..avatar.url)
             embed_new.set_footer(text=f"Page: {page_new} of {page_total}")
             return embed_new
 
@@ -305,7 +305,7 @@ class Realm(commands.Cog):
                                     f"Cruise: {ship_data['ship_name']}\n"
                                     f"Card: {get_emoji_cards(card_name)} `Grade {grade}` {card_name.title()}",
                     )
-                    embed.set_author(name=f"Cruise rewards", icon_url=shipper1.default_avatar_url)
+                    embed.set_author(name=f"Cruise rewards", icon_url=shipper1..avatar.url)
                     embed.add_field(
                         name="Earnings per captain",
                         value=f"{rewards_count_adj:,d}{get_emoji(rewards)}"
@@ -313,7 +313,7 @@ class Realm(commands.Cog):
                     embed.set_thumbnail(url=link)
                     embed.set_footer(
                         text=f"Ship Level: {ship_data['level']} | Multiplier: {multiplier}",
-                        icon_url=shipper2.default_avatar_url
+                        icon_url=shipper2..avatar.url
                     )
 
                     if rewards != "experience":
