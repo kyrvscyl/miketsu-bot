@@ -400,7 +400,7 @@ def get_time():
 
 
 def get_timestamp():
-    return datetime.utcfromtimestamp(datetime.timestamp(datetime.now()))
+    return discord.utils.utcnow()
 
 
 def get_time_converted(utc_dt):
