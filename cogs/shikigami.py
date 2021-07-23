@@ -464,7 +464,7 @@ class Shikigami(commands.Cog):
         embed.set_thumbnail(url=thumbnail)
         embed.set_author(
             name=f"{user.display_name}'s {shikigami_name.title()}",
-            icon_url=user.avatar_url
+            icon_url=user.avatar.url
         )
         embed.set_footer(text=f"Rarity: {shiki_profile['rarity']}")
         msg = await process_msg_submit(ctx.channel, None, embed)
@@ -813,7 +813,7 @@ class Shikigami(commands.Cog):
                 description=f"You currently have {count_shikigami:,d} {shikigami_name_lower.title()}",
             )
             embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
-            embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+            embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
             msg = await process_msg_submit(ctx.channel, None, embed)
 
             try:
@@ -823,7 +823,7 @@ class Shikigami(commands.Cog):
                     title="Timeout!", colour=user.colour,
                     description=f"Enter the amount on time", timestamp=get_timestamp()
                 )
-                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                 await process_msg_edit(msg, None, embed)
             except KeyboardInterrupt:
                 embed = discord.Embed(
@@ -831,7 +831,7 @@ class Shikigami(commands.Cog):
                     description=f"provide a valid integer", timestamp=get_timestamp()
                 )
                 embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
-                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                 await process_msg_edit(msg, None, embed)
 
             else:
@@ -854,7 +854,7 @@ class Shikigami(commands.Cog):
                         description=f"You shrined {shikigami_name_lower.title()} for {final_talismans:,d}{e_t}",
                     )
                     embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
-                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                     await process_msg_edit(msg, None, embed)
 
                 else:
@@ -863,7 +863,7 @@ class Shikigami(commands.Cog):
                         description=f"You lack that amount of shikigami {shikigami_name_lower.title()}",
                     )
                     embed.set_thumbnail(url=get_shikigami_url(shikigami_name_lower, "evo"))
-                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                     await process_msg_submit(ctx.channel, None, embed)
 
             finally:
@@ -885,7 +885,7 @@ class Shikigami(commands.Cog):
                 title="Exchange confirmation", colour=colour, timestamp=get_timestamp(),
                 description=f"Confirm exchange of {talisman_req:,d}{e_t} for a {shikigami_name_lower.title()}",
             )
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
             msg = await process_msg_submit(ctx.channel, None, embed)
 
             await process_msg_reaction_add(msg, "✅")
@@ -924,7 +924,7 @@ class Shikigami(commands.Cog):
                     title="Exchange success!", colour=colour, timestamp=get_timestamp(),
                     description=f"You acquired {shikigami_name_lower.title()} for {talisman_req:,d}{e_t}",
                 )
-                embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+                embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
                 await process_msg_edit(msg, None, embed)
                 await process_msg_reaction_clear(msg)
 
@@ -936,7 +936,7 @@ class Shikigami(commands.Cog):
                 title="Insufficient talismans", colour=colour, timestamp=get_timestamp(),
                 description=f"You lack {talisman_req - talisman:,d}{e_t}",
             )
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
             await process_msg_submit(ctx.channel, None, embed)
 
     async def perform_evolution_help(self, ctx):
@@ -1007,7 +1007,7 @@ class Shikigami(commands.Cog):
                 colour=colour, title="Evolution failed", timestamp=get_timestamp(),
                 description=f"Your {shikigami_name.title()} is already evolved",
             )
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
             embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "evo"))
             await process_msg_submit(ctx.channel, None, embed)
 
@@ -1036,7 +1036,7 @@ class Shikigami(commands.Cog):
                     description=f"You have evolved your {shikigami_name.title()}\n"
                                 f"Also acquired `{shards}` shards of this shikigami",
                 )
-                embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+                embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
                 embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "evo"))
                 await process_msg_submit(ctx.channel, None, embed)
 

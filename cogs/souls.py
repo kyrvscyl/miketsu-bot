@@ -138,7 +138,7 @@ class Souls(commands.Cog):
                     title="Invalid soul slot", color=user.colour, timestamp=get_timestamp(),
                     description=f"You do not own a `{soul_select.title()}` soul slot `#{slot}` yet",
                 )
-                embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+                embed.set_footer(text=user.display_name, icon_url=user.avatar.url)
                 embed.set_thumbnail(url=get_soul_url(soul_select))
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -314,7 +314,7 @@ class Souls(commands.Cog):
                 name="Total Souls Challenged",
                 value=f"{total_souls}"
             )
-            embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+            embed.set_footer(text=user.display_name, icon_url=user.avatar.url)
             await process_msg_submit(ctx.channel, None, embed)
 
         except TypeError:
@@ -367,7 +367,7 @@ class Souls(commands.Cog):
                 color=user.colour, timestamp=get_timestamp(), description=description2,
                 title=f"{strike}Soul Stage: {stage} :: Round {r} of 3{strike}",
             )
-            embed_new_souls.set_footer(text=user.display_name, icon_url=user.avatar_url)
+            embed_new_souls.set_footer(text=user.display_name, icon_url=user.avatar.url)
             embed_new_souls.set_thumbnail(url=thumbnail)
 
             shiki_exp, shiki_exp_next, shiki_lvl, user_sushi = get_shiki_exp_lvl_next_sushi(user, shikigami_name)
@@ -694,7 +694,7 @@ class Souls(commands.Cog):
                         )
 
                     embed_new = discord.Embed(color=user.colour, timestamp=get_timestamp())
-                    embed_new.set_author(name=f"{soul_select_new.title()} Souls Stats", icon_url=user.avatar_url)
+                    embed_new.set_author(name=f"{soul_select_new.title()} Souls Stats", icon_url=user.avatar.url)
                     embed_new.set_thumbnail(url=get_soul_url(soul_select_new))
 
                     for s in sorted(souls_formatted, key=lambda z: z[0], reverse=False):

@@ -53,7 +53,7 @@ class Startup(commands.Cog):
         )
         embed.set_author(
             name=f"Hello there! I'm {self.client.user.display_name}! ~",
-            icon_url=self.client.user.avatar_url
+            icon_url=self.client.user.avatar.url
         )
         await process_msg_submit(ctx.channel, None, embed)
 
@@ -72,7 +72,7 @@ class Startup(commands.Cog):
             name="Others / Utility", inline=False,
             value=f"*{', '.join(sorted(commands_others))}*",
         )
-        embed.set_thumbnail(url=self.client.user.avatar_url)
+        embed.set_thumbnail(url=self.client.user.avatar.url)
         embed.set_footer(text="*Head commands, **#pvp-fair")
         await process_msg_submit(ctx, None, embed)
 
@@ -148,7 +148,7 @@ class Startup(commands.Cog):
             description = "".join(listings_formatted[start:end])
 
             embed_new = discord.Embed(color=colour, description=description)
-            embed_new.set_author(name="Bot Changelogs", icon_url=self.client.user.avatar_url)
+            embed_new.set_author(name="Bot Changelogs", icon_url=self.client.user.avatar.url)
             embed_new.set_footer(text=f"Last 200 only; Page: {page_new} of {page_total}")
             return embed_new
 

@@ -97,7 +97,7 @@ class Funfun(commands.Cog):
 
             embed.set_footer(
                 text=f"{successes}/{successes + fails} successful {pluralize('shooting', successes + fails)}",
-                icon_url=user.avatar_url
+                icon_url=user.avatar.url
             )
     
         else:
@@ -117,7 +117,7 @@ class Funfun(commands.Cog):
 
             embed.set_footer(
                 text=f"{fails}/{successes + fails} failed {pluralize('shooting', successes + fails)}",
-                icon_url=user.avatar_url
+                icon_url=user.avatar.url
             )
 
         await process_msg_submit(channel, None, embed)
@@ -294,7 +294,7 @@ class Funfun(commands.Cog):
                     users.update_one({"user_id": str(user.id)}, {"$inc": {"stickers": 1}})
 
                 embed = discord.Embed(color=user.colour)
-                embed.set_footer(text=f"{user.display_name}{comment}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"{user.display_name}{comment}", icon_url=user.avatar.url)
                 embed.set_image(url=sticker_url)
 
                 await process_msg_submit(message.channel, None, embed)

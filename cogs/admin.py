@@ -152,7 +152,7 @@ class Admin(commands.Cog):
                     embed_new.set_thumbnail(url=ctx.guild.icon_url)
                     embed_new.set_footer(
                         text=f"#{memo_channel_name}-{lengthen_code_4(memos_count + 1)}",
-                        icon_url=user.avatar_url
+                        icon_url=user.avatar.url
                     )
                     if link is not None:
                         embed_new.set_image(url=link)
@@ -200,7 +200,7 @@ class Admin(commands.Cog):
                     title="Confirm issuance",
                     description="Do you want to send the memo drafted above?\nAnnounces immediately",
                 )
-                embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar.url)
 
                 msg1 = await process_msg_submit(ctx.channel, None, embed)
 
@@ -869,7 +869,7 @@ class Admin(commands.Cog):
                 colour=user.colour, description=f"there was no confirmation received",
                 title="Batch update cancelled", timestamp=get_timestamp()
             )
-            embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+            embed.set_footer(text=user.display_name, icon_url=user.avatar.url)
             await process_msg_submit(ctx.channel, None, embed)
         else:
             async with ctx.channel.typing():

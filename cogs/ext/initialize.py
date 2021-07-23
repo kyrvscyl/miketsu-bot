@@ -722,7 +722,7 @@ async def frame_acquisition(user, frame_name, jades, channel):
         description=f"{user.mention} has obtained{intro_caption}{frame_name} frame!\n"
         f"Acquired {jades:,d}{e_j} as bonus rewards!",
     )
-    embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+    embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
     embed.set_thumbnail(url=get_frame_thumbnail(frame_name))
     await process_msg_submit(channel, None, embed)
 

@@ -47,7 +47,7 @@ class Friendship(commands.Cog):
         )
         embed.set_footer(
             text=f"{ships_count} {pluralize('ship', ships_count)}",
-            icon_url=user.avatar_url
+            icon_url=user.avatar.url
         )
         await process_msg_submit(channel, None, embed)
 
@@ -222,9 +222,9 @@ class Friendship(commands.Cog):
         embed = discord.Embed(color=member.colour, description=description, timestamp=get_timestamp())
         embed.set_author(
             name=f"{query['ship_name']}",
-            icon_url=self.client.get_user(int(query["shipper1"])).avatar_url
+            icon_url=self.client.get_user(int(query["shipper1"])).avatar.url
         )
-        embed.set_thumbnail(url=self.client.get_user(int(query['shipper2'])).avatar_url)
+        embed.set_thumbnail(url=self.client.get_user(int(query['shipper2'])).avatar.url)
 
         try:
             time_deployed = get_time_converted(query["cards"]["timestamp"])

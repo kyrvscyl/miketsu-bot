@@ -218,7 +218,7 @@ class Castle(commands.Cog):
                 timestamp=get_timestamp(),
                 color=msg.author.colour
             )
-            embed.set_author(name=f"{msg.author.display_name}'s", icon_url=msg.author.avatar_url)
+            embed.set_author(name=f"{msg.author.display_name}'s", icon_url=msg.author.avatar.url)
 
             if query['attachment_link'] is not None:
                 embed.set_image(url=query['attachment_link'])
@@ -565,7 +565,7 @@ class Castle(commands.Cog):
                 caption = args_split[3].replace("\\n", "\n")
 
                 if image_link.lower() == "default":
-                    image_link = user.avatar_url
+                    image_link = user.avatar.url
 
                 find_role = ""
                 for role in reversed(ctx.guild.get_member(user.id).roles):

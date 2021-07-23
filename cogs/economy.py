@@ -77,7 +77,7 @@ class Economy(commands.Cog):
                 description=f"{strike}You currently have {reserves:,d}{get_emoji('sushi')} in your reserve{strike}",
                 color=user.colour, timestamp=get_timestamp()
             )
-            embed_new.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+            embed_new.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
             return embed_new
 
         msg = await process_msg_submit(ctx.channel, None, embed_new_create(""))
@@ -118,7 +118,7 @@ class Economy(commands.Cog):
             )
             embed.set_footer(
                 text=f"lasts {minutes} minutes",
-                icon_url=self.client.user.avatar_url
+                icon_url=self.client.user.avatar.url
             )
             return embed
 
@@ -191,7 +191,7 @@ class Economy(commands.Cog):
                 color=user.colour, title=f"Wish registered", timestamp=get_timestamp(),
                 description=f"You have wished for {shikigami_name.title()} shard today"
             )
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
             embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
 
             await process_msg_reaction_add(ctx.message, "✅")
@@ -348,7 +348,7 @@ class Economy(commands.Cog):
                         description=f"Donated 1 {shikigami_name.title()} shard to {member.mention}\n"
                                     f"Also acquired {friendship}{e_f} and {friendship_pass}{e_fp}",
                     )
-                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                     embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
                     await process_msg_submit(ctx.channel, None, embed)
 
@@ -570,7 +570,7 @@ class Economy(commands.Cog):
                 )
                 embed_new.set_image(url=attachment_link)
                 embed_new.add_field(name="Beaned shikigamis", value=value)
-                embed_new.set_footer(text=f"{remaining_chances} beans", icon_url=user.avatar_url)
+                embed_new.set_footer(text=f"{remaining_chances} beans", icon_url=user.avatar.url)
                 return embed_new
 
             msg = await process_msg_submit(ctx.channel, None, embed_new_create(beaned_shikigamis, beans))
@@ -738,7 +738,7 @@ class Economy(commands.Cog):
                 title="Pray to the Goddess of Hope and Prosperity!", color=user.colour,
                 description="45% chance to obtain rich rewards", timestamp=get_timestamp()
             )
-            embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+            embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
             msg = await process_msg_submit(ctx.channel, None, embed)
 
             roll = random.randint(1, 100)
@@ -783,7 +783,7 @@ class Economy(commands.Cog):
                         title=f"Prayer results", color=user.colour,
                         description=f"{next(self.prayer_ignored)}", timestamp=get_timestamp()
                     )
-                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                     await process_msg_edit(msg, None, embed)
                 else:
                     amount, rewards = get_rewards(str(reaction.emoji))
@@ -791,7 +791,7 @@ class Economy(commands.Cog):
                         title=f"Prayer results", color=user.colour, timestamp=get_timestamp(),
                         description=f"{next(self.prayer_heard)} You obtained {amount:,d}{str(reaction.emoji)}",
                     )
-                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                     users.update_one({"user_id": str(user.id)}, {"$inc": {rewards: amount}})
 
                     await perform_add_log(rewards, amount, user.id)
@@ -853,7 +853,7 @@ class Economy(commands.Cog):
                         f"{parade_tickets:,d} {e_p}, & "
                         f"{sushi:,d} {e_s}",
         )
-        embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar.url)
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["weekly"])
@@ -898,7 +898,7 @@ class Economy(commands.Cog):
             description=f"A mythical box containing {jades:,d}{e_j}, {coins:,d}{e_c}, "
                         f"{amulets:,d}{e_a}, & {sushi:,d}{e_s}",
         )
-        embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"Opened by {user.display_name}", icon_url=user.avatar.url)
         await process_msg_submit(ctx.channel, None, embed)
 
     @commands.command(aliases=["profile", "p"])
@@ -1089,7 +1089,7 @@ class Economy(commands.Cog):
             )
 
             try:
-                embed.set_thumbnail(url=seller.avatar_url)
+                embed.set_thumbnail(url=seller.avatar.url)
             except AttributeError:
                 pass
 
@@ -1130,10 +1130,10 @@ class Economy(commands.Cog):
             embed = discord.Embed(title="Confirm purchase?", color=ctx.author.colour, timestamp=get_timestamp())
             embed.description = f"{frame_name} frame for {amount:,d} {get_emoji(currency)}"
             embed.add_field(name="Inventory", value=f"{cost_item_have:,d} {get_emoji(currency)}", inline=False)
-            embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
+            embed.set_footer(icon_url=user.avatar.url, text=user.display_name)
 
             try:
-                embed.set_thumbnail(url=seller.avatar_url)
+                embed.set_thumbnail(url=seller.avatar.url)
             except AttributeError:
                 pass
 
@@ -1160,7 +1160,7 @@ class Economy(commands.Cog):
                 offer_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, offer_item: 1})[offer_item]
 
                 embed = discord.Embed(title="Confirm purchase?", colour=user.colour, timestamp=get_timestamp())
-                embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
+                embed.set_footer(icon_url=user.avatar.url, text=user.display_name)
                 embed.description = \
                     f"{offer_amount} {get_emoji(offer_item)} for " \
                     f"{cost_amount:,d} {get_emoji(cost_item)}\n\n"
@@ -1192,7 +1192,7 @@ class Economy(commands.Cog):
                 title="Timeout!", colour=ctx.author.colour, timestamp=get_timestamp(),
                 description=f"No confirmation was received",
             )
-            embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar_url)
+            embed.set_footer(text=f"{ctx.author.display_name}", icon_url=ctx.author.avatar.url)
             embed.set_thumbnail(url=seller_img)
             await process_msg_edit(msg, None, embed)
             await process_msg_reaction_clear(msg)
@@ -1218,7 +1218,7 @@ class Economy(commands.Cog):
             offer_item_have = users.find_one({"user_id": str(user.id)}, {"_id": 0, offer_i: 1})[offer_i]
 
             embed = discord.Embed(title="Purchase successful", colour=user.color, timestamp=get_timestamp())
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
             embed.description = f"You acquired {offer_a:,d}{get_emoji(offer_i)} " \
                                 f"in exchange for {cost_a:,d}{get_emoji(cost_i)}"
             embed.set_thumbnail(url=seller_img)
@@ -1234,7 +1234,7 @@ class Economy(commands.Cog):
                 title="Purchase failure", colour=colour,
                 description=f"You have insufficient {get_emoji(cost_i)}",
             )
-            embed.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
             await process_msg_submit(ctx.channel, None, embed)
 
     async def economy_shop_buy_items_process_purchase_frame(self, ctx, user, currency, amount, frame_name):
@@ -1260,7 +1260,7 @@ class Economy(commands.Cog):
                     title="Confirmation receipt", colour=colour, timestamp=get_timestamp(),
                     description=f"You acquired {frame_name} in exchange for {amount:,d}{get_emoji(currency)}",
                 )
-                embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar_url)
+                embed.set_footer(text=ctx.author.display_name, icon_url=ctx.author.avatar.url)
                 await process_msg_submit(ctx.channel, None, embed)
 
             else:

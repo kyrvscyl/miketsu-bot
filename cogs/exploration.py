@@ -154,7 +154,7 @@ class Exploration(commands.Cog):
                             color=user.colour, timestamp=get_timestamp(),
                             description=f"You have no pending explorations",
                         )
-                        embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+                        embed.set_footer(text=user.display_name, icon_url=user.avatar.url)
                         await process_msg_submit(ctx.channel, None, embed)
 
                     elif query is not None:
@@ -217,7 +217,7 @@ class Exploration(commands.Cog):
                 value=f"Level: {shiki_lvl} | Experience: {shiki_exp}/{shiki_exp_next}\n"
                       f"Clear Chance: ~{round(total_chance, 2)}%"
             )
-            embed_new.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+            embed_new.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
             embed_new.set_thumbnail(url=thumbnail)
 
             return embed_new
@@ -449,7 +449,7 @@ class Exploration(commands.Cog):
                 color=user.colour, timestamp=get_timestamp(),
                 description=f"You have access up to chapter {ch_unlocked}",
             )
-            embed.set_footer(text=user.display_name, icon_url=user.avatar_url)
+            embed.set_footer(text=user.display_name, icon_url=user.avatar.url)
             await process_msg_submit(ctx.channel, None, embed)
 
         else:

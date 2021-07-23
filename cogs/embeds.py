@@ -304,7 +304,7 @@ class Embeds(commands.Cog):
             if link.startswith("http") is True:
                 embed = discord.Embed(color=ctx.author.colour, timestamp=get_timestamp())
                 embed.set_image(url=link)
-                embed.set_footer(icon_url=ctx.author.avatar_url, text=f"{ctx.author.display_name}")
+                embed.set_footer(icon_url=ctx.author.avatar.url, text=f"{ctx.author.display_name}")
                 await process_msg_submit(ctx.channel, None, embed)
 
             else:

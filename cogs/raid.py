@@ -206,7 +206,7 @@ class Raid(commands.Cog):
                     value=f"{raider.display_name} won!\n"
                           f"{coins:,d}{e_c}, {jades:,d}{e_j}, {medals:,d}{e_m}"
                 )
-                embed.set_footer(text=raider.display_name, icon_url=raider.avatar_url)
+                embed.set_footer(text=raider.display_name, icon_url=raider.avatar.url)
                 await self.raid_perform_attack_giverewards_as_winner_raider(raider, coins, jades, medals, experience)
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -221,7 +221,7 @@ class Raid(commands.Cog):
                     value=f"{victim.display_name} won!\n"
                           f"{coins:,d}{e_c}, {jades:,d}{e_j}, {medals:,d}{e_m}"
                 )
-                embed.set_footer(text=raider.display_name, icon_url=raider.avatar_url)
+                embed.set_footer(text=raider.display_name, icon_url=raider.avatar.url)
                 await self.raid_perform_attack_giverewards_as_winner_victim(
                     victim, raider, coins, jades, medals, experience
                 )

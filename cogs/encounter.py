@@ -259,7 +259,7 @@ class Encounter(commands.Cog):
                 name=f"Top {len(shikis_t)} {pluralize('shikigami', len(shikis_t))}",
                 value=f"*{', '.join(shikigamis_formatted[:10])}*", inline=False
             )
-            embed_new.set_footer(icon_url=user.avatar_url, text=f"{user.display_name}")
+            embed_new.set_footer(icon_url=user.avatar.url, text=f"{user.display_name}")
 
             if s in ["accepted", "end"]:
                 caption_list = []
@@ -564,7 +564,7 @@ class Encounter(commands.Cog):
         embed = discord.Embed(title=f"Demon Quiz", color=user.colour, timestamp=get_timestamp())
         embed.description = f"Time Limit: {timeout} sec"
         embed.add_field(name="Who is this shikigami?", value=f"{question}")
-        embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar.url)
         await process_msg_edit(msg, None, embed)
 
         def check(m):
@@ -583,7 +583,7 @@ class Encounter(commands.Cog):
                     description=f"You have failed the quiz",
                 )
                 embed.add_field(name="Correct Answer", value=f"{answer.title()}")
-                embed.set_footer(text="Time is up!", icon_url=user.avatar_url)
+                embed.set_footer(text="Time is up!", icon_url=user.avatar.url)
                 await process_msg_edit(msg, None, embed)
                 break
 
@@ -591,17 +591,17 @@ class Encounter(commands.Cog):
 
                 if guesses == 3:
                     guesses -= 1
-                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar.url)
                     await process_msg_edit(msg, None, embed)
 
                 elif guesses == 2:
                     guesses -= 1
-                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar.url)
                     await process_msg_edit(msg, None, embed)
 
                 elif guesses == 1:
                     guesses -= 1
-                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar_url)
+                    embed.set_footer(text=f"{guesses} {pluralize('guess', guesses)}", icon_url=user.avatar.url)
                     embed.remove_field(0)
                     embed.add_field(name="Correct Answer", value=f"{answer.title()}")
                     await process_msg_edit(msg, None, embed)
@@ -614,7 +614,7 @@ class Encounter(commands.Cog):
                     description=f"You have earned 5{e_a}",
                     timestamp=get_timestamp()
                 )
-                embed.set_footer(text="Correct!", icon_url=user.avatar_url)
+                embed.set_footer(text="Correct!", icon_url=user.avatar.url)
                 await process_msg_edit(msg, None, embed)
                 break
 
@@ -634,7 +634,7 @@ class Encounter(commands.Cog):
             description=f"A treasure chest containing {offer_a:,d}{get_emoji(offer_i)}\n"
                         f"It opens using {cost_a:,d}{get_emoji(cost_i)}",
         )
-        embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar.url)
         await process_msg_edit(msg, None, embed)
 
         emojis_add = ["✅"]
@@ -652,7 +652,7 @@ class Encounter(commands.Cog):
                 color=user.colour, timestamp=get_timestamp(),
                 title="Encounter Treasure", description=f"The chest you found turned into ashes 🔥",
             )
-            embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
+            embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar.url)
             await process_msg_edit(msg, None, embed)
             await process_msg_reaction_clear(msg)
 
@@ -678,7 +678,7 @@ class Encounter(commands.Cog):
                     name="Updated Inventory", inline=False,
                     value=f"{offer_i_have:,d} {get_emoji(offer_i)} | {cost_i_have:,d} {get_emoji(cost_i)}"
                 )
-                embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar.url)
                 await process_msg_edit(msg, None, embed)
                 await process_msg_reaction_clear(msg)
 
@@ -688,7 +688,7 @@ class Encounter(commands.Cog):
                     title="Encounter treasure",
                     description=f"Exchange failed, you only have {cost_item_current:,d}{get_emoji(cost_i)} left",
                 )
-                embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"Found by {user.display_name}", icon_url=user.avatar.url)
                 await process_msg_edit(msg, None, embed)
                 await process_msg_reaction_clear(msg)
 
@@ -741,7 +741,7 @@ class Encounter(commands.Cog):
             embed_new.set_thumbnail(url=e)
             embed_new.set_footer(
                 text=f"Discovered by {discoverer.display_name}",
-                icon_url=discoverer.avatar_url
+                icon_url=discoverer.avatar.url
             )
             return embed_new
 

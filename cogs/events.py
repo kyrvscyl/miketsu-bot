@@ -94,7 +94,7 @@ class Events(commands.Cog):
             embed = discord.Embed(color=colour, timestamp=get_timestamp())
             embed.set_author(
                 name=f"{message.author}",
-                icon_url=message.author.avatar_url
+                icon_url=message.author.avatar.url
             )
             embed.set_image(url=message.attachments[0].url)
             await process_msg_submit(owner, None, embed)
@@ -236,7 +236,7 @@ class Events(commands.Cog):
                 description=f"{entry['emoji']} *{entry['caption']}*",
                 color=colour
             )
-            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar_url)
+            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar.url)
             embed.set_image(url=entry["link"])
             await process_msg_submit(channel, None, embed)
 
@@ -254,7 +254,7 @@ class Events(commands.Cog):
             timestamp=get_timestamp(),
             color=colour
         )
-        embed.set_author(name="Portrait of the Goddess Vote Casting!", icon_url=self.client.user.avatar_url)
+        embed.set_author(name="Portrait of the Goddess Vote Casting!", icon_url=self.client.user.avatar.url)
 
         default_role = ctx.guild.default_role
         msg = await process_msg_submit(channel, default_role, embed)
@@ -270,7 +270,7 @@ class Events(commands.Cog):
                 description=f"{entry['emoji']} *{entry['caption']}*",
                 color=colour
             )
-            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar_url)
+            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar.url)
             embed.set_image(url=entry["link"])
             await process_msg_submit(channel, None, embed)
 
@@ -291,7 +291,7 @@ class Events(commands.Cog):
             timestamp=get_timestamp(),
             color=colour
         )
-        embed.set_author(name="Portrait of the Goddess Results!", icon_url=self.client.user.avatar_url)
+        embed.set_author(name="Portrait of the Goddess Results!", icon_url=self.client.user.avatar.url)
 
         default_role = ctx.guild.default_role
         await process_msg_submit(channel, default_role, embed)
@@ -304,7 +304,7 @@ class Events(commands.Cog):
                             f"Illustration by <@!{entry['id']}>",
                 color=colour
             )
-            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar_url)
+            embed.set_author(name=f"PotG Entry #{index + 1}", icon_url=self.client.user.avatar.url)
             embed.set_image(url=entry["link"])
             await process_msg_submit(channel, None, embed)
 

@@ -68,7 +68,7 @@ class Quest(commands.Cog):
             else:
                 embed = discord.Embed(color=user.colour, description="*\"" + hint + "\"*", timestamp=get_timestamp())
                 embed.set_footer(
-                    icon_url=user.avatar_url,
+                    icon_url=user.avatar.url,
                     text=f"Quest# 1 | Path# {path[4::]} | Hint# {hint_num}"
                 )
                 await update_hint_quest1(user, path, cycle, h)
@@ -274,7 +274,7 @@ class Quest(commands.Cog):
             await Expecto(self.client).expecto_update_path(user, cycle, path_new="path21")
 
         def check(g):
-            key = (str(user.avatar_url).rsplit('/', 2)[1:])[1][:32:]
+            key = (str(user.avatar.url).rsplit('/', 2)[1:])[1][:32:]
             if g.channel != message.channel:
                 return
             elif str(g.content) == key and g.author == user and g.channel == message.channel:
@@ -665,7 +665,7 @@ class Expecto(commands.Cog):
                 embed.set_footer(text=f"Hours spent: {delta} hours")
                 embed.set_author(
                     name=f"{user.display_name} | Cycle #{cycle} results!",
-                    icon_url=user.avatar_url
+                    icon_url=user.avatar.url
                 )
                 embed.add_field(
                     name="Wand Properties",
@@ -954,7 +954,7 @@ class Expecto(commands.Cog):
             embed = discord.Embed(color=user.colour, description=description)
             embed.set_author(
                 name=f"{user}'s Cycle #{cycle}",
-                icon_url=user.avatar_url
+                icon_url=user.avatar.url
             )
             await process_msg_submit(user, None, embed)
             await process_msg_reaction_add(ctx.message, "✅")
@@ -1518,7 +1518,7 @@ class Expecto(commands.Cog):
                                       f"Core: `{wand_core.title()}`"
 
                         embed = discord.Embed(color=user.colour, description=description)
-                        embed.set_author(name="Wand Properties", icon_url=user.avatar_url)
+                        embed.set_author(name="Wand Properties", icon_url=user.avatar.url)
                         embed.set_footer(text="Confirm purchase? Y/N")
 
                         msg_confirm = await process_msg_submit(channel, None, embed)

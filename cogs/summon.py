@@ -132,7 +132,7 @@ class Summon(commands.Cog):
                     title="Summon success", colour=user.colour, timestamp=get_timestamp(),
                     description=f"You acquired the {shikigami_rarity} shikigami {shikigami_name.title()}!",
                 )
-                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar_url)
+                embed.set_footer(text=f"{user.display_name}", icon_url=user.avatar.url)
                 embed.set_thumbnail(url=get_shikigami_url(shikigami_name, "pre"))
                 await process_msg_submit(ctx.channel, None, embed)
 
@@ -200,7 +200,7 @@ class Summon(commands.Cog):
             color=user.colour, title="🎊 Summon results",
             description=description, timestamp=get_timestamp()
         )
-        embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar.url)
 
         await process_msg_submit(ctx.channel, caption, embed)
         await self.summon_perform_broken_pull_push(user, shikigami_pulled_count, amulets_pulled, shikigami_pulled)
@@ -258,7 +258,7 @@ class Summon(commands.Cog):
                     title="Insufficient amulets", colour=user.colour,
                     description=f"You only have `{amulets_current}`{e_a} in your possession"
                 )
-                embed.set_footer(icon_url=user.avatar_url, text=user.display_name)
+                embed.set_footer(icon_url=user.avatar.url, text=user.display_name)
                 await process_msg_submit(ctx.channel, None, embed)
 
             elif amulets_pulled == 10 and amulets_current >= 10:
@@ -307,10 +307,10 @@ class Summon(commands.Cog):
             color=user.colour, title="🎊 Summon results",
             description=description, timestamp=get_timestamp()
         )
-        embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar_url)
+        embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar.url)
 
         if amulets_pulled == 10:
-            embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar_url)
+            embed.set_footer(text=f"{'; '.join(text)}", icon_url=user.avatar.url)
 
         elif amulets_pulled == 1:
             embed.set_thumbnail(url=get_shikigami_url(shikigami_pulled[0][1], "pre"))
